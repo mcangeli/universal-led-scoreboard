@@ -20,6 +20,24 @@ STATE_DIR=Path('/run/universal-led-scoreboard/wifi-recovery')
 def valid_token(token):
     return isinstance(token,str) and len(token)==32 and all(c in '0123456789abcdef' for c in token)
 
+def secure_open_state(path):
+    """Validate the actual opened file, not just its pathname."""
+    flags=os.O_RDWR | getattr(os,'O_NOFOLLOW',0) | getattr(os,'O_CLOEXEC',0)
+    fd=os.open(path,flags)
+    try:
+        opened=os.fstat(fd)
+        named=path.lstat()
+        if (not stat.S_ISREG(opened.st_mode)
+                or stat.S_IMODE(opened.st_mode)!=0o600
+                or opened.st_nlink!=1 or opened.st_uid!=os.geteuid()
+                or (opened.st_dev,opened.st_ino)!=(named.st_dev,named.st_ino)):
+            raise PermissionError('Unsafe recovery state file')
+        return os.fdopen(fd,'r+',encoding='utf-8')
+    except BaseException:
+        os.close(fd)
+        raise
+
+
 def recover(token, *, state_dir=STATE_DIR, sleep=time.sleep, run=subprocess.run):
     if not valid_token(token):
         raise ValueError('Invalid recovery token')
