@@ -38,13 +38,22 @@ def secure_open_state(path):
         raise
 
 
+def _same_open_state(path, handle):
+    try:
+        named=path.lstat()
+        opened=os.fstat(handle.fileno())
+        return (named.st_dev,named.st_ino)==(opened.st_dev,opened.st_ino)
+    except FileNotFoundError:
+        return False
+
+
 def recover(token, *, state_dir=STATE_DIR, sleep=time.sleep, run=subprocess.run):
     if not valid_token(token):
         raise ValueError('Invalid recovery token')
     path=state_dir/(token+'.json')
     # State files are root-owned, created with O_EXCL and mode 0600.
     try:
-        with path.open(encoding='utf-8') as handle:
+        with secure_open_state(path) as handle:
             data=json.load(handle)
     except FileNotFoundError:
         # Confirmation may remove the state before this worker starts.
@@ -59,14 +68,16 @@ def recover(token, *, state_dir=STATE_DIR, sleep=time.sleep, run=subprocess.run)
     # Serialize cancellation and rollback. Holding the lock through nmcli
     # prevents confirmation from deleting state during an in-flight rollback.
     try:
-        with path.open('r+',encoding='utf-8') as handle:
+        with secure_open_state(path) as handle:
             fcntl.flock(handle.fileno(),fcntl.LOCK_EX)
             try:
-                if not path.exists() or path.stat().st_ino != os.fstat(handle.fileno()).st_ino:
+                if not _same_open_state(path,handle):
                     return False
                 current=json.load(handle)
                 if current != data:
                     raise ValueError('Recovery state changed')
+                if current.get('phase') is not None:
+                    return False
                 current['phase']='executing'
                 handle.seek(0)
                 json.dump(current,handle)
@@ -78,7 +89,8 @@ def recover(token, *, state_dir=STATE_DIR, sleep=time.sleep, run=subprocess.run)
                            capture_output=True,text=True)
                 if result.returncode != 0:
                     return False
-                path.unlink(missing_ok=True)
+                if _same_open_state(path,handle):
+                    path.unlink()
                 return True
             finally:
                 fcntl.flock(handle.fileno(),fcntl.LOCK_UN)
