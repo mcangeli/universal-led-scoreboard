@@ -1,0 +1,86 @@
+"""MLB Stats API schedule adapter, with throttling and offline-safe cache."""
+from __future__ import annotations
+import json
+import threading
+import time
+from datetime import datetime
+from urllib.parse import urlencode
+from urllib.request import urlopen
+from .mlb_classic import BaseballGame
+
+API = 'https://statsapi.mlb.com/api/v1/schedule'
+
+# MLB Stats API returns UTC dates; using the local date on the Pi is a practical
+# default for the preview, with an explicit --date override for other time zones.
+def parse_schedule(payload: dict, team: str | None = None) -> list[BaseballGame]:
+    games = []
+    for day in payload.get('dates', []):
+        for item in day.get('games', []):
+            teams = item.get('teams') or {}
+            away, home = teams.get('away') or {}, teams.get('home') or {}
+            def abbr(side):
+                obj = side.get('team') or {}
+                return str(obj.get('abbreviation') or obj.get('name','UNK')[:3]).upper()[:3]
+            a, h = abbr(away), abbr(home)
+            if team and team.upper() not in (a, h):
+                continue
+            abstract = (item.get('status') or {}).get('abstractGameState', '')
+            status = 'final' if abstract == 'Final' else 'live' if abstract == 'Live' else 'pregame'
+            ls = item.get('linescore') or {}
+            offense = ls.get('offense') or {}
+            def occupied(key):
+                return bool(offense.get(key))
+            def stat(side, key):
+                return max(0, int((side.get('leagueRecord') or {}).get(key, 0))) if False else max(0,int(side.get(key,0) or 0))
+            # Hits/errors are supplied by the hydrated linescore teams object.
+            ls_teams = ls.get('teams') or {}
+            def hits_errors(which, key):
+                return max(0,int(((ls_teams.get(which) or {}).get(key)) or 0))
+            inning = max(1, int(ls.get('currentInning') or 1))
+            games.append(BaseballGame(
+                away=a, home=h,
+                away_runs=stat(away,'score'), home_runs=stat(home,'score'),
+                away_hits=hits_errors('away','hits'), home_hits=hits_errors('home','hits'),
+                away_errors=hits_errors('away','errors'), home_errors=hits_errors('home','errors'),
+                inning=inning,
+                inning_half='top' if ls.get('isTopInning',True) else 'bottom',
+                outs=min(3,max(0,int(ls.get('outs') or 0))),
+                bases=(occupied('first'),occupied('second'),occupied('third')),
+                status=status))
+    return games
+
+class MLBFeed:
+    def __init__(self, team: str | None = 'ATL', date: str | None = None,
+                 refresh_seconds: float = 60, fetch=None, clock=None):
+        if refresh_seconds <= 0:
+            raise ValueError('refresh_seconds must be positive')
+        self.team = team.upper() if team else None
+        self.date = date
+        self.refresh_seconds = refresh_seconds
+        self.fetch = fetch or self._fetch
+        self.clock = clock or time.monotonic
+        self._lock = threading.Lock()
+        self._next_refresh = 0.0
+        self._games: list[BaseballGame] = []
+        self.last_error: str | None = None
+
+    def _fetch(self):
+        day = self.date or datetime.now().astimezone().date().isoformat()
+        url = API + '?' + urlencode({'sportId':1,'date':day,'hydrate':'linescore'})
+        with urlopen(url,timeout=8) as response:
+            return json.load(response)
+
+    def games(self) -> list[BaseballGame]:
+        # Single request per interval, even with concurrent browser requests.
+        with self._lock:
+            now = self.clock()
+            if now >= self._next_refresh:
+                self._next_refresh = now + self.refresh_seconds
+                try:
+                    parsed = parse_schedule(self.fetch(), self.team)
+                    self._games = parsed
+                    self.last_error = None
+                except (OSError,ValueError,KeyError,TypeError) as exc:
+                    self.last_error = str(exc)
+                    # Keep last known good data during network failures.
+            return list(self._games)
