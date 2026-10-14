@@ -5,7 +5,7 @@ from universal_led.configurator import HTML
 
 class WifiStatusReuseTests(unittest.TestCase):
     def test_escaped_connection_name(self):
-        self.assertEqual(_split_nmcli(r'wlan0:wifi:connected:Home\\:Guest'),
+        self.assertEqual(_split_nmcli('wlan0:wifi:connected:Home' + chr(92) + ':Guest'),
                          ['wlan0','wifi','connected','Home:Guest'])
 
     def test_connected_network_status(self):
