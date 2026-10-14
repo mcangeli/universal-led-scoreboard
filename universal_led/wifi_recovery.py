@@ -1,3 +1,4 @@
+#!/usr/bin/env python3
 """Privileged Wi-Fi recovery worker.
 
 Run only from a root-owned systemd transient unit. This process must survive
