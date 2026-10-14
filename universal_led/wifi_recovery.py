@@ -55,6 +55,8 @@ def recover(token, *, state_dir=STATE_DIR, sleep=time.sleep, run=subprocess.run)
     try:
         with secure_open_state(path) as handle:
             data=json.load(handle)
+            original_identity=(os.fstat(handle.fileno()).st_dev,
+                               os.fstat(handle.fileno()).st_ino)
     except FileNotFoundError:
         # Confirmation may remove the state before this worker starts.
         # A missing state is a cancelled recovery, not a worker failure.
@@ -72,6 +74,9 @@ def recover(token, *, state_dir=STATE_DIR, sleep=time.sleep, run=subprocess.run)
             fcntl.flock(handle.fileno(),fcntl.LOCK_EX)
             try:
                 if not _same_open_state(path,handle):
+                    return False
+                current_stat=os.fstat(handle.fileno())
+                if (current_stat.st_dev,current_stat.st_ino)!=original_identity:
                     return False
                 current=json.load(handle)
                 if current.get('phase') is not None:
