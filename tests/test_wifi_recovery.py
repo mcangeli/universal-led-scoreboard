@@ -19,6 +19,7 @@ class WifiRecoveryTests(unittest.TestCase):
             path=Path(temp)/(TOKEN+'.json')
             path.write_text(json.dumps({'token':TOKEN,'previous_connection':'Original Wi-Fi',
                                         'interface':'wlan0','delay':0}))
+            path.chmod(0o600)
             runner=Mock(return_value=SimpleNamespace(returncode=0))
             self.assertTrue(recover(TOKEN,state_dir=Path(temp),sleep=lambda _:None,run=runner))
             self.assertEqual(runner.call_args.args[0],
@@ -30,6 +31,7 @@ class WifiRecoveryTests(unittest.TestCase):
             path=Path(temp)/(TOKEN+'.json')
             path.write_text(json.dumps({'token':TOKEN,'previous_connection':'Original',
                                         'interface':'wlan0','delay':0}))
+            path.chmod(0o600)
             runner=Mock(return_value=SimpleNamespace(returncode=1))
             self.assertFalse(recover(TOKEN,state_dir=Path(temp),sleep=lambda _:None,run=runner))
             self.assertTrue(path.exists())
@@ -39,6 +41,7 @@ class WifiRecoveryTests(unittest.TestCase):
             path=Path(temp)/(TOKEN+'.json')
             path.write_text(json.dumps({'token':TOKEN,'previous_connection':'Original',
                                         'interface':'wlan0','delay':0}))
+            path.chmod(0o600)
             runner=Mock()
             def confirm(_): path.unlink()
             self.assertFalse(recover(TOKEN,state_dir=Path(temp),sleep=confirm,run=runner))
@@ -56,6 +59,7 @@ class WifiRecoveryTests(unittest.TestCase):
             path=Path(temp)/(TOKEN+'.json')
             path.write_text(json.dumps({'token':TOKEN,'previous_connection':'Original',
                                         'interface':'eth0','delay':0}))
+            path.chmod(0o600)
             runner=Mock()
             with self.assertRaises(ValueError):
                 recover(TOKEN,state_dir=Path(temp),sleep=lambda _:None,run=runner)
