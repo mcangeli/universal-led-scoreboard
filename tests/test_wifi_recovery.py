@@ -44,6 +44,13 @@ class WifiRecoveryTests(unittest.TestCase):
             self.assertFalse(recover(TOKEN,state_dir=Path(temp),sleep=confirm,run=runner))
             runner.assert_not_called()
 
+    def test_missing_state_before_start_is_cancelled(self):
+        with tempfile.TemporaryDirectory() as temp:
+            runner=Mock()
+            self.assertFalse(recover(TOKEN,state_dir=Path(temp),
+                                     sleep=lambda _:None,run=runner))
+            runner.assert_not_called()
+
     def test_invalid_recovery_state_does_not_execute(self):
         with tempfile.TemporaryDirectory() as temp:
             path=Path(temp)/(TOKEN+'.json')
