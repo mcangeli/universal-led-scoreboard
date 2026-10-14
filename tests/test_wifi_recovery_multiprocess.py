@@ -38,6 +38,14 @@ def executing_child(directory, executing, proceed, outcome):
     outcome.put(('recovered', result))
 
 
+def already_cancelled_child(directory, outcome):
+    def forbidden_runner(*_args, **_kwargs):
+        raise AssertionError('Cancelled recovery attempted network command')
+    outcome.put(('recovered', recover(
+        TOKEN, state_dir=Path(directory), sleep=lambda _: None,
+        run=forbidden_runner)))
+
+
 class CrossProcessRecoveryTests(unittest.TestCase):
     def setUp(self):
         self.temp = tempfile.TemporaryDirectory()
@@ -90,9 +98,11 @@ class CrossProcessRecoveryTests(unittest.TestCase):
 
     def test_cancelled_state_stays_cancelled_across_processes(self):
         self.assertTrue(cancel_recovery(TOKEN, state_dir=self.directory))
-        waiting = self.ctx.Event()
-        process, proceed, outcome = self.run_child(recovery_child, waiting)
-        proceed.set()
+        outcome = self.ctx.Queue()
+        process = self.ctx.Process(target=already_cancelled_child,
+                                   args=(str(self.directory), outcome))
+        process.start()
+        self.addCleanup(self.cleanup_child, process, self.ctx.Event())
         process.join(5)
         self.assertEqual(process.exitcode, 0)
         self.assertEqual(outcome.get(timeout=2), ('recovered', False))
