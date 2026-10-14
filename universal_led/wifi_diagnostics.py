@@ -29,7 +29,6 @@ def wifi_status():
     """Read-only connectivity and hotspot snapshot, adapted from MLB configurator."""
     state=_nmcli('--fields','WIFI','general')
     device=_nmcli('--fields','DEVICE,TYPE,STATE,CONNECTION','device','status')
-    active=_nmcli('--fields','NAME,TYPE,DEVICE','connection','show','--active')
     if state is None or device is None:
         return {'available':False,'state':'unavailable','devices':[],
                 'connected':False,'hotspot_active':False,'setup':'not enabled'}
@@ -40,9 +39,7 @@ def wifi_status():
             continue
         devices.append({'device':parts[0],'state':parts[2],
                         'connection':':'.join(parts[3:]) if parts[2]=='connected' else ''})
-    # NetworkManager connection TYPE '802-11-wireless' does not distinguish AP mode.
-    # Query device GENERAL.TYPE and connection's 802-11-wireless.mode separately later
-    # when hotspot provisioning is installed; do not infer AP mode from connection names.
+    # Do not infer AP mode from connection names; hotspot provisioning is not installed.
     connected=any(d['state']=='connected' for d in devices)
     return {'available':True,'state':state.strip().splitlines()[-1] if state.strip() else 'unknown',
             'devices':devices,'connected':connected,'hotspot_active':None,
