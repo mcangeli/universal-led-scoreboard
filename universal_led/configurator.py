@@ -165,7 +165,8 @@ async function refreshRecoveryReadiness(){
   const response=await fetch('/api/wifi/recovery-readiness',{cache:'no-store'});
   if(!response.ok)throw Error('Recovery readiness unavailable');
   const data=await response.json();
-  target.textContent=data.ready?'Recovery worker: installed, permissions and source integrity verified. Connection switching remains disabled.':'Recovery worker: not ready ('+data.reason+'). Connection switching remains disabled.';
+  const missing=Object.entries(data.checks||{}).filter(([key,ok])=>!ok).map(([key])=>key.replaceAll('_',' '));
+  target.textContent=data.ready?'Recovery deployment preflight: ready. Live connection switching remains disabled.':'Recovery deployment preflight: incomplete ('+(missing.join(', ')||data.worker_reason||'unknown')+'). Live connection switching remains disabled.';
  }catch(err){target.textContent=err.message+'; connection switching remains disabled.';}
 }
 function selectWifiNetwork(network){
@@ -285,9 +286,8 @@ def make_handler(config_dir,token,frame_provider=None,settings_callback=None,fee
                 try:self.send_json(200,load_settings(config_dir))
                 except (OSError,ValueError) as exc:self.send_json(500,{'error':str(exc)})
             elif path=='/api/wifi/recovery-readiness':
-                from .wifi_worker_deployment import inspect_source_match
-                source=Path(__file__).with_name('wifi_recovery.py')
-                self.send_json(200,inspect_source_match(source=source))
+                from .wifi_deployment_preflight import deployment_preflight
+                self.send_json(200,deployment_preflight())
             elif path=='/api/wifi/scan':
                 from .wifi_scan import scan_networks
                 self.send_json(200,scan_networks())
