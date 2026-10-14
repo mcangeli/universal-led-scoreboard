@@ -144,14 +144,12 @@ def make_handler(config_dir,token,frame_provider=None):
 
 def main():
     p=argparse.ArgumentParser()
-    p.add_argument('--host',default='127.0.0.1')
+    p.add_argument('--host',default='0.0.0.0')
     p.add_argument('--port',type=int,default=8080)
     p.add_argument('--config-dir',default=str(Path.home()/'.config/universal-led-scoreboard'))
     p.add_argument('--team',default='ATL')
     p.add_argument('--date')
     args=p.parse_args()
-    if args.host not in ('127.0.0.1','localhost','::1'):
-        p.error('Preview 12 is local-only; use SSH port forwarding to access remotely')
     token=secrets.token_urlsafe(32)
     feed=BackgroundMLBFeed(MLBFeed(team=None,date=args.date))
     feed.start()
@@ -160,7 +158,7 @@ def main():
         return matches[0] if matches else BaseballGame()
     try:
         with ThreadingHTTPServer((args.host,args.port),make_handler(args.config_dir,token,game)) as server:
-            print(f'Configurator: http://127.0.0.1:{args.port}',flush=True)
+            print(f'Configurator listening on {args.host}:{args.port}',flush=True)
             server.serve_forever()
     finally:
         feed.stop()
