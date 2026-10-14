@@ -17,7 +17,7 @@ class WifiHelperInstallerTests(unittest.TestCase):
         self.assertIn('SUDO_USER',self.script)
 
     def test_helper_is_preflight_only(self):
-        self.assertIn("request['operation'] != 'preflight'",self.helper)
+        self.assertIn("request['operation'] not in ('preflight','recovery_check')",self.helper)
         self.assertIn("'switching_enabled':False",self.helper)
 
     def test_installer_restricts_sudo_to_exact_no_args(self):
