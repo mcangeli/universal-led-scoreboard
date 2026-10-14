@@ -52,7 +52,7 @@ def parse_schedule(payload: dict, team: str | None = None) -> list[BaseballGame]
                 inning_half='top' if ls.get('isTopInning',True) else 'bottom',
                 outs=min(3,max(0,int(ls.get('outs') or 0))),
                 bases=(occupied('first'),occupied('second'),occupied('third')),
-                status=status))
+                status=status, start_time=item.get('gameDate')))
     return games
 
 class MLBFeed:
