@@ -2,7 +2,7 @@
 
 The caller must be privileged and the state directory must be private.
 A cancellation that wins the lock prevents rollback; one arriving after
-rollback begins waits until it finishes and reports that it was too late.
+rollback begins fails immediately and reports that it was too late.
 """
 from __future__ import annotations
 import fcntl
