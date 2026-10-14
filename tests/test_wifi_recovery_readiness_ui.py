@@ -12,6 +12,12 @@ class RecoveryReadinessUiTests(unittest.TestCase):
         self.assertIn('disabled title="Requires recovery helper"',HTML)
         self.assertIn('Connect (coming soon)',HTML)
 
+    def test_readiness_requires_source_integrity(self):
+        import inspect
+        source=inspect.getsource(make_handler)
+        self.assertIn('inspect_source_match(source=source)',source)
+        self.assertIn("with_name('wifi_recovery.py')",source)
+
     def test_handler_has_authenticated_readiness_route(self):
         import inspect
         source=inspect.getsource(make_handler)
