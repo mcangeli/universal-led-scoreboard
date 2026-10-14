@@ -3,6 +3,7 @@ import tempfile
 import unittest
 from pathlib import Path
 from unittest.mock import Mock
+from types import SimpleNamespace
 from universal_led.wifi_recovery import recover, valid_token
 
 TOKEN='a'*32
@@ -18,7 +19,7 @@ class WifiRecoveryTests(unittest.TestCase):
             path=Path(temp)/(TOKEN+'.json')
             path.write_text(json.dumps({'token':TOKEN,'previous_connection':'Original Wi-Fi',
                                         'interface':'wlan0','delay':0}))
-            runner=Mock()
+            runner=Mock(return_value=SimpleNamespace(returncode=0))
             self.assertTrue(recover(TOKEN,state_dir=Path(temp),sleep=lambda _:None,run=runner))
             self.assertEqual(runner.call_args.args[0],
                              ['nmcli','connection','up','id','Original Wi-Fi','ifname','wlan0'])
