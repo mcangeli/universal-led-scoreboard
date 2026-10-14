@@ -35,6 +35,6 @@ class MLBDemoScreen:
         f.text(str(self.game.away_runs), 54, 9, white)
         f.text(self.game.home, 2, 19, green)
         f.text(str(self.game.home_runs), 54, 19, green)
-        f.text('IN', 3, 27, gold)
-        f.text(str(self.game.inning), 24, 27, gold)
+        f.text('IN', 3, 25, gold)
+        f.text(str(self.game.inning), 24, 25, gold)
         return f
