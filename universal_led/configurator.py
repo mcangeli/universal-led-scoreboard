@@ -13,6 +13,9 @@ from .mlb_palette_v11 import MLBPaletteScreen
 from .mlb_data import MLBFeed
 from .mlb_runtime import BackgroundMLBFeed,select_games
 from .web_preview import HTML as BOARD_HTML
+from .auth import Sessions, verify_password, configure_cli
+
+LOGIN_HTML='''<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Scoreboard Login</title><style>body{font:16px system-ui;background:#0c1624;color:#e9eef5;max-width:400px;margin:12vh auto;padding:24px}form{background:#18283b;border:1px solid #34445b;border-radius:12px;padding:24px}input,button{box-sizing:border-box;width:100%;padding:12px;margin:8px 0;border-radius:6px}button{background:#d7b46d;border:0;font-weight:bold;cursor:pointer}</style></head><body><form method="post" action="/login"><h2>Universal LED Scoreboard</h2><p>Administrator login</p><label>Password<input name="password" type="password" autocomplete="current-password" required></label><button type="submit">Sign In</button><p>Use HTTPS before accessing outside a trusted LAN.</p></form></body></html>'''
 
 HTML='''<!doctype html><html lang="en"><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
@@ -29,8 +32,8 @@ canvas{width:100%;max-width:768px;image-rendering:pixelated;background:black;bor
 button{background:#d7b46d;color:#142033;padding:11px 17px;border:0;border-radius:7px;font-weight:bold;cursor:pointer}
 button:disabled{opacity:.5} .muted{color:#b6c5d5} #status{min-height:24px}
 </style></head><body>
-<header><h1>Universal LED Scoreboard</h1><span class="muted">Native Configurator | Preview 18</span></header>
-<main><nav><a class="board-button" href="/board" target="_blank" rel="noopener" aria-label="Open Board View in a new tab">Open Board View ↗</a> <button type="button" onclick="showPage('dashboard')">Dashboard</button> <button type="button" onclick="showPage('sports')">Sports</button> <button type="button" onclick="showPage('display')">Display</button> <button type="button" onclick="showPage('colors')">Colors</button> <button type="button" onclick="showPage('system')">System</button></nav><section data-page="dashboard"><h2>Dashboard</h2><p id="summary">Loading settings…</p><p id="feed-status" class="muted">MLB feed loading…</p><p id="current-game" class="muted">Waiting for game information…</p><p id="last-refresh" class="muted">Last feed update: pending</p><p class="muted">The board view refreshes independently every second.</p></section><section data-page="sports" hidden><h2>Sports & Rotation</h2><p>MLB is available. Other sports will be enabled as their renderers are completed.</p><label>Favorite MLB team <input id="favorite" maxlength="3" value="ATL"></label><p class="muted">Choose the favorite team for MLB. Rotation and feed timing are under Display.</p><button id="save-settings">Save Sport Settings</button><span id="settings-status" role="status"></span></section><section data-page="display" hidden><h2>Display Settings</h2><label>Game selection <select id="mode"><option value="favorite">Favorite only</option><option value="fallback">Favorite, otherwise all</option><option value="all">All games</option></select></label><p><label>Rotation seconds <input id="rotation" type="number" min="1" max="3600" value="12"></label> <label>Feed refresh seconds <input id="refresh" type="number" min="1" max="3600" value="60"></label></p><button id="save-display">Save Display Settings</button><span id="display-status" role="status"></span></section><section data-page="system" hidden><h2>System</h2><p id="system-info">Checking server information…</p><div id="pi-info" class="grid"><p class="muted">Loading Raspberry Pi diagnostics…</p></div><p class="muted">Service status is read-only. Hardware output and remote service controls are not enabled.</p></section><div data-page="colors" hidden><section><h2>64 × 32 Live Preview</h2><canvas id="matrix" width="64" height="32"></canvas>
+<header><h1>Universal LED Scoreboard</h1><span class="muted">Native Configurator | Preview 19</span></header>
+<main><nav><button type="button" onclick="logout()">Sign Out</button> <a class="board-button" href="/board" target="_blank" rel="noopener" aria-label="Open Board View in a new tab">Open Board View ↗</a> <button type="button" onclick="showPage('dashboard')">Dashboard</button> <button type="button" onclick="showPage('sports')">Sports</button> <button type="button" onclick="showPage('display')">Display</button> <button type="button" onclick="showPage('colors')">Colors</button> <button type="button" onclick="showPage('system')">System</button></nav><section data-page="dashboard"><h2>Dashboard</h2><p id="summary">Loading settings…</p><p id="feed-status" class="muted">MLB feed loading…</p><p id="current-game" class="muted">Waiting for game information…</p><p id="last-refresh" class="muted">Last feed update: pending</p><p class="muted">The board view refreshes independently every second.</p></section><section data-page="sports" hidden><h2>Sports & Rotation</h2><p>MLB is available. Other sports will be enabled as their renderers are completed.</p><label>Favorite MLB team <input id="favorite" maxlength="3" value="ATL"></label><p class="muted">Choose the favorite team for MLB. Rotation and feed timing are under Display.</p><button id="save-settings">Save Sport Settings</button><span id="settings-status" role="status"></span></section><section data-page="display" hidden><h2>Display Settings</h2><label>Game selection <select id="mode"><option value="favorite">Favorite only</option><option value="fallback">Favorite, otherwise all</option><option value="all">All games</option></select></label><p><label>Rotation seconds <input id="rotation" type="number" min="1" max="3600" value="12"></label> <label>Feed refresh seconds <input id="refresh" type="number" min="1" max="3600" value="60"></label></p><button id="save-display">Save Display Settings</button><span id="display-status" role="status"></span></section><section data-page="system" hidden><h2>System</h2><p id="system-info">Checking server information…</p><div id="pi-info" class="grid"><p class="muted">Loading Raspberry Pi diagnostics…</p></div><p class="muted">Service status is read-only. Hardware output and remote service controls are not enabled.</p></section><div data-page="colors" hidden><section><h2>64 × 32 Live Preview</h2><canvas id="matrix" width="64" height="32"></canvas>
 <p class="muted">Changes preview immediately. Saving is optional.</p><label for="preview-team">Preview favorite team: </label><select id="preview-team"></select><span id="dirty" role="status">All changes saved</span></section>
 <section><h2>Scoreboard Colors</h2><div id="scoreboard" class="grid"></div></section>
 <section><h2>MLB Team Colors</h2><div id="teams" class="grid"></div></section>
@@ -38,6 +41,7 @@ button:disabled{opacity:.5} .muted{color:#b6c5d5} #status{min-height:24px}
 <p class="muted">Available on your trusted LAN. Backups are created before overwriting existing files.</p></section></div></main>
 <script>
 const token=__TOKEN__;
+async function logout(){await fetch('/logout',{method:'POST',headers:{'X-Configurator-Token':token}});location.href='/login'}
 let state=null,saved=null,dirty=false,selectedTeam='ATL',selected=null,settings=null;
 function showPage(name){document.querySelectorAll('[data-page]').forEach(el=>el.hidden=el.dataset.page!==name);if(name==='dashboard'||name==='system')refreshStatus();if(name==='system')refreshSystem()}
 const clone=value=>JSON.parse(JSON.stringify(value));
@@ -153,7 +157,25 @@ loadSettings().catch(err=>document.getElementById('settings-status').textContent
 
 def make_handler(config_dir,token,frame_provider=None,settings_callback=None,feed_status=None,board_provider=None):
     started=time.monotonic()
+    sessions=Sessions()
     class Handler(BaseHTTPRequestHandler):
+        def session_token(self):
+            from http.cookies import SimpleCookie
+            cookie=SimpleCookie()
+            try:cookie.load(self.headers.get('Cookie',''))
+            except Exception:return ''
+            item=cookie.get('uls_session')
+            return item.value if item else ''
+        def authenticated(self):
+            return sessions.valid(self.session_token())
+        def send_login(self):
+            body=LOGIN_HTML.encode()
+            self.send_response(200)
+            self.send_header('Content-Type','text/html; charset=utf-8')
+            self.send_header('Cache-Control','no-store')
+            self.send_header('Content-Length',str(len(body)))
+            self.end_headers()
+            self.wfile.write(body)
         def send_json(self,code,obj):
             body=json.dumps(obj).encode()
             self.send_response(code)
@@ -164,6 +186,15 @@ def make_handler(config_dir,token,frame_provider=None,settings_callback=None,fee
             self.wfile.write(body)
         def do_GET(self):
             path=urlsplit(self.path).path
+            if path=='/login':
+                self.send_login();return
+            if path=='/health':
+                self.send_json(200,{'status':'ok'});return
+            if not self.authenticated():
+                if path=='/':
+                    self.send_response(303);self.send_header('Location','/login');self.end_headers()
+                else:self.send_json(401,{'error':'Authentication required'})
+                return
             if path=='/':
                 body=HTML.replace('__TOKEN__',json.dumps(token)).encode()
                 self.send_response(200)
@@ -211,6 +242,32 @@ def make_handler(config_dir,token,frame_provider=None,settings_callback=None,fee
             else:self.send_error(404)
         def do_POST(self):
             path=urlsplit(self.path).path
+            if path=='/login':
+                from urllib.parse import parse_qs
+                size=int(self.headers.get('Content-Length','0'))
+                if not 0<size<=4096:
+                    self.send_json(400,{'error':'Invalid login request'});return
+                if self.headers.get('Content-Type','').split(';')[0].strip()!='application/x-www-form-urlencoded':
+                    self.send_json(415,{'error':'Form required'});return
+                password=parse_qs(self.rfile.read(size).decode('utf-8',errors='replace')).get('password',[''])[0]
+                if not verify_password(config_dir,password):
+                    time.sleep(0.5)
+                    self.send_json(401,{'error':'Invalid credentials'});return
+                session=sessions.create()
+                self.send_response(303)
+                self.send_header('Set-Cookie','uls_session='+session+'; HttpOnly; SameSite=Strict; Path=/; Max-Age=28800')
+                self.send_header('Location','/')
+                self.send_header('Cache-Control','no-store')
+                self.end_headers();return
+            if not self.authenticated():
+                self.send_json(401,{'error':'Authentication required'});return
+            if path=='/logout':
+                if not secrets.compare_digest(self.headers.get('X-Configurator-Token',''),token):
+                    self.send_json(403,{'error':'Invalid session token'});return
+                sessions.revoke(self.session_token())
+                self.send_response(204)
+                self.send_header('Set-Cookie','uls_session=; HttpOnly; SameSite=Strict; Path=/; Max-Age=0')
+                self.end_headers();return
             if path not in ('/api/config','/api/frame','/api/settings'):
                 self.send_error(404);return
             if not secrets.compare_digest(self.headers.get('X-Configurator-Token',''),token):
@@ -258,7 +315,14 @@ def main():
     p.add_argument('--config-dir',default=str(Path.home()/'.config/universal-led-scoreboard'))
     p.add_argument('--team',default='ATL')
     p.add_argument('--date')
+    p.add_argument('--set-admin-password',action='store_true',help='Set or reset administrator password and exit')
     args=p.parse_args()
+    if args.set_admin_password:
+        configure_cli(args.config_dir)
+        print('Administrator password saved. Restart service to invalidate existing sessions.')
+        return
+    if not (Path(args.config_dir)/'admin.json').exists():
+        p.error('Administrator password missing. Run python3 -m universal_led.configurator --set-admin-password first.')
     token=secrets.token_urlsafe(32)
     from .runtime_settings import ConfiguredMLBRenderer
     from .sport_settings import load_settings
