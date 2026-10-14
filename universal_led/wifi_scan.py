@@ -39,8 +39,8 @@ def scan_networks():
     try:
         result=subprocess.run(
             ['nmcli','--terse','--escape','yes','--fields','SSID,SIGNAL,SECURITY,IN-USE',
-             'device','wifi','list','--rescan','no'],
-            capture_output=True,text=True,timeout=15,check=False)
+             'device','wifi','list','--rescan','yes'],
+            capture_output=True,text=True,timeout=25,check=False)
     except (OSError,subprocess.TimeoutExpired):
         return {'available':False,'networks':[],'error':'NetworkManager scan unavailable'}
     if result.returncode:
