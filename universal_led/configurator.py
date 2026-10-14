@@ -28,16 +28,18 @@ canvas{width:100%;max-width:768px;image-rendering:pixelated;background:black;bor
 button{background:#d7b46d;color:#142033;padding:11px 17px;border:0;border-radius:7px;font-weight:bold;cursor:pointer}
 button:disabled{opacity:.5} .muted{color:#b6c5d5} #status{min-height:24px}
 </style></head><body>
-<header><h1>Universal LED Scoreboard</h1><span class="muted">Native Configurator | Preview 12</span></header>
+<header><h1>Universal LED Scoreboard</h1><span class="muted">Native Configurator | Preview 13</span></header>
 <main><section><h2>64 × 32 Live Preview</h2><canvas id="matrix" width="64" height="32"></canvas>
-<p class="muted">Changes in the editor preview immediately. Save to persist them.</p></section>
+<p class="muted">Changes preview immediately. Saving is optional.</p><label for="preview-team">Preview favorite team: </label><select id="preview-team"></select><span id="dirty" role="status">All changes saved</span></section>
 <section><h2>Scoreboard Colors</h2><div id="scoreboard" class="grid"></div></section>
 <section><h2>MLB Team Colors</h2><div id="teams" class="grid"></div></section>
-<section><button id="save">Save Color Settings</button> <span id="status" role="status"></span>
-<p class="muted">Runs on localhost by default. Backups are created before overwriting existing files.</p></section></main>
+<section><button id="save">Save Color Settings</button> <button id="cancel" type="button">Cancel Changes</button> <button id="reset" type="button">Reset Selected Color</button> <span id="status" role="status"></span>
+<p class="muted">Available on your trusted LAN. Backups are created before overwriting existing files.</p></section></main>
 <script>
 const token=__TOKEN__;
-let state=null,dirty=false;
+let state=null,saved=null,dirty=false,selectedTeam='ATL',selected=null;
+const clone=value=>JSON.parse(JSON.stringify(value));
+function markDirty(){dirty=JSON.stringify(state)!==JSON.stringify(saved);document.getElementById('dirty').textContent=dirty?'Unsaved changes':'All changes saved';}
 const hex=rgb=>'#'+rgb.map(x=>x.toString(16).padStart(2,'0')).join('');
 const rgb=hex=>[1,3,5].map(i=>parseInt(hex.slice(i,i+2),16));
 function section(name){
@@ -47,21 +49,26 @@ function section(name){
   const label=document.createElement('label');label.textContent=key;
   const input=document.createElement('input');input.type='color';input.value=hex(value);
   input.setAttribute('aria-label',key+' color');
-  input.oninput=()=>{state[name][key]=rgb(input.value);dirty=true;draw()};
+  input.oninput=()=>{state[name][key]=rgb(input.value);selected={name,key};markDirty();draw()};
+  input.onfocus=()=>{selected={name,key}};
   wrapper.append(label,input);target.append(wrapper);
  });
 }
 async function load(){
  const response=await fetch('/api/config',{cache:'no-store'});
  if(!response.ok)throw Error('Cannot load configuration');
- state=await response.json();section('scoreboard');section('teams');draw();
+ state=await response.json();saved=clone(state);
+ const picker=document.getElementById('preview-team');picker.replaceChildren();
+ Object.keys(state.teams).sort().forEach(team=>{const option=document.createElement('option');option.value=team;option.textContent=team;picker.append(option)});
+ picker.value=selectedTeam in state.teams?selectedTeam:'ATL';selectedTeam=picker.value;
+ section('scoreboard');section('teams');markDirty();draw();
 }
 async function draw(){
  if(!state)return;
  try{
   const response=await fetch('/api/frame',{method:'POST',
    headers:{'Content-Type':'application/json','X-Configurator-Token':token},
-   body:JSON.stringify(state)});
+   body:JSON.stringify({...state,preview_team:selectedTeam})});
   if(!response.ok)throw Error('Preview unavailable');
   const f=await response.json(),canvas=document.getElementById('matrix');
   const ctx=canvas.getContext('2d'),image=ctx.createImageData(64,32);
@@ -69,6 +76,14 @@ async function draw(){
   ctx.putImageData(image,0,0);
  }catch(err){document.getElementById('status').textContent=err.message}
 }
+document.getElementById('preview-team').onchange=event=>{selectedTeam=event.target.value;draw()};
+document.getElementById('cancel').onclick=()=>{state=clone(saved);section('scoreboard');section('teams');markDirty();draw();document.getElementById('status').textContent='Unsaved changes discarded.'};
+document.getElementById('reset').onclick=async()=>{
+ if(!selected){document.getElementById('status').textContent='Select a color first.';return}
+ const response=await fetch('/api/defaults');const defaults=await response.json();
+ state[selected.name][selected.key]=clone(defaults[selected.name][selected.key]);
+ section(selected.name);markDirty();draw();
+};
 document.getElementById('save').onclick=async()=>{
  const status=document.getElementById('status');status.textContent='Saving…';
  try{
@@ -77,7 +92,7 @@ document.getElementById('save').onclick=async()=>{
    body:JSON.stringify(state)});
   const result=await response.json();
   if(!response.ok)throw Error(result.error||'Save failed');
-  dirty=false;status.textContent='Saved. Restart Preview 11 to reload its palette.';
+  saved=clone(state);markDirty();status.textContent='Saved. Other running preview processes may require restart to reload colors.';
  }catch(err){status.textContent=err.message}
 };
 load().catch(err=>document.getElementById('status').textContent=err.message);
@@ -106,6 +121,9 @@ def make_handler(config_dir,token,frame_provider=None):
             elif path=='/api/config':
                 try:self.send_json(200,read_config(config_dir))
                 except (OSError,ValueError) as exc:self.send_json(500,{'error':str(exc)})
+            elif path=='/api/defaults':
+                from .colors import TEAM_COLORS,DEFAULT_SCOREBOARD
+                self.send_json(200,{'teams':TEAM_COLORS,'scoreboard':DEFAULT_SCOREBOARD})
             elif path=='/health':
                 self.send_json(200,{'status':'ok'})
             else:self.send_error(404)
@@ -129,6 +147,9 @@ def make_handler(config_dir,token,frame_provider=None):
                 colors=normalize_scoreboard_colors(data['scoreboard'])
                 if path=='/api/frame':
                     game=frame_provider() if frame_provider else BaseballGame()
+                    requested=data.get('preview_team')
+                    if requested in teams and requested not in (game.away,game.home):
+                        game=BaseballGame(away='NYM' if requested!='NYM' else 'ATL',home=requested)
                     frame=MLBPaletteScreen(game,teams,colors).render()
                     self.send_json(200,{'width':64,'height':32,'pixels':[p for row in frame.pixels for p in row]})
                 else:
