@@ -25,7 +25,13 @@ def parse_schedule(payload: dict, team: str | None = None) -> list[BaseballGame]
             if team and team.upper() not in (a, h):
                 continue
             abstract = (item.get('status') or {}).get('abstractGameState', '')
-            status = 'final' if abstract == 'Final' else 'live' if abstract == 'Live' else 'pregame'
+            detailed = (item.get('status') or {}).get('detailedState', '').lower()
+            if 'postpon' in detailed:
+                status = 'postponed'
+            elif 'delay' in detailed or 'suspend' in detailed:
+                status = 'delayed'
+            else:
+                status = 'final' if abstract == 'Final' else 'live' if abstract == 'Live' else 'pregame'
             ls = item.get('linescore') or {}
             offense = ls.get('offense') or {}
             def occupied(key):
