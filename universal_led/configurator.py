@@ -29,8 +29,8 @@ canvas{width:100%;max-width:768px;image-rendering:pixelated;background:black;bor
 button{background:#d7b46d;color:#142033;padding:11px 17px;border:0;border-radius:7px;font-weight:bold;cursor:pointer}
 button:disabled{opacity:.5} .muted{color:#b6c5d5} #status{min-height:24px}
 </style></head><body>
-<header><h1>Universal LED Scoreboard</h1><span class="muted">Native Configurator | Preview 14</span></header>
-<main><nav><a class="board-button" href="/board" target="_blank" rel="noopener" aria-label="Open Board View in a new tab">Open Board View ↗</a> <button type="button" onclick="showPage('dashboard')">Dashboard</button> <button type="button" onclick="showPage('sports')">Sports</button> <button type="button" onclick="showPage('colors')">Colors</button> <button type="button" onclick="showPage('system')">System</button></nav><section data-page="dashboard"><h2>Dashboard</h2><p id="summary">Loading settings…</p><p id="feed-status" class="muted">MLB feed loading…</p></section><section data-page="sports" hidden><h2>Sports & Rotation</h2><p>MLB is available. Other sports will be enabled as their renderers are completed.</p><label>Favorite MLB team <input id="favorite" maxlength="3" value="ATL"></label><label> Game selection <select id="mode"><option value="favorite">Favorite only</option><option value="fallback">Favorite, otherwise all</option><option value="all">All games</option></select></label><p><label>Rotation seconds <input id="rotation" type="number" min="1" max="3600" value="12"></label> <label>Refresh seconds <input id="refresh" type="number" min="1" max="3600" value="60"></label></p><button id="save-settings">Save Sport Settings</button><span id="settings-status" role="status"></span></section><section data-page="system" hidden><h2>System</h2><p>Web configurator: running. LED hardware and service controls are not connected yet.</p></section><div data-page="colors" hidden><section><h2>64 × 32 Live Preview</h2><canvas id="matrix" width="64" height="32"></canvas>
+<header><h1>Universal LED Scoreboard</h1><span class="muted">Native Configurator | Preview 16</span></header>
+<main><nav><a class="board-button" href="/board" target="_blank" rel="noopener" aria-label="Open Board View in a new tab">Open Board View ↗</a> <button type="button" onclick="showPage('dashboard')">Dashboard</button> <button type="button" onclick="showPage('sports')">Sports</button> <button type="button" onclick="showPage('display')">Display</button> <button type="button" onclick="showPage('colors')">Colors</button> <button type="button" onclick="showPage('system')">System</button></nav><section data-page="dashboard"><h2>Dashboard</h2><p id="summary">Loading settings…</p><p id="feed-status" class="muted">MLB feed loading…</p><p id="current-game" class="muted">Waiting for game information…</p><p class="muted">The board view refreshes independently every second.</p></section><section data-page="sports" hidden><h2>Sports & Rotation</h2><p>MLB is available. Other sports will be enabled as their renderers are completed.</p><label>Favorite MLB team <input id="favorite" maxlength="3" value="ATL"></label><p class="muted">Choose the favorite team for MLB. Rotation and feed timing are under Display.</p><button id="save-settings">Save Sport Settings</button><span id="settings-status" role="status"></span></section><section data-page="display" hidden><h2>Display Settings</h2><label>Game selection <select id="mode"><option value="favorite">Favorite only</option><option value="fallback">Favorite, otherwise all</option><option value="all">All games</option></select></label><p><label>Rotation seconds <input id="rotation" type="number" min="1" max="3600" value="12"></label> <label>Feed refresh seconds <input id="refresh" type="number" min="1" max="3600" value="60"></label></p><button id="save-display">Save Display Settings</button><span id="display-status" role="status"></span></section><section data-page="system" hidden><h2>System</h2><p id="system-info">Checking server information…</p><p class="muted">This page reports the running application. Systemd controls and physical HUB75 status are not yet available.</p></section><div data-page="colors" hidden><section><h2>64 × 32 Live Preview</h2><canvas id="matrix" width="64" height="32"></canvas>
 <p class="muted">Changes preview immediately. Saving is optional.</p><label for="preview-team">Preview favorite team: </label><select id="preview-team"></select><span id="dirty" role="status">All changes saved</span></section>
 <section><h2>Scoreboard Colors</h2><div id="scoreboard" class="grid"></div></section>
 <section><h2>MLB Team Colors</h2><div id="teams" class="grid"></div></section>
@@ -39,7 +39,7 @@ button:disabled{opacity:.5} .muted{color:#b6c5d5} #status{min-height:24px}
 <script>
 const token=__TOKEN__;
 let state=null,saved=null,dirty=false,selectedTeam='ATL',selected=null,settings=null;
-function showPage(name){document.querySelectorAll('[data-page]').forEach(el=>el.hidden=el.dataset.page!==name)}
+function showPage(name){document.querySelectorAll('[data-page]').forEach(el=>el.hidden=el.dataset.page!==name);if(name==='dashboard'||name==='system')refreshStatus()}
 const clone=value=>JSON.parse(JSON.stringify(value));
 function markDirty(){dirty=JSON.stringify(state)!==JSON.stringify(saved);document.getElementById('dirty').textContent=dirty?'Unsaved changes':'All changes saved';}
 const hex=rgb=>'#'+rgb.map(x=>x.toString(16).padStart(2,'0')).join('');
@@ -108,25 +108,39 @@ async function loadSettings(){
  document.getElementById('refresh').value=mlb.refresh_seconds;
  document.getElementById('summary').textContent='Active sport: MLB | Favorite: '+mlb.favorite_team+' | Rotation: '+mlb.mode;
 }
-document.getElementById('save-settings').onclick=async()=>{
- const status=document.getElementById('settings-status');status.textContent='Saving…';
+async function saveSportSettings(source){
+ const status=document.getElementById(source==='display'?'display-status':'settings-status');status.textContent='Saving…';
  const next=clone(settings);
- next.mlb.favorite_team=document.getElementById('favorite').value.trim().toUpperCase();
- next.mlb.mode=document.getElementById('mode').value;
+ if(source==='sports')next.mlb.favorite_team=document.getElementById('favorite').value.trim().toUpperCase();
+ else {next.mlb.mode=document.getElementById('mode').value;
  next.mlb.rotation_seconds=Number(document.getElementById('rotation').value);
- next.mlb.refresh_seconds=Number(document.getElementById('refresh').value);
+ next.mlb.refresh_seconds=Number(document.getElementById('refresh').value)}
  try{
   const response=await fetch('/api/settings',{method:'POST',headers:{'Content-Type':'application/json','X-Configurator-Token':token},body:JSON.stringify(next)});
   const result=await response.json();if(!response.ok)throw Error(result.error||'Save failed');
   settings=result.settings;status.textContent='Saved and applied to configurator preview.';
-  await loadSettings();draw();
+  await loadSettings();draw();await refreshStatus();
  }catch(err){status.textContent=err.message}
-};
+}
+document.getElementById('save-settings').onclick=()=>saveSportSettings('sports');
+document.getElementById('save-display').onclick=()=>saveSportSettings('display');
+async function refreshStatus(){
+ try{
+  const response=await fetch('/api/status',{cache:'no-store'});
+  if(!response.ok)throw Error('Status unavailable');
+  const data=await response.json();
+  document.getElementById('feed-status').textContent='MLB feed: '+data.feed.state+' | Cached games: '+data.feed.games+(data.feed.error?' | Error: '+data.feed.error:'');
+  document.getElementById('current-game').textContent=data.current_game?('On board: '+data.current_game.away+' @ '+data.current_game.home+' | '+data.current_game.status):'No MLB game selected';
+  document.getElementById('system-info').textContent='Application: '+data.application+' | Board: '+data.board.width+' × '+data.board.height+' | Uptime: '+data.uptime_seconds+' seconds | Configurator: online';
+ }catch(err){document.getElementById('feed-status').textContent=err.message;document.getElementById('system-info').textContent=err.message}
+}
+refreshStatus();setInterval(refreshStatus,10000);
 load().catch(err=>document.getElementById('status').textContent=err.message);
 loadSettings().catch(err=>document.getElementById('settings-status').textContent=err.message);
 </script></body></html>'''
 
 def make_handler(config_dir,token,frame_provider=None,settings_callback=None,feed_status=None,board_provider=None):
+    started=time.monotonic()
     class Handler(BaseHTTPRequestHandler):
         def send_json(self,code,obj):
             body=json.dumps(obj).encode()
@@ -167,6 +181,11 @@ def make_handler(config_dir,token,frame_provider=None,settings_callback=None,fee
                 from .sport_settings import load_settings
                 try:self.send_json(200,load_settings(config_dir))
                 except (OSError,ValueError) as exc:self.send_json(500,{'error':str(exc)})
+            elif path=='/api/status':
+                feed=feed_status() if feed_status else {'state':'unavailable','games':0,'error':None}
+                game=frame_provider() if frame_provider else None
+                current={'away':game.away,'home':game.home,'status':game.status} if game else None
+                self.send_json(200,{'application':'Universal LED Scoreboard','uptime_seconds':int(time.monotonic()-started),'board':{'width':64,'height':32,'backend':'emulator'},'feed':feed,'current_game':current})
             elif path=='/api/feed':
                 self.send_json(200,feed_status() if feed_status else {'state':'unavailable'})
             elif path=='/api/defaults':
