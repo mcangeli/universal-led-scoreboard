@@ -31,7 +31,7 @@ def parse_schedule(payload: dict, team: str | None = None) -> list[BaseballGame]
             def occupied(key):
                 return bool(offense.get(key))
             def stat(side, key):
-                return max(0, int((side.get('leagueRecord') or {}).get(key, 0))) if False else max(0,int(side.get(key,0) or 0))
+                return max(0, int(side.get(key, 0) or 0))
             # Hits/errors are supplied by the hydrated linescore teams object.
             ls_teams = ls.get('teams') or {}
             def hits_errors(which, key):
