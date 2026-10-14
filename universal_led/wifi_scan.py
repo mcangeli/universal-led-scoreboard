@@ -5,6 +5,8 @@ until a separate privilege-restricted helper and recovery path are installed.
 """
 from __future__ import annotations
 import subprocess
+import json
+from pathlib import Path
 
 def parse_scan(output):
     networks={}
@@ -90,28 +92,20 @@ def _iw_scan():
     except (OSError,subprocess.TimeoutExpired):
         return []
 
+SCAN_HELPER='/usr/local/libexec/universal-led-wifi-scan'
+
 def scan_networks():
-    """Follow MLB Scoreboard Configurator: rescan interface, then list separately."""
-    try:
-        devices=subprocess.run(
-            ['nmcli','--terse','--escape','no','--fields','DEVICE,TYPE','device','status'],
-            capture_output=True,text=True,timeout=5,check=False)
-        if devices.returncode:
-            return {'available':False,'networks':[],'error':'Unable to identify Wi-Fi interface'}
-        interfaces=[line.rsplit(':',1)[0] for line in devices.stdout.splitlines()
-                    if line.endswith(':wifi')]
-        if not interfaces:
-            return {'available':False,'networks':[],'error':'No Wi-Fi interface found'}
-        iface=interfaces[0]
-        # A failed rescan must not prevent displaying cached networks.
-        subprocess.run(['nmcli','device','wifi','rescan','ifname',iface],
-                       capture_output=True,text=True,timeout=15,check=False)
-        result=subprocess.run(
-            ['nmcli','--terse','--escape','yes','--fields','SSID,SIGNAL,SECURITY,IN-USE',
-             'device','wifi','list','ifname',iface],
-            capture_output=True,text=True,timeout=15,check=False)
-    except (OSError,subprocess.TimeoutExpired):
-        return {'available':False,'networks':[],'error':'NetworkManager scan unavailable'}
-    if result.returncode:
-        return {'available':False,'networks':[],'error':'Unable to list wireless networks'}
-    return {'available':True,'networks':parse_scan(result.stdout),'error':None}
+    """Use narrowly privileged helper when installed; otherwise report scan errors."""
+    if Path(SCAN_HELPER).is_file():
+        try:
+            result=subprocess.run(['sudo','-n',SCAN_HELPER],capture_output=True,
+                                  text=True,timeout=40,check=False)
+            payload=json.loads(result.stdout)
+            if result.returncode or 'error' in payload:
+                return {'available':False,'networks':[],
+                        'error':payload.get('error','Wi-Fi scan helper not authorized')}
+            return {'available':True,'networks':parse_scan(payload['raw']),'error':None}
+        except (OSError,subprocess.TimeoutExpired,ValueError,KeyError):
+            return {'available':False,'networks':[],'error':'Wi-Fi scan helper failed'}
+    return {'available':False,'networks':[],
+            'error':'Wi-Fi scan helper not installed. Run sudo bash scripts/install-wifi-scan-helper.sh'}
