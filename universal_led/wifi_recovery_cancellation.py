@@ -11,13 +11,14 @@ import json
 from pathlib import Path
 
 from .wifi_recovery import valid_token
+from .wifi_recovery_safe_file import open_state, same_state
 
 def cancel_recovery(token, *, state_dir):
     if not valid_token(token):
         raise ValueError('Invalid recovery token')
     path=Path(state_dir)/(token+'.json')
     try:
-        with path.open('r+',encoding='utf-8') as handle:
+        with open_state(path) as handle:
             try:
                 fcntl.flock(handle.fileno(),fcntl.LOCK_EX | fcntl.LOCK_NB)
             except BlockingIOError:
@@ -26,7 +27,7 @@ def cancel_recovery(token, *, state_dir):
                 data=json.load(handle)
                 if data.get('token')!=token:
                     raise ValueError('Recovery token mismatch')
-                if not path.exists() or path.stat().st_ino!=os.fstat(handle.fileno()).st_ino:
+                if not same_state(path,handle):
                     return False
                 if data.get('phase')=='executing':
                     return False
