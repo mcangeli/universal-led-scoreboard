@@ -1,4 +1,4 @@
-"""Local-only native web configurator for Universal LED Scoreboard."""
+"""Native LAN configurator and shared scoreboard emulator."""
 from __future__ import annotations
 import argparse
 import json
@@ -12,6 +12,7 @@ from .mlb_classic import BaseballGame
 from .mlb_palette_v11 import MLBPaletteScreen
 from .mlb_data import MLBFeed
 from .mlb_runtime import BackgroundMLBFeed,select_games
+from .web_preview import HTML as BOARD_HTML
 
 HTML='''<!doctype html><html lang="en"><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
@@ -29,7 +30,7 @@ button{background:#d7b46d;color:#142033;padding:11px 17px;border:0;border-radius
 button:disabled{opacity:.5} .muted{color:#b6c5d5} #status{min-height:24px}
 </style></head><body>
 <header><h1>Universal LED Scoreboard</h1><span class="muted">Native Configurator | Preview 14</span></header>
-<main><nav><button type="button" onclick="showPage('dashboard')">Dashboard</button> <button type="button" onclick="showPage('sports')">Sports</button> <button type="button" onclick="showPage('colors')">Colors</button> <button type="button" onclick="showPage('system')">System</button></nav><section data-page="dashboard"><h2>Dashboard</h2><p id="summary">Loading settings…</p><p id="feed-status" class="muted">MLB feed loading…</p></section><section data-page="sports" hidden><h2>Sports & Rotation</h2><p>MLB is available. Other sports will be enabled as their renderers are completed.</p><label>Favorite MLB team <input id="favorite" maxlength="3" value="ATL"></label><label> Game selection <select id="mode"><option value="favorite">Favorite only</option><option value="fallback">Favorite, otherwise all</option><option value="all">All games</option></select></label><p><label>Rotation seconds <input id="rotation" type="number" min="1" max="3600" value="12"></label> <label>Refresh seconds <input id="refresh" type="number" min="1" max="3600" value="60"></label></p><button id="save-settings">Save Sport Settings</button><span id="settings-status" role="status"></span></section><section data-page="system" hidden><h2>System</h2><p>Web configurator: running. LED hardware and service controls are not connected yet.</p></section><div data-page="colors" hidden><section><h2>64 × 32 Live Preview</h2><canvas id="matrix" width="64" height="32"></canvas>
+<main><nav><a href="/board" target="_blank" rel="noopener">Open Board View ↗</a> <button type="button" onclick="showPage('dashboard')">Dashboard</button> <button type="button" onclick="showPage('sports')">Sports</button> <button type="button" onclick="showPage('colors')">Colors</button> <button type="button" onclick="showPage('system')">System</button></nav><section data-page="dashboard"><h2>Dashboard</h2><p id="summary">Loading settings…</p><p id="feed-status" class="muted">MLB feed loading…</p></section><section data-page="sports" hidden><h2>Sports & Rotation</h2><p>MLB is available. Other sports will be enabled as their renderers are completed.</p><label>Favorite MLB team <input id="favorite" maxlength="3" value="ATL"></label><label> Game selection <select id="mode"><option value="favorite">Favorite only</option><option value="fallback">Favorite, otherwise all</option><option value="all">All games</option></select></label><p><label>Rotation seconds <input id="rotation" type="number" min="1" max="3600" value="12"></label> <label>Refresh seconds <input id="refresh" type="number" min="1" max="3600" value="60"></label></p><button id="save-settings">Save Sport Settings</button><span id="settings-status" role="status"></span></section><section data-page="system" hidden><h2>System</h2><p>Web configurator: running. LED hardware and service controls are not connected yet.</p></section><div data-page="colors" hidden><section><h2>64 × 32 Live Preview</h2><canvas id="matrix" width="64" height="32"></canvas>
 <p class="muted">Changes preview immediately. Saving is optional.</p><label for="preview-team">Preview favorite team: </label><select id="preview-team"></select><span id="dirty" role="status">All changes saved</span></section>
 <section><h2>Scoreboard Colors</h2><div id="scoreboard" class="grid"></div></section>
 <section><h2>MLB Team Colors</h2><div id="teams" class="grid"></div></section>
@@ -125,7 +126,7 @@ load().catch(err=>document.getElementById('status').textContent=err.message);
 loadSettings().catch(err=>document.getElementById('settings-status').textContent=err.message);
 </script></body></html>'''
 
-def make_handler(config_dir,token,frame_provider=None,settings_callback=None,feed_status=None):
+def make_handler(config_dir,token,frame_provider=None,settings_callback=None,feed_status=None,board_provider=None):
     class Handler(BaseHTTPRequestHandler):
         def send_json(self,code,obj):
             body=json.dumps(obj).encode()
@@ -145,6 +146,20 @@ def make_handler(config_dir,token,frame_provider=None,settings_callback=None,fee
                 self.send_header('Content-Length',str(len(body)))
                 self.end_headers()
                 self.wfile.write(body)
+            elif path=='/board':
+                body=BOARD_HTML.encode()
+                self.send_response(200)
+                self.send_header('Content-Type','text/html; charset=utf-8')
+                self.send_header('Cache-Control','no-store')
+                self.send_header('Content-Length',str(len(body)))
+                self.end_headers()
+                self.wfile.write(body)
+            elif path=='/frame.json':
+                if board_provider is None:
+                    self.send_json(503,{'error':'Board emulator not configured'})
+                else:
+                    frame=board_provider()
+                    self.send_json(200,{'width':frame.width,'height':frame.height,'pixels':[pixel for row in frame.pixels for pixel in row]})
             elif path=='/api/config':
                 try:self.send_json(200,read_config(config_dir))
                 except (OSError,ValueError) as exc:self.send_json(500,{'error':str(exc)})
@@ -225,7 +240,7 @@ def main():
     def feed_status():
         return {'state':'error' if feed.last_error else 'running','error':feed.last_error,'games':len(feed.games())}
     try:
-        with ThreadingHTTPServer((args.host,args.port),make_handler(args.config_dir,token,game,apply_settings,feed_status)) as server:
+        with ThreadingHTTPServer((args.host,args.port),make_handler(args.config_dir,token,game,apply_settings,feed_status,renderer.frame)) as server:
             print(f'Configurator listening on {args.host}:{args.port}',flush=True)
             server.serve_forever()
     finally:
