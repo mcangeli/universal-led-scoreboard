@@ -37,3 +37,17 @@ production-ready remote Wi-Fi switching.
    operations inside the restricted helper.
 
 Test with `python3 -m unittest discover -s tests -v`.
+
+## Stage 3 preflight (in progress)
+
+`scripts/universal-led-wifi-connect` now accepts exactly one JSON request via
+standard input: `{"operation":"preflight"}`. It checks NetworkManager using a
+read-only command. It rejects connection, rollback, password, and arbitrary
+command requests. Tests are in `tests/test_wifi_connect_helper.py`.
+
+**Do not install a sudoers rule for this helper yet.** It is deliberately not
+wired to the web service and does not create or schedule recovery state.
+The next milestone is an independently scheduled rollback unit and a
+root-owned state manager that can prove rollback is armed before permitting
+any connection change. The UI must remain disabled until end-to-end tests
+pass on the Raspberry Pi with local console access.
