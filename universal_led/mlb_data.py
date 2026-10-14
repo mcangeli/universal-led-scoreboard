@@ -10,6 +10,40 @@ from .mlb_classic import BaseballGame
 
 API = 'https://statsapi.mlb.com/api/v1/schedule'
 
+# MLB Stats API schedule responses often omit abbreviation. Use stable team IDs.
+TEAM_ABBREVIATIONS = {
+    108:'LAA',109:'ARI',110:'BAL',111:'BOS',112:'CHC',113:'CIN',
+    114:'CLE',115:'COL',116:'DET',117:'HOU',118:'KCR',119:'LAD',
+    120:'WSN',121:'NYM',133:'OAK',134:'PIT',135:'SDP',136:'SEA',
+    137:'SFG',138:'STL',139:'TBR',140:'TEX',141:'TOR',142:'MIN',
+    143:'PHI',144:'ATL',145:'CWS',146:'MIA',147:'NYY',158:'MIL'
+}
+TEAM_NAMES = {
+    'los angeles dodgers':'LAD','los angeles angels':'LAA',
+    'milwaukee brewers':'MIL','new york yankees':'NYY',
+    'new york mets':'NYM','san francisco giants':'SFG',
+    'san diego padres':'SDP','chicago white sox':'CWS',
+    'chicago cubs':'CHC','kansas city royals':'KCR',
+    'tampa bay rays':'TBR','washington nationals':'WSN',
+    'arizona diamondbacks':'ARI','athletics':'OAK'
+}
+
+def team_abbreviation(team):
+    """Prefer MLB team ID; accept abbreviations and known full-name fallbacks."""
+    raw_id = team.get('id')
+    try:
+        team_id = int(raw_id)
+    except (TypeError, ValueError):
+        team_id = None
+    if team_id in TEAM_ABBREVIATIONS:
+        return TEAM_ABBREVIATIONS[team_id]
+    abbreviation = str(team.get('abbreviation') or '').upper()
+    if abbreviation:
+        return abbreviation[:3]
+    name = str(team.get('name') or '').strip()
+    return TEAM_NAMES.get(name.lower(),name.upper()[:3] if name else 'UNK')
+
+
 # MLB Stats API returns UTC dates; using the local date on the Pi is a practical
 # default for the preview, with an explicit --date override for other time zones.
 def parse_schedule(payload: dict, team: str | None = None) -> list[BaseballGame]:
@@ -20,7 +54,7 @@ def parse_schedule(payload: dict, team: str | None = None) -> list[BaseballGame]
             away, home = teams.get('away') or {}, teams.get('home') or {}
             def abbr(side):
                 obj = side.get('team') or {}
-                return str(obj.get('abbreviation') or obj.get('name','UNK')[:3]).upper()[:3]
+                return team_abbreviation(obj)
             a, h = abbr(away), abbr(home)
             if team and team.upper() not in (a, h):
                 continue
