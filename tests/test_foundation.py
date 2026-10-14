@@ -25,6 +25,14 @@ class FoundationTests(unittest.TestCase):
         fb.pixel(-1, 0, (255,255,255))
         fb.pixel(64, 0, (255,255,255))
         self.assertEqual(fb.pixels[0][0], (0,0,0))
+    def test_splash_has_complete_three_line_layout(self):
+        fb = splash()
+        white = (245,245,240)
+        gold = (239,195,95)
+        self.assertTrue(any(white in row for row in fb.pixels[2:9]))
+        self.assertTrue(any(gold in row for row in fb.pixels[11:18]))
+        self.assertTrue(any(gold in row for row in fb.pixels[20:27]))
+        self.assertEqual(fb.pixels[20][63], (0,0,0))
     def test_small_splash_rejected(self):
         with self.assertRaises(ValueError):
             splash(32, 32)
