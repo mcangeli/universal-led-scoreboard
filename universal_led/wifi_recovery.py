@@ -66,13 +66,32 @@ def recover(token, *, state_dir=STATE_DIR, sleep=time.sleep, run=subprocess.run)
     except FileNotFoundError:
         return False
 
+def run_privileged_recovery(token, *, state_dir=STATE_DIR,
+                            verify=None, worker=None):
+    """Fail closed on unsafe state before entering the recovery worker.
+
+    Dependency injection is limited to isolated regression tests. The actual
+    CLI uses the root-owned state directory and the real recovery function.
+    """
+    from .wifi_recovery_state_security import verify_state_file
+    verifier=verify if verify is not None else verify_state_file
+    executor=worker if worker is not None else recover
+    if os.geteuid()!=0:
+        raise PermissionError('Recovery must run as root')
+    if not valid_token(token):
+        raise ValueError('Invalid recovery token')
+    if not verifier(token,state_dir=state_dir,expected_uid=0):
+        raise PermissionError('Recovery state is missing or insecure')
+    return executor(token,state_dir=state_dir)
+
+
 def main():
     parser=argparse.ArgumentParser()
     parser.add_argument('token')
     args=parser.parse_args()
     if os.geteuid()!=0:
         parser.error('Recovery must run as root')
-    recover(args.token)
+    run_privileged_recovery(args.token)
 
 if __name__=='__main__':
     main()
