@@ -1,0 +1,34 @@
+#!/usr/bin/env python3
+"""Restricted read-only NetworkManager scan helper. Installed root-owned."""
+import json
+import subprocess
+import time
+
+def run(args, timeout=20):
+    return subprocess.run(args, capture_output=True, text=True, timeout=timeout, check=False)
+
+def main():
+    # No caller-provided command or interface: avoid becoming a generic root shell.
+    devices=run(['nmcli','-t','--escape','no','-f','DEVICE,TYPE','device','status'],5)
+    if devices.returncode:
+        raise RuntimeError('Unable to identify Wi-Fi interface')
+    interfaces=[line.rsplit(':',1)[0] for line in devices.stdout.splitlines() if line.endswith(':wifi')]
+    if not interfaces:
+        raise RuntimeError('No Wi-Fi interface found')
+    iface=interfaces[0]
+    rescan=run(['nmcli','device','wifi','rescan','ifname',iface],15)
+    if rescan.returncode:
+        raise RuntimeError('NetworkManager denied Wi-Fi rescan')
+    time.sleep(5)
+    listing=run(['nmcli','-t','--escape','yes','-f','SSID,SIGNAL,SECURITY,IN-USE',
+                 'device','wifi','list','ifname',iface,'--rescan','no'],15)
+    if listing.returncode:
+        raise RuntimeError('Unable to list wireless networks')
+    print(json.dumps({'raw':listing.stdout,'interface':iface}))
+
+if __name__=='__main__':
+    try:
+        main()
+    except (OSError,subprocess.TimeoutExpired,RuntimeError) as exc:
+        print(json.dumps({'error':str(exc)}))
+        raise SystemExit(1)
