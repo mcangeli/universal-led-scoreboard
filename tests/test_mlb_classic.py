@@ -16,7 +16,8 @@ class MLBClassicTests(unittest.TestCase):
         frame=MLBClassicScreen().render()
         self.assertEqual(frame.pixels[27][34],(110,125,140))
         self.assertEqual(frame.pixels[29][38],GOLD)
-        self.assertEqual(frame.pixels[29][30],(110,125,140))
+        self.assertEqual(frame.pixels[29][30],GOLD)  # third base is occupied
+        self.assertEqual(frame.pixels[29][14],(240,80,70))  # first out is lit
     def test_double_digit_scores(self):
         frame=MLBClassicScreen(BaseballGame(away_runs=12,home_runs=15)).render()
         self.assertTrue(any(p!=(0,0,0) for p in frame.pixels[9][38:50]))
