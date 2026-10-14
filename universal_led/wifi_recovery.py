@@ -10,6 +10,7 @@ import argparse
 import fcntl
 import json
 import os
+import stat
 from pathlib import Path
 import subprocess
 import time
@@ -66,6 +67,22 @@ def recover(token, *, state_dir=STATE_DIR, sleep=time.sleep, run=subprocess.run)
     except FileNotFoundError:
         return False
 
+def verify_privileged_state(token, *, state_dir, expected_uid=0):
+    """Standalone-safe state checks; worker is installed as a single script."""
+    if not valid_token(token):
+        return False
+    directory=Path(state_dir)
+    try:
+        dstat=directory.lstat()
+        fstat=(directory/(token+'.json')).lstat()
+    except (OSError,ValueError):
+        return False
+    return (stat.S_ISDIR(dstat.st_mode) and dstat.st_uid==expected_uid
+            and stat.S_IMODE(dstat.st_mode)==0o700
+            and stat.S_ISREG(fstat.st_mode) and fstat.st_uid==expected_uid
+            and stat.S_IMODE(fstat.st_mode)==0o600 and fstat.st_nlink==1)
+
+
 def run_privileged_recovery(token, *, state_dir=STATE_DIR,
                             verify=None, worker=None):
     """Fail closed on unsafe state before entering the recovery worker.
@@ -73,8 +90,7 @@ def run_privileged_recovery(token, *, state_dir=STATE_DIR,
     Dependency injection is limited to isolated regression tests. The actual
     CLI uses the root-owned state directory and the real recovery function.
     """
-    from .wifi_recovery_state_security import verify_state_file
-    verifier=verify if verify is not None else verify_state_file
+    verifier=verify if verify is not None else verify_privileged_state
     executor=worker if worker is not None else recover
     if os.geteuid()!=0:
         raise PermissionError('Recovery must run as root')
