@@ -34,7 +34,12 @@ def observe_probe_lifecycle(*, run=subprocess.run, sleep=time.sleep,
             substate=fields.get('SubState')
             outcome=fields.get('Result')
             observed.append(state+'/'+str(substate))
-            if state=='inactive' and substate=='dead' and outcome=='success':
+            if state=='active' and substate=='exited' and outcome=='success':
+                # Stop only our dedicated sleep-only probe after observing completion.
+                stopped=run(['systemctl','--system','stop',name],
+                            capture_output=True,text=True,timeout=8,check=False)
+                if stopped.returncode != 0:
+                    break
                 return {'ok':True,'started':True,'completed':True,
                         'unit':name,'observed':observed,'network_changed':False}
             if state=='failed' or outcome not in (None,'','success'):
