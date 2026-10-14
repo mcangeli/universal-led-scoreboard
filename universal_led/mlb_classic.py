@@ -1,0 +1,106 @@
+"""64x32 MLB-inspired inning scoreboard. Offline fixtures; no live feed yet.
+
+Independent clean-room layout: this is not a port of upstream MLB artwork.
+"""
+from dataclasses import dataclass
+from typing import Literal
+from .display import Framebuffer
+
+Status = Literal['live', 'pregame', 'final']
+WHITE=(235,235,225)
+DIM=(110,125,140)
+GOLD=(239,195,95)
+GREEN=(80,205,105)
+RED=(240,80,70)
+
+# 3x5 glyphs for compact score labels; 4px advance.
+SMALL={
+'0':('111','101','101','101','111'),
+'1':('010','110','010','010','111'),
+'2':('111','001','111','100','111'),
+'3':('111','001','111','001','111'),
+'4':('101','101','111','001','001'),
+'5':('111','100','111','001','111'),
+'6':('111','100','111','101','111'),
+'7':('111','001','010','010','010'),
+'8':('111','101','111','101','111'),
+'9':('111','101','111','001','111'),
+'R':('110','101','110','101','101'),
+'H':('101','101','111','101','101'),
+'E':('111','100','110','100','111'),
+'I':('111','010','010','010','111'),
+'N':('101','111','111','111','101'),
+'F':('111','100','110','100','100'),
+'A':('010','101','111','101','101'),
+'L':('100','100','100','100','111'),
+'P':('110','101','110','100','100'),
+'M':('101','111','111','101','101'),
+'T':('111','010','010','010','010'),
+' ':('000',)*5,
+}
+def small(fb: Framebuffer, text: str, x: int, y: int, color=WHITE):
+    for i,ch in enumerate(text.upper()):
+        for yy,bits in enumerate(SMALL[ch]):
+            for xx,bit in enumerate(bits):
+                if bit=='1': fb.pixel(x+4*i+xx,y+yy,color)
+
+@dataclass(frozen=True)
+class BaseballGame:
+    away: str = 'NYM'
+    home: str = 'ATL'
+    away_runs: int = 2
+    home_runs: int = 4
+    away_hits: int = 5
+    home_hits: int = 8
+    away_errors: int = 0
+    home_errors: int = 1
+    inning: int = 7
+    inning_half: Literal['top','bottom'] = 'bottom'
+    outs: int = 1
+    bases: tuple[bool,bool,bool] = (True,False,True)
+    status: Status = 'live'
+    def __post_init__(self):
+        if len(self.away)!=3 or len(self.home)!=3:
+            raise ValueError('Three-letter team abbreviations required')
+        if len(self.bases)!=3 or not all(type(b) is bool for b in self.bases):
+            raise ValueError('Bases must be three booleans')
+        if self.status not in ('live','pregame','final'):
+            raise ValueError('Unknown game status')
+        if self.inning < 1 or self.outs not in (0,1,2,3):
+            raise ValueError('Invalid inning or outs')
+        if min(self.away_runs,self.home_runs,self.away_hits,self.home_hits,
+               self.away_errors,self.home_errors)<0:
+            raise ValueError('Negative game statistics')
+
+@dataclass(frozen=True)
+class MLBClassicScreen:
+    game: BaseballGame = BaseballGame()
+    name: str = 'mlb-classic'
+    def render(self) -> Framebuffer:
+        g=self.game
+        fb=Framebuffer(64,32)
+        # Compact R/H/E grid on the right, teams on the left.
+        small(fb,'RHE',43,1,GOLD)
+        fb.text(g.away.upper(),1,8,WHITE)
+        fb.text(g.home.upper(),1,18,GREEN)
+        for y,values in ((9,(g.away_runs,g.away_hits,g.away_errors)),
+                         (19,(g.home_runs,g.home_hits,g.home_errors))):
+            for x,value in zip((42,50,58),values):
+                # Two-digit values stay within each column, using a 3px font.
+                digits=str(value)
+                if len(digits)>2: digits='99'
+                small(fb,digits,x-(4 if len(digits)==2 else 0),y)
+        if g.status=='live':
+            small(fb,str(g.inning),1,27,GOLD)
+            # Inning direction and outs: single pixels are legible on 64x32.
+            fb.pixel(7,27 if g.inning_half=='top' else 31,GOLD)
+            for i in range(3):
+                fb.pixel(14+i*3,29,RED if i<g.outs else DIM)
+            # Diamond: second, third, first, plus home anchor.
+            for x,y,on in ((34,27,g.bases[1]),(30,29,g.bases[2]),(38,29,g.bases[0])):
+                fb.pixel(x,y,GOLD if on else DIM)
+        elif g.status=='final':
+            small(fb,'FINAL',1,27,GOLD)
+        else:
+            small(fb,'PM',1,27,GOLD)
+        return fb
