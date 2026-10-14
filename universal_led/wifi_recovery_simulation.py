@@ -24,6 +24,7 @@ def simulate_recovery(*, cancel=False, command_succeeds=True, corrupt=False):
         if corrupt:
             state['token']='invalid'
         path.write_text(json.dumps(state),encoding='utf-8')
+        path.chmod(0o600)
 
         def simulated_sleep(_seconds):
             if cancel:
