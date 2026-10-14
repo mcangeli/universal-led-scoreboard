@@ -140,7 +140,24 @@ async function refreshStatus(){
   document.getElementById('system-info').textContent='Application: '+data.application+' | Board: '+data.board.width+' × '+data.board.height+' | Uptime: '+data.uptime_seconds+' seconds | Configurator: online';
  }catch(err){document.getElementById('feed-status').textContent=err.message;document.getElementById('system-info').textContent=err.message}
 }
-async function refreshWifi(){const response=await fetch('/api/wifi');const data=await response.json();document.getElementById('wifi-info').textContent=data.available?('Radio: '+data.state+' | '+data.devices.map(d=>d.device+': '+d.state+' '+d.connection).join(', ')):'NetworkManager unavailable';}
+async function refreshWifi(){
+ const target=document.getElementById('wifi-info');
+ try{
+  const response=await fetch('/api/wifi',{cache:'no-store'});
+  if(!response.ok)throw Error('Unable to read Wi-Fi status');
+  const data=await response.json();
+  target.replaceChildren();
+  if(!data.available){target.textContent='NetworkManager unavailable';return;}
+  const connected=(data.devices||[]).filter(d=>d.state==='connected');
+  const headline=document.createElement('strong');
+  headline.textContent=connected.length?'Connected: '+connected.map(d=>d.connection||d.device).join(', '):'Not connected';
+  const details=document.createElement('p');details.className='muted';
+  details.textContent='Wi-Fi radio: '+data.state+' · Interface: '+(data.devices||[]).map(d=>d.device).join(', ');
+  const setup=document.createElement('p');setup.className='muted';
+  setup.textContent='Fallback hotspot: not configured yet';
+  target.append(headline,details,setup);
+ }catch(err){target.textContent=err.message;}
+}
 function selectWifiNetwork(network){
  document.getElementById('wifi-selection').hidden=false;
  document.getElementById('wifi-selected-name').textContent=network.ssid;
