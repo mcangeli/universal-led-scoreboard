@@ -6,7 +6,7 @@ from dataclasses import dataclass
 from typing import Literal
 from .display import Framebuffer
 
-Status = Literal['live', 'pregame', 'final']
+Status = Literal['live', 'pregame', 'final', 'delayed', 'postponed']
 WHITE=(235,235,225)
 DIM=(110,125,140)
 GOLD=(239,195,95)
@@ -36,6 +36,10 @@ SMALL={
 'P':('110','101','110','100','100'),
 'M':('101','111','111','101','101'),
 'T':('111','010','010','010','010'),
+'D':('110','101','101','101','110'),
+'Y':('101','101','010','010','010'),
+'S':('111','100','111','001','111'),
+'O':('111','101','101','101','111'),
 ' ':('000',)*5,
 }
 def small(fb: Framebuffer, text: str, x: int, y: int, color=WHITE):
@@ -64,7 +68,7 @@ class BaseballGame:
             raise ValueError('Three-letter team abbreviations required')
         if len(self.bases)!=3 or not all(type(b) is bool for b in self.bases):
             raise ValueError('Bases must be three booleans')
-        if self.status not in ('live','pregame','final'):
+        if self.status not in ('live','pregame','final','delayed','postponed'):
             raise ValueError('Unknown game status')
         if self.inning < 1 or self.outs not in (0,1,2,3):
             raise ValueError('Invalid inning or outs')
