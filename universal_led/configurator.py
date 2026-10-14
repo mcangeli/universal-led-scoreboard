@@ -148,8 +148,23 @@ function selectWifiNetwork(network){
  const field=document.getElementById('wifi-password');field.value='';field.disabled=network.security==='Open';field.placeholder=field.disabled?'No password required':'Enter Wi-Fi password';
 }
 function renderWifiNetworks(networks){
+ // Reuses the MLB Scoreboard Configurator's network row + security/signal metadata layout.
  const target=document.getElementById('wifi-networks');target.replaceChildren();
- networks.forEach(network=>{const item=document.createElement('div');item.className='item';const text=document.createElement('span');text.textContent=network.ssid+' | '+network.signal+'% | '+network.security+(network.connected?' | Connected':'');const select=document.createElement('button');select.type='button';select.textContent='Select';select.onclick=()=>selectWifiNetwork(network);item.append(text,select);target.append(item)});
+ if(!networks.length){const empty=document.createElement('p');empty.className='muted';empty.textContent='No networks found.';target.append(empty);return;}
+ networks.forEach(network=>{
+  const item=document.createElement('div');item.className='item';
+  item.style.display='flex';item.style.alignItems='center';item.style.justifyContent='space-between';item.style.gap='1rem';
+  const details=document.createElement('div');details.style.minWidth='0';
+  const name=document.createElement('strong');name.textContent=network.ssid;
+  const meta=document.createElement('div');meta.className='muted';
+  meta.textContent=(network.security||'Open')+' · signal '+network.signal+'%'+(network.connected?' · Connected':'');
+  details.append(name,meta);
+  const select=document.createElement('button');select.type='button';
+  select.textContent=network.connected?'Connected':'Select';
+  select.disabled=!!network.connected;
+  select.onclick=()=>selectWifiNetwork(network);
+  item.append(details,select);target.append(item);
+ });
 }
 async function scanWifi(){
  const status=document.getElementById('wifi-scan-status');status.textContent='Scanning…';
