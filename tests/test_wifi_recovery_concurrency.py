@@ -31,6 +31,7 @@ class ConcurrentRecoveryTests(unittest.TestCase):
             path=Path(directory)/(TOKEN+'.json')
             path.write_text(json.dumps({'token':TOKEN,'interface':'wlan0',
                 'previous_connection':'Home','delay':0}))
+            path.chmod(0o600)
             context=mp.get_context('spawn')
             entered=context.Event()
             release=context.Event()
@@ -56,6 +57,7 @@ class ConcurrentRecoveryTests(unittest.TestCase):
             path=Path(directory)/(TOKEN+'.json')
             path.write_text(json.dumps({'token':TOKEN,'interface':'wlan0',
                 'previous_connection':'Home','delay':0}))
+            path.chmod(0o600)
             self.assertTrue(cancel_recovery(TOKEN,state_dir=Path(directory)))
             calls=[]
             self.assertFalse(recover(TOKEN,state_dir=Path(directory),
