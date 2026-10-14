@@ -4,7 +4,7 @@ import subprocess
 
 def _nmcli(*args):
     try:
-        result=subprocess.run(['nmcli','--terse','--escape','no',*args],
+        result=subprocess.run(['nmcli','--terse','--escape','yes',*args],
                               capture_output=True,text=True,timeout=4,check=False)
         return result.stdout if result.returncode==0 else None
     except (OSError,subprocess.TimeoutExpired):
