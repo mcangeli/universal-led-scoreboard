@@ -56,6 +56,7 @@ class CrossProcessRecoveryTests(unittest.TestCase):
             'token': TOKEN, 'interface': 'wlan0',
             'previous_connection': 'Home', 'delay': 0
         }), encoding='utf-8')
+        self.state.chmod(0o600)
         self.ctx = multiprocessing.get_context('fork')
 
     def run_child(self, target, signal):
