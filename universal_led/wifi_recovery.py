@@ -34,9 +34,12 @@ def recover(token, *, state_dir=STATE_DIR, sleep=time.sleep, run=subprocess.run)
     if not path.exists():
         return False
     # Avoid re-reading a potentially modified state file after waiting.
-    run(['nmcli','connection','up','id',data['previous_connection'],
-         'ifname',data['interface']],timeout=45,check=False,
-        capture_output=True,text=True)
+    result=run(['nmcli','connection','up','id',data['previous_connection'],
+                'ifname',data['interface']],timeout=45,check=False,
+               capture_output=True,text=True)
+    if result.returncode != 0:
+        # Preserve evidence of an unsuccessful rollback for diagnosis.
+        return False
     path.unlink(missing_ok=True)
     return True
 
