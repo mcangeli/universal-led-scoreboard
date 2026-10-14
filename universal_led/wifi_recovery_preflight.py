@@ -46,3 +46,10 @@ def recovery_preflight(*, worker=RECOVERY_WORKER, stat_func=os.stat,
             verify_systemd(run=run)]
     return {'ready':all(item['ready'] for item in checks),
             'checks':checks,'switching_enabled':False,'rollback_armed':False}
+
+def main():
+    import json
+    print(json.dumps(recovery_preflight(),separators=(',',':')))
+
+if __name__ == '__main__':
+    main()
