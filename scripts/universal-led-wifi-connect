@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Restricted root-side Wi-Fi helper, Stage 3 preflight only.
+"""Restricted root-side Wi-Fi helper, preflight and recovery readiness only.
 
 Reads one JSON request on stdin. Never accepts arbitrary shell commands,
 does not print credentials, and cannot change network state in this stage.
@@ -19,7 +19,7 @@ def parse_request(raw):
     request = json.loads(raw)
     if not isinstance(request, dict) or set(request) != {'operation'}:
         raise ValueError('Invalid request fields')
-    if request['operation'] != 'preflight':
+    if request['operation'] not in ('preflight','recovery_check'):
         raise ValueError('Operation not enabled')
     return request
 
@@ -39,8 +39,12 @@ def main():
         raise SystemExit('Arguments are not permitted')
     try:
         raw=sys.stdin.buffer.read(MAX_REQUEST_BYTES+1)
-        parse_request(raw)
-        response=preflight()
+        request=parse_request(raw)
+        if request["operation"] == "recovery_check":
+            from universal_led_wifi_privileged_checks import recovery_status
+            response=recovery_status()
+        else:
+            response=preflight()
     except (ValueError,RuntimeError,json.JSONDecodeError,subprocess.TimeoutExpired,OSError):
         response={'ok':False,'error':'Wi-Fi helper preflight failed'}
     print(json.dumps(response,separators=(',',':')))
