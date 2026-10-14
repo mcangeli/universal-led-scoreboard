@@ -25,6 +25,15 @@ class WifiRecoveryTests(unittest.TestCase):
                              ['nmcli','connection','up','id','Original Wi-Fi','ifname','wlan0'])
             self.assertFalse(path.exists())
 
+    def test_failed_rollback_retains_state(self):
+        with tempfile.TemporaryDirectory() as temp:
+            path=Path(temp)/(TOKEN+'.json')
+            path.write_text(json.dumps({'token':TOKEN,'previous_connection':'Original',
+                                        'interface':'wlan0','delay':0}))
+            runner=Mock(return_value=SimpleNamespace(returncode=1))
+            self.assertFalse(recover(TOKEN,state_dir=Path(temp),sleep=lambda _:None,run=runner))
+            self.assertTrue(path.exists())
+
     def test_confirmed_switch_does_not_rollback(self):
         with tempfile.TemporaryDirectory() as temp:
             path=Path(temp)/(TOKEN+'.json')
