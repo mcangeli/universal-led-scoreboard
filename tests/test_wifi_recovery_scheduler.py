@@ -1,6 +1,7 @@
 import tempfile
 import unittest
 from pathlib import Path
+import os
 from types import SimpleNamespace
 from unittest.mock import Mock, patch
 
@@ -10,6 +11,13 @@ from universal_led.wifi_recovery_scheduler import (
 TOKEN='a'*32
 
 class RecoverySchedulerTests(unittest.TestCase):
+    @staticmethod
+    def root_stat(path):
+        stat = os.stat(path)
+        return os.stat_result((stat.st_mode, stat.st_ino, stat.st_dev, stat.st_nlink,
+                               0, stat.st_gid, stat.st_size, stat.st_atime,
+                               stat.st_mtime, stat.st_ctime))
+
     def test_validate_target(self):
         validate_target('wlan0','Home Wi-Fi')
         for iface,profile in [('eth0','Home'),('wlan0',''),('wlan0','bad\nname'),
@@ -26,7 +34,7 @@ class RecoverySchedulerTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as temp, \
              patch('universal_led.wifi_recovery_scheduler.os.geteuid',return_value=0), \
              patch('universal_led.wifi_recovery_scheduler.Path.stat',
-                   return_value=SimpleNamespace(st_uid=0)):
+                   autospec=True, side_effect=lambda path: self.root_stat(path)):
             state_dir=Path(temp)/'recovery'
             runner=Mock(return_value=SimpleNamespace(returncode=0))
             token=arm_recovery('wlan0','Original',state_dir=state_dir,
@@ -43,7 +51,7 @@ class RecoverySchedulerTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as temp, \
              patch('universal_led.wifi_recovery_scheduler.os.geteuid',return_value=0), \
              patch('universal_led.wifi_recovery_scheduler.Path.stat',
-                   return_value=SimpleNamespace(st_uid=0)):
+                   autospec=True, side_effect=lambda path: self.root_stat(path)):
             state_dir=Path(temp)/'recovery'
             runner=Mock(return_value=SimpleNamespace(returncode=1))
             with self.assertRaises(RuntimeError):
