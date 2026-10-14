@@ -7,6 +7,7 @@ web service restarts and never receives or logs a Wi-Fi password.
 from __future__ import annotations
 
 import argparse
+import fcntl
 import json
 import os
 from pathlib import Path
@@ -31,18 +32,34 @@ def recover(token, *, state_dir=STATE_DIR, sleep=time.sleep, run=subprocess.run)
         raise ValueError('Invalid recovery target')
     delay=max(0,min(180,int(data.get('delay',90))))
     sleep(delay)
-    # Confirmation removes the state file; a missing file means no rollback.
-    if not path.exists():
+    # Serialize cancellation and rollback. Holding the lock through nmcli
+    # prevents confirmation from deleting state during an in-flight rollback.
+    try:
+        with path.open('r+',encoding='utf-8') as handle:
+            fcntl.flock(handle.fileno(),fcntl.LOCK_EX)
+            try:
+                if not path.exists() or path.stat().st_ino != os.fstat(handle.fileno()).st_ino:
+                    return False
+                current=json.load(handle)
+                if current != data:
+                    raise ValueError('Recovery state changed')
+                current['phase']='executing'
+                handle.seek(0)
+                json.dump(current,handle)
+                handle.truncate()
+                handle.flush()
+                os.fsync(handle.fileno())
+                result=run(['nmcli','connection','up','id',data['previous_connection'],
+                            'ifname',data['interface']],timeout=45,check=False,
+                           capture_output=True,text=True)
+                if result.returncode != 0:
+                    return False
+                path.unlink(missing_ok=True)
+                return True
+            finally:
+                fcntl.flock(handle.fileno(),fcntl.LOCK_UN)
+    except FileNotFoundError:
         return False
-    # Avoid re-reading a potentially modified state file after waiting.
-    result=run(['nmcli','connection','up','id',data['previous_connection'],
-                'ifname',data['interface']],timeout=45,check=False,
-               capture_output=True,text=True)
-    if result.returncode != 0:
-        # Preserve evidence of an unsuccessful rollback for diagnosis.
-        return False
-    path.unlink(missing_ok=True)
-    return True
 
 def main():
     parser=argparse.ArgumentParser()
