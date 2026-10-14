@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 """Restricted read-only NetworkManager scan helper. Installed root-owned."""
 import json
+import sys
 import subprocess
 import time
 
@@ -8,6 +9,8 @@ def run(args, timeout=20):
     return subprocess.run(args, capture_output=True, text=True, timeout=timeout, check=False)
 
 def main():
+    if len(sys.argv)!=1:
+        raise RuntimeError('Arguments are not supported')
     # No caller-provided command or interface: avoid becoming a generic root shell.
     devices=run(['nmcli','-t','--escape','no','-f','DEVICE,TYPE','device','status'],5)
     if devices.returncode:
