@@ -23,10 +23,10 @@ class WifiScanTests(unittest.TestCase):
         def fake_run(args,**kwargs):
             calls.append(args)
             if args[-2:]==['device','status']:
-                return SimpleNamespace(returncode=0,stdout='wlan0:wifi\\n')
+                return SimpleNamespace(returncode=0,stdout='wlan0:wifi\n')
             if args[:4]==['nmcli','device','wifi','rescan']:
                 return SimpleNamespace(returncode=0,stdout='')
-            return SimpleNamespace(returncode=0,stdout='Home:80:WPA2:*\\nGuest:60:WPA2:\\n')
+            return SimpleNamespace(returncode=0,stdout='Home:80:WPA2:*\nGuest:60:WPA2:\n')
         with patch('universal_led.wifi_scan.subprocess.run',side_effect=fake_run):
             result=scan_networks()
         self.assertTrue(result['available'])
@@ -56,7 +56,7 @@ BSS 00:11:22:33:44:77(on wlan0)
         self.assertEqual(len(merged),3)
         self.assertTrue(merged[0]['connected'])
     def test_hidden_ssid_ignored(self):
-        self.assertEqual(parse_iw_scan('BSS aa(on wlan0)\\n  SSID: \\n'),[])
+        self.assertEqual(parse_iw_scan('BSS aa(on wlan0)\n  SSID: \n'),[])
     def test_ui(self):
         self.assertIn('scanWifi()',HTML)
         self.assertIn('wifi-networks',HTML)
