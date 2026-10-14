@@ -29,7 +29,7 @@ def cancel_recovery(token, *, state_dir):
                     raise ValueError('Recovery token mismatch')
                 if not same_state(path,handle):
                     return False
-                if data.get('phase')=='executing':
+                if data.get('phase') is not None:
                     return False
                 path.unlink()
                 return True
