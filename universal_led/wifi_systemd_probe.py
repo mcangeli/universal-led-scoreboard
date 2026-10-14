@@ -17,6 +17,7 @@ def run_probe(*, run=subprocess.run, sleep=time.sleep,
     name=PREFIX+token+'.service'
     start=run(['systemd-run','--system','--quiet','--collect',
                '--unit='+PREFIX+token,'--property=Type=exec',
+               '--property=RemainAfterExit=yes',
                WORKER,'--seconds',str(seconds)],
               capture_output=True,text=True,timeout=12,check=False)
     if start.returncode:
