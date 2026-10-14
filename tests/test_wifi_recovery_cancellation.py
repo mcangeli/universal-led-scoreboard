@@ -50,6 +50,17 @@ class RecoveryCancellationTests(unittest.TestCase):
         self.assertFalse(recover(TOKEN,state_dir=self.directory,sleep=lambda _:None,run=runner))
         self.assertTrue(self.path.exists())
 
+    def test_unknown_phase_is_not_cancellable(self):
+        for phase in ('completed', 'unexpected', ''):
+            with self.subTest(phase=phase):
+                self.path.write_text(json.dumps({
+                    'token': TOKEN, 'interface': 'wlan0',
+                    'previous_connection': 'Home', 'delay': 0,
+                    'phase': phase
+                }), encoding='utf-8')
+                self.assertFalse(cancel_recovery(TOKEN, state_dir=self.directory))
+                self.assertTrue(self.path.exists())
+
     def test_invalid_token_rejected(self):
         with self.assertRaises(ValueError):
             cancel_recovery('../bad',state_dir=self.directory)
