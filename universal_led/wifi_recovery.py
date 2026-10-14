@@ -74,10 +74,10 @@ def recover(token, *, state_dir=STATE_DIR, sleep=time.sleep, run=subprocess.run)
                 if not _same_open_state(path,handle):
                     return False
                 current=json.load(handle)
-                if current != data:
-                    raise ValueError('Recovery state changed')
                 if current.get('phase') is not None:
                     return False
+                if current != data:
+                    raise ValueError('Recovery state changed')
                 current['phase']='executing'
                 handle.seek(0)
                 json.dump(current,handle)
