@@ -59,7 +59,8 @@ def splash(width: int = 64, height: int = 32) -> Framebuffer:
     ):
         text_width = len(label) * 6 - 1
         fb.text(label, x0 + (64 - text_width) // 2, y0 + y, color)
+    # Keep indicators on their own bottom row, separated from the 7px text.
     for index, color in enumerate(((222,82,82),(90,157,217),(102,193,129),(229,187,79),(166,136,219))):
         for x in range(x0+19+index*6, x0+23+index*6):
-            fb.pixel(x, y0+27, color)
+            fb.pixel(x, y0+30, color)
     return fb
