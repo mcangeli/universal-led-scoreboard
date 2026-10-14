@@ -48,7 +48,7 @@ class MLBClassicV9Screen:
             label=start_label(g.start_time)
             # Compact glyphs lack punctuation; render clock digits + AM/PM.
             if label == 'PREGAME':
-                small(fb,'PRE',2,27,GOLD) if False else small(fb,'PM',2,27,GOLD)
+                small(fb,'PM',2,27,GOLD)
             else:
                 small(fb,label[:9],2,27,GOLD)
         elif g.status == 'final':
