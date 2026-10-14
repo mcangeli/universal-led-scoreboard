@@ -1,0 +1,50 @@
+#!/usr/bin/env python3
+"""Restricted root-side Wi-Fi helper, Stage 3 preflight only.
+
+Reads one JSON request on stdin. Never accepts arbitrary shell commands,
+does not print credentials, and cannot change network state in this stage.
+"""
+from __future__ import annotations
+
+import json
+import os
+import subprocess
+import sys
+
+MAX_REQUEST_BYTES = 4096
+
+def parse_request(raw):
+    if len(raw) > MAX_REQUEST_BYTES:
+        raise ValueError('Request too large')
+    request = json.loads(raw)
+    if not isinstance(request, dict) or set(request) != {'operation'}:
+        raise ValueError('Invalid request fields')
+    if request['operation'] != 'preflight':
+        raise ValueError('Operation not enabled')
+    return request
+
+def preflight(run=subprocess.run):
+    result=run(['nmcli','-t','-f','DEVICE,TYPE,STATE,CONNECTION','device','status'],
+               capture_output=True,text=True,timeout=8,check=False)
+    if result.returncode:
+        raise RuntimeError('NetworkManager unavailable')
+    # This deliberately does not expose SSIDs or saved connection profiles.
+    return {'ok':True,'operation':'preflight','network_manager':True,
+            'switching_enabled':False,'rollback_armed':False}
+
+def main():
+    if os.geteuid()!=0:
+        raise SystemExit('Must run as root')
+    if len(sys.argv)!=1:
+        raise SystemExit('Arguments are not permitted')
+    try:
+        raw=sys.stdin.buffer.read(MAX_REQUEST_BYTES+1)
+        parse_request(raw)
+        response=preflight()
+    except (ValueError,RuntimeError,json.JSONDecodeError,subprocess.TimeoutExpired,OSError):
+        response={'ok':False,'error':'Wi-Fi helper preflight failed'}
+    print(json.dumps(response,separators=(',',':')))
+    return 0 if response['ok'] else 1
+
+if __name__=='__main__':
+    raise SystemExit(main())
