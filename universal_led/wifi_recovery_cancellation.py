@@ -6,6 +6,7 @@ rollback begins waits until it finishes and reports that it was too late.
 """
 from __future__ import annotations
 import fcntl
+import os
 import json
 from pathlib import Path
 
@@ -17,12 +18,15 @@ def cancel_recovery(token, *, state_dir):
     path=Path(state_dir)/(token+'.json')
     try:
         with path.open('r+',encoding='utf-8') as handle:
-            fcntl.flock(handle.fileno(),fcntl.LOCK_EX)
+            try:
+                fcntl.flock(handle.fileno(),fcntl.LOCK_EX | fcntl.LOCK_NB)
+            except BlockingIOError:
+                return False
             try:
                 data=json.load(handle)
                 if data.get('token')!=token:
                     raise ValueError('Recovery token mismatch')
-                if not path.exists() or path.stat().st_ino!=__import__('os').fstat(handle.fileno()).st_ino:
+                if not path.exists() or path.stat().st_ino!=os.fstat(handle.fileno()).st_ino:
                     return False
                 if data.get('phase')=='executing':
                     return False
