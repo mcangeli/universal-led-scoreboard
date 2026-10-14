@@ -53,8 +53,8 @@ class WorkerHardeningTests(unittest.TestCase):
                 'token':TOKEN,'interface':'wlan0',
                 'previous_connection':'Different','delay':0}),encoding='utf-8')
             self.path.chmod(0o600)
-        with self.assertRaises(ValueError):
-            recover(TOKEN,state_dir=self.directory,sleep=swap,run=runner)
+        self.assertFalse(recover(TOKEN,state_dir=self.directory,
+                                 sleep=swap,run=runner))
         runner.assert_not_called()
 
     def test_failed_rollback_cannot_be_retried(self):
