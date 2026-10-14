@@ -38,6 +38,8 @@ class WifiScanTests(unittest.TestCase):
     def test_ui(self):
         self.assertIn('scanWifi()',HTML)
         self.assertIn('wifi-networks',HTML)
+        self.assertIn("network.connected?'Connected':'Select'",HTML)
+        self.assertIn('signal '+"'+network.signal+'"+'%',HTML)
         self.assertIn('/api/wifi/scan',HTML)
 
 if __name__=='__main__':
