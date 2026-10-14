@@ -32,7 +32,7 @@ canvas{width:100%;max-width:768px;image-rendering:pixelated;background:black;bor
 button{background:#d7b46d;color:#142033;padding:11px 17px;border:0;border-radius:7px;font-weight:bold;cursor:pointer}
 button:disabled{opacity:.5} .muted{color:#b6c5d5} #status{min-height:24px}
 </style></head><body>
-<header><h1>Universal LED Scoreboard</h1><span class="muted">Native Configurator | Preview 21.1</span></header>
+<header><h1>Universal LED Scoreboard</h1><span class="muted">Native Configurator | Preview 21.2</span></header>
 <main><nav><button type="button" onclick="logout()">Sign Out</button> <a class="board-button" href="/board" target="_blank" rel="noopener" aria-label="Open Board View in a new tab">Open Board View ↗</a> <button type="button" onclick="showPage('dashboard')">Dashboard</button> <button type="button" onclick="showPage('sports')">Sports</button> <button type="button" onclick="showPage('display')">Display</button> <button type="button" onclick="showPage('colors')">Colors</button> <button type="button" onclick="showPage('system')">System</button></nav><section data-page="dashboard"><h2>Dashboard</h2><p id="summary">Loading settings…</p><p id="feed-status" class="muted">MLB feed loading…</p><p id="current-game" class="muted">Waiting for game information…</p><p id="last-refresh" class="muted">Last feed update: pending</p><p class="muted">The board view refreshes independently every second.</p></section><section data-page="sports" hidden><h2>Sports & Rotation</h2><p>MLB is available. Other sports will be enabled as their renderers are completed.</p><label>Favorite MLB team <input id="favorite" maxlength="3" value="ATL"></label><p class="muted">Choose the favorite team for MLB. Rotation and feed timing are under Display.</p><button id="save-settings">Save Sport Settings</button><span id="settings-status" role="status"></span></section><section data-page="display" hidden><h2>Display Settings</h2><label>Game selection <select id="mode"><option value="favorite">Favorite only</option><option value="fallback">Favorite, otherwise all</option><option value="all">All games</option></select></label><p><label>Rotation seconds <input id="rotation" type="number" min="1" max="3600" value="12"></label> <label>Feed refresh seconds <input id="refresh" type="number" min="1" max="3600" value="60"></label></p><button id="save-display">Save Display Settings</button><span id="display-status" role="status"></span></section><section data-page="system" hidden><h2>System</h2><p id="system-info">Checking server information…</p><h3>Wi-Fi</h3><p id="wifi-info">Loading…</p><button type="button" onclick="refreshWifi()">Refresh Wi-Fi</button> <button type="button" onclick="scanWifi()">Scan Networks</button><p id="wifi-scan-status" class="muted" role="status" aria-live="polite">Click Scan Networks to list nearby access points.</p><div id="wifi-networks" class="grid"></div><div id="pi-info" class="grid"><p class="muted">Loading Raspberry Pi diagnostics…</p></div><p class="muted">Service status is read-only. Hardware output and remote service controls are not enabled.</p></section><div data-page="colors" hidden><section><h2>64 × 32 Live Preview</h2><canvas id="matrix" width="64" height="32"></canvas>
 <p class="muted">Changes preview immediately. Saving is optional.</p><label for="preview-team">Preview favorite team: </label><select id="preview-team"></select><span id="dirty" role="status">All changes saved</span></section>
 <section><h2>Scoreboard Colors</h2><div id="scoreboard" class="grid"></div></section>
@@ -169,7 +169,7 @@ loadSettings().catch(err=>document.getElementById('settings-status').textContent
 
 def make_handler(config_dir,token,frame_provider=None,settings_callback=None,feed_status=None,board_provider=None):
     started=time.monotonic()
-    sessions=Sessions()
+    sessions=Sessions(config_dir)
     class Handler(BaseHTTPRequestHandler):
         def session_token(self):
             from http.cookies import SimpleCookie
@@ -337,7 +337,7 @@ def main():
     args=p.parse_args()
     if args.set_admin_password:
         configure_cli(args.config_dir)
-        print('Administrator password saved. Restart service to invalidate existing sessions.')
+        print('Administrator password saved. Existing sessions will be invalidated.')
         return
     if not (Path(args.config_dir)/'admin.json').exists():
         p.error('Administrator password missing. Run python3 -m universal_led.configurator --set-admin-password first.')
