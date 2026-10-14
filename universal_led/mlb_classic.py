@@ -63,6 +63,7 @@ class BaseballGame:
     outs: int = 1
     bases: tuple[bool,bool,bool] = (True,False,True)
     status: Status = 'live'
+    start_time: str | None = None  # ISO 8601 gameDate from MLB schedule
     def __post_init__(self):
         if len(self.away)!=3 or len(self.home)!=3:
             raise ValueError('Three-letter team abbreviations required')
