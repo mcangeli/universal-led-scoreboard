@@ -11,6 +11,7 @@ import os
 import secrets
 import threading
 import sqlite3
+from contextlib import contextmanager
 import time
 from pathlib import Path
 
@@ -63,8 +64,14 @@ class Sessions:
             with self._connect() as conn:
                 conn.execute('CREATE TABLE IF NOT EXISTS sessions (token_hash TEXT PRIMARY KEY, expires REAL NOT NULL, password_revision TEXT NOT NULL)')
                 conn.execute('DELETE FROM sessions WHERE expires <= ?', (time.time(),))
+    @contextmanager
     def _connect(self):
-        return sqlite3.connect(self._db,timeout=5)
+        conn=sqlite3.connect(self._db,timeout=5)
+        try:
+            with conn:
+                yield conn
+        finally:
+            conn.close()
     def _revision(self):
         try:
             return hashlib.sha256((self._directory/'admin.json').read_bytes()).hexdigest()
