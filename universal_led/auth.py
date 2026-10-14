@@ -1,4 +1,4 @@
-"""Administrator credentials and in-memory sessions for trusted LAN use.
+"""Administrator credentials and persistent sessions for trusted LAN use.
 
 HTTP transport is NOT encrypted. Deploy behind HTTPS before using on untrusted networks.
 """
@@ -10,6 +10,7 @@ import json
 import os
 import secrets
 import threading
+import sqlite3
 import time
 from pathlib import Path
 
@@ -48,24 +49,68 @@ def verify_password(directory, password):
         return False
 
 class Sessions:
-    def __init__(self):
+    """Session tokens are hashed before storage; expiry and revocation persist."""
+    def __init__(self, directory=None):
         self._lock=threading.Lock()
-        self._tokens={}
+        self._tokens={} if directory is None else None
+        self._directory=Path(directory) if directory is not None else None
+        if self._directory is not None:
+            self._directory.mkdir(parents=True,exist_ok=True)
+            self._db=self._directory/'sessions.sqlite3'
+            fd=os.open(self._db,os.O_CREAT|os.O_RDWR,0o600)
+            os.close(fd)
+            os.chmod(self._db,0o600)
+            with self._connect() as conn:
+                conn.execute('CREATE TABLE IF NOT EXISTS sessions (token_hash TEXT PRIMARY KEY, expires REAL NOT NULL, password_revision TEXT NOT NULL)')
+                conn.execute('DELETE FROM sessions WHERE expires <= ?', (time.time(),))
+    def _connect(self):
+        return sqlite3.connect(self._db,timeout=5)
+    def _revision(self):
+        try:
+            return hashlib.sha256((self._directory/'admin.json').read_bytes()).hexdigest()
+        except OSError:
+            return ''
+    @staticmethod
+    def _digest(token):
+        return hashlib.sha256(token.encode('utf-8')).hexdigest()
     def create(self):
         token=secrets.token_urlsafe(32)
         with self._lock:
-            self._tokens[token]=time.monotonic()+SESSION_SECONDS
+            if self._tokens is not None:
+                self._tokens[self._digest(token)]=time.time()+SESSION_SECONDS
+            else:
+                with self._connect() as conn:
+                    conn.execute('INSERT INTO sessions VALUES (?,?,?)',
+                                 (self._digest(token),time.time()+SESSION_SECONDS,self._revision()))
         return token
     def valid(self,token):
+        if not isinstance(token,str) or not 20<=len(token)<=256:
+            return False
+        digest=self._digest(token)
         with self._lock:
-            expiry=self._tokens.get(token,0)
-            if expiry <= time.monotonic():
-                self._tokens.pop(token,None)
-                return False
-            return True
+            if self._tokens is not None:
+                expiry=self._tokens.get(digest,0)
+                if expiry<=time.time():
+                    self._tokens.pop(digest,None)
+                    return False
+                return True
+            with self._connect() as conn:
+                row=conn.execute('SELECT expires,password_revision FROM sessions WHERE token_hash=?',(digest,)).fetchone()
+                if row is None:
+                    return False
+                if row[0]<=time.time() or not hmac.compare_digest(row[1],self._revision()):
+                    conn.execute('DELETE FROM sessions WHERE token_hash=?',(digest,))
+                    return False
+                return True
     def revoke(self,token):
+        if not isinstance(token,str):
+            return
         with self._lock:
-            self._tokens.pop(token,None)
+            if self._tokens is not None:
+                self._tokens.pop(self._digest(token),None)
+            else:
+                with self._connect() as conn:
+                    conn.execute('DELETE FROM sessions WHERE token_hash=?',(self._digest(token),))
 
 def configure_cli(directory):
     first=getpass.getpass('New administrator password (12+ characters): ')
