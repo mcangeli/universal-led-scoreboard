@@ -51,8 +51,14 @@ def splash(width: int = 64, height: int = 32) -> Framebuffer:
         raise ValueError('Classic splash requires at least 64x32')
     fb = Framebuffer(width, height)
     x0, y0 = (width-64)//2, (height-32)//2
-    fb.text('UNIVERSAL', x0+2, y0+5, (245,245,240))
-    fb.text('LED SCOREBOARD', x0+2, y0+16, (239,195,95))
+    # Three centered rows fit the native 64x32 panel without clipping.
+    for label, y, color in (
+        ('UNIVERSAL', 2, (245, 245, 240)),
+        ('LED', 11, (239, 195, 95)),
+        ('SCOREBOARD', 20, (239, 195, 95)),
+    ):
+        text_width = len(label) * 6 - 1
+        fb.text(label, x0 + (64 - text_width) // 2, y0 + y, color)
     for index, color in enumerate(((222,82,82),(90,157,217),(102,193,129),(229,187,79),(166,136,219))):
         for x in range(x0+19+index*6, x0+23+index*6):
             fb.pixel(x, y0+27, color)
