@@ -91,15 +91,27 @@ def _iw_scan():
         return []
 
 def scan_networks():
+    """Follow MLB Scoreboard Configurator: rescan interface, then list separately."""
     try:
+        devices=subprocess.run(
+            ['nmcli','--terse','--escape','no','--fields','DEVICE,TYPE','device','status'],
+            capture_output=True,text=True,timeout=5,check=False)
+        if devices.returncode:
+            return {'available':False,'networks':[],'error':'Unable to identify Wi-Fi interface'}
+        interfaces=[line.rsplit(':',1)[0] for line in devices.stdout.splitlines()
+                    if line.endswith(':wifi')]
+        if not interfaces:
+            return {'available':False,'networks':[],'error':'No Wi-Fi interface found'}
+        iface=interfaces[0]
+        # A failed rescan must not prevent displaying cached networks.
+        subprocess.run(['nmcli','device','wifi','rescan','ifname',iface],
+                       capture_output=True,text=True,timeout=15,check=False)
         result=subprocess.run(
             ['nmcli','--terse','--escape','yes','--fields','SSID,SIGNAL,SECURITY,IN-USE',
-             'device','wifi','list','--rescan','yes'],
-            capture_output=True,text=True,timeout=25,check=False)
+             'device','wifi','list','ifname',iface],
+            capture_output=True,text=True,timeout=15,check=False)
     except (OSError,subprocess.TimeoutExpired):
         return {'available':False,'networks':[],'error':'NetworkManager scan unavailable'}
     if result.returncode:
-        return {'available':False,'networks':[],'error':'Unable to scan wireless networks'}
-    primary=parse_scan(result.stdout)
-    secondary=_iw_scan() if len(primary)<2 else []
-    return {'available':True,'networks':_merge_networks(primary,secondary),'error':None}
+        return {'available':False,'networks':[],'error':'Unable to list wireless networks'}
+    return {'available':True,'networks':parse_scan(result.stdout),'error':None}
