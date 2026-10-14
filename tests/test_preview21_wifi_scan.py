@@ -19,12 +19,20 @@ class WifiScanTests(unittest.TestCase):
         with patch('universal_led.wifi_scan.subprocess.run',side_effect=OSError()):
             self.assertFalse(scan_networks()['available'])
     def test_scan_requests_fresh_network_results(self):
-        with patch('universal_led.wifi_scan.subprocess.run',return_value=SimpleNamespace(returncode=0,stdout='Home:80:WPA2:*\nGuest:60:WPA2:\n')) as runner:
+        calls=[]
+        def fake_run(args,**kwargs):
+            calls.append(args)
+            if args[-2:]==['device','status']:
+                return SimpleNamespace(returncode=0,stdout='wlan0:wifi\\n')
+            if args[:4]==['nmcli','device','wifi','rescan']:
+                return SimpleNamespace(returncode=0,stdout='')
+            return SimpleNamespace(returncode=0,stdout='Home:80:WPA2:*\\nGuest:60:WPA2:\\n')
+        with patch('universal_led.wifi_scan.subprocess.run',side_effect=fake_run):
             result=scan_networks()
         self.assertTrue(result['available'])
         self.assertEqual(len(result['networks']),2)
-        command=runner.call_args.args[0]
-        self.assertEqual(command[command.index('--rescan')+1],'yes')
+        self.assertEqual(calls[1],['nmcli','device','wifi','rescan','ifname','wlan0'])
+        self.assertEqual(calls[2][-3:],['list','ifname','wlan0'])
     def test_iw_scan_discovers_additional_networks(self):
         output='''BSS 00:11:22:33:44:55(on wlan0) -- associated
         freq: 2452
