@@ -18,6 +18,7 @@ class RecoveryCancellationTests(unittest.TestCase):
         self.path.write_text(json.dumps({
             'token':TOKEN,'interface':'wlan0',
             'previous_connection':'Home','delay':0}),encoding='utf-8')
+        self.path.chmod(0o600)
 
     def test_cancel_before_worker_prevents_rollback(self):
         calls=[]
