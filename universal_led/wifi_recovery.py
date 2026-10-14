@@ -24,8 +24,13 @@ def recover(token, *, state_dir=STATE_DIR, sleep=time.sleep, run=subprocess.run)
         raise ValueError('Invalid recovery token')
     path=state_dir/(token+'.json')
     # State files are root-owned, created with O_EXCL and mode 0600.
-    with path.open(encoding='utf-8') as handle:
-        data=json.load(handle)
+    try:
+        with path.open(encoding='utf-8') as handle:
+            data=json.load(handle)
+    except FileNotFoundError:
+        # Confirmation may remove the state before this worker starts.
+        # A missing state is a cancelled recovery, not a worker failure.
+        return False
     if data.get('token')!=token or not isinstance(data.get('previous_connection'),str) or not isinstance(data.get('interface'),str):
         raise ValueError('Invalid recovery state')
     if not data['previous_connection'] or not data['interface'].startswith('wl'):
