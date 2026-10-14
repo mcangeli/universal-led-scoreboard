@@ -33,6 +33,8 @@ class FoundationTests(unittest.TestCase):
         self.assertTrue(any(gold in row for row in fb.pixels[11:18]))
         self.assertTrue(any(gold in row for row in fb.pixels[20:27]))
         self.assertEqual(fb.pixels[20][63], (0,0,0))
+        self.assertTrue(any(pixel != (0,0,0) for pixel in fb.pixels[30]))
+        self.assertTrue(all(pixel == (0,0,0) for pixel in fb.pixels[27]))
     def test_small_splash_rejected(self):
         with self.assertRaises(ValueError):
             splash(32, 32)
