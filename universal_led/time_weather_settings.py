@@ -9,6 +9,7 @@ DEFAULT_TIME_WEATHER = {
     'version': 1,
     'clock_enabled': True,
     'weather_enabled': False,
+    'weather_provider': 'open-meteo',
     'timezone': 'America/New_York',
     'time_format': '12h',
     'temperature_unit': 'fahrenheit',
@@ -31,6 +32,8 @@ def validate_time_weather(value):
         ZoneInfo(value['timezone'])
     except (ZoneInfoNotFoundError, ValueError, KeyError) as exc:
         raise ValueError('Unknown timezone') from exc
+    if value['weather_provider'] not in ('open-meteo','openweathermap'):
+        raise ValueError('Invalid weather provider')
     if value['time_format'] not in ('12h', '24h'):
         raise ValueError('Invalid clock format')
     if value['temperature_unit'] not in ('fahrenheit', 'celsius'):
@@ -46,7 +49,10 @@ def load_time_weather(directory):
     path = Path(directory) / 'time_weather.json'
     if not path.exists():
         return dict(DEFAULT_TIME_WEATHER)
-    return validate_time_weather(json.loads(path.read_text(encoding='utf-8')))
+    value=json.loads(path.read_text(encoding='utf-8'))
+    if isinstance(value,dict) and 'weather_provider' not in value:
+        value['weather_provider']='open-meteo'
+    return validate_time_weather(value)
 
 
 def save_time_weather(directory, value):
