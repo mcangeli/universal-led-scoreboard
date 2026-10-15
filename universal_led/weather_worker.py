@@ -1,5 +1,6 @@
 """Weather polling runs separately from the matrix rendering thread."""
 import threading
+import hashlib
 
 from .time_weather_settings import load_time_weather
 from .weather_feed import BackgroundWeather, fetch_weather
@@ -30,7 +31,14 @@ class WeatherWorker:
                 # Reset cache when provider changes; do not show data from the old provider.
                 if isinstance(self.cache,BackgroundWeather):
                     self.cache.invalidate()
-            self.cache.update(settings['location'], settings['temperature_unit'])
+            if isinstance(self.cache,BackgroundWeather):
+                identity=provider
+                if provider=='openweathermap':
+                    key=load_openweathermap_key(self.directory)
+                    identity=(provider,hashlib.sha256(key.encode('utf-8')).hexdigest())
+                self.cache.update(settings['location'], settings['temperature_unit'], identity=identity)
+            else:
+                self.cache.update(settings['location'], settings['temperature_unit'])
 
     def start(self):
         if self._thread is not None and self._thread.is_alive():
