@@ -689,7 +689,10 @@ def main():
     feed.start()
     from .news_background import BackgroundNews
     news=BackgroundNews(args.config_dir)
-    renderer=ConfiguredMLBRenderer(args.config_dir,feed,news=news)
+    from .weather_worker import WeatherWorker
+    weather=WeatherWorker(args.config_dir)
+    renderer=ConfiguredMLBRenderer(args.config_dir,feed,news=news,weather=weather)
+    weather.start()
     news.start(renderer.settings)
     def game():
         return renderer.game()
@@ -703,6 +706,7 @@ def main():
             print(f'Configurator listening on {args.host}:{args.port}',flush=True)
             server.serve_forever()
     finally:
+        weather.stop()
         news.stop()
         feed.stop()
 if __name__=='__main__':
