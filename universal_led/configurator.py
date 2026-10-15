@@ -357,7 +357,7 @@ def make_handler(config_dir,token,frame_provider=None,settings_callback=None,fee
                 self.send_response(204)
                 self.send_header('Set-Cookie','uls_session=; HttpOnly; SameSite=Strict; Path=/; Max-Age=0')
                 self.end_headers();return
-            if path not in ('/api/config','/api/frame','/api/settings'):
+            if path not in ('/api/config','/api/frame','/api/settings','/api/wifi/control'):
                 self.send_error(404);return
             if not secrets.compare_digest(self.headers.get('X-Configurator-Token',''),token):
                 self.send_json(403,{'error':'Invalid session token'});return
@@ -368,6 +368,13 @@ def make_handler(config_dir,token,frame_provider=None,settings_callback=None,fee
                 if self.headers.get('Content-Type','').split(';')[0].strip()!='application/json':
                     self.send_json(415,{'error':'JSON required'});return
                 data=json.loads(self.rfile.read(size))
+                if path=='/api/wifi/control':
+                    from .wifi_web_bridge import request_wifi_change
+                    if not isinstance(data,dict) or data.get('action') not in ('connect_saved','connect_new','confirm','hotspot'):
+                        raise ValueError('Unsupported Wi-Fi operation')
+                    result=request_wifi_change(data)
+                    self.send_json(200 if result.get('ok') or result.get('confirmed') else 409,result)
+                    return
                 if path=='/api/settings':
                     from .sport_settings import save_settings
                     saved_settings=save_settings(config_dir,data)
