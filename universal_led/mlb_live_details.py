@@ -6,10 +6,28 @@ from .colors import load_palette
 
 
 def compact_name(value):
-    if not value:
+    """Return a display-safe surname without silently truncating long names."""
+    if not value or not value.strip():
         return 'TBD'
-    name=value.strip().split()[-1].upper()
-    return ''.join(ch if ch in SMALL else ' ' for ch in name)[:12] or 'TBD'
+    parts=value.strip().split()
+    # Preserve common surname particles rather than displaying only the last word.
+    particles={'DE','DEL','DELA','DE','VAN','VON','DA','DOS','DI','LA','LE'}
+    start=len(parts)-1
+    while start>0 and parts[start-1].upper() in particles:
+        start-=1
+    name=' '.join(parts[start:]).upper()
+    return ''.join(ch if ch in SMALL else ' ' for ch in name).strip() or 'TBD'
+
+
+def visible_name(value, offset=0, width=13):
+    name=compact_name(value)
+    if len(name)<=width:
+        return name
+    # Wrap through the name with a short readable gap; never draw beyond x=63.
+    cycle=name+'   '
+    offset=max(0,int(offset))%len(cycle)
+    repeated=cycle*3
+    return repeated[offset:offset+width]
 
 
 @dataclass(frozen=True)
@@ -17,6 +35,7 @@ class MLBLiveDetailsScreen:
     game: BaseballGame
     scoreboard_colors: dict = field(default_factory=lambda: load_palette()[1])
     name: str = 'mlb-live-details'
+    offset: int = 0
 
     def render(self):
         g=self.game
@@ -26,9 +45,9 @@ class MLBLiveDetailsScreen:
         for x in range(64):
             fb.pixel(x,7,c['separator'])
         small(fb,'P',1,10,c['accent'])
-        small(fb,compact_name(g.pitcher),9,10,c['text'])
+        small(fb,visible_name(g.pitcher,self.offset),9,10,c['text'])
         small(fb,'B',1,18,c['accent'])
-        small(fb,compact_name(g.batter),9,18,c['text'])
+        small(fb,visible_name(g.batter,self.offset),9,18,c['text'])
         for x in range(64):
             fb.pixel(x,25,c['separator'])
         balls='-' if g.balls is None else str(g.balls)
