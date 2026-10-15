@@ -636,7 +636,10 @@ def main():
     initial=load_settings(args.config_dir)
     feed=BackgroundMLBFeed(MLBFeed(team=None,date=args.date,refresh_seconds=initial['mlb']['refresh_seconds']))
     feed.start()
-    renderer=ConfiguredMLBRenderer(args.config_dir,feed)
+    from .news_background import BackgroundNews
+    news=BackgroundNews(args.config_dir)
+    renderer=ConfiguredMLBRenderer(args.config_dir,feed,news=news)
+    news.start(renderer.settings)
     def game():
         return renderer.game()
     def apply_settings(settings):
@@ -649,6 +652,7 @@ def main():
             print(f'Configurator listening on {args.host}:{args.port}',flush=True)
             server.serve_forever()
     finally:
+        news.stop()
         feed.stop()
 if __name__=='__main__':
     main()
