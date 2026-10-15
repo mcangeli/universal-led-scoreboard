@@ -8,12 +8,14 @@ from .mlb_live_details import MLBLiveDetailsScreen
 from .mlb_previous_play import MLBPreviousPlayScreen
 from .mlb_classic import BaseballGame
 from .display import splash
+from .news_screen import NewsHeadlineScreen
 from .config_store import read_config
 
 class ConfiguredMLBRenderer:
-    def __init__(self,directory,feed):
+    def __init__(self,directory,feed,news=None):
         self.directory=directory
         self.feed=feed
+        self.news=news
         self._lock=threading.Lock()
         self._started=time.monotonic()
         self._settings=load_settings(directory)
@@ -75,6 +77,17 @@ class ConfiguredMLBRenderer:
     def frame(self):
         palette=read_config(self.directory)
         game,page=self._selection()
+        # Never interrupt a live game with news.
+        # Read cached items only; no network work happens in frame().
+        if self.news is not None and (game is None or game.status != 'live'):
+            headlines=self.news.items()
+            if headlines:
+                with self._lock:
+                    elapsed=max(0.0,time.monotonic()-self._started)
+                slot=self.settings()['mlb']['rotation_seconds']
+                if game is None or int(elapsed//slot)%5==4:
+                    item=headlines[int(elapsed//(slot*5))%len(headlines)]
+                    return NewsHeadlineScreen(item.text,item.source,offset=int(elapsed*3)).render()
         if not game:
             return splash()
         if page==3:
