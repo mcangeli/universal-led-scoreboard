@@ -4,6 +4,11 @@ import re
 from .weather_feed import WeatherSnapshot, _get_json
 
 
+_STATE_CODES = dict(zip(
+    ('Alabama','Alaska','Arizona','Arkansas','California','Colorado','Connecticut','Delaware','Florida','Georgia','Hawaii','Idaho','Illinois','Indiana','Iowa','Kansas','Kentucky','Louisiana','Maine','Maryland','Massachusetts','Michigan','Minnesota','Mississippi','Missouri','Montana','Nebraska','Nevada','New Hampshire','New Jersey','New Mexico','New York','North Carolina','North Dakota','Ohio','Oklahoma','Oregon','Pennsylvania','Rhode Island','South Carolina','South Dakota','Tennessee','Texas','Utah','Vermont','Virginia','Washington','West Virginia','Wisconsin','Wyoming','District of Columbia'),
+    ('AL','AK','AZ','AR','CA','CO','CT','DE','FL','GA','HI','ID','IL','IN','IA','KS','KY','LA','ME','MD','MA','MI','MN','MS','MO','MT','NE','NV','NH','NJ','NM','NY','NC','ND','OH','OK','OR','PA','RI','SC','SD','TN','TX','UT','VT','VA','WA','WV','WI','WY','DC')))
+
+
 def fetch_openweathermap(location, unit='fahrenheit', api_key='', *, get_json=None):
     if not isinstance(location, str) or not location.strip():
         raise ValueError('Weather location is required')
@@ -35,6 +40,7 @@ def fetch_openweathermap(location, unit='fahrenheit', api_key='', *, get_json=No
                 match = matches[0]
                 city = str(match.get('name') or display_location or '').strip()
                 state = str(match.get('state') or '').strip()
+                state = _STATE_CODES.get(state, state)
                 display_location = ', '.join(part for part in (city, state) if part)
         except (OSError, ValueError, KeyError, TypeError, IndexError):
             pass
