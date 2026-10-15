@@ -14,6 +14,7 @@ from .clock_screen import ClockScreen
 from .weather_screen import WeatherScreen
 from .time_weather_settings import load_time_weather
 from .config_store import read_config
+from .screen_rotation import choose_screen
 
 class ConfiguredMLBRenderer:
     def __init__(self,directory,feed,news=None,weather=None):
@@ -87,52 +88,31 @@ class ConfiguredMLBRenderer:
         game,page=self._selection()
         favorites=set(self.settings()['mlb']['favorite_teams'])
         priority_live=game is not None and game.status=='live' and (game.away in favorites or game.home in favorites)
-        # Clock is independent of sports, and never replaces a live game.
         if not priority_live:
-            clock_settings=load_time_weather(self.directory)
-            if clock_settings['clock_enabled'] and (Path(self.directory)/'time_weather.json').exists():
-                with self._lock:
-                    elapsed=max(0.0,time.monotonic()-self._started)
-                slot=self.settings()['mlb']['rotation_seconds']
-                interval=clock_settings['rotation_interval']
-                # Reserve the first non-live slot in each clock interval.
-                # Without games, alternate clock and news/splash by slot.
-                if (game is None and int(elapsed//slot)%2==0) or (game is not None and int(elapsed//slot)%interval==0):
-                    return ClockScreen(clock_settings['timezone'],clock_settings['time_format']).render()
-        # Only read an already-cached snapshot. Never perform weather HTTP here.
-        if game is None or game.status != 'live':
-            weather_settings=load_time_weather(self.directory)
-            if weather_settings['weather_enabled'] and self.weather is not None:
-                snapshot=self.weather.snapshot()
-                if snapshot is not None:
-                    with self._lock:
-                        elapsed=max(0.0,time.monotonic()-self._started)
-                    slot=self.settings()['mlb']['rotation_seconds']
-                    interval=weather_settings['rotation_interval']
-                    # Weather follows clock in the non-live rotation cycle.
-                    position=int(elapsed//slot)
-                    if (game is None and position%2==1) or (game is not None and position%interval==1%interval):
-                        return WeatherScreen(snapshot,weather_settings['temperature_unit']).render()
-        # Never interrupt a live game with news.
-        # Read cached items only; no network work happens in frame().
-        if self.news is not None and not priority_live:
-            headlines=self.news.items()
-            if headlines:
-                with self._lock:
-                    elapsed=max(0.0,time.monotonic()-self._started)
-                config=self.settings()
-                slot=config['mlb']['rotation_seconds']
-                options=config['news']
-                interval=options['rotation_interval']
+            preferences=load_time_weather(self.directory)
+            clock_enabled=preferences['clock_enabled'] and (Path(self.directory)/'time_weather.json').exists()
+            snapshot=self.weather.snapshot() if preferences['weather_enabled'] and self.weather is not None else None
+            headlines=self.news.items() if self.news is not None else []
+            with self._lock:
+                elapsed=max(0.0,time.monotonic()-self._started)
+            slot=self.settings()['mlb']['rotation_seconds']
+            selected=choose_screen(int(elapsed//slot),has_game=game is not None,
+                                   clock=clock_enabled,weather=snapshot is not None,
+                                   news=bool(headlines))
+            if selected=='clock':
+                return ClockScreen(preferences['timezone'],preferences['time_format']).render()
+            if selected=='weather':
+                return WeatherScreen(snapshot,preferences['temperature_unit']).render()
+            if selected=='news':
+                options=self.settings()['news']
                 duration=options['headline_seconds']
-                # A fixed interval reserves one non-live slot for news.
-                # Within that slot, page through headlines at the chosen pace.
-                if game is None or int(elapsed//slot)%interval==interval-1:
-                    local=elapsed if game is None else elapsed%slot
-                    index=int(local//duration)%len(headlines)
-                    offset=int((local%duration)*options['scroll_chars_per_second'])
-                    item=headlines[index]
-                    return NewsHeadlineScreen(item.text,item.source,offset=offset).render()
+                local=elapsed%slot
+                index=int(elapsed//slot)%len(headlines)
+                offset=int((local%duration)*options['scroll_chars_per_second'])
+                item=headlines[index]
+                return NewsHeadlineScreen(item.text,item.source,offset=offset).render()
+            if selected=='splash':
+                return splash()
         if not game:
             return splash()
         if page==3:
