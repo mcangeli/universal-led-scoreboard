@@ -5,6 +5,7 @@ from zoneinfo import ZoneInfo
 
 from .display import Framebuffer
 from .mlb_classic import small
+from .safe_layout import MARGIN, fit_small, big_center_x, small_center_x
 
 
 @dataclass(frozen=True)
@@ -20,15 +21,17 @@ class ClockScreen:
         white = (235, 235, 225)
         muted = (120, 140, 155)
         date_label = now.strftime('%a %b %d').upper()
-        small(frame, date_label[:16], 0, 1, gold)
+        small(frame, fit_small(date_label, 60), MARGIN, MARGIN, gold)
         value = now.strftime('%I:%M' if self.time_format == '12h' else '%H:%M')
         if self.time_format == '12h':
             value = value.lstrip('0') or '0'
         # Large 5x7 numerals occupy the center of the 64x32 display.
-        x = max(0, (64 - (len(value) * 6 - 1)) // 2)
+        x = big_center_x(value)
         frame.text(value, x, 12, white)
         if self.time_format == '12h':
-            small(frame, now.strftime('%p'), 27, 25, muted)
+            label=now.strftime('%p')
+            small(frame, label, small_center_x(label), 25, muted)
         else:
-            small(frame, now.strftime('%a').upper(), 26, 25, muted)
+            label=now.strftime('%a').upper()
+            small(frame, label, small_center_x(label), 25, muted)
         return frame
