@@ -95,8 +95,8 @@ class BackgroundWeather:
             self._next = 0.0
             self.error = None
 
-    def update(self, location, unit='fahrenheit'):
-        key = (location.strip(), unit)
+    def update(self, location, unit='fahrenheit', *, identity=None):
+        key = (location.strip(), unit, identity)
         now = self.clock()
         with self._lock:
             if key != self._key:
@@ -107,7 +107,7 @@ class BackgroundWeather:
                 return self._snapshot
             self._next = now + self.refresh_seconds
         try:
-            snapshot = self.fetch(*key)
+            snapshot = self.fetch(location.strip(), unit)
         except (OSError, ValueError, KeyError, TypeError, IndexError) as exc:
             with self._lock:
                 self.error = str(exc)
