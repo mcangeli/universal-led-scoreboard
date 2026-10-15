@@ -25,9 +25,10 @@ class MLBPreviousPlayScreen:
         message=sanitize_play(self.game.previous_play) or 'NO PLAY DATA'
         # Render the scrolling text as two compact lines. Offset is measured
         # in glyphs, making animation independent of the frame rate.
-        padded=' ' * 16 + message + ' ' * 16
-        offset=max(0,min(self.offset,max(0,len(padded)-16)))
-        visible=padded[offset:offset+32].ljust(32)
+        # Start with real content instead of a blank 16-character lead-in.
+        # Keep two rows visible and advance through longer descriptions.
+        offset=max(0,min(self.offset,max(0,len(message)-32)))
+        visible=message[offset:offset+32].ljust(32)
         small(fb,visible[:16],0,12,c['text'])
         small(fb,visible[16:],0,20,c['text'])
         return fb
