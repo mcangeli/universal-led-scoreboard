@@ -22,7 +22,7 @@ def execute(data, *, run=command):
     if not isinstance(data, dict):
         raise ValueError('JSON object required')
     action = data.get('action')
-    if action not in ('connect_saved', 'connect_new', 'confirm', 'hotspot'):
+    if action not in ('connect_saved', 'connect_new', 'confirm', 'hotspot', 'hotspot_password'):
         raise ValueError('Unsupported action')
     if action == 'confirm':
         if set(data) != {'action', 'token'} or not isinstance(data['token'], str) or not TOKEN.fullmatch(data['token']):
@@ -46,6 +46,24 @@ def execute(data, *, run=command):
         if active.returncode != 0 or not active.stdout.strip() or active.stdout.strip() in (previous, '--'):
             return {'confirmed': False, 'reason': 'new_connection_not_verified'}
         return confirm_recovery(data['token'])
+    if action == 'hotspot_password':
+        if set(data) != {'action', 'password'}:
+            raise ValueError('Invalid hotspot password request')
+        password = data['password']
+        if not isinstance(password, str) or not 8 <= len(password.encode('utf-8')) <= 63 or not password.isascii() or not password.isprintable():
+            raise ValueError('Hotspot password must contain 8-63 printable ASCII characters')
+        # Restrict the operation to the dedicated AP profile. Never pass the
+        # password in argv or include nmcli stdout/stderr in the response.
+        profile = run(['nmcli', '-g', '802-11-wireless.mode', 'connection', 'show', 'Universal-LED-Setup'])
+        if profile.returncode != 0 or profile.stdout.strip() != 'ap':
+            raise ValueError('Universal-LED-Setup hotspot profile is missing')
+        # Interactive editor receives commands over stdin, keeping the secret
+        # out of process arguments. Quote through the nmcli editor parser.
+        if any(c in password for c in ('\\\\', '"', "'", '\\n', '\\r')):
+            raise ValueError('Password cannot contain quotes or backslashes')
+        script = 'set wifi-sec.psk "' + password + '"\\nsave persistent\\nquit\\n'
+        result = run(['nmcli', 'connection', 'edit', 'Universal-LED-Setup'], input=script)
+        return {'ok': result.returncode == 0, 'message': 'Hotspot password saved for next activation' if result.returncode == 0 else 'Hotspot password update failed'}
     if action == 'hotspot':
         if set(data) != {'action', 'enabled'} or type(data['enabled']) is not bool:
             raise ValueError('Invalid hotspot request')
