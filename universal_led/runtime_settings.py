@@ -42,7 +42,10 @@ class ConfiguredMLBRenderer:
     def _selection(self):
         """Keep game and pregame page on the same rotation clock."""
         settings=self.settings()['mlb']
-        games=select_games(self.feed.games(),settings.get('favorite_teams',settings.get('favorite_team',['ATL'])),settings['mode'])
+        all_games=self.feed.games()
+        favorites=set(settings.get('favorite_teams',settings.get('favorite_team',['ATL'])))
+        priority=[g for g in all_games if g.status=='live' and (g.away in favorites or g.home in favorites)]
+        games=priority or select_games(all_games,settings.get('favorite_teams',settings.get('favorite_team',['ATL'])),settings['mode'])
         if not games:
             return None,0
         with self._lock:
@@ -82,8 +85,10 @@ class ConfiguredMLBRenderer:
     def frame(self):
         palette=read_config(self.directory)
         game,page=self._selection()
+        favorites=set(self.settings()['mlb']['favorite_teams'])
+        priority_live=game is not None and game.status=='live' and (game.away in favorites or game.home in favorites)
         # Clock is independent of sports, and never replaces a live game.
-        if game is None or game.status != 'live':
+        if not priority_live:
             clock_settings=load_time_weather(self.directory)
             if clock_settings['clock_enabled'] and (Path(self.directory)/'time_weather.json').exists():
                 with self._lock:
@@ -110,7 +115,7 @@ class ConfiguredMLBRenderer:
                         return WeatherScreen(snapshot,weather_settings['temperature_unit']).render()
         # Never interrupt a live game with news.
         # Read cached items only; no network work happens in frame().
-        if self.news is not None and (game is None or game.status != 'live'):
+        if self.news is not None and not priority_live:
             headlines=self.news.items()
             if headlines:
                 with self._lock:
