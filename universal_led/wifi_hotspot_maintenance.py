@@ -29,8 +29,9 @@ def maintain(*, run=subprocess.run, pending=PENDING):
         return 'no_wifi_interface'
     device = wifi[0][0]
     active = ':'.join(wifi[0][3:])
-    if wifi[0][2] == 'connected' and active != AP:
-        return 'client_connected'
+    if wifi[0][2] == 'connected':
+        # Never interrupt an active management hotspot or client session.
+        return 'hotspot_active' if active == AP else 'client_connected'
     profile = nm('-g', '802-11-wireless.mode', 'connection', 'show', AP)
     if profile is None or profile.returncode or profile.stdout.strip() != 'ap':
         return 'hotspot_not_provisioned'
