@@ -103,6 +103,7 @@ def parse_schedule(payload: dict, team: str | None = None) -> list[BaseballGame]
                 away_errors=hits_errors('away','errors'), home_errors=hits_errors('home','errors'),
                 inning=inning,
                 inning_half='top' if ls.get('isTopInning',True) else 'bottom',
+                inning_state=ls.get('inningState'),
                 outs=min(3,max(0,int(ls.get('outs') or 0))),
                 bases=(occupied('first'),occupied('second'),occupied('third')),
                 status=status, start_time=item.get('gameDate'),
