@@ -35,7 +35,7 @@ class MLBPaletteScreen:
         if g.status=='pregame':
             label=start_label(g.start_time)
             # Only compact-font characters are supported.
-            small(fb,'PM' if label=='PREGAME' else label[:9],2,27,c['accent'])
+            small(fb,label[:9],2,27,c['accent'])
         elif g.status=='final':
             small(fb,'FINAL',2,27,c['accent'])
         elif g.status=='delayed':
