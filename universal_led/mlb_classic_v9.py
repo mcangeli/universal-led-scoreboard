@@ -14,7 +14,7 @@ def start_label(iso: str | None) -> str:
         return 'PREGAME'
     try:
         stamp = datetime.fromisoformat(iso.replace('Z','+00:00')).astimezone()
-        return stamp.strftime('%I%M%p').lstrip('0')
+        return stamp.strftime('%I:%M %p').lstrip('0')
     except (ValueError, TypeError, OverflowError):
         return 'PREGAME'
 
