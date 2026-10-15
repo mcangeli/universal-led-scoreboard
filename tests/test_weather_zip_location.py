@@ -16,8 +16,11 @@ class ZipLocationTests(unittest.TestCase):
             return {'main':{'temp':70},'weather':[{'id':800}],'name':'Kennesaw'}
         snapshot=fetch_openweathermap('30144','fahrenheit','key',get_json=get_json)
         self.assertEqual(snapshot.location,'Kennesaw, GA')
-        self.assertEqual(len(urls),3)
-        self.assertIn('lat',parse_qs(urlsplit(urls[1]).query))
+        self.assertTrue(any('/geo/1.0/zip?' in url for url in urls))
+        self.assertTrue(any('/geo/1.0/reverse?' in url for url in urls))
+        self.assertTrue(any('/data/2.5/forecast?' in url for url in urls))
+        current = next(url for url in urls if '/data/2.5/weather?' in url)
+        self.assertIn('lat',parse_qs(urlsplit(current).query))
         self.assertTrue(any(pixel!=(0,0,0) for row in WeatherScreen(snapshot).render().pixels for pixel in row))
 
     def test_zip_reverse_failure_keeps_city(self):
