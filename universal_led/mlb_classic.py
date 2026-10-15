@@ -74,6 +74,7 @@ class BaseballGame:
     home_errors: int = 1
     inning: int = 7
     inning_half: Literal['top','bottom'] = 'bottom'
+    inning_state: str | None = None  # MLB linescore: Top, Bottom, Middle, End
     outs: int = 1
     bases: tuple[bool,bool,bool] = (True,False,True)
     status: Status = 'live'
