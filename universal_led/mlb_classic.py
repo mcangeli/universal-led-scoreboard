@@ -82,7 +82,21 @@ class BaseballGame:
     home_record: str | None = None
     away_probable: str | None = None
     home_probable: str | None = None
+    balls: int | None = None
+    strikes: int | None = None
+    pitcher: str | None = None
+    batter: str | None = None
+    pitch_count: int | None = None
+    pitch_speed_mph: float | None = None
     def __post_init__(self):
+        if self.balls is not None and self.balls not in range(5):
+            raise ValueError('Invalid ball count')
+        if self.strikes is not None and self.strikes not in range(4):
+            raise ValueError('Invalid strike count')
+        if self.pitch_count is not None and self.pitch_count < 0:
+            raise ValueError('Invalid pitch count')
+        if self.pitch_speed_mph is not None and self.pitch_speed_mph < 0:
+            raise ValueError('Invalid pitch speed')
         if len(self.away)!=3 or len(self.home)!=3:
             raise ValueError('Three-letter team abbreviations required')
         if len(self.bases)!=3 or not all(type(b) is bool for b in self.bases):
