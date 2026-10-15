@@ -97,7 +97,7 @@ def parse_schedule(payload: dict, team: str | None = None) -> list[BaseballGame]
                 return str((obj or {}).get('fullName') or '').strip() or None
             defense = ls.get('defense') or {}
             games.append(BaseballGame(
-                away=a, home=h,
+                away=a, home=h, game_pk=item.get('gamePk'),
                 away_runs=stat(away,'score'), home_runs=stat(home,'score'),
                 away_hits=hits_errors('away','hits'), home_hits=hits_errors('home','hits'),
                 away_errors=hits_errors('away','errors'), home_errors=hits_errors('home','errors'),
