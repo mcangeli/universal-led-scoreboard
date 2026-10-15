@@ -18,6 +18,8 @@ class BackgroundNews:
         self._next = 0.0
         self._running = False
         self._thread = None
+        self._custom_feed = None
+        self._custom_sources = None
 
     def start(self, settings_getter):
         if self._running:
@@ -31,7 +33,11 @@ class BackgroundNews:
                         settings = settings_getter()
                         configured = load_news_settings(self.directory)
                         sources = [NewsSource(**source) for source in configured['sources']]
-                        custom = MultiSourceNewsFeed(sources).items() if sources else []
+                        signature = tuple(sources)
+                        if signature != self._custom_sources:
+                            self._custom_feed = MultiSourceNewsFeed(sources) if sources else None
+                            self._custom_sources = signature
+                        custom = self._custom_feed.items() if self._custom_feed else []
                         items = normalize_items(self.automatic.items(settings) + custom)
                         with self._lock:
                             self._items = items
