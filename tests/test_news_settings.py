@@ -29,7 +29,7 @@ class NewsSettingsTests(unittest.TestCase):
     def test_configurator_exposes_editor(self):
         self.assertIn('data-page="news"',HTML)
         self.assertIn('saveNewsSources()',HTML)
-        self.assertIn('Sources are saved but not yet displayed on the board.',HTML)
+        self.assertIn('Automatic and custom feeds display during available news rotation slots.',HTML)
 
 
 if __name__=='__main__':
