@@ -4,6 +4,7 @@ import argparse
 import json
 import secrets
 import subprocess
+import threading
 import time
 from http.server import BaseHTTPRequestHandler,ThreadingHTTPServer
 from pathlib import Path
@@ -138,7 +139,13 @@ async function restartScoreboard(){
   const response=await fetch('/api/service/restart',{method:'POST',headers:{'Content-Type':'application/json','X-Configurator-Token':token},body:JSON.stringify({confirm:true})});
   const result=await response.json();
   if(!response.ok)throw Error(result.error||'Restart failed');
-  status.textContent='Restart requested. The board may briefly disconnect.';
+  status.textContent='Restart scheduled. Waiting for the dashboard to return…';
+  let restored=false;
+  for(let attempt=0;attempt<15;attempt++){
+   await new Promise(resolve=>setTimeout(resolve,1000));
+   try{const health=await fetch('/health',{cache:'no-store'});if(health.ok&&attempt>=2){restored=true;break}}catch(error){}
+  }
+  status.textContent=restored?'Scoreboard service is responding again.':'Restart was requested, but the service has not responded yet. Check System status.';
  }catch(error){status.textContent='Restart failed: '+error.message}
  finally{button.disabled=false}
 }
@@ -438,13 +445,18 @@ def make_handler(config_dir,token,frame_provider=None,settings_callback=None,fee
                 if path=='/api/service/restart':
                     if data != {'confirm':True}:
                         raise ValueError('Explicit restart confirmation required')
-                    try:
-                        result=subprocess.run(['systemctl','--user','restart','universal-led-scoreboard.service'],capture_output=True,text=True,timeout=8,check=False)
-                    except (OSError,subprocess.TimeoutExpired) as exc:
-                        self.send_json(503,{'error':str(exc)});return
-                    if result.returncode:
-                        self.send_json(503,{'error':(result.stderr or 'Scoreboard service restart failed').strip()[:300]});return
-                    self.send_json(200,{'ok':True,'message':'Scoreboard restart requested'});return
+                    # The configurator may be hosted by the service being restarted.
+                    # Reply before invoking systemctl so the HTTP request is not killed.
+                    def restart_after_response():
+                        time.sleep(0.75)
+                        try:
+                            subprocess.run(['systemctl','--user','restart','universal-led-scoreboard.service'],
+                                           capture_output=True,text=True,timeout=20,check=False)
+                        except (OSError,subprocess.TimeoutExpired):
+                            pass
+                    self.send_json(202,{'ok':True,'message':'Scoreboard restart scheduled'})
+                    threading.Thread(target=restart_after_response,daemon=True,name='scoreboard-restart').start()
+                    return
                 if path=='/api/wifi/control':
                     from .wifi_web_bridge import request_wifi_change
                     if not isinstance(data,dict) or data.get('action') not in ('connect_saved','connect_new','confirm','hotspot','hotspot_password'):
