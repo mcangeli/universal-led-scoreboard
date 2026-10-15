@@ -44,7 +44,7 @@ button:disabled{opacity:.5} .muted{color:#b6c5d5} #status{min-height:24px}
 const token=__TOKEN__;
 async function logout(){await fetch('/logout',{method:'POST',headers:{'X-Configurator-Token':token}});location.href='/login'}
 let state=null,saved=null,dirty=false,selectedTeam='ATL',selected=null,settings=null;
-function showPage(name){document.querySelectorAll('[data-page]').forEach(el=>el.hidden=el.dataset.page!==name);if(name==='dashboard'||name==='system')refreshStatus();if(name==='system'){refreshSystem();refreshWifi();refreshRecoveryReadiness()}}
+function showPage(name){document.querySelectorAll('[data-page]').forEach(el=>el.hidden=el.dataset.page!==name);if(name==='dashboard'||name==='system')refreshStatus();if(name==='system'){refreshSystem();refreshWifi();refreshWifiProfiles();refreshRecoveryReadiness()}}
 const clone=value=>JSON.parse(JSON.stringify(value));
 function markDirty(){dirty=JSON.stringify(state)!==JSON.stringify(saved);document.getElementById('dirty').textContent=dirty?'Unsaved changes':'All changes saved';}
 const hex=rgb=>'#'+rgb.map(x=>x.toString(16).padStart(2,'0')).join('');
