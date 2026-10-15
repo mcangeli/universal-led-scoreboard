@@ -60,3 +60,13 @@ be changed. Never log or expose hotspot passwords in the web status API.
 The hotspot helper currently toggles a pre-existing profile; it does not yet
 provision a profile on a fresh install or automatically activate a fallback.
 Those features and an end-to-end recovery test remain required.
+
+## Hotspot password setup and admin management (approved requirement)
+
+- During installation, create a dedicated `Universal-LED-Setup` NetworkManager AP profile, with `connection.autoconnect=no`, WPA-PSK and IPv4 shared mode. Do not overwrite `mlb-scoreboard-setup`.
+- Offer a memorable generated password (e.g. three short words plus two digits, minimum 8 characters), or allow a custom password of 8–63 bytes. Do not mandate arbitrary uppercase/symbol complexity.
+- Display the chosen password to the installer once, with instructions to store it. Never embed a common password such as `ScoreBoard` as a production default.
+- Under authenticated System → Wi-Fi → Hotspot Settings, allow an administrator to set a replacement password and, optionally, change the SSID. Require confirmation of the new password. Do not expose the old password in HTML, JSON, logs, shell arguments, or diagnostic output.
+- Write secrets through a narrowly privileged, root-owned helper. Avoid `nmcli connection modify ... psk PASSWORD` because that leaks the password into process arguments. Validate length and reject control characters.
+- Update the saved profile without immediately restarting an active hotspot. Warn that clients must reconnect after the next activation. Do not interrupt the active management connection.
+- Test fresh-install provisioning, password update, bad-password rejection, permission checks, no-secret logging, and connection persistence on Raspberry Pi Bookworm/Trixie before enabling this UI.
