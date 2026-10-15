@@ -4,6 +4,7 @@ import time
 from .sport_settings import load_settings
 from .mlb_runtime import select_games
 from .mlb_palette_v11 import MLBPaletteScreen
+from .mlb_live_details import MLBLiveDetailsScreen
 from .mlb_classic import BaseballGame
 from .display import splash
 from .config_store import read_config
@@ -40,6 +41,12 @@ class ConfiguredMLBRenderer:
         # other games are in rotation. Live/final games have one stable page.
         within=elapsed%slot
         page=min(2,int(within*3/slot)) if game.status=='pregame' else 0
+        # Reserve the second half of a live game's slot for its matchup.
+        # If the feed has no current matchup/count, retain Classic throughout.
+        if game.status=='live' and within >= slot/2 and any(
+            value is not None for value in (game.pitcher,game.batter,game.balls,game.strikes)
+        ):
+            page=3
         return game,page
 
     def game(self):
@@ -50,4 +57,6 @@ class ConfiguredMLBRenderer:
         game,page=self._selection()
         if not game:
             return splash()
+        if page==3:
+            return MLBLiveDetailsScreen(game,palette['scoreboard']).render()
         return MLBPaletteScreen(game,palette['teams'],palette['scoreboard'],pregame_page=page).render()
