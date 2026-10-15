@@ -65,6 +65,16 @@ def _entries(directory):
     return result
 
 
+def _sync_directory(directory):
+    """Persist directory-entry creation and replacement across a crash."""
+    fd = os.open(directory, os.O_RDONLY | getattr(os, 'O_DIRECTORY', 0) |
+                 getattr(os, 'O_NOFOLLOW', 0))
+    try:
+        os.fsync(fd)
+    finally:
+        os.close(fd)
+
+
 def reserve_switch(interface, previous_connection, token, *, directory=DEFAULT_DIR):
     """Atomically reserve one unresolved switch per interface.
 
@@ -87,10 +97,17 @@ def reserve_switch(interface, previous_connection, token, *, directory=DEFAULT_D
         payload = {'token': token, 'interface': interface,
                    'previous_connection': previous_connection, 'phase': 'pending'}
         new_fd = os.open(path, os.O_CREAT | os.O_EXCL | os.O_WRONLY | getattr(os, 'O_NOFOLLOW', 0), 0o600)
-        with os.fdopen(new_fd, 'w', encoding='utf-8') as handle:
-            json.dump(payload, handle)
-            handle.flush()
-            os.fsync(handle.fileno())
+        try:
+            with os.fdopen(new_fd, 'w', encoding='utf-8') as handle:
+                json.dump(payload, handle)
+                handle.flush()
+                os.fsync(handle.fileno())
+            _sync_directory(root)
+        except BaseException:
+            # Never leave a partially written reservation that looks usable.
+            # If cleanup itself fails, the remaining entry blocks new work.
+            path.unlink(missing_ok=True)
+            raise
         return payload.copy()
     finally:
         os.close(fd)
@@ -121,6 +138,7 @@ def resolve_switch(token, phase, *, directory=DEFAULT_DIR):
                 handle.flush()
                 os.fsync(handle.fileno())
             os.replace(temp, path)
+            _sync_directory(root)
         finally:
             temp.unlink(missing_ok=True)
         return updated.copy()
