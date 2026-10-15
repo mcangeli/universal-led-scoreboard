@@ -63,17 +63,24 @@ class MLBPaletteScreen:
             label=start_label(g.start_time)
             draw_start_label(fb,label,c['accent'],c['text'])
         elif g.status=='final':
+            # Include inning count for extra-inning games without losing FINAL.
             small(fb,'FINAL',2,27,c['accent'])
+            if g.inning>9:
+                small(fb,str(min(g.inning,99)),34,27,c['dim'])
         elif g.status=='delayed':
             small(fb,'DELAY',2,27,c['error'])
         elif g.status=='postponed':
             small(fb,'PPD',2,27,c['error'])
         else:
-            small(fb,str(min(g.inning,99)),2,27,c['accent'])
+            inning_label=str(min(g.inning,99))
+            small(fb,inning_label,2,27,c['accent'])
             top=g.inning_half=='top'
-            fb.pixel(12,27 if top else 31,c['accent'])
-            fb.pixel(11,28 if top else 30,c['accent'])
-            fb.pixel(13,28 if top else 30,c['accent'])
+            # Move direction arrow right when the inning reaches two digits.
+            arrow_x=12 if len(inning_label)==1 else 16
+            arrow_y=27 if top else 31
+            fb.pixel(arrow_x,arrow_y,c['accent'])
+            fb.pixel(arrow_x-1,28 if top else 30,c['accent'])
+            fb.pixel(arrow_x+1,28 if top else 30,c['accent'])
             for i in range(3):
                 for y in (28,29):
                     fb.pixel(20+i*4,y,c['error'] if i<g.outs else c['dim'])
