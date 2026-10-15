@@ -1,7 +1,12 @@
 #!/usr/bin/env python3
 """Read-only live MLB readiness check. Uses same feed/parser as scoreboard."""
 import argparse
+import sys
 from datetime import datetime
+from pathlib import Path
+
+# Direct execution from scripts/ must still resolve the project package.
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 from universal_led.mlb_data import MLBFeed
 
 def main():
