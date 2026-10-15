@@ -38,7 +38,8 @@ class WifiScanTests(unittest.TestCase):
     def test_ui(self):
         self.assertIn('scanWifi()',HTML)
         self.assertIn('wifi-networks',HTML)
-        self.assertIn("select.textContent=connected?'Connected':'Select'",HTML)
+        self.assertIn("select.textContent=connected?'Connected':(saved?'Connect saved':'Select')",HTML)
+        self.assertIn('p.ssid===selectedWifi.ssid',HTML)
         self.assertIn("const connected=!!network.connected",HTML)
         self.assertIn("data-page=\"wifi\"",HTML)
         self.assertIn("await Promise.all([refreshWifi(),refreshWifiProfiles(),scanWifi()])",HTML)
