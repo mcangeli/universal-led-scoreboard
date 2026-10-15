@@ -33,9 +33,21 @@ A modular, multi-sport Raspberry Pi LED scoreboard with classic league displays,
 | v0.6.x | Rotation profiles, themes, diagnostics and polish |
 | v1.0.0 | Stable release and installation tooling |
 
-## Development
+## Current implementation (0.1.0 preview)
 
-Use `main` for integration and `feature/0.1.0-core-foundation` for initial implementation. Test rendering in an emulator before hardware deployment. League integrations are not yet implemented.
+The MLB module, 64×32 emulator, native web configurator, Wi-Fi setup, news rotation, and independent clock/weather screens are implemented on `feature/0.1.0-core-foundation`. Weather supports Open-Meteo and optional OpenWeatherMap credentials. The shared scheduler gives exclusive display priority only to live games involving configured favorite teams; other content rotates normally. NBA, NFL, NHL, MLS, and EFL remain planned integrations, not completed displays.
+
+## Development and validation
+
+Use `main` for integration and `feature/0.1.0-core-foundation` for current preview development. On a Raspberry Pi checkout, run:
+
+```bash
+python3 -m unittest discover -s tests
+```
+
+The most recent user-validated baseline is 550 tests passing, 15 skipped. Run the full suite again after any release preparation changes. Test rendering in the emulator before hardware deployment.
+
+The `0.1.0` version is still a preview until integration review, version finalization, and tagging are complete.
 
 ## Licensing
 
