@@ -49,6 +49,13 @@ class MLBPaletteScreen:
             (8,g.away,(g.away_runs,g.away_hits,g.away_errors)),
             (18,g.home,(g.home_runs,g.home_hits,g.home_errors))):
             fb.text(team,1,y-1,self.team_colors.get(team,c['text']))
+            # A compact accent chevron identifies the winner on final screens.
+            # It occupies unused space between team labels and the R/H/E grid.
+            if g.status=='final' and g.away_runs != g.home_runs:
+                winner_y=8 if g.away_runs>g.home_runs else 18
+                if y==winner_y:
+                    for dx,dy in ((0,0),(1,1),(0,2)):
+                        fb.pixel(24+dx,y+dy,c['accent'])
             for right,value in zip((46,54,62),values):
                 if value>=100:
                     for x in (right-6,right-2):
