@@ -205,12 +205,17 @@ async function connectWifi(){
   const profiles=await (await fetch('/api/wifi/profiles')).json();
   const saved=(profiles.profiles||[]).find(p=>p.name===selectedWifi.ssid);
   const payload=saved?{action:'connect_saved',interface:current.device,previous_connection:current.connection,target_ssid:selectedWifi.ssid,profile_uuid:saved.uuid}:{action:'connect_new',interface:current.device,previous_connection:current.connection,target_ssid:selectedWifi.ssid,password};
-  const response=await fetch('/api/wifi/control',{method:'POST',headers:{'Content-Type':'application/json','X-Configurator-Token':TOKEN},body:JSON.stringify(payload)});
+  const response=await fetch('/api/wifi/control',{method:'POST',headers:{'Content-Type':'application/json','X-Configurator-Token':token},body:JSON.stringify(payload)});
   const result=await response.json();
   if(!result.token)throw Error(result.error||'Unable to arm rollback');
   output.textContent=result.message+'. Confirming connectivity…';
   if(!result.ok)return;
-  const confirmation=await fetch('/api/wifi/control',{method:'POST',headers:{'Content-Type':'application/json','X-Configurator-Token':TOKEN},body:JSON.stringify({action:'confirm',token:result.token})});
+  const observed=await (await fetch('/api/wifi',{cache:'no-store'})).json();
+  if(!(observed.devices||[]).some(d=>d.state==='connected'&&d.device===current.device&&d.connection!==current.connection)){
+   output.textContent='New connection not verified; rollback remains armed.';
+   return;
+  }
+  const confirmation=await fetch('/api/wifi/control',{method:'POST',headers:{'Content-Type':'application/json','X-Configurator-Token':token},body:JSON.stringify({action:'confirm',token:result.token})});
   const verified=await confirmation.json();
   output.textContent=verified.confirmed?'Connection confirmed.':'Rollback remains armed: '+(verified.error||verified.reason||'not confirmed');
   refreshWifi();refreshWifiProfiles();
