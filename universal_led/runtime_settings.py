@@ -37,4 +37,8 @@ class ConfiguredMLBRenderer:
     def frame(self):
         palette=read_config(self.directory)
         game=self.game()
-        return MLBPaletteScreen(game,palette['teams'],palette['scoreboard']).render() if game else splash()
+        if not game:
+            return splash()
+        # Each pregame page gets a fixed interval; live/final remain unchanged.
+        page=int((time.monotonic()-self._started)//6)%3 if game.status=='pregame' else 0
+        return MLBPaletteScreen(game,palette['teams'],palette['scoreboard'],pregame_page=page).render()
