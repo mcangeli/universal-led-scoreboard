@@ -152,7 +152,7 @@ async function refreshWifiProfiles(){
   if(!data.profiles.length){target.textContent='No saved Wi-Fi connections.';return;}
   for(const profile of data.profiles){
    const item=document.createElement('p');
-   item.textContent=profile.name+(profile.active?' (connected on '+profile.interface+')':' (saved)');
+   item.textContent=profile.ssid+(profile.active?' (connected on '+profile.interface+')':' (saved)')+(profile.name!==profile.ssid?' · '+profile.name:'');
    target.appendChild(item);
   }
  }catch(error){target.textContent='Saved profiles unavailable: '+error.message;}
@@ -191,7 +191,7 @@ function selectWifiNetwork(network){
  document.getElementById('wifi-selection').hidden=false;
  document.getElementById('wifi-selected-name').textContent=network.ssid;
  document.getElementById('wifi-selected-security').textContent='Security: '+network.security;
- const field=document.getElementById('wifi-password');field.value='';field.disabled=network.security==='Open';field.placeholder=field.disabled?'No password required':'Enter Wi-Fi password';
+ const field=document.getElementById('wifi-password');field.value='';const saved=(window.savedWifiSsids||[]).includes(network.ssid);field.disabled=saved||network.security==='Open';field.placeholder=saved?'Saved credentials will be reused':(field.disabled?'No password required':'Enter Wi-Fi password');
 }
 async function saveHotspotPassword(){
  const output=document.getElementById('hotspot-result');
@@ -217,7 +217,7 @@ async function connectWifi(){
   const current=(wifi.devices||[]).find(d=>d.state==='connected');
   if(!current||!current.connection)throw Error('No existing Wi-Fi connection to restore. Use Ethernet for initial setup.');
   const profiles=await (await fetch('/api/wifi/profiles')).json();
-  const saved=(profiles.profiles||[]).find(p=>p.name===selectedWifi.ssid);
+  const saved=(profiles.profiles||[]).find(p=>p.ssid===selectedWifi.ssid);
   const payload=saved?{action:'connect_saved',interface:current.device,previous_connection:current.connection,target_ssid:selectedWifi.ssid,profile_uuid:saved.uuid}:{action:'connect_new',interface:current.device,previous_connection:current.connection,target_ssid:selectedWifi.ssid,password};
   const response=await fetch('/api/wifi/control',{method:'POST',headers:{'Content-Type':'application/json','X-Configurator-Token':token},body:JSON.stringify(payload)});
   const result=await response.json();
@@ -248,10 +248,11 @@ function renderWifiNetworks(networks){
   const name=document.createElement('strong');name.textContent=network.ssid;
   const meta=document.createElement('div');meta.className='muted';
   const connected=!!network.connected;
+  const saved=(window.savedWifiSsids||[]).includes(network.ssid);
   meta.textContent=(network.security||'Open')+' · signal '+network.signal+'%'+(connected?' · Connected':'');
   details.append(name,meta);
   const select=document.createElement('button');select.type='button';
-  select.textContent=connected?'Connected':'Select';
+  select.textContent=connected?'Connected':(saved?'Connect saved':'Select');
   select.disabled=connected;
   select.onclick=()=>selectWifiNetwork(network);
   item.append(details,select);target.append(item);
@@ -263,8 +264,9 @@ async function scanWifi(){
  const wifi=await (await fetch('/api/wifi',{cache:'no-store'})).json();
  const active=(wifi.devices||[]).filter(d=>d.state==='connected').map(d=>d.connection||'');
  const profiles=await (await fetch('/api/wifi/profiles',{cache:'no-store'})).json();
- const activeProfiles=(profiles.profiles||[]).filter(p=>p.active).map(p=>p.name||'');
- const networks=data.networks.map(n=>({...n,connected:active.some(c=>c===n.ssid||c.endsWith('-'+n.ssid))||activeProfiles.some(c=>c===n.ssid||c.endsWith('-'+n.ssid))}));
+ window.savedWifiSsids=(profiles.profiles||[]).map(p=>p.ssid);
+ const activeProfiles=(profiles.profiles||[]).filter(p=>p.active).map(p=>p.ssid||'');
+ const networks=data.networks.map(n=>({...n,connected:activeProfiles.includes(n.ssid)||(!activeProfiles.length&&active.some(c=>c===n.ssid))}));
  status.textContent=networks.length+' network(s) found. Select a network to connect using the recovery-protected helper.';
  document.getElementById('wifi-selection').hidden=true;document.getElementById('wifi-password').value='';renderWifiNetworks(networks);
  }catch(err){status.textContent=err.message}
