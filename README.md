@@ -23,36 +23,33 @@ Development targets Raspberry Pi 5, with Raspberry Pi 3 as a production target. 
 
 For a physical board you need a compatible 64×32 RGB LED matrix, appropriate power supply, and an RGB matrix interface/HAT supported by the `rpi-rgb-led-matrix` driver. **The web emulator does not require matrix hardware.** Hardware wiring and service setup depend on the interface used.
 
-## Get started (browser emulator)
+## Quick installation (browser emulator)
 
-These steps run the Python application directly from a checkout. They are useful for first-time setup and testing before installing it as a background service.
+On Raspberry Pi OS Lite Bookworm or Trixie, sign in as your normal user (not root), then run:
 
-1. Install Git and Python 3 on the Raspberry Pi.
-2. Clone the project and check out the current preview branch:
+```bash
+sudo apt update
+sudo apt install -y git
+git clone -b feature/0.1.0-core-foundation https://github.com/mcangeli/universal-led-scoreboard.git
+cd universal-led-scoreboard
+bash scripts/install.sh
+```
 
-   ```bash
-   git clone https://github.com/mcangeli/universal-led-scoreboard.git
-   cd universal-led-scoreboard
-   git switch feature/0.1.0-core-foundation
-   ```
+The installer installs basic Python dependencies, prompts for a 12+ character administrator password on a new installation, and creates and enables the **user-level** `universal-led-scoreboard.service`. It also enables systemd user lingering so the service can start after boot without an interactive login. It preserves existing application configuration and credentials when rerun. It does **not** install the physical RGB matrix driver.
 
-3. Set the administrator password (minimum 12 characters):
+Open `http://<pi-ip>:8080` from another device on the same network and sign in. Select **Open Board View** to preview the 64×32 output.
 
-   ```bash
-   python3 -m universal_led.configurator --set-admin-password
-   ```
+Optional installer flags:
 
-4. Start the web configurator:
+```bash
+bash scripts/install.sh --skip-apt   # dependencies already installed
+bash scripts/install.sh --no-start   # install and enable service, but don't launch it
+bash scripts/install.sh --port 8081  # use a different HTTP port
+```
 
-   ```bash
-   python3 -m universal_led.configurator --host 0.0.0.0 --port 8080
-   ```
+To run without installing a service, set the administrator password with `python3 -m universal_led.configurator --set-admin-password`, then launch `python3 -m universal_led.configurator --host 0.0.0.0 --port 8080` from the checkout.
 
-5. On a device on the same network, open `http://<raspberry-pi-ip>:8080`, sign in, and use **Open Board View** to see the emulator. On the Pi itself, use `http://localhost:8080`.
-
-The default configuration directory is `~/.config/universal-led-scoreboard`. To use a different directory, pass `--config-dir /path/to/config` to both the password-setup and server commands. Stop a foreground server with Ctrl+C.
-
-**Security:** Port 8080 serves HTTP. Keep it on a trusted LAN; use HTTPS through a properly configured reverse proxy before making it accessible outside your network. Do not expose the configurator directly to the internet.
+**Security:** The configurator uses HTTP on the LAN. Do not expose port 8080 to the public internet without HTTPS and appropriate access controls.
 
 ## Configure and use
 
