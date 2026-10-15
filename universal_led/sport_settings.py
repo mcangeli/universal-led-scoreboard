@@ -9,7 +9,8 @@ DEFAULT_SETTINGS={
     'version':1,
     'active_sport':'mlb',
     'sports':{name:{'enabled':name=='mlb'} for name in SPORTS},
-    'mlb':{'favorite_team':'ATL','mode':'fallback','refresh_seconds':60,'rotation_seconds':12}
+    'mlb':{'favorite_team':'ATL','mode':'fallback','refresh_seconds':60,'rotation_seconds':12,
+           'live_classic_percent':50,'live_matchup_percent':25}
 }
 
 def validate_settings(value):
@@ -30,8 +31,19 @@ def validate_settings(value):
     if value['active_sport']!='mlb':
         raise ValueError('Only MLB is supported by the current rendering engine')
     mlb=value['mlb']
-    if not isinstance(mlb,dict) or set(mlb)!=set(DEFAULT_SETTINGS['mlb']):
+    if not isinstance(mlb,dict):
         raise ValueError('Invalid MLB settings')
+    # Older settings.json files predate the live-page split. Preserve them.
+    legacy_keys=set(DEFAULT_SETTINGS['mlb'])-{'live_classic_percent','live_matchup_percent'}
+    if set(mlb) not in (legacy_keys,set(DEFAULT_SETTINGS['mlb'])):
+        raise ValueError('Invalid MLB settings')
+    mlb=dict(DEFAULT_SETTINGS['mlb']) | mlb
+    value=dict(value,mlb=mlb)
+    for key in ('live_classic_percent','live_matchup_percent'):
+        if type(mlb[key]) is not int or not 0<=mlb[key]<=100:
+            raise ValueError(key+' must be between 0 and 100')
+    if mlb['live_classic_percent']<1 or mlb['live_classic_percent']+mlb['live_matchup_percent']>100:
+        raise ValueError('Invalid live screen allocation')
     if not isinstance(mlb['favorite_team'],str) or len(mlb['favorite_team'])!=3 or not mlb['favorite_team'].isalpha():
         raise ValueError('Favorite team must be a three-letter abbreviation')
     if mlb['mode'] not in ('favorite','fallback','all'):
