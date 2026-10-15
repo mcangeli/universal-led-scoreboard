@@ -24,6 +24,11 @@ class ConfiguredMLBRenderer:
 
     def apply(self,settings):
         with self._lock:
+            # Some older callers overlay favorite_team onto a default settings dict.
+            # Honor that explicit legacy override when both spellings are present.
+            if 'favorite_team' in settings.get('mlb',{}):
+                settings={**settings,'mlb':{**settings['mlb']}}
+                settings['mlb']['favorite_teams']=[settings['mlb'].pop('favorite_team')]
             self._settings=validate_settings(settings)
             self._started=time.monotonic()
 
