@@ -82,6 +82,31 @@ class SwitchReservationTests(unittest.TestCase):
         with self.assertRaises(PermissionError):
             reserve_switch('wlan0', 'Home', TOKEN, directory=alias)
 
+    def test_interrupted_creation_removes_partial_state(self):
+        with patch('universal_led.wifi_switch_reservations.json.dump',
+                   side_effect=OSError('interrupted write')):
+            with self.assertRaises(OSError):
+                self.reserve()
+        self.assertFalse((self.directory / (TOKEN + '.json')).exists())
+        self.reserve()
+
+    def test_directory_sync_failure_removes_new_reservation(self):
+        with patch('universal_led.wifi_switch_reservations._sync_directory',
+                   side_effect=OSError('directory sync failed')):
+            with self.assertRaises(OSError):
+                self.reserve()
+        self.assertFalse((self.directory / (TOKEN + '.json')).exists())
+
+    def test_resolve_write_failure_preserves_pending(self):
+        self.reserve()
+        with patch('universal_led.wifi_switch_reservations.json.dump',
+                   side_effect=OSError('interrupted replacement')):
+            with self.assertRaises(OSError):
+                resolve_switch(TOKEN, 'confirmed', directory=self.directory)
+        self.assertEqual(json.loads((self.directory / (TOKEN + '.json')).read_text())['phase'],
+                         'pending')
+        self.assertFalse((self.directory / ('.' + TOKEN + '.tmp')).exists())
+
     def test_non_root_rejected(self):
         with patch('universal_led.wifi_switch_reservations.os.geteuid', return_value=1000):
             with self.assertRaises(PermissionError):
