@@ -25,20 +25,29 @@ class ConfiguredMLBRenderer:
             self._settings=settings
             self._started=time.monotonic()
 
-    def game(self):
+    def _selection(self):
+        """Keep game and pregame page on the same rotation clock."""
         settings=self.settings()['mlb']
         games=select_games(self.feed.games(),settings['favorite_team'],settings['mode'])
         if not games:
-            return None
+            return None,0
         with self._lock:
-            index=int((time.monotonic()-self._started)//settings['rotation_seconds'])%len(games)
-        return games[index]
+            elapsed=max(0.0,time.monotonic()-self._started)
+        slot=settings['rotation_seconds']
+        index=int(elapsed//slot)%len(games)
+        game=games[index]
+        # Three pages per selected game's own slot, regardless of how many
+        # other games are in rotation. Live/final games have one stable page.
+        within=elapsed%slot
+        page=min(2,int(within*3/slot)) if game.status=='pregame' else 0
+        return game,page
+
+    def game(self):
+        return self._selection()[0]
 
     def frame(self):
         palette=read_config(self.directory)
-        game=self.game()
+        game,page=self._selection()
         if not game:
             return splash()
-        # Each pregame page gets a fixed interval; live/final remain unchanged.
-        page=int((time.monotonic()-self._started)//6)%3 if game.status=='pregame' else 0
         return MLBPaletteScreen(game,palette['teams'],palette['scoreboard'],pregame_page=page).render()
