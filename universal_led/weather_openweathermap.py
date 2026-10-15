@@ -19,7 +19,7 @@ def fetch_openweathermap(location, unit='fahrenheit', api_key='', *, get_json=No
     get_json = get_json or _get_json
     units = 'imperial' if unit == 'fahrenheit' else 'metric'
     query = location.strip()
-    zip_match = re.fullmatch(r'(\\d{5})(?:-\\d{4})?(?:,\\s*US)?', query, re.IGNORECASE)
+    zip_match = re.fullmatch(r'(\d{5})(?:-\d{4})?(?:,\s*US)?', query, re.IGNORECASE)
     display_location = None
     if zip_match:
         zip_args = urlencode({'zip': zip_match.group(1) + ',US', 'appid': api_key.strip()})
