@@ -46,7 +46,7 @@ class MLBClassicV9Screen:
             fb.pixel(x,25,(28,37,48))
         if g.status == 'pregame':
             label=start_label(g.start_time)
-            # Compact glyphs lack punctuation; render clock digits + AM/PM.
+            # Compact font includes colon and spacing for readable clock time.
             if label == 'PREGAME':
                 small(fb,'PREGAME',2,27,GOLD)
             else:
