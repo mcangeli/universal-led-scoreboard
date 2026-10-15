@@ -40,7 +40,7 @@ def parse_live_pitch_details(payload: dict) -> LivePitchDetails:
     previous = None
     # The current at-bat is incomplete, so prefer the last completed play.
     for play in reversed(plays):
-        if play is current or not (play.get('about') or {}).get('isComplete',False):
+        if not (play.get('about') or {}).get('isComplete',False):
             continue
         description = str((play.get('result') or {}).get('description') or '').strip()
         if description:
