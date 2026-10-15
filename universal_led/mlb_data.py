@@ -77,6 +77,13 @@ def parse_schedule(payload: dict, team: str | None = None) -> list[BaseballGame]
             def hits_errors(which, key):
                 return max(0,int(((ls_teams.get(which) or {}).get(key)) or 0))
             inning = max(1, int(ls.get('currentInning') or 1))
+            def record(side):
+                league = side.get('leagueRecord') or {}
+                wins, losses = league.get('wins'), league.get('losses')
+                return f'{wins}-{losses}' if isinstance(wins,int) and isinstance(losses,int) else None
+            def probable(side):
+                pitcher = side.get('probablePitcher') or {}
+                return str(pitcher.get('fullName') or '').strip() or None
             games.append(BaseballGame(
                 away=a, home=h,
                 away_runs=stat(away,'score'), home_runs=stat(home,'score'),
@@ -86,7 +93,9 @@ def parse_schedule(payload: dict, team: str | None = None) -> list[BaseballGame]
                 inning_half='top' if ls.get('isTopInning',True) else 'bottom',
                 outs=min(3,max(0,int(ls.get('outs') or 0))),
                 bases=(occupied('first'),occupied('second'),occupied('third')),
-                status=status, start_time=item.get('gameDate')))
+                status=status, start_time=item.get('gameDate'),
+                away_record=record(away), home_record=record(home),
+                away_probable=probable(away), home_probable=probable(home)))
     return games
 
 class MLBFeed:
@@ -106,7 +115,7 @@ class MLBFeed:
 
     def _fetch(self):
         day = self.date or datetime.now().astimezone().date().isoformat()
-        url = API + '?' + urlencode({'sportId':1,'date':day,'hydrate':'linescore'})
+        url = API + '?' + urlencode({'sportId':1,'date':day,'hydrate':'linescore,probablePitcher'})
         with urlopen(url,timeout=8) as response:
             return json.load(response)
 
