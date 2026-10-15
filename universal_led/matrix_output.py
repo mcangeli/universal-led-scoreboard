@@ -9,6 +9,10 @@ from .display import Framebuffer
 
 def create_matrix(*, rows=32, cols=64, chain_length=1, parallel=1,
                   gpio_mapping="adafruit-hat", brightness=40, gpio_slowdown=2):
+    if rows <= 0 or cols <= 0 or chain_length <= 0 or parallel <= 0:
+        raise ValueError("Matrix dimensions and chain counts must be positive")
+    if not 1 <= brightness <= 100 or gpio_slowdown < 0:
+        raise ValueError("Invalid brightness or GPIO slowdown")
     try:
         from rgbmatrix import RGBMatrix, RGBMatrixOptions
     except ImportError as exc:
@@ -16,10 +20,6 @@ def create_matrix(*, rows=32, cols=64, chain_length=1, parallel=1,
             "rgbmatrix Python bindings are missing. Install the rpi-rgb-led-matrix "
             "Python bindings before enabling physical output."
         ) from exc
-    if rows <= 0 or cols <= 0 or chain_length <= 0 or parallel <= 0:
-        raise ValueError("Matrix dimensions and chain counts must be positive")
-    if not 1 <= brightness <= 100 or gpio_slowdown < 0:
-        raise ValueError("Invalid brightness or GPIO slowdown")
     options = RGBMatrixOptions()
     options.rows = rows
     options.cols = cols
