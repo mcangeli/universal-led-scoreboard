@@ -1,9 +1,17 @@
 import unittest
-from universal_led.mlb_classic import BaseballGame
+from universal_led.mlb_classic import BaseballGame, SMALL
 from universal_led.mlb_data import parse_schedule
 from universal_led.mlb_palette_v11 import MLBPaletteScreen
 
 class PregameRotationTests(unittest.TestCase):
+    def test_compact_font_covers_pitcher_names(self):
+        self.assertTrue(all(letter in SMALL for letter in 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'))
+
+    def test_detail_separator_is_present(self):
+        game=BaseballGame(status='pregame')
+        frame=MLBPaletteScreen(game,pregame_page=1).render()
+        self.assertTrue(all(pixel != (0,0,0) for pixel in frame.pixels[7]))
+
     def test_schedule_probables_and_records(self):
         side=lambda id, name: {'team':{'id':id},'leagueRecord':{'wins':20,'losses':10},
                                 'probablePitcher':{'fullName':name}}
