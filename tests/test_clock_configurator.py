@@ -9,8 +9,10 @@ class ClockConfiguratorTests(unittest.TestCase):
             with self.subTest(marker=marker):
                 self.assertIn(marker,HTML)
 
-    def test_weather_controls_remain_disabled(self):
-        self.assertIn('id="weather-enabled" type="checkbox" disabled',HTML)
+    def test_weather_controls_enabled(self):
+        self.assertIn('id="weather-enabled" type="checkbox"',HTML)
+        self.assertIn('id="weather-provider"',HTML)
+        self.assertIn('id="weather-key" type="password"',HTML)
 
     def test_clock_configuration_is_valid(self):
         settings=dict(DEFAULT_TIME_WEATHER,clock_enabled=True,timezone='America/Chicago',time_format='24h',rotation_interval=3)
