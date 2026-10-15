@@ -11,7 +11,7 @@ class SavedWifiProfilesTests(unittest.TestCase):
                   'Ethernet:33333333-3333-3333-3333-333333333333:802-3-ethernet:eth0\n')
         def runner(args, **kw):
             if '802-11-wireless.ssid,802-11-wireless.mode' in args:
-                return SimpleNamespace(returncode=0, stdout=('Home:Office\\ninfra\\n' if args[-1].startswith('111') else 'Guest\\ninfra\\n'))
+                return SimpleNamespace(returncode=0, stdout=('Home:Office\ninfra\n' if args[-1].startswith('111') else 'Guest\ninfra\n'))
             return SimpleNamespace(returncode=0, stdout=output)
         result = saved_wifi_profiles(run=runner)
         self.assertTrue(result['available'])
@@ -31,12 +31,12 @@ class SavedWifiProfilesTests(unittest.TestCase):
         self.assertEqual(seen[-2:], ['connection', 'show'])
 
     def test_profile_name_differs_from_ssid_and_hotspot_excluded(self):
-        rows = ('netplan-wlan0-Cafe:11111111-1111-1111-1111-111111111111:wifi:wlan0\\n'
-                'Universal-LED-Setup:22222222-2222-2222-2222-222222222222:wifi:--\\n')
+        rows = ('netplan-wlan0-Cafe:11111111-1111-1111-1111-111111111111:wifi:wlan0\n'
+                'Universal-LED-Setup:22222222-2222-2222-2222-222222222222:wifi:--\n')
         def runner(args, **kw):
             if args[-2:] == ['connection', 'show']:
                 return SimpleNamespace(returncode=0, stdout=rows)
-            return SimpleNamespace(returncode=0, stdout='Cafe\\ninfra\\n' if args[-1].startswith('111') else 'Universal-LED-Setup\\nap\\n')
+            return SimpleNamespace(returncode=0, stdout='Cafe\ninfra\n' if args[-1].startswith('111') else 'Universal-LED-Setup\nap\n')
         result = saved_wifi_profiles(run=runner)
         self.assertEqual(len(result['profiles']), 1)
         self.assertEqual(result['profiles'][0]['ssid'], 'Cafe')
