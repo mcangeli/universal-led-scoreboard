@@ -32,6 +32,12 @@ SMALL={
 'N':('101','111','111','111','101'),
 'F':('111','100','110','100','100'),
 'G':('111','100','101','101','111'),
+'B':('110','101','110','101','110'),
+'C':('111','100','100','100','111'),
+'K':('101','101','110','101','101'),
+'W':('101','101','111','111','101'),
+'-':('000','000','111','000','000'),
+'.':('000','000','000','000','010'),
 'A':('010','101','111','101','101'),
 'L':('100','100','100','100','111'),
 'P':('110','101','110','100','100'),
@@ -66,6 +72,10 @@ class BaseballGame:
     bases: tuple[bool,bool,bool] = (True,False,True)
     status: Status = 'live'
     start_time: str | None = None  # ISO 8601 gameDate from MLB schedule
+    away_record: str | None = None
+    home_record: str | None = None
+    away_probable: str | None = None
+    home_probable: str | None = None
     def __post_init__(self):
         if len(self.away)!=3 or len(self.home)!=3:
             raise ValueError('Three-letter team abbreviations required')
