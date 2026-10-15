@@ -23,7 +23,8 @@ class PaletteV11Tests(unittest.TestCase):
     def test_outs_and_bases(self):
         f=self.screen()
         self.assertEqual(f.pixels[28][20],(10,11,12))
-        self.assertEqual(f.pixels[28][24],(4,5,6))
+        self.assertEqual(f.pixels[28][24],(0,0,0))
+        self.assertEqual(f.pixels[27][23],(4,5,6))
         self.assertEqual(f.pixels[29][45],(7,8,9))
         self.assertEqual(f.pixels[27][50],(4,5,6))
     def test_status_colors(self):
