@@ -29,7 +29,7 @@ class WeatherWorker:
                 self._provider=provider
                 # Reset cache when provider changes; do not show data from the old provider.
                 if isinstance(self.cache,BackgroundWeather):
-                    self.cache._key=None
+                    self.cache.invalidate()
             self.cache.update(settings['location'], settings['temperature_unit'])
 
     def start(self):
