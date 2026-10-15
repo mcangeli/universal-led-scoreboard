@@ -11,10 +11,33 @@ class MLBPaletteScreen:
     team_colors: dict = field(default_factory=lambda: load_palette()[0])
     scoreboard_colors: dict = field(default_factory=lambda: load_palette()[1])
     name: str = 'mlb-palette-v11'
+    pregame_page: int = 0
+
+    def _pregame_detail(self) -> Framebuffer:
+        g=self.game
+        c=self.scoreboard_colors
+        fb=Framebuffer(64,32)
+        page=self.pregame_page % 3
+        small(fb,'STARTERS' if page==1 else 'RECORDS',1,1,c['accent'])
+        for y,team,value in ((10,g.away,g.away_probable if page==1 else g.away_record),
+                             (20,g.home,g.home_probable if page==1 else g.home_record)):
+            small(fb,team,1,y,self.team_colors.get(team,c['text']))
+            if page==1:
+                # Names are shortened to last names to fit the 64-pixel matrix.
+                label=(value or 'TBD').split()[-1]
+            else:
+                label=value or 'TBD'
+            # Unsupported letters are replaced, not allowed to crash rendering.
+            from .mlb_classic import SMALL
+            label=''.join(ch if ch in SMALL else ' ' for ch in label.upper())[:11]
+            small(fb,label,17,y,c['text'])
+        return fb
 
     def render(self) -> Framebuffer:
         g=self.game
         c=self.scoreboard_colors
+        if g.status == 'pregame' and self.pregame_page % 3:
+            return self._pregame_detail()
         fb=Framebuffer(64,32)
         for label,right in zip('RHE',(46,54,62)):
             small(fb,label,right-2,1,c['accent'])
