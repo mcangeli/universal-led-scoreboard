@@ -81,11 +81,14 @@ class MLBPaletteScreen:
             fb.pixel(arrow_x,arrow_y,c['accent'])
             fb.pixel(arrow_x-1,28 if top else 30,c['accent'])
             fb.pixel(arrow_x+1,28 if top else 30,c['accent'])
+            # Three distinct two-pixel out lamps: illuminated means an out.
             for i in range(3):
                 for y in (28,29):
                     fb.pixel(20+i*4,y,c['error'] if i<g.outs else c['dim'])
-            for x,y,on in ((50,27,g.bases[1]),(45,29,g.bases[2]),(55,29,g.bases[0])):
+            # Draw true 3x3 diamond markers, not T-shaped dots.
+            # Bases tuple is (first, second, third), ordered spatially below.
+            for x,y,on in ((50,28,g.bases[1]),(45,30,g.bases[2]),(55,30,g.bases[0])):
                 color=c['accent'] if on else c['dim']
-                for dx,dy in ((0,0),(-1,0),(1,0),(0,1)):
+                for dx,dy in ((0,-1),(-1,0),(0,0),(1,0),(0,1)):
                     fb.pixel(x+dx,y+dy,color)
         return fb
