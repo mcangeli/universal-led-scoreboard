@@ -88,10 +88,19 @@ class MLBPaletteScreen:
             fb.pixel(arrow_x,arrow_y,c['accent'])
             fb.pixel(arrow_x-1,28 if top else 30,c['accent'])
             fb.pixel(arrow_x+1,28 if top else 30,c['accent'])
-            # Three distinct two-pixel out lamps: illuminated means an out.
+            # Original-style outlined out lamps: filled squares indicate outs.
+            # A 3x3 footprint leaves room for the inning, count and bases.
             for i in range(3):
-                for y in (28,29):
-                    fb.pixel(20+i*4,y,c['error'] if i<g.outs else c['dim'])
+                x=19+i*4
+                for dx in range(3):
+                    for dy in range(3):
+                        edge=dx in (0,2) or dy in (0,2)
+                        if edge or i<g.outs:
+                            fb.pixel(x+dx,27+dy,c['error'] if i<g.outs else c['dim'])
+            # Live ball-strike count on Classic, without replacing Matchup.
+            # Two-digit inning labels already use the space left of the outs.
+            if g.balls is not None and g.strikes is not None:
+                small(fb,f'{g.balls}-{g.strikes}',32,27,c['text'])
             # Draw true 3x3 diamond markers, not T-shaped dots.
             # Bases tuple is (first, second, third), ordered spatially below.
             for x,y,on in ((50,28,g.bases[1]),(45,30,g.bases[2]),(55,30,g.bases[0])):
