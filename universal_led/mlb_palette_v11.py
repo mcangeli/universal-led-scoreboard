@@ -19,11 +19,15 @@ class MLBPaletteScreen:
         fb=Framebuffer(64,32)
         page=self.pregame_page % 3
         small(fb,'STARTERS' if page==1 else 'RECORDS',1,1,c['accent'])
+        for x in range(64):
+            fb.pixel(x,7,c['separator'])
         for y,team,value in ((10,g.away,g.away_probable if page==1 else g.away_record),
                              (20,g.home,g.home_probable if page==1 else g.home_record)):
             small(fb,team,1,y,self.team_colors.get(team,c['text']))
             if page==1:
                 # Names are shortened to last names to fit the 64-pixel matrix.
+                # Preserve surname particles/hyphenation when possible; compact
+                # text is deliberately clipped to the allotted 11 glyphs.
                 label=(value or 'TBD').split()[-1]
             else:
                 label=value or 'TBD'
