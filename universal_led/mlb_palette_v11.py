@@ -78,6 +78,12 @@ class MLBPaletteScreen:
             small(fb,'DELAY',2,27,c['error'])
         elif g.status=='postponed':
             small(fb,'PPD',2,27,c['error'])
+        elif g.status=='live' and (g.inning_state or '').lower() in ('middle','end'):
+            # Between innings: do not display stale counts, outs or runners.
+            # The next half-inning has not started yet.
+            state='MID' if g.inning_state.lower()=='middle' else 'END'
+            small(fb,state,2,27,c['accent'])
+            small(fb,str(min(g.inning,99)),20,27,c['text'])
         else:
             inning_label=str(min(g.inning,99))
             small(fb,inning_label,2,27,c['accent'])
