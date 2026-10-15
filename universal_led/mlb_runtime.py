@@ -2,6 +2,10 @@
 from __future__ import annotations
 import threading
 import time
+import json
+from dataclasses import replace
+from urllib.request import urlopen
+from .mlb_live_feed import parse_live_pitch_details
 from .mlb_data import MLBFeed
 from .mlb_classic import BaseballGame
 
@@ -17,8 +21,10 @@ def select_games(games: list[BaseballGame], team: str | None = 'ATL',
 
 class BackgroundMLBFeed:
     """Only the worker calls the network. Browser requests read cached snapshots."""
-    def __init__(self, feed: MLBFeed):
+    def __init__(self, feed: MLBFeed, fetch_live=None):
         self.feed = feed
+        self.fetch_live = fetch_live or self._fetch_live
+        self.live_error: str | None = None
         self._stop = threading.Event()
         self._thread: threading.Thread | None = None
         self._lock = threading.Lock()
@@ -27,11 +33,32 @@ class BackgroundMLBFeed:
         self.last_attempt: float | None = None
         self.last_success: float | None = None
 
+    @staticmethod
+    def _fetch_live(game_pk):
+        with urlopen(f'https://statsapi.mlb.com/api/v1.1/game/{game_pk}/feed/live',timeout=5) as response:
+            return json.load(response)
+
     def refresh_once(self):
         games = self.feed.games()
+        live_errors=[]
+        enriched=[]
+        for game in games:
+            if game.status != 'live' or not isinstance(game.game_pk,int):
+                enriched.append(game)
+                continue
+            try:
+                details=parse_live_pitch_details(self.fetch_live(game.game_pk))
+                enriched.append(replace(game,pitch_count=details.pitch_count,
+                                        pitch_speed_mph=details.pitch_speed_mph,
+                                        previous_play=details.previous_play))
+            except Exception as exc:
+                live_errors.append(f'{game.game_pk}: {exc}')
+                enriched.append(game)
+        games=enriched
         now = time.time()
         with self._lock:
             self._games = games
+            self.live_error = '; '.join(live_errors) if live_errors else None
             self.last_error = self.feed.last_error
             self.last_attempt = now
             if self.last_error is None:
