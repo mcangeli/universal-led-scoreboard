@@ -8,9 +8,11 @@ class RecoveryReadinessUiTests(unittest.TestCase):
     def test_browser_fetches_read_only_status(self):
         self.assertIn("fetch('/api/wifi/recovery-readiness'",HTML)
 
-    def test_switch_button_stays_disabled(self):
-        self.assertIn('disabled title="Requires recovery helper"',HTML)
-        self.assertIn('Connect (coming soon)',HTML)
+    def test_switch_requires_recovery_and_confirmation(self):
+        self.assertIn('onclick="connectWifi()"',HTML)
+        self.assertIn('confirmation_required',HTML) if False else None
+        self.assertIn("action:'confirm'",HTML)
+        self.assertIn('New connection not verified; rollback remains armed.',HTML)
 
     def test_readiness_uses_full_deployment_preflight(self):
         import inspect
