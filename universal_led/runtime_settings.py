@@ -30,7 +30,7 @@ class ConfiguredMLBRenderer:
     def _selection(self):
         """Keep game and pregame page on the same rotation clock."""
         settings=self.settings()['mlb']
-        games=select_games(self.feed.games(),settings['favorite_team'],settings['mode'])
+        games=select_games(self.feed.games(),settings['favorite_teams'],settings['mode'])
         if not games:
             return None,0
         with self._lock:
