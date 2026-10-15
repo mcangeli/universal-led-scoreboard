@@ -9,7 +9,7 @@ DEFAULT_SETTINGS={
     'version':1,
     'active_sport':'mlb',
     'sports':{name:{'enabled':name=='mlb'} for name in SPORTS},
-    'mlb':{'favorite_team':'ATL','mode':'fallback','refresh_seconds':60,'rotation_seconds':12,
+    'mlb':{'favorite_teams':['ATL'],'mode':'fallback','refresh_seconds':60,'rotation_seconds':12,
            'live_classic_percent':50,'live_matchup_percent':25}
 }
 
@@ -35,8 +35,14 @@ def validate_settings(value):
         raise ValueError('Invalid MLB settings')
     # Older settings.json files predate the live-page split. Preserve them.
     legacy_keys=set(DEFAULT_SETTINGS['mlb'])-{'live_classic_percent','live_matchup_percent'}
-    if set(mlb) not in (legacy_keys,set(DEFAULT_SETTINGS['mlb'])):
+    current_keys=set(DEFAULT_SETTINGS['mlb'])
+    allowed_legacy=(current_keys-{'favorite_teams'})|{'favorite_team'}
+    if set(mlb) not in (current_keys,current_keys-{'live_classic_percent','live_matchup_percent'},
+                        allowed_legacy,allowed_legacy-{'live_classic_percent','live_matchup_percent'}):
         raise ValueError('Invalid MLB settings')
+    mlb=dict(mlb)
+    if 'favorite_team' in mlb:
+        mlb['favorite_teams']=[mlb.pop('favorite_team')]
     mlb=dict(DEFAULT_SETTINGS['mlb']) | mlb
     value=dict(value,mlb=mlb)
     for key in ('live_classic_percent','live_matchup_percent'):
@@ -44,8 +50,11 @@ def validate_settings(value):
             raise ValueError(key+' must be between 0 and 100')
     if mlb['live_classic_percent']<1 or mlb['live_classic_percent']+mlb['live_matchup_percent']>100:
         raise ValueError('Invalid live screen allocation')
-    if not isinstance(mlb['favorite_team'],str) or len(mlb['favorite_team'])!=3 or not mlb['favorite_team'].isalpha():
-        raise ValueError('Favorite team must be a three-letter abbreviation')
+    teams=mlb['favorite_teams']
+    if (not isinstance(teams,list) or not teams or
+        any(not isinstance(t,str) or len(t)!=3 or not t.isalpha() or t!=t.upper() for t in teams) or
+        len(teams)!=len(set(teams))):
+        raise ValueError('Favorite teams must be a nonempty list of unique three-letter abbreviations')
     if mlb['mode'] not in ('favorite','fallback','all'):
         raise ValueError('Invalid rotation mode')
     for key in ('refresh_seconds','rotation_seconds'):
