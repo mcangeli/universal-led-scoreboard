@@ -2,7 +2,7 @@
 from dataclasses import dataclass, field
 from .display import Framebuffer
 from .mlb_classic import BaseballGame, small
-from .mlb_classic_v9 import start_label
+from .mlb_classic_v9 import start_label, draw_start_label
 from .colors import load_palette
 
 @dataclass(frozen=True)
@@ -34,8 +34,7 @@ class MLBPaletteScreen:
             fb.pixel(x,25,c['separator'])
         if g.status=='pregame':
             label=start_label(g.start_time)
-            # Only compact-font characters are supported.
-            small(fb,label[:9],2,27,c['accent'])
+            draw_start_label(fb,label,c['accent'],c['text'])
         elif g.status=='final':
             small(fb,'FINAL',2,27,c['accent'])
         elif g.status=='delayed':
