@@ -84,10 +84,19 @@ class ConfiguredMLBRenderer:
             if headlines:
                 with self._lock:
                     elapsed=max(0.0,time.monotonic()-self._started)
-                slot=self.settings()['mlb']['rotation_seconds']
-                if game is None or int(elapsed//slot)%5==4:
-                    item=headlines[int(elapsed//(slot*5))%len(headlines)]
-                    return NewsHeadlineScreen(item.text,item.source,offset=int(elapsed*3)).render()
+                config=self.settings()
+                slot=config['mlb']['rotation_seconds']
+                options=config['news']
+                interval=options['rotation_interval']
+                duration=options['headline_seconds']
+                # A fixed interval reserves one non-live slot for news.
+                # Within that slot, page through headlines at the chosen pace.
+                if game is None or int(elapsed//slot)%interval==interval-1:
+                    local=elapsed if game is None else elapsed%slot
+                    index=int(local//duration)%len(headlines)
+                    offset=int((local%duration)*options['scroll_chars_per_second'])
+                    item=headlines[index]
+                    return NewsHeadlineScreen(item.text,item.source,offset=offset).render()
         if not game:
             return splash()
         if page==3:
