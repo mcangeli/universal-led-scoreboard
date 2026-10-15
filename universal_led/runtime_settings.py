@@ -11,14 +11,16 @@ from .mlb_classic import BaseballGame
 from .display import splash
 from .news_screen import NewsHeadlineScreen
 from .clock_screen import ClockScreen
+from .weather_screen import WeatherScreen
 from .time_weather_settings import load_time_weather
 from .config_store import read_config
 
 class ConfiguredMLBRenderer:
-    def __init__(self,directory,feed,news=None):
+    def __init__(self,directory,feed,news=None,weather=None):
         self.directory=directory
         self.feed=feed
         self.news=news
+        self.weather=weather
         self._lock=threading.Lock()
         self._started=time.monotonic()
         self._settings=load_settings(directory)
@@ -92,6 +94,20 @@ class ConfiguredMLBRenderer:
                 # Without games, alternate clock and news/splash by slot.
                 if (game is None and int(elapsed//slot)%2==0) or (game is not None and int(elapsed//slot)%interval==0):
                     return ClockScreen(clock_settings['timezone'],clock_settings['time_format']).render()
+        # Only read an already-cached snapshot. Never perform weather HTTP here.
+        if game is None or game.status != 'live':
+            weather_settings=load_time_weather(self.directory)
+            if weather_settings['weather_enabled'] and self.weather is not None:
+                snapshot=self.weather.snapshot()
+                if snapshot is not None:
+                    with self._lock:
+                        elapsed=max(0.0,time.monotonic()-self._started)
+                    slot=self.settings()['mlb']['rotation_seconds']
+                    interval=weather_settings['rotation_interval']
+                    # Weather follows clock in the non-live rotation cycle.
+                    position=int(elapsed//slot)
+                    if (game is None and position%2==1) or (game is not None and position%interval==1%interval):
+                        return WeatherScreen(snapshot,weather_settings['temperature_unit']).render()
         # Never interrupt a live game with news.
         # Read cached items only; no network work happens in frame().
         if self.news is not None and (game is None or game.status != 'live'):
