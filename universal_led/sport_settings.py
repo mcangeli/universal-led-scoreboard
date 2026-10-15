@@ -10,12 +10,20 @@ DEFAULT_SETTINGS={
     'active_sport':'mlb',
     'sports':{name:{'enabled':name=='mlb','news_enabled':name=='mlb'} for name in SPORTS},
     'mlb':{'favorite_teams':['ATL'],'mode':'fallback','refresh_seconds':60,'rotation_seconds':12,
-           'live_classic_percent':50,'live_matchup_percent':25}
+           'live_classic_percent':50,'live_matchup_percent':25},
+    'news':{'rotation_interval':5,'headline_seconds':12,'scroll_chars_per_second':3}
 }
 
 def validate_settings(value):
-    if not isinstance(value,dict) or set(value)!=set(DEFAULT_SETTINGS):
+    if not isinstance(value,dict) or set(value) not in (set(DEFAULT_SETTINGS),set(DEFAULT_SETTINGS)-{'news'}):
         raise ValueError('Settings require version, active_sport, sports and mlb')
+    value=dict(value,news=dict(DEFAULT_SETTINGS['news']) | value.get('news',{}))
+    if set(value['news'])!=set(DEFAULT_SETTINGS['news']):
+        raise ValueError('Invalid news rotation settings')
+    for key,minimum,maximum in (('rotation_interval',1,20),('headline_seconds',3,120),('scroll_chars_per_second',1,15)):
+        number=value['news'][key]
+        if type(number) is not int or not minimum<=number<=maximum:
+            raise ValueError('Invalid news setting: '+key)
     if type(value['version']) is not int or value['version']!=1:
         raise ValueError('Unsupported settings version')
     if value['active_sport'] not in SPORTS:
