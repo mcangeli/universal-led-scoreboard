@@ -63,6 +63,11 @@ def execute(data, *, run=command):
         # The web server passes it only over the local sudo helper stdin.
         args = ['nmcli', '--ask', '--wait', '45', 'device', 'wifi', 'connect', ssid, 'ifname', interface]
         stdin = password + '\n' if password else None
+    # Never trust a browser-supplied rollback target. Confirm the actual active
+    # Wi-Fi connection on this interface before scheduling any change.
+    active = run(['nmcli', '-g', 'GENERAL.CONNECTION', 'device', 'show', interface])
+    if active.returncode != 0 or active.stdout.strip() != previous:
+        raise ValueError('Previous Wi-Fi connection does not match current state')
     token = arm_recovery(interface, previous)
     try:
         result = run(args, input=stdin)
