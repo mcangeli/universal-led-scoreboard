@@ -28,6 +28,23 @@ def execute(data, *, run=command):
         if set(data) != {'action', 'token'} or not isinstance(data['token'], str) or not TOKEN.fullmatch(data['token']):
             raise ValueError('Invalid confirmation')
         from universal_led.wifi_recovery_confirmation import confirm_recovery
+        from universal_led.wifi_recovery_scheduler import STATE_DIR
+        from universal_led.wifi_recovery import secure_open_state
+        path = STATE_DIR / (data['token'] + '.json')
+        try:
+            with secure_open_state(path) as handle:
+                pending = json.load(handle)
+        except FileNotFoundError:
+            return {'confirmed': False, 'reason': 'not_pending'}
+        if pending.get('token') != data['token'] or pending.get('phase') is not None:
+            return {'confirmed': False, 'reason': 'not_pending'}
+        interface = pending.get('interface', '')
+        previous = pending.get('previous_connection', '')
+        if not IFACE.fullmatch(interface):
+            raise ValueError('Invalid pending interface')
+        active = run(['nmcli', '-g', 'GENERAL.CONNECTION', 'device', 'show', interface])
+        if active.returncode != 0 or not active.stdout.strip() or active.stdout.strip() in (previous, '--'):
+            return {'confirmed': False, 'reason': 'new_connection_not_verified'}
         return confirm_recovery(data['token'])
     if action == 'hotspot':
         if set(data) != {'action', 'enabled'} or type(data['enabled']) is not bool:
