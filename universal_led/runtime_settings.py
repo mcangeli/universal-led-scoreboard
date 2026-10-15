@@ -1,6 +1,7 @@
 """Shared live settings snapshot for native configurator and MLB preview."""
 import threading
 import time
+from pathlib import Path
 from .sport_settings import load_settings, validate_settings
 from .mlb_runtime import select_games
 from .mlb_palette_v11 import MLBPaletteScreen
@@ -82,7 +83,7 @@ class ConfiguredMLBRenderer:
         # Clock is independent of sports, and never replaces a live game.
         if game is None or game.status != 'live':
             clock_settings=load_time_weather(self.directory)
-            if clock_settings['clock_enabled']:
+            if clock_settings['clock_enabled'] and (Path(self.directory)/'time_weather.json').exists():
                 with self._lock:
                     elapsed=max(0.0,time.monotonic()-self._started)
                 slot=self.settings()['mlb']['rotation_seconds']
