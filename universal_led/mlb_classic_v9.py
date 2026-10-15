@@ -18,6 +18,16 @@ def start_label(iso: str | None) -> str:
     except (ValueError, TypeError, OverflowError):
         return 'PREGAME'
 
+def draw_start_label(fb: Framebuffer, label: str, accent=GOLD, text=WHITE):
+    """Separate the clock from AM/PM for clarity on a 64x32 matrix."""
+    if label == 'PREGAME':
+        small(fb,label,2,27,accent)
+        return
+    clock, _, meridiem = label.partition(' ')
+    small(fb,clock,2,27,accent)
+    if meridiem in ('AM','PM'):
+        small(fb,meridiem,27,27,text)
+
 @dataclass(frozen=True)
 class MLBClassicV9Screen:
     game: BaseballGame = BaseballGame()
@@ -46,11 +56,7 @@ class MLBClassicV9Screen:
             fb.pixel(x,25,(28,37,48))
         if g.status == 'pregame':
             label=start_label(g.start_time)
-            # Compact font includes colon and spacing for readable clock time.
-            if label == 'PREGAME':
-                small(fb,'PREGAME',2,27,GOLD)
-            else:
-                small(fb,label[:9],2,27,GOLD)
+            draw_start_label(fb,label,GOLD,WHITE)
         elif g.status == 'final':
             small(fb,'FINAL',2,27,GOLD)
         elif g.status == 'delayed':
