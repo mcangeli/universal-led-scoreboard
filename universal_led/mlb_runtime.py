@@ -9,14 +9,15 @@ from .mlb_live_feed import parse_live_pitch_details
 from .mlb_data import MLBFeed
 from .mlb_classic import BaseballGame
 
-def select_games(games: list[BaseballGame], team: str | None = 'ATL',
+def select_games(games: list[BaseballGame], team: str | list[str] | None = 'ATL',
                  mode: str = 'fallback') -> list[BaseballGame]:
     """favorite: team only; fallback: team if playing else all; all: every game."""
     if mode not in ('favorite', 'fallback', 'all'):
         raise ValueError('mode must be favorite, fallback, or all')
     if mode == 'all' or not team:
         return list(games)
-    matches = [g for g in games if team.upper() in (g.away, g.home)]
+    favorites = {item.upper() for item in ([team] if isinstance(team,str) else team)}
+    matches = [g for g in games if g.away in favorites or g.home in favorites]
     return matches if matches or mode == 'favorite' else list(games)
 
 class BackgroundMLBFeed:
