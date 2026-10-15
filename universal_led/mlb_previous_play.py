@@ -9,6 +9,54 @@ def sanitize_play(text):
     return ''.join(ch if ch in SMALL else ' ' for ch in (text or '').upper())
 
 
+
+def wrap_play(text, width=16):
+    """Wrap at word boundaries; split only tokens wider than a full row."""
+    words=sanitize_play(text).split()
+    lines=[]
+    current=''
+    for word in words:
+        while len(word)>width:
+            if current:
+                lines.append(current)
+                current=''
+            lines.append(word[:width])
+            word=word[width:]
+        if not word:
+            continue
+        if not current:
+            current=word
+        elif len(current)+1+len(word)<=width:
+            current+=' '+word
+        else:
+            lines.append(current)
+            current=word
+    if current:
+        lines.append(current)
+    return lines or ['NO PLAY DATA']
+
+
+def visible_play_lines(text, offset=0, width=16):
+    """Show two complete wrapped rows; offset is a character-based scroll clock."""
+    lines=wrap_play(text,width)
+    if len(lines)<=2:
+        return (lines+[''])[:2]
+    # The animation clock advances in glyphs. Convert that to row starts
+    # so scrolling never begins in the middle of a word.
+    starts=[]
+    position=0
+    for line in lines:
+        starts.append(position)
+        position+=len(line)+1
+    index=0
+    for i,start in enumerate(starts):
+        if start<=max(0,offset):
+            index=i
+        else:
+            break
+    index=min(index,len(lines)-2)
+    return lines[index:index+2]
+
 @dataclass(frozen=True)
 class MLBPreviousPlayScreen:
     game: BaseballGame
@@ -22,13 +70,7 @@ class MLBPreviousPlayScreen:
         small(fb,'LAST PLAY',1,1,c['accent'])
         for x in range(64):
             fb.pixel(x,7,c['separator'])
-        message=sanitize_play(self.game.previous_play) or 'NO PLAY DATA'
-        # Render the scrolling text as two compact lines. Offset is measured
-        # in glyphs, making animation independent of the frame rate.
-        # Start with real content instead of a blank 16-character lead-in.
-        # Keep two rows visible and advance through longer descriptions.
-        offset=max(0,min(self.offset,max(0,len(message)-32)))
-        visible=message[offset:offset+32].ljust(32)
-        small(fb,visible[:16],0,12,c['text'])
-        small(fb,visible[16:],0,20,c['text'])
+        first,second=visible_play_lines(self.game.previous_play,self.offset)
+        small(fb,first,0,12,c['text'])
+        small(fb,second,0,20,c['text'])
         return fb
