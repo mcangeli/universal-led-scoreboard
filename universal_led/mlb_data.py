@@ -84,6 +84,18 @@ def parse_schedule(payload: dict, team: str | None = None) -> list[BaseballGame]
             def probable(side):
                 pitcher = side.get('probablePitcher') or {}
                 return str(pitcher.get('fullName') or '').strip() or None
+            # Live count and current matchup are present in hydrated linescore.
+            # Missing values stay unknown rather than being shown as zero.
+            count = ls.get('balls'), ls.get('strikes')
+            def optional_count(value, upper):
+                try:
+                    number = int(value)
+                    return number if 0 <= number <= upper else None
+                except (TypeError, ValueError):
+                    return None
+            def person_name(obj):
+                return str((obj or {}).get('fullName') or '').strip() or None
+            defense = ls.get('defense') or {}
             games.append(BaseballGame(
                 away=a, home=h,
                 away_runs=stat(away,'score'), home_runs=stat(home,'score'),
@@ -95,7 +107,10 @@ def parse_schedule(payload: dict, team: str | None = None) -> list[BaseballGame]
                 bases=(occupied('first'),occupied('second'),occupied('third')),
                 status=status, start_time=item.get('gameDate'),
                 away_record=record(away), home_record=record(home),
-                away_probable=probable(away), home_probable=probable(home)))
+                away_probable=probable(away), home_probable=probable(home),
+                balls=optional_count(count[0],4), strikes=optional_count(count[1],3),
+                pitcher=person_name(defense.get('pitcher')),
+                batter=person_name(offense.get('batter'))))
     return games
 
 class MLBFeed:
