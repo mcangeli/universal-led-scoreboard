@@ -77,7 +77,7 @@ class MultiSourceNewsFeed:
     def _fetch(url):
         request = Request(url,headers={'User-Agent':'UniversalLEDScoreboard/0.1 (RSS/Atom reader)'})
         with urlopen(request,timeout=8) as response:
-            return response.read()
+            return response.read(2_000_001)
 
     def items(self):
         with self._lock:
@@ -89,7 +89,13 @@ class MultiSourceNewsFeed:
                 if now>=self._next_refresh.get(source.name,0):
                     self._next_refresh[source.name]=now+source.refresh_seconds
                     try:
-                        self._cache[source.name]=parse_news_feed(self.fetch(source.url),source)
+                        payload=self.fetch(source.url)
+                        if len(payload)>2_000_000:
+                            raise ValueError('Feed exceeds 2 MB size limit')
+                        parsed=parse_news_feed(payload,source)
+                        if not parsed:
+                            raise ValueError('Feed returned no headlines')
+                        self._cache[source.name]=parsed
                         self.errors.pop(source.name,None)
                     except (OSError,ValueError,ElementTree.ParseError) as exc:
                         self.errors[source.name]=str(exc)
