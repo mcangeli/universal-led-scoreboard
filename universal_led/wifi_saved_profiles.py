@@ -30,7 +30,25 @@ def saved_wifi_profiles(*, run=subprocess.run):
         name, uuid, kind, device = parts
         if kind not in ('802-11-wireless', 'wifi') or not name or not uuid:
             continue
-        profiles.append({'name': name, 'uuid': uuid,
+        # Query only the SSID and mode, never secrets. Profile names may be
+        # netplan-wlan0-SSID and therefore cannot be used as SSIDs.
+        try:
+            details = run(['nmcli', '--get-values',
+                           '802-11-wireless.ssid,802-11-wireless.mode',
+                           'connection', 'show', 'uuid', uuid],
+                          capture_output=True, text=True, timeout=8, check=False)
+        except (OSError, subprocess.TimeoutExpired):
+            continue
+        if details.returncode:
+            continue
+        values = details.stdout.splitlines()
+        if not values or not values[0]:
+            continue
+        ssid = values[0]
+        mode = values[1] if len(values) > 1 else ''
+        if mode == 'ap':
+            continue
+        profiles.append({'name': name, 'ssid': ssid, 'uuid': uuid,
                          'interface': '' if device == '--' else device,
                          'active': device not in ('', '--')})
     return {'available': True, 'profiles': profiles, 'error': None}
