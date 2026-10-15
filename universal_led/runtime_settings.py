@@ -1,7 +1,7 @@
 """Shared live settings snapshot for native configurator and MLB preview."""
 import threading
 import time
-from .sport_settings import load_settings
+from .sport_settings import load_settings, validate_settings
 from .mlb_runtime import select_games
 from .mlb_palette_v11 import MLBPaletteScreen
 from .mlb_live_details import MLBLiveDetailsScreen
@@ -24,13 +24,13 @@ class ConfiguredMLBRenderer:
 
     def apply(self,settings):
         with self._lock:
-            self._settings=settings
+            self._settings=validate_settings(settings)
             self._started=time.monotonic()
 
     def _selection(self):
         """Keep game and pregame page on the same rotation clock."""
         settings=self.settings()['mlb']
-        games=select_games(self.feed.games(),settings['favorite_teams'],settings['mode'])
+        games=select_games(self.feed.games(),settings.get('favorite_teams',settings.get('favorite_team',['ATL'])),settings['mode'])
         if not games:
             return None,0
         with self._lock:
