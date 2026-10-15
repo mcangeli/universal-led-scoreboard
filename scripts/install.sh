@@ -4,13 +4,15 @@ SERVICE="universal-led-scoreboard.service"
 PORT=8080
 SKIP_APT=0
 NO_START=0
+OUTPUT_MODE=""
 INSTALL_DIR="$HOME/universal-led-scoreboard"
 usage() {
-  echo "Usage: bash scripts/install.sh [--skip-apt] [--no-start] [--port 8080] [--install-dir PATH]"
-  echo "Installs web configurator and emulator, NOT physical matrix drivers."
+  echo "Usage: bash scripts/install.sh [--skip-apt] [--no-start] [--port 8080] [--install-dir PATH] [--output physical|emulator|both|keep]"
+  echo "Optionally installs physical RGB matrix driver bindings."
 }
 while (($#)); do
   case "$1" in
+    --output) OUTPUT_MODE="${2:-}"; shift 2 ;;
     --skip-apt) SKIP_APT=1; shift ;;
     --no-start) NO_START=1; shift ;;
     --port) PORT="$2"; shift 2 ;;
@@ -29,6 +31,52 @@ if ((SKIP_APT == 0)); then
   sudo apt-get install -y python3 python3-venv python3-pip git
 fi
 INSTALL_DIR="$(cd "$INSTALL_DIR" && pwd -P)"
+# Output choice is preserved on upgrades unless explicitly changed.
+OUTPUT_FILE="$HOME/.config/universal-led-scoreboard/output-mode"
+if [[ -z "$OUTPUT_MODE" ]]; then
+  if [[ -t 0 ]]; then
+    echo "Display output: 1) Physical LED Matrix  2) Browser Emulator  3) Both  4) Keep existing"
+    read -r -p "Selection [4]: " selection
+    case "${selection:-4}" in
+      1) OUTPUT_MODE=physical ;; 2) OUTPUT_MODE=emulator ;;
+      3) OUTPUT_MODE=both ;; 4) OUTPUT_MODE=keep ;;
+      *) echo "Invalid selection" >&2; exit 2 ;;
+    esac
+  else
+    OUTPUT_MODE=keep
+  fi
+fi
+case "$OUTPUT_MODE" in
+  physical|emulator|both|keep) ;;
+  *) echo "Invalid --output (physical|emulator|both|keep)" >&2; exit 2 ;;
+esac
+if [[ "$OUTPUT_MODE" == keep ]]; then
+  OUTPUT_MODE="$(cat "$OUTPUT_FILE" 2>/dev/null || echo emulator)"
+fi
+if [[ "$OUTPUT_MODE" == physical || "$OUTPUT_MODE" == both ]]; then
+  echo "Installing optional HUB75 matrix Python bindings..."
+  if ((SKIP_APT == 0)); then
+    sudo apt-get install -y build-essential python3-dev python3-venv python3-pip python3-setuptools
+  fi
+  DRIVER_DIR="$HOME/.local/src/rpi-rgb-led-matrix"
+  mkdir -p "$(dirname "$DRIVER_DIR")"
+  if [[ -d "$DRIVER_DIR/.git" ]]; then
+    git -C "$DRIVER_DIR" pull --ff-only
+  elif [[ ! -e "$DRIVER_DIR" ]]; then
+    git clone https://github.com/hzeller/rpi-rgb-led-matrix.git "$DRIVER_DIR"
+  else
+    echo "Driver directory exists but is not a Git checkout: $DRIVER_DIR" >&2; exit 1
+  fi
+  make -C "$DRIVER_DIR/lib"
+  python3 -m venv --system-site-packages "$HOME/.local/share/universal-led-scoreboard/matrix-venv"
+  MATRIX_PY="$HOME/.local/share/universal-led-scoreboard/matrix-venv/bin/python"
+  "$MATRIX_PY" -m pip install "$DRIVER_DIR/bindings/python"
+  "$MATRIX_PY" -c 'from rgbmatrix import RGBMatrix, RGBMatrixOptions; print("RGBMatrix bindings verified")'
+  echo "Physical driver installed. Hardware output integration into the runtime is still required."
+fi
+mkdir -p "$(dirname "$OUTPUT_FILE")"
+printf '%s\\n' "$OUTPUT_MODE" > "$OUTPUT_FILE"
+
 CONFIG_DIR="$HOME/.config/universal-led-scoreboard"
 UNIT_DIR="$HOME/.config/systemd/user"
 mkdir -p "$CONFIG_DIR" "$UNIT_DIR"
@@ -69,4 +117,5 @@ fi
 echo "Installed. Open http://$(hostname -I | awk '{print $1}'):$PORT"
 echo "Check: systemctl --user status $SERVICE"
 echo "Logs: journalctl --user -u $SERVICE -n 100 --no-pager"
-echo "RGB matrix hardware output has NOT been enabled."
+echo "Selected output: $OUTPUT_MODE"
+echo "Note: physical driver installation does not yet connect the running web service to the panel."
