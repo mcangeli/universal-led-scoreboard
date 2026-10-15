@@ -73,7 +73,11 @@ class ConfiguredMLBRenderer:
         if not game:
             return splash()
         if page==3:
-            return MLBLiveDetailsScreen(game,palette['scoreboard']).render()
+            with self._lock:
+                elapsed=max(0.0,time.monotonic()-self._started)
+            # About three glyphs per second; short surnames remain stationary.
+            offset=int(elapsed*3)
+            return MLBLiveDetailsScreen(game,palette['scoreboard'],offset=offset).render()
         if page==4:
             with self._lock:
                 elapsed=max(0.0,time.monotonic()-self._started)
