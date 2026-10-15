@@ -1,6 +1,6 @@
 import unittest
 from universal_led.mlb_classic import BaseballGame
-from universal_led.mlb_previous_play import MLBPreviousPlayScreen
+from universal_led.mlb_previous_play import MLBPreviousPlayScreen, wrap_play, visible_play_lines
 
 
 class LastPlayReadabilityTests(unittest.TestCase):
@@ -19,8 +19,12 @@ class LastPlayReadabilityTests(unittest.TestCase):
     def test_long_description_scrolls_and_clamps(self):
         game=BaseballGame(previous_play='BATTER HITS A DOUBLE INTO LEFT FIELD AND TWO RUNNERS SCORE')
         first=MLBPreviousPlayScreen(game,offset=0).render()
-        later=MLBPreviousPlayScreen(game,offset=12).render()
+        first_line_end=len(wrap_play(game.previous_play)[0])+1
+        before_boundary=MLBPreviousPlayScreen(game,offset=first_line_end-1).render()
+        self.assertEqual(first.pixels,before_boundary.pixels)
+        later=MLBPreviousPlayScreen(game,offset=first_line_end).render()
         self.assertNotEqual(first.pixels,later.pixels)
+        self.assertEqual(visible_play_lines(game.previous_play,first_line_end)[0],wrap_play(game.previous_play)[1])
         last=MLBPreviousPlayScreen(game,offset=500).render()
         beyond=MLBPreviousPlayScreen(game,offset=1000).render()
         self.assertEqual(last.pixels,beyond.pixels)
