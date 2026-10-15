@@ -18,9 +18,11 @@ class ProvisioningTests(unittest.TestCase):
     def test_remote_changes_blocked(self):
         result=provisioning_readiness({'available':True,'devices':[{'state':'connected'}]})
         self.assertFalse(result['ready'])
-    def test_ui_has_selection_but_no_active_connect(self):
+    def test_ui_has_selection_and_authenticated_connect(self):
         self.assertIn('selectWifiNetwork',HTML)
-        self.assertIn('Connect (coming soon)',HTML)
+        self.assertIn('onclick="connectWifi()"',HTML)
+        self.assertIn("fetch('/api/wifi/control'",HTML)
+        self.assertIn("'X-Configurator-Token':token",HTML)
 
 if __name__=='__main__':
     unittest.main()
