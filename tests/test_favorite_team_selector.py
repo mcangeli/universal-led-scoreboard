@@ -17,7 +17,7 @@ class FavoriteTeamSelectorTests(unittest.TestCase):
 
     def test_favorite_value_is_still_saved_as_feed_identifier(self):
         self.assertIn("document.getElementById('favorite').value=mlb.favorite_team",HTML)
-        self.assertIn("favorite_team:document.getElementById('favorite').value",HTML)
+        self.assertIn("next.mlb.favorite_team=document.getElementById('favorite').value.trim().toUpperCase()",HTML)
 
     def test_team_selector_is_accessibly_labeled(self):
         self.assertIn('<label for="favorite">Favorite MLB team</label>',HTML)
