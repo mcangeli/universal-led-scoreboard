@@ -9,6 +9,8 @@ from .mlb_previous_play import MLBPreviousPlayScreen
 from .mlb_classic import BaseballGame
 from .display import splash
 from .news_screen import NewsHeadlineScreen
+from .clock_screen import ClockScreen
+from .time_weather_settings import load_time_weather
 from .config_store import read_config
 
 class ConfiguredMLBRenderer:
@@ -77,6 +79,18 @@ class ConfiguredMLBRenderer:
     def frame(self):
         palette=read_config(self.directory)
         game,page=self._selection()
+        # Clock is independent of sports, and never replaces a live game.
+        if game is None or game.status != 'live':
+            clock_settings=load_time_weather(self.directory)
+            if clock_settings['clock_enabled']:
+                with self._lock:
+                    elapsed=max(0.0,time.monotonic()-self._started)
+                slot=self.settings()['mlb']['rotation_seconds']
+                interval=clock_settings['rotation_interval']
+                # Reserve the first non-live slot in each clock interval.
+                # Without games, alternate clock and news/splash by slot.
+                if (game is None and int(elapsed//slot)%2==0) or (game is not None and int(elapsed//slot)%interval==0):
+                    return ClockScreen(clock_settings['timezone'],clock_settings['time_format']).render()
         # Never interrupt a live game with news.
         # Read cached items only; no network work happens in frame().
         if self.news is not None and (game is None or game.status != 'live'):
