@@ -88,6 +88,13 @@ class BackgroundWeather:
         self._next = 0.0
         self.error = None
 
+    def invalidate(self):
+        with self._lock:
+            self._key = None
+            self._snapshot = None
+            self._next = 0.0
+            self.error = None
+
     def update(self, location, unit='fahrenheit'):
         key = (location.strip(), unit)
         now = self.clock()
