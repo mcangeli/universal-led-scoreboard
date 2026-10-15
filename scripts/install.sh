@@ -70,7 +70,8 @@ if [[ "$OUTPUT_MODE" == physical || "$OUTPUT_MODE" == both ]]; then
   make -C "$DRIVER_DIR/lib"
   python3 -m venv --system-site-packages "$HOME/.local/share/universal-led-scoreboard/matrix-venv"
   MATRIX_PY="$HOME/.local/share/universal-led-scoreboard/matrix-venv/bin/python"
-  "$MATRIX_PY" -m pip install "$DRIVER_DIR/bindings/python"
+  make -C "$DRIVER_DIR/bindings/python" build-python PYTHON="$MATRIX_PY"
+  make -C "$DRIVER_DIR/bindings/python" install-python PYTHON="$MATRIX_PY"
   "$MATRIX_PY" -c 'from rgbmatrix import RGBMatrix, RGBMatrixOptions; print("RGBMatrix bindings verified")'
   echo "Physical driver installed. Hardware output integration into the runtime is still required."
 fi
