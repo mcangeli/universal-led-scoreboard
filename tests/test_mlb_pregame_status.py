@@ -19,19 +19,15 @@ class PregameStatusTests(unittest.TestCase):
     def test_clock_label_has_colon_and_space(self):
         self.assertIn(':', SMALL)
         label = start_label('2026-10-15T19:30:00Z')
-        self.assertRegex(label, r'^\\d{1,2}:\\d{2} (AM|PM)
-        frame = MLBPaletteScreen(BaseballGame(status='pregame', start_time='2026-10-15T19:30:00Z')).render()
-        self.assertEqual((frame.width, frame.height), (64, 32))
-
-if __name__ == '__main__':
-    unittest.main()
-)
+        self.assertRegex(label, r'^\d{1,2}:\d{2} (AM|PM)$')
         self.assertTrue(all(char in SMALL for char in label))
         self.assertLessEqual(2 + len(label) * 4, 64)
 
     def test_valid_time_renders(self):
-        frame = MLBPaletteScreen(BaseballGame(status='pregame', start_time='2026-10-15T19:30:00Z')).render()
-        self.assertEqual((frame.width, frame.height), (64, 32))
+        for screen in (MLBPaletteScreen, MLBClassicV9Screen):
+            with self.subTest(screen=screen.__name__):
+                frame = screen(BaseballGame(status='pregame', start_time='2026-10-15T19:30:00Z')).render()
+                self.assertEqual((frame.width, frame.height), (64, 32))
 
 if __name__ == '__main__':
     unittest.main()
