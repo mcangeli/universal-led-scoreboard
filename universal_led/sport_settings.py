@@ -8,7 +8,7 @@ SPORTS=('mlb','nba','nfl','nhl','mls','efl')
 DEFAULT_SETTINGS={
     'version':1,
     'active_sport':'mlb',
-    'sports':{name:{'enabled':name=='mlb'} for name in SPORTS},
+    'sports':{name:{'enabled':name=='mlb','news_enabled':name=='mlb'} for name in SPORTS},
     'mlb':{'favorite_teams':['ATL'],'mode':'fallback','refresh_seconds':60,'rotation_seconds':12,
            'live_classic_percent':50,'live_matchup_percent':25}
 }
@@ -23,9 +23,14 @@ def validate_settings(value):
     sports=value['sports']
     if not isinstance(sports,dict) or set(sports)!=set(SPORTS):
         raise ValueError('Invalid sports list')
+    sports={name:dict(entry) if isinstance(entry,dict) else entry for name,entry in sports.items()}
     for name,entry in sports.items():
-        if not isinstance(entry,dict) or set(entry)!={'enabled'} or type(entry['enabled']) is not bool:
+        if not isinstance(entry,dict) or set(entry) not in ({'enabled'},{'enabled','news_enabled'}) or type(entry['enabled']) is not bool:
             raise ValueError('Invalid sport enabled flag: '+name)
+        entry.setdefault('news_enabled',name=='mlb')
+        if type(entry['news_enabled']) is not bool:
+            raise ValueError('Invalid sport news flag: '+name)
+    value=dict(value,sports=sports)
     if not sports[value['active_sport']]['enabled']:
         raise ValueError('Active sport must be enabled')
     if value['active_sport']!='mlb':
