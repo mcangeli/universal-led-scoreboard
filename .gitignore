@@ -1,0 +1,28 @@
+# Python-generated files
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+htmlcov/
+
+# Local environments and editor state
+.venv/
+venv/
+.env
+.env.*
+!.env.example
+.vscode/
+.idea/
+
+# Local generated output
+splash.ppm
+*.log
+
+# Local scoreboard configuration and credentials
+my-scoreboard.json
+admin.json
+sessions.sqlite3
+sessions.sqlite3-*
+weather_credentials.json
