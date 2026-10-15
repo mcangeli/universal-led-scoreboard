@@ -49,8 +49,8 @@ def maintain(*, run=subprocess.run, pending=PENDING):
         result = nm('--wait', '15', 'connection', 'up', 'uuid', parts[1], 'ifname', device)
         if result is not None and result.returncode == 0:
             return 'client_restored'
-    if active == AP:
-        return 'hotspot_active'
+    # An attempted client connection may have torn down the hotspot.
+    # Reassert it even if the initial snapshot showed AP active.
     result = nm('--wait', '15', 'connection', 'up', 'id', AP, 'ifname', device)
     return 'hotspot_started' if result is not None and result.returncode == 0 else 'hotspot_failed'
 
