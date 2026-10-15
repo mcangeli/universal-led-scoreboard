@@ -120,8 +120,19 @@ class Sessions:
                     conn.execute('DELETE FROM sessions WHERE token_hash=?',(self._digest(token),))
 
 def configure_cli(directory):
-    first=getpass.getpass('New administrator password (12+ characters): ')
-    second=getpass.getpass('Confirm password: ')
-    if first != second:
-        raise ValueError('Passwords do not match')
-    set_password(directory,first)
+    """Prompt until a valid password is entered, without exposing it in logs."""
+    while True:
+        try:
+            first = getpass.getpass('New administrator password (12+ characters): ')
+            if len(first) < 12:
+                print('Password must contain at least 12 characters. Please try again.')
+                continue
+            second = getpass.getpass('Confirm password: ')
+            if first != second:
+                print('Passwords do not match. Please try again.')
+                continue
+            set_password(directory, first)
+            return
+        except (KeyboardInterrupt, EOFError):
+            print('\nPassword setup cancelled.')
+            raise SystemExit(1) from None
