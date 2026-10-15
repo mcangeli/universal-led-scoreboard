@@ -34,4 +34,9 @@ class MLBLiveDetailsScreen:
         balls='-' if g.balls is None else str(g.balls)
         strikes='-' if g.strikes is None else str(g.strikes)
         small(fb,'B '+balls+' S '+strikes,2,27,c['text'])
+        if g.pitch_count is not None:
+            small(fb,'P'+str(min(g.pitch_count,999)),32,27,c['accent'])
+        if g.pitch_speed_mph is not None:
+            speed=str(round(g.pitch_speed_mph))
+            small(fb,speed[:3],52,27,c['text'])
         return fb
