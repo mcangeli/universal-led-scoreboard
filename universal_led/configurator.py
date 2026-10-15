@@ -291,6 +291,9 @@ def make_handler(config_dir,token,frame_provider=None,settings_callback=None,fee
             elif path=='/api/wifi/scan':
                 from .wifi_scan import scan_networks
                 self.send_json(200,scan_networks())
+            elif path=='/api/wifi/profiles':
+                from .wifi_saved_profiles import saved_wifi_profiles
+                self.send_json(200,saved_wifi_profiles())
             elif path=='/api/wifi':
                 from .wifi_diagnostics import wifi_status
                 self.send_json(200,wifi_status())
