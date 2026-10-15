@@ -42,17 +42,26 @@ class ConfiguredMLBRenderer:
         # other games are in rotation. Live/final games have one stable page.
         within=elapsed%slot
         page=min(2,int(within*3/slot)) if game.status=='pregame' else 0
-        # Reserve the second half of a live game's slot for its matchup.
-        # If the feed has no current matchup/count, retain Classic throughout.
-        classic_fraction=settings.get('live_classic_percent',50)/100
-        matchup_fraction=settings.get('live_matchup_percent',25)/100
-        play_start=classic_fraction+matchup_fraction
-        if game.status=='live' and game.previous_play and play_start<1 and within >= slot*play_start:
-            page=4
-        elif game.status=='live' and matchup_fraction>0 and within >= slot*classic_fraction and any(
-            value is not None for value in (game.pitcher,game.batter,game.balls,game.strikes)
-        ):
-            page=3
+        if game.status=='live':
+            classic=settings.get('live_classic_percent',50)
+            matchup=settings.get('live_matchup_percent',25)
+            play=100-classic-matchup
+            has_matchup=any(value is not None for value in (
+                game.pitcher,game.batter,game.balls,game.strikes,
+                game.pitch_count,game.pitch_speed_mph))
+            weights=[(0,classic)]
+            if matchup>0 and has_matchup:
+                weights.append((3,matchup))
+            if play>0 and (game.previous_play or '').strip():
+                weights.append((4,play))
+            total=sum(weight for _,weight in weights)
+            position=within/slot*total
+            cumulative=0
+            for selected,weight in weights:
+                cumulative+=weight
+                if position<cumulative:
+                    page=selected
+                    break
         return game,page
 
     def game(self):
@@ -71,7 +80,14 @@ class ConfiguredMLBRenderer:
             slot=self.settings()['mlb']['rotation_seconds']
             within=elapsed%slot
             mlb=self.settings()['mlb']
-            play_start=(mlb.get('live_classic_percent',50)+mlb.get('live_matchup_percent',25))/100
-            offset=int(max(0,within-slot*play_start)*5)
+            classic=mlb.get('live_classic_percent',50)
+            matchup=mlb.get('live_matchup_percent',25)
+            play=100-classic-matchup
+            has_matchup=any(value is not None for value in (
+                game.pitcher,game.batter,game.balls,game.strikes,
+                game.pitch_count,game.pitch_speed_mph))
+            total=classic+(matchup if has_matchup else 0)+play
+            play_start=slot*(total-play)/total
+            offset=int(max(0,within-play_start)*5)
             return MLBPreviousPlayScreen(game,offset,palette['scoreboard']).render()
         return MLBPaletteScreen(game,palette['teams'],palette['scoreboard'],pregame_page=page).render()
