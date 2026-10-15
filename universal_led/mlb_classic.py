@@ -88,6 +88,8 @@ class BaseballGame:
     batter: str | None = None
     pitch_count: int | None = None
     pitch_speed_mph: float | None = None
+    previous_play: str | None = None
+    game_pk: int | None = None
     def __post_init__(self):
         if self.balls is not None and self.balls not in range(5):
             raise ValueError('Invalid ball count')
