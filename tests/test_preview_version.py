@@ -18,7 +18,7 @@ class PreviewVersionTests(unittest.TestCase):
     def test_version_marker_replaces_cleanly(self):
         with patch('universal_led.release.installed_commit',return_value='abc12345'):
             rendered=HTML.replace('__PREVIEW_VERSION__',display_version())
-        self.assertIn(f'Native Configurator | v{__version__} · abc12345',rendered)
+        self.assertIn(f'<span class="muted">v{__version__} · abc12345</span>',rendered)
         self.assertNotIn('__PREVIEW_VERSION__',rendered)
 
 
