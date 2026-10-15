@@ -14,6 +14,8 @@ printf '' > "$DEST/universal_led/__init__.py"
 chown root:root "$DEST/universal_led/__init__.py"
 chmod 0644 "$DEST/universal_led/__init__.py"
 install -d -o root -g root -m 0755 /usr/local/libexec
+# Recovery scheduler invokes this exact root-owned standalone worker.
+install -o root -g root -m 0755 "$ROOT/universal_led/wifi_recovery.py" /usr/local/libexec/universal-led-wifi-recovery
 cat > /usr/local/libexec/universal-led-wifi-control <<'EOF'
 #!/usr/bin/python3 -I
 import sys
@@ -26,4 +28,6 @@ chmod 0755 /usr/local/libexec/universal-led-wifi-control
 printf '%s ALL=(root) NOPASSWD: /usr/local/libexec/universal-led-wifi-control ""\n' "$SUDO_USER" > /etc/sudoers.d/universal-led-wifi-control
 chmod 0440 /etc/sudoers.d/universal-led-wifi-control
 visudo -cf /etc/sudoers.d/universal-led-wifi-control
-echo 'Scoped Wi-Fi control helper installed; no network settings changed.'
+# Syntax-check installed files before reporting success.
+python3 -m py_compile "$DEST"/universal_led/*.py
+echo 'Scoped Wi-Fi control and recovery workers installed; no network settings changed.'
