@@ -44,9 +44,12 @@ class ConfiguredMLBRenderer:
         page=min(2,int(within*3/slot)) if game.status=='pregame' else 0
         # Reserve the second half of a live game's slot for its matchup.
         # If the feed has no current matchup/count, retain Classic throughout.
-        if game.status=='live' and game.previous_play and within >= slot*0.75:
+        classic_fraction=settings.get('live_classic_percent',50)/100
+        matchup_fraction=settings.get('live_matchup_percent',25)/100
+        play_start=classic_fraction+matchup_fraction
+        if game.status=='live' and game.previous_play and play_start<1 and within >= slot*play_start:
             page=4
-        elif game.status=='live' and within >= slot/2 and any(
+        elif game.status=='live' and matchup_fraction>0 and within >= slot*classic_fraction and any(
             value is not None for value in (game.pitcher,game.batter,game.balls,game.strikes)
         ):
             page=3
@@ -67,6 +70,8 @@ class ConfiguredMLBRenderer:
                 elapsed=max(0.0,time.monotonic()-self._started)
             slot=self.settings()['mlb']['rotation_seconds']
             within=elapsed%slot
-            offset=int(max(0,within-slot*0.75)*5)
+            mlb=self.settings()['mlb']
+            play_start=(mlb.get('live_classic_percent',50)+mlb.get('live_matchup_percent',25))/100
+            offset=int(max(0,within-slot*play_start)*5)
             return MLBPreviousPlayScreen(game,offset,palette['scoreboard']).render()
         return MLBPaletteScreen(game,palette['teams'],palette['scoreboard'],pregame_page=page).render()
