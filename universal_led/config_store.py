@@ -15,11 +15,14 @@ def read_config(directory: str | Path):
     return {'teams':teams,'scoreboard':scoreboard}
 
 def save_config(directory: str | Path, section: str, values: dict):
-    if section not in ('teams','scoreboard','settings'):
+    if section not in ('teams','scoreboard','settings','time_weather'):
         raise ValueError('Unknown configuration section')
     if section=='settings':
         from .sport_settings import validate_settings
         normalized=validate_settings(values)
+    elif section=='time_weather':
+        from .time_weather_settings import validate_time_weather
+        normalized=validate_time_weather(values)
     else:
         normalized=(normalize_team_colors(values) if section=='teams'
                     else normalize_scoreboard_colors(values))
