@@ -1,6 +1,7 @@
 """Optional OpenWeatherMap adapter with normalized weather snapshots."""
-from urllib.parse import urlencode
+from urllib.parse import urlencode, parse_qsl
 import re
+from datetime import datetime, timezone, timedelta
 from .weather_feed import WeatherSnapshot, _get_json
 
 
@@ -28,8 +29,6 @@ def fetch_openweathermap(location, unit='fahrenheit', api_key='', *, get_json=No
         args = urlencode({'lat': place['lat'], 'lon': place['lon'], 'appid': api_key.strip(), 'units': units})
     else:
         args = urlencode({'q': query, 'appid': api_key.strip(), 'units': units})
-    # The current weather endpoint provides current temperature and min/max
-    # reported for the current period, not a full-day forecast.
     data = get_json('https://api.openweathermap.org/data/2.5/weather?' + args)
     if zip_match:
         # Reverse geocoding supplies the state, which the ZIP endpoint omits.
@@ -45,6 +44,25 @@ def fetch_openweathermap(location, unit='fahrenheit', api_key='', *, get_json=No
         except (OSError, ValueError, KeyError, TypeError, IndexError):
             pass
     main = data['main']
+    high = float(main.get('temp_max', main['temp']))
+    low = float(main.get('temp_min', main['temp']))
+    # The free 5-day / 3-hour forecast is a better daily H/L estimate than
+    # current-weather temp_min/temp_max. Group by the location's local day.
+    try:
+        forecast_args = dict(parse_qsl(args))
+        forecast = get_json('https://api.openweathermap.org/data/2.5/forecast?' + urlencode(forecast_args))
+        offset = int(forecast.get('city', {}).get('timezone', data.get('timezone', 0)))
+        local_zone = timezone(timedelta(seconds=offset))
+        reference = int(data.get('dt') or datetime.now(timezone.utc).timestamp())
+        today = datetime.fromtimestamp(reference, local_zone).date()
+        periods = [entry for entry in forecast.get('list', [])
+                   if datetime.fromtimestamp(int(entry['dt']), local_zone).date() == today]
+        if periods:
+            high = max(float(entry['main'].get('temp_max', entry['main']['temp'])) for entry in periods)
+            low = min(float(entry['main'].get('temp_min', entry['main']['temp'])) for entry in periods)
+    except (OSError, ValueError, KeyError, TypeError, IndexError, OverflowError):
+        pass
+
     conditions = data.get('weather') or []
     code = int(conditions[0].get('id', 800)) if conditions else 800
     if 200 <= code < 300:
@@ -66,7 +84,7 @@ def fetch_openweathermap(location, unit='fahrenheit', api_key='', *, get_json=No
     return WeatherSnapshot(
         location=display_location or str(data.get('name') or location.strip()),
         temperature=float(main['temp']),
-        high=float(main.get('temp_max', main['temp'])),
-        low=float(main.get('temp_min', main['temp'])),
+        high=high,
+        low=low,
         weather_code=wmo,
         observed_at=str(data.get('dt', '')))
