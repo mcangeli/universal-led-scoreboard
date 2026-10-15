@@ -38,3 +38,25 @@ Acceptance fixtures:
 - Actual 64×32 emulator screenshot comparisons
 
 Once Wi-Fi is done, MLB parity is the next milestone. NBA follows MLB parity.
+
+## Development Pi hotspot: verified manual test (2026-10-15)
+
+The development Raspberry Pi has a NetworkManager access-point profile:
+
+- Profile name and SSID: `Universal-LED-Setup`
+- Password on this **specific development Pi**: `ScoreBoard` (case-sensitive)
+- Wireless interface: `wlan0`
+- Security: WPA-PSK; wireless mode: AP; IPv4 method: shared
+- Autoconnect: disabled, so activating the hotspot is explicit
+- Manual activation through the scoped Wi-Fi control helper was successful; a client connected.
+- Ethernet `eth0` remained available for management during testing.
+
+**Do not treat `ScoreBoard` as an application-wide or production default.** It is
+currently a known development-device credential, not a password provisioned
+by the Universal installer. For production, generate a distinct per-device
+hotspot password, show it locally to the owner during setup, and allow it to
+be changed. Never log or expose hotspot passwords in the web status API.
+
+The hotspot helper currently toggles a pre-existing profile; it does not yet
+provision a profile on a fresh install or automatically activate a fallback.
+Those features and an end-to-end recovery test remain required.
