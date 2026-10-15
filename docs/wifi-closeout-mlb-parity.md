@@ -70,3 +70,22 @@ Those features and an end-to-end recovery test remain required.
 - Write secrets through a narrowly privileged, root-owned helper. Avoid `nmcli connection modify ... psk PASSWORD` because that leaks the password into process arguments. Validate length and reject control characters.
 - Update the saved profile without immediately restarting an active hotspot. Warn that clients must reconnect after the next activation. Do not interrupt the active management connection.
 - Test fresh-install provisioning, password update, bad-password rejection, permission checks, no-secret logging, and connection persistence on Raspberry Pi Bookworm/Trixie before enabling this UI.
+
+## Final Wi-Fi closeout implementation (requires live Pi validation)
+
+- `sudo python3 scripts/provision-wifi-hotspot.py` creates the dedicated AP with a
+  per-device generated password or a custom one. It retains an existing AP unchanged.
+  The chosen password is displayed once in the interactive installer session.
+- `sudo bash scripts/install-wifi-hotspot-maintenance.sh` installs a root-owned
+  maintenance worker and enables its systemd timer. It checks every two minutes.
+- A healthy client connection is never disturbed. An active hotspot is also
+  preserved so management sessions are not interrupted.
+- With no active Wi-Fi connection, the worker tries saved client profiles and
+  activates Universal-LED-Setup if none succeeds. It will not operate during
+  a pending recovery rollback.
+- **Limit:** While the AP is active, this worker does not periodically interrupt
+  it to retry client networks. Returning to client Wi-Fi is currently manual
+  through the Wi-Fi tab. Full non-disruptive AP-to-client automatic recovery
+  needs additional validation/design, and must not be claimed complete.
+- Run the full regression suite and live-test on Raspberry Pi before production
+  deployment. The password editor and new AP provisioning are not yet live verified.
