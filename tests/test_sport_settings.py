@@ -9,9 +9,9 @@ class SportSettingsTests(unittest.TestCase):
     def test_persistence(self):
         with tempfile.TemporaryDirectory() as root:
             changed=copy.deepcopy(DEFAULT_SETTINGS)
-            changed['mlb']['favorite_team']='NYM'
+            changed['mlb']['favorite_teams']=['NYM']
             save_settings(root,changed)
-            self.assertEqual(load_settings(root)['mlb']['favorite_team'],'NYM')
+            self.assertEqual(load_settings(root)['mlb']['favorite_teams'],['NYM'])
     def test_reject_unsupported_active_sport(self):
         data=copy.deepcopy(DEFAULT_SETTINGS)
         data['sports']['nba']['enabled']=True
