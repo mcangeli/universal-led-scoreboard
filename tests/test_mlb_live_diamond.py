@@ -25,8 +25,12 @@ class LiveDiamondTests(unittest.TestCase):
                 fb=MLBPaletteScreen(BaseballGame(outs=outs),scoreboard_colors=COLORS).render()
                 for index in range(3):
                     expected=COLORS['error'] if index<outs else COLORS['dim']
-                    self.assertEqual(fb.pixels[28][20+index*4],expected)
-                    self.assertEqual(fb.pixels[29][20+index*4],expected)
+                    x=19+index*4
+                    # All lamps have a visible outline; only recorded outs fill the center.
+                    for dx,dy in ((0,0),(1,0),(2,0),(0,1),(2,1),(0,2),(1,2),(2,2)):
+                        self.assertEqual(fb.pixels[27+dy][x+dx],expected)
+                    self.assertEqual(fb.pixels[28][x+1],
+                                     COLORS['error'] if index<outs else (0,0,0))
 
     def test_final_footer_does_not_show_live_bases(self):
         fb=MLBPaletteScreen(BaseballGame(status='final',bases=(True,True,True)),
