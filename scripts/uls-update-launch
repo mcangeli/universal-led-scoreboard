@@ -1,0 +1,6 @@
+#!/usr/bin/env bash
+set -Eeuo pipefail
+[[ $# -eq 0 ]] || exit 2
+[[ $EUID -eq 0 ]] || exit 1
+# Unique unit name prevents duplicate concurrent launches.
+exec /usr/bin/systemd-run --quiet --collect --unit=uls-dashboard-update --property=Type=exec /usr/local/libexec/uls-update-worker
