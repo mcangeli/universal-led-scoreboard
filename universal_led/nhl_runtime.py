@@ -20,6 +20,8 @@ class BackgroundNHLFeed:
         self.timezone_name = timezone_name
         ZoneInfo(timezone_name)
         self.day_provider = day_provider or self._local_day
+        self._stop = threading.Event()
+        self._thread = None
 
     def _local_day(self):
         return datetime.now(ZoneInfo(self.timezone_name)).date()
@@ -27,8 +29,6 @@ class BackgroundNHLFeed:
     def set_timezone(self, timezone_name):
         ZoneInfo(timezone_name)
         self.timezone_name = timezone_name
-        self._stop = threading.Event()
-        self._thread = None
 
     def refresh_once(self):
         return self.feed.refresh(self.day_provider())
