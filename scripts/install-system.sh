@@ -125,6 +125,8 @@ fi
 sudo install -m 0755 "$APP/scripts/ulsctl" /usr/local/bin/ulsctl
 sudo install -m 0755 "$APP/scripts/uls-update" /usr/local/bin/uls-update
 sudo bash "$APP/scripts/install-wifi-scan-helper.sh"
+sudo bash "$APP/scripts/install-wifi-control-helper.sh"
+sudo bash "$APP/scripts/provision-hotspot.sh"
 sudo bash "$APP/scripts/install-dashboard-restart-helper.sh"
 sudo bash "$APP/scripts/install-dashboard-update-helper.sh"
 sudo systemctl daemon-reload
