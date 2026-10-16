@@ -4,7 +4,7 @@ from .display import Framebuffer
 from .mlb_classic import BaseballGame, small
 from .mlb_classic_v9 import start_label, draw_start_label
 from .colors import load_palette
-from .mlb_team_marks import draw_team_mark
+from .mlb_team_marks import draw_team_mark, SPRITES
 
 @dataclass(frozen=True)
 class MLBPaletteScreen:
@@ -51,7 +51,10 @@ class MLBPaletteScreen:
             (18,g.home,(g.home_runs,g.home_hits,g.home_errors))):
             fb.text(team,1,y-1,self.team_colors.get(team,c['text']))
             if g.status == 'live':
-                draw_team_mark(fb,team,25,y-1)
+                if team.upper() in SPRITES:
+                    draw_team_mark(fb,team,24,y-2)
+                else:
+                    draw_team_mark(fb,team,25,y-1)
             # A compact accent chevron identifies the winner on final screens.
             # It occupies unused space between team labels and the R/H/E grid.
             if g.status=='final' and g.away_runs != g.home_runs:
