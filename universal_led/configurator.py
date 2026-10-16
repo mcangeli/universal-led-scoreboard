@@ -359,7 +359,7 @@ async function refreshUpdateProgress(){
   const response=await fetch('/api/update/progress',{cache:'no-store'});
   if(!response.ok)return;
   const data=await response.json();
-  document.getElementById('update-log').textContent=(data.status||'not started')+'\n'+(data.log||'');
+  document.getElementById('update-log').textContent=(data.status||'not started')+'\\n'+(data.log||'');
   if(data.status==='running')document.getElementById('install-update').disabled=true;
   if(data.status==='completed'||data.status==='failed')document.getElementById('update-status').textContent='Last update: '+data.status+'. Review log below.';
  }catch(error){}
