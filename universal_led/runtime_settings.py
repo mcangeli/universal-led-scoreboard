@@ -101,6 +101,9 @@ class ConfiguredMLBRenderer:
                     break
         return game,page
 
+    def has_games(self):
+        return bool(self.feed.games())
+
     def game(self):
         return self._selection()[0]
 
