@@ -1,35 +1,72 @@
-# Installation and first-run experience
+# Installation and first-run guide (v0.1.0 candidate)
 
-**Status:** design specification; the installer is not yet implemented.
+**Important: clean system-service installation is not yet automated or validated.** Do not wipe a working scoreboard or assume `scripts/install.sh` provisions the production layout. That script creates an older **user-level** `universal-led-scoreboard.service`. The current working installation uses **system-level** `uls-web.service` and `uls-matrix.service`.
 
-## Goal
+## Before a clean-install test
 
-On a supported Raspberry Pi or similar SBC: install a supported OS, clone this repository, run `./install.sh`, open the web setup wizard, choose matrix hardware, select sports and teams, and start the scoreboard. Installation should not require editing JSON by hand.
+1. Preserve the existing boot card/image. Use a **second microSD card** on the Raspberry Pi 5.
+2. Record hardware mapping, brightness, and any driver-specific settings from the known-good device. Never publish administrator passwords, API keys, or Wi-Fi credentials.
+3. Flash Raspberry Pi OS Lite 64-bit **Trixie** and configure SSH and networking using Raspberry Pi Imager.
+4. Boot and verify SSH, network connectivity, system clock, and OS version.
+5. Clone the candidate branch, but **do not run the legacy installer expecting a production setup**:
 
-## Planned guided workflow
+```bash
+sudo apt update
+sudo apt install -y git
+git clone -b feature/0.1.0-core-foundation https://github.com/mcangeli/universal-led-scoreboard.git
+cd universal-led-scoreboard
+python3 --version
+cat /etc/os-release
+```
 
-1. Detect OS, architecture, display hardware and permissions; explain unsupported combinations.
-2. Create an isolated Python virtual environment and install pinned dependencies.
-3. Install a narrowly privileged system helper for network and service operations; keep the web application unprivileged.
-4. Install and enable the scoreboard service, with safe recovery after interruption.
-5. Configure Wi-Fi through the wizard; offer a fallback hotspot/captive portal when offline.
-6. Select matrix dimensions, GPIO mapping, brightness, leagues, teams and display rotation.
-7. Test the matrix or emulator, preview the startup splash and save settings.
-8. Run a health check and provide update, backup, restore and uninstall instructions.
+**Stop here for the system-service installation** until the new clean-install bootstrap is implemented and reviewed. The existing `scripts/stage-system-services.sh` and `scripts/cutover-to-system.sh` are **migration tools**: they require a previously migrated `/opt/uls/app`, `/etc/uls/admin.json`, and, for cutover, a running legacy service. They are not suitable for a fresh image.
 
-## Supported hardware policy
+## Known-good deployed layout (existing installations)
 
-Raspberry Pi and 64x32 HUB75 matrices are the initial reference target. Other SBCs require a verified compatible matrix driver and will be documented separately. Never assume all Raspberry Pi GPIO drivers work on other SBCs.
+| Purpose | Path or service |
+| --- | --- |
+| Application | `/opt/uls/app` |
+| Python environment | `/opt/uls/venv` |
+| Settings and credentials | `/etc/uls` |
+| Persistent state | `/var/lib/uls` |
+| Published framebuffer | `/run/uls/live-frame.ppm` |
+| Web service | `uls-web.service` |
+| Physical display | `uls-matrix.service` |
+| Management command | `/usr/local/bin/ulsctl` |
+| Browser dashboard | `http://<pi-host>:8080/` |
 
-## Documentation required for every milestone
+Existing deployments can safely update and check health:
 
-- Installation and upgrade instructions
-- Configuration reference with defaults
-- User-facing change log and migration notes
-- Common errors and troubleshooting
-- Automated test instructions and a manual hardware test checklist
-- Source/license attribution and third-party API requirements
+```bash
+sudo ulsctl update
+sudo ulsctl health
+sudo ulsctl status
+sudo ulsctl logs
+```
 
-## Acceptance criteria
+The updater tests candidate code, fast-forwards the checked-out branch, synchronizes the installed management command, restarts both services, and checks the web endpoint. A failed update attempts rollback.
 
-A clean supported device can reach the first running scoreboard using the documented steps, without hand-editing configuration files. Failed installs and Wi-Fi configuration must be recoverable.
+## Hardware and acceptance testing
+
+The reference hardware is a 64×32 HUB75 RGB matrix attached to a Raspberry Pi 5 running Trixie. A compatible interface/HAT, separate matrix power supply, and supported `rpi-rgb-led-matrix` driver are required. Never connect or disconnect the panel while powered.
+
+The fresh-install test must verify: installer completes without preexisting `/opt/uls` files; admin account setup; web login; board emulator; matrix driver and mapping; boot-time service startup; 30-second splash; live frame generation; Wi-Fi; dashboard restart; and safe update. Record the outcome in `docs/FOUNDATION-RELEASE-CHECKLIST.md`.
+
+Pi 3, Bookworm, and other boards remain separate compatibility validation targets.
+
+## Troubleshooting existing installations
+
+```bash
+sudo ulsctl status
+sudo ulsctl logs
+sudo ulsctl restart
+sudo ulsctl health
+```
+
+If dashboard restart support is absent on an upgraded installation:
+
+```bash
+sudo bash /opt/uls/app/scripts/install-dashboard-restart-helper.sh
+```
+
+The web interface uses HTTP on the local network. Do not expose it publicly without TLS and appropriate access controls.
