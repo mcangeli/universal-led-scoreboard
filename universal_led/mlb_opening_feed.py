@@ -24,6 +24,7 @@ class MLBOpeningDayFeed:
         self._lock = threading.Lock()
         self._cache = {}
         self._next_refresh = {}
+        self._refreshing = set()
         self.last_error = None
 
     @staticmethod
@@ -33,6 +34,27 @@ class MLBOpeningDayFeed:
         with urlopen(API + '?' + query, timeout=12) as response:
             return json.load(response)
 
+    def _refresh(self, year):
+        try:
+            payload = self.fetch(year)
+            if not isinstance(payload, dict):
+                raise ValueError('Invalid schedule response')
+        except (OSError, ValueError, TypeError, KeyError) as exc:
+            with self._lock:
+                self.last_error = str(exc)
+        else:
+            with self._lock:
+                self._cache[year] = payload
+                self.last_error = None
+
+    def status(self, season):
+        """Snapshot for the dashboard; never performs network I/O."""
+        year = int(season)
+        with self._lock:
+            return {'available': year in self._cache,
+                    'refreshing': year in self._refreshing,
+                    'error': self.last_error}
+
     def opening(self, season, *, target='league', team=None):
         year = int(season)
         if year < 1876 or year > 9999:
@@ -41,20 +63,20 @@ class MLBOpeningDayFeed:
             raise ValueError('Invalid countdown target')
         if target == 'favorite' and (not isinstance(team, str) or len(team) != 3):
             raise ValueError('Favorite target requires a three-letter team')
-        key = (year, target, team.upper() if team else None)
         with self._lock:
             now = self.clock()
-            if now >= self._next_refresh.get(year, 0):
+            if now >= self._next_refresh.get(year, 0) and year not in self._refreshing:
                 self._next_refresh[year] = now + self.refresh_seconds
-                try:
-                    payload = self.fetch(year)
-                    if not isinstance(payload, dict):
-                        raise ValueError('Invalid schedule response')
-                    self._cache[year] = payload
-                    self.last_error = None
-                except (OSError, ValueError, TypeError, KeyError) as exc:
-                    self.last_error = str(exc)
+                self._refreshing.add(year)
+                def background():
+                    try:
+                        self._refresh(year)
+                    finally:
+                        with self._lock:
+                            self._refreshing.discard(year)
+                threading.Thread(target=background, daemon=True,
+                                 name=f'mlb-opening-{year}').start()
             payload = self._cache.get(year)
-            if payload is None:
-                return None
-            return from_schedule(payload, year, target=target, team=team)
+        if payload is None:
+            return None
+        return from_schedule(payload, year, target=target, team=team)
