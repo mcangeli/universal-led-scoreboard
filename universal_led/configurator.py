@@ -976,6 +976,7 @@ def main():
         feed.feed.refresh_seconds=settings['mlb']['refresh_seconds']
         from .time_weather_settings import load_time_weather
         time_preferences = load_time_weather(args.config_dir)
+        nhl_feed.set_timezone(time_preferences['timezone'])
         nhl_renderer.timezone_name = time_preferences['timezone']
         nhl_renderer.time_format = time_preferences['time_format']
         nhl = settings['nhl']
