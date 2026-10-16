@@ -5,14 +5,17 @@ import time
 from .nhl_runtime import select_games
 from .nhl_visual import NHLVisualScreen
 from .config_store import read_nhl_colors
+from .news_screen import NewsHeadlineScreen
 
 
 class ConfiguredNHLRenderer:
     """Read cached feed snapshots; never perform network I/O during render."""
 
     def __init__(self, feed, *, favorite_teams=None, mode="fallback",
-                 rotation_seconds=12, clock=time.monotonic, config_dir=None):
+                 rotation_seconds=12, clock=time.monotonic, config_dir=None, news=None, settings_getter=None):
         self.feed = feed
+        self.news = news
+        self.settings_getter = settings_getter
         self.config_dir = config_dir
         self.clock = clock
         self.started = clock()
@@ -46,8 +49,23 @@ class ConfiguredNHLRenderer:
         return games[slot % len(games)]
 
     def frame(self):
+        game = self.game()
+        # Keep live NHL games uninterrupted. Rotate headlines during non-live periods.
+        if game is None or game.status != "live":
+            settings = self.settings_getter() if self.settings_getter else None
+            if settings and settings["sports"]["nhl"]["enabled"] and settings["sports"]["nhl"]["news_enabled"] and self.news is not None:
+                headlines = [item for item in self.news.items() if item.source == "nhl"]
+                if headlines:
+                    elapsed = max(0.0, self.clock() - self.started)
+                    interval = self.rotation_seconds
+                    slot = int(elapsed // interval)
+                    if game is None or slot % 2 == 1:
+                        options = settings["news"]
+                        item = headlines[(slot // 2) % len(headlines)]
+                        offset = int((elapsed % interval) * options["scroll_chars_per_second"])
+                        return NewsHeadlineScreen(item.text, item.source, offset=offset).render()
         # Read saved colors at render time so dashboard edits take effect without
         # restarting the web service. Failed reads retain the built-in defaults.
         colors = read_nhl_colors(self.config_dir) if self.config_dir is not None else None
-        return NHLVisualScreen(self.game(), timezone_name=self.timezone_name,
+        return NHLVisualScreen(game, timezone_name=self.timezone_name,
                                time_format=self.time_format, team_colors=colors).render()
