@@ -11,6 +11,20 @@ class ScreenRotationTests(unittest.TestCase):
         actual=[choose_screen(i,has_game=True,clock=True,weather=False,news=True) for i in range(6)]
         self.assertEqual(actual,['clock','news','game']*2)
 
+    def test_countdown_gets_fair_rotation_slot(self):
+        actual=[choose_screen(i,has_game=True,clock=True,weather=True,news=True,countdown=True)
+                for i in range(10)]
+        self.assertEqual(actual,['clock','weather','news','countdown','game']*2)
+
+    def test_countdown_without_other_feeds(self):
+        self.assertEqual(choose_screen(0,has_game=False,clock=False,
+                                       weather=False,news=False,countdown=True),'countdown')
+
+    def test_unavailable_countdown_does_not_leave_empty_slot(self):
+        actual=[choose_screen(i,has_game=False,clock=True,weather=False,
+                              news=True,countdown=False) for i in range(6)]
+        self.assertEqual(actual,['clock','news']*3)
+
     def test_weather_only(self):
         self.assertEqual(choose_screen(20,has_game=False,clock=False,weather=True,news=False),'weather')
 
