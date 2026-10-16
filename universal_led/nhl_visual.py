@@ -42,6 +42,8 @@ def draw_puck(fb: Framebuffer, x: int, y: int, color=ICE):
 class NHLVisualScreen:
     game: HockeyGame | None = None
     name: str = "nhl-visual"
+    timezone_name: str = "America/New_York"
+    time_format: str = "12h"
 
     def render(self) -> Framebuffer:
         fb = Framebuffer(64, 32)
@@ -62,6 +64,6 @@ class NHLVisualScreen:
             draw_puck(fb, 24, y, accent)
             digits = "-" if score is None else str(min(score, 99))
             small(fb, digits, 59 - 4 * len(digits), y, GOLD)
-        label = status_text(g)[:15]
+        label = status_text(g, self.timezone_name, self.time_format)[:15]
         small(fb, label, 2, 27, RED if g.status == "postponed" else GOLD)
         return fb
