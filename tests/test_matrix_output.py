@@ -29,6 +29,7 @@ class FakeMatrix:
         self.canvas = FakeCanvas()
         self.canvas_creations = 0
     def CreateFrameCanvas(self):
+        self.canvas_creations += 1
         return self.canvas
     def SwapOnVSync(self, canvas):
         return canvas
