@@ -51,11 +51,48 @@ MARKS = {
 }
 
 
+# Hand-drawn 9x7 transparent sprites. Each row is exactly nine pixels.
+# MIL: a compact glove silhouette with ball and pocket.
+# LAD: interlocking L/A-inspired diagonal strokes.
+# '.' is transparent; symbols map to each sprite's own palette.
+SPRITES = {
+    'MIL': (
+        '...GGG...',
+        '..G...G..',
+        '.G.WW..G.',
+        '.G.WW..G.',
+        '.G.....G.',
+        '..GGGGG..',
+        '...GGG...',
+    ),
+    'LAD': (
+        'B...B....',
+        'B...B.B..',
+        'B...BBB..',
+        'B...B.B..',
+        'BBBBB.B..',
+        '....B.B..',
+        '....B.B..',
+    ),
+}
+SPRITE_COLORS = {
+    'MIL': {'G': (236, 190, 69), 'W': (245, 245, 230)},
+    'LAD': {'B': (40, 110, 230)},
+}
+
 def draw_team_mark(fb, team, x, y):
     """Draw a badge when artwork exists. Return False for unknown teams."""
     mark = MARKS.get(team.upper())
     if mark is None:
         return False
+    sprite = SPRITES.get(team.upper())
+    if sprite is not None:
+        colors = SPRITE_COLORS[team.upper()]
+        for dy, row in enumerate(sprite):
+            for dx, symbol in enumerate(row):
+                if symbol != '.':
+                    fb.pixel(x + dx, y + dy, colors[symbol])
+        return True
     background, foreground, letter = mark
     for dy in range(7):
         for dx in range(9):
