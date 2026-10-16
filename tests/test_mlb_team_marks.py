@@ -23,7 +23,7 @@ class MLBTeamMarksTests(unittest.TestCase):
                 self.assertTrue(any(pixel != (0, 0, 0) for row in frame.pixels[7:14] for pixel in row[25:34]))
 
     def test_custom_sprites_are_transparent_and_fit(self):
-        self.assertEqual(set(SPRITES), {'MIL', 'LAD'})
+        self.assertEqual(set(SPRITES), {'MIL', 'LAD', 'ATL', 'CLE', 'TBR'})
         for team, rows in SPRITES.items():
             with self.subTest(team=team):
                 self.assertEqual(len(rows), 9)
@@ -43,12 +43,23 @@ class MLBTeamMarksTests(unittest.TestCase):
         final = MLBPaletteScreen(BaseballGame(away='MIL', home='LAD', status='final')).render()
         self.assertEqual(live.pixels[6][24], (0, 0, 0))
         self.assertEqual(live.pixels[16][24], (40, 110, 230))
-        self.assertEqual(live.pixels[6][27], (236, 190, 69))
-        self.assertEqual(final.pixels[6][27], (0, 0, 0))
+        self.assertEqual(live.pixels[6][26], (236, 190, 69))
+        self.assertEqual(final.pixels[6][26], (0, 0, 0))
         self.assertEqual(live.pixels[25], final.pixels[25])
         # Sprite artwork must not touch the first score column.
         for y in list(range(6, 15)) + list(range(16, 25)):
             self.assertEqual(live.pixels[y][35:40], final.pixels[y][35:40])
+
+    def test_playoff_sprite_aliases_and_score_clearance(self):
+        for away, home in (('ATL', 'CLE'), ('CLE', 'TB'), ('TBR', 'LAD')):
+            with self.subTest(away=away, home=home):
+                game = BaseballGame(away=away, home=home)
+                live = MLBPaletteScreen(game).render()
+                final = MLBPaletteScreen(BaseballGame(away=away, home=home, status='final')).render()
+                self.assertTrue(any(live.pixels[y][x] != final.pixels[y][x]
+                                    for y in range(6, 25) for x in range(24, 35)))
+                for y in list(range(6, 15)) + list(range(16, 25)):
+                    self.assertEqual(live.pixels[y][35:40], final.pixels[y][35:40])
 
     def test_marks_only_on_live_classic(self):
         live = MLBPaletteScreen(BaseballGame(away='PHI', home='ATL')).render()
