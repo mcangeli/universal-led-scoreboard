@@ -13,10 +13,19 @@ def read_config(directory: str | Path):
     teams,scoreboard=load_palette(
         root/'teams.json' if (root/'teams.json').is_file() else None,
         root/'scoreboard.json' if (root/'scoreboard.json').is_file() else None)
-    nhl=dict(NHL_TEAM_COLORS)
-    if (root/'nhl_teams.json').is_file():
-        nhl.update(normalize_team_colors(json.loads((root/'nhl_teams.json').read_text(encoding='utf-8'))))
-    return {'teams':teams,'scoreboard':scoreboard,'nhl_teams':nhl}
+    return {'teams':teams,'scoreboard':scoreboard}
+
+
+def read_nhl_colors(directory: str | Path):
+    """Read NHL defaults and overrides without changing the legacy MLB config API."""
+    path=Path(directory)/'nhl_teams.json'
+    colors=dict(NHL_TEAM_COLORS)
+    if path.is_file():
+        overrides=normalize_team_colors(json.loads(path.read_text(encoding='utf-8')))
+        if set(overrides)-set(NHL_TEAM_COLORS):
+            raise ValueError('Unknown NHL team color keys')
+        colors.update(overrides)
+    return colors
 
 def save_config(directory: str | Path, section: str, values: dict):
     if section not in ('teams','nhl_teams','scoreboard','settings','time_weather','season_countdown'):
