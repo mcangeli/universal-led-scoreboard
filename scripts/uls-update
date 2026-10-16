@@ -37,6 +37,7 @@ rollback() {
   if ! as_owner git reset --hard "$OLD"; then
     echo "CRITICAL: Could not restore Git checkout automatically." >&2
   fi
+  install -m 755 "$APP/scripts/ulsctl" /usr/local/bin/ulsctl || true
   systemctl restart uls-web.service || true
   systemctl restart uls-matrix.service || true
   echo "Rollback attempted; check: sudo ulsctl status" >&2
@@ -44,6 +45,9 @@ rollback() {
 }
 trap rollback ERR
 as_owner git merge --ff-only "$NEW"
+# Refresh the installed CLI after the candidate has passed its tests.
+# The operator invokes /usr/local/bin/ulsctl, not the Git checkout copy.
+install -m 755 "$APP/scripts/ulsctl" /usr/local/bin/ulsctl
 systemctl restart uls-web.service
 # Always restart the physical worker: its 30-second startup splash provides
 # visible confirmation that the updated scoreboard has restarted.
