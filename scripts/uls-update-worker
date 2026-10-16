@@ -12,7 +12,7 @@ chmod 0640 "$status"
 : > "$log"
 chgrp uls "$log"
 chmod 0640 "$log"
-if /opt/uls/app/scripts/uls-update > "$log" 2>&1; then
+if /usr/bin/bash /opt/uls/app/scripts/uls-update > "$log" 2>&1; then
   printf 'completed\n' > "$status"
 else
   printf 'failed\n' > "$status"
