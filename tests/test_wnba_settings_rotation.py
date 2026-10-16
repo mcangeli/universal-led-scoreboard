@@ -10,6 +10,8 @@ class Stub:
     def __init__(self, name, games=True):
         self.name = name
         self.games = games
+    def has_games(self):
+        return self.games
     def frame(self):
         return self.name
     def game(self):
