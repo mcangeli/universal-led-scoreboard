@@ -4,7 +4,7 @@ usage() { echo "Usage: ulsctl {status|start|stop|restart|logs|health} [web|matri
 action="${1:-status}"
 if [[ "$action" == update ]]; then
   [[ $# -eq 1 ]] || { usage >&2; exit 2; }
-  exec /opt/uls/app/scripts/uls-update
+  exec bash /opt/uls/app/scripts/uls-update
 fi
 target="${2:-all}"
 case "$target" in
