@@ -62,6 +62,16 @@ class NFLScreen:
             small(fb, team[:3].ljust(3), 2, y, TEAM if y == 18 else WHITE)
             digits = (record[:9] if record else "-") if pregame else ("-" if score is None else str(score))
             small(fb, digits, max(22, 62 - 4 * len(digits)), y, GOLD)
-        small(fb, status_text(self.game, self.timezone_name, self.time_format)[:15],
-              2, 27, RED if self.game.status == "postponed" else GOLD)
+        label = status_text(self.game, self.timezone_name, self.time_format)
+        if self.game.status == "live":
+            if self.game.possession in (self.game.away, self.game.home):
+                marker_y = 10 if self.game.possession == self.game.away else 18
+                for dx, dy in ((0, 1), (1, 0), (1, 1), (1, 2), (2, 1)):
+                    fb.pixel(19 + dx, marker_y + dy, GOLD)
+            if self.game.down is not None and self.game.distance is not None:
+                down = f"{self.game.down}&{self.game.distance}"
+                small(fb, down, 62 - 4 * len(down), 27, TEAM)
+                label = label[:max(0, (60 - 4 * len(down)) // 4)]
+        small(fb, label[:15], 2, 27,
+              RED if self.game.status == "postponed" else GOLD)
         return fb
