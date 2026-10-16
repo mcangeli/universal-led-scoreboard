@@ -30,6 +30,8 @@ class OpeningFeedTests(unittest.TestCase):
         self.await_refresh(feed)
         self.assertEqual(feed.opening(2027).starts_at.day, 25)
         self.assertEqual(feed.opening(2027, target='favorite', team='ATL').starts_at.day, 26)
+        self.assertTrue(feed.status(2027)['last_success'])
+        self.assertTrue(feed.status(2027)['available'])
         self.assertEqual(calls, [2027])
         now[0] += 21600
         feed.opening(2027)
@@ -52,6 +54,8 @@ class OpeningFeedTests(unittest.TestCase):
         self.assertEqual(feed.opening(2027), expected)
         self.await_refresh(feed)
         self.assertEqual(feed.last_error, 'offline')
+        self.assertTrue(feed.status(2027)['available'])
+        self.assertTrue(feed.status(2027)['last_success'])
 
     def test_initial_failure_is_unavailable(self):
         feed = MLBOpeningDayFeed(fetch=lambda year: (_ for _ in ()).throw(OSError('offline')))
