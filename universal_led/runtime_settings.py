@@ -45,8 +45,10 @@ class ConfiguredMLBRenderer:
         settings=self.settings()['mlb']
         all_games=self.feed.games()
         favorites=set(settings.get('favorite_teams',settings.get('favorite_team',['ATL'])))
-        priority=[g for g in all_games if g.status=='live' and (g.away in favorites or g.home in favorites)]
-        games=priority or select_games(all_games,settings.get('favorite_teams',settings.get('favorite_team',['ATL'])),settings['mode'])
+        selected=select_games(all_games,settings.get('favorite_teams',settings.get('favorite_team',['ATL'])),settings['mode'])
+        favorite_live=[g for g in all_games if g.status=='live' and (g.away in favorites or g.home in favorites)]
+        eligible_live=[g for g in selected if g.status=='live']
+        games=favorite_live or eligible_live or selected
         if not games:
             return None,0
         with self._lock:
@@ -86,9 +88,7 @@ class ConfiguredMLBRenderer:
     def frame(self):
         palette=read_config(self.directory)
         game,page=self._selection()
-        favorites=set(self.settings()['mlb']['favorite_teams'])
-        priority_live=game is not None and game.status=='live' and (game.away in favorites or game.home in favorites)
-        if not priority_live:
+        if game is None or game.status!='live':
             preferences=load_time_weather(self.directory)
             clock_enabled=preferences['clock_enabled'] and (Path(self.directory)/'time_weather.json').exists()
             snapshot=self.weather.snapshot() if preferences['weather_enabled'] and self.weather is not None else None
