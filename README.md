@@ -27,7 +27,7 @@ For a physical board you need a compatible 64×32 RGB LED matrix, appropriate po
 
 **v0.1.0 is a release candidate, not yet tagged.** The validated production installation runs two **system-level** services (`uls-web.service` and `uls-matrix.service`) from `/opt/uls/app`. The older `scripts/install.sh` installs a separate user-level preview service and **must not be used as the clean-install procedure for the current system layout**.
 
-The system installer and CLI updater have been exercised on the Raspberry Pi installation. Dashboard-initiated update installation and the final release regression suite remain acceptance gates. See [Installation and first-run guide](docs/INSTALLATION.md) and [Foundation release checklist](docs/FOUNDATION-RELEASE-CHECKLIST.md). Preserve a known-good boot card during hardware experiments.
+The system installer and CLI updater have been exercised on the Raspberry Pi installation. The foundation regression suite passed on the production Pi (621 tests, 15 skipped). Dashboard-initiated update installation remains the final functional acceptance gate. See [Installation and first-run guide](docs/INSTALLATION.md) and [Foundation release checklist](docs/FOUNDATION-RELEASE-CHECKLIST.md). Preserve a known-good boot card during hardware experiments.
 
 ### Updating an existing system installation
 
