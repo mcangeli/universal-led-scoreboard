@@ -1,13 +1,15 @@
 # Hardware and operating-system support policy
 
-The **Raspberry Pi 5 running Raspberry Pi OS Trixie with a physical 64×32 HUB75 matrix** is the active development and manually tested reference environment. The physical board and matrix worker are operating on that setup. A clean-image install is still pending.
+**Raspberry Pi OS Trixie 64-bit is the minimum supported operating system for v0.1.0.** Bookworm is out of scope and will not be tested or supported.
 
-| Board | Bookworm | Trixie | Physical matrix |
-| --- | --- | --- | --- |
-| Pi Zero 2 W | Target, unverified | Target, unverified | Not validated |
-| Pi 3 | Target, unverified | Planned production validation | Not validated |
-| Pi 4 | Target, unverified | Target, unverified | Not validated |
-| Pi 5 | Target, unverified | Active development, existing install tested | Working on development setup; clean install pending |
+The Raspberry Pi 5 with a physical 64×32 HUB75 matrix is the active development and manually tested reference setup. A clean-image installation is pending.
+
+| Board | Trixie 64-bit | Physical matrix |
+| --- | --- | --- |
+| Pi Zero 2 W | Target, performance unverified | Not validated |
+| Pi 3 | Planned production validation | Not validated |
+| Pi 4 | Target, unverified | Not validated |
+| Pi 5 | Active development, existing installation tested | Working on development setup; clean installation pending |
 
 These entries are **not hardware certification**. Pi 5 GPIO handling and driver support differ from earlier Pi models.
 
@@ -21,4 +23,4 @@ These entries are **not hardware certification**. Pi 5 GPIO handling and driver 
 
 ## Validation
 
-Use a separate clean boot card. Confirm install, web login, Wi-Fi recovery, services after reboot, physical splash, frame freshness, rotation, network-loss handling, and updates. Record tested OS, Pi model, driver revision, HAT mapping, and results before claiming compatibility.
+Use a separate clean boot card. Confirm install, web login, Wi-Fi recovery, services after reboot, physical splash, frame freshness, rotation, network-loss handling, and updates. Reject unsupported OS releases during the future clean-install bootstrap. Record tested OS, Pi model, driver revision, HAT mapping, and results before claiming compatibility.
