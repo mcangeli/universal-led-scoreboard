@@ -1,6 +1,6 @@
 # Installation and first-run guide (v0.1.0 candidate)
 
-**Important: clean system-service installation is not yet automated or validated.** Do not wipe a working scoreboard or assume `scripts/install.sh` provisions the production layout. That script creates an older **user-level** `universal-led-scoreboard.service`. The current working installation uses **system-level** `uls-web.service` and `uls-matrix.service`.
+**Important: the new clean system-service installer is experimental and has not yet been validated on a fresh image.** Do not wipe a working scoreboard or assume `scripts/install.sh` provisions the production layout. That script creates an older **user-level** `universal-led-scoreboard.service`. The current working installation uses **system-level** `uls-web.service` and `uls-matrix.service`.
 
 ## Before a clean-install test
 
@@ -8,7 +8,7 @@
 2. Record hardware mapping, brightness, and any driver-specific settings from the known-good device. Never publish administrator passwords, API keys, or Wi-Fi credentials.
 3. Flash Raspberry Pi OS Lite 64-bit **Trixie** (required; Bookworm is unsupported) and configure SSH and networking using Raspberry Pi Imager.
 4. Boot and verify SSH, network connectivity, system clock, and OS version.
-5. Clone the candidate branch, but **do not run the legacy installer expecting a production setup**:
+5. Clone the candidate branch:
 
 ```bash
 sudo apt update
@@ -19,7 +19,21 @@ python3 --version
 cat /etc/os-release
 ```
 
-**Stop here for the system-service installation** until the new clean-install bootstrap is implemented and reviewed. The existing `scripts/stage-system-services.sh` and `scripts/cutover-to-system.sh` are **migration tools**: they require a previously migrated `/opt/uls/app`, `/etc/uls/admin.json`, and, for cutover, a running legacy service. They are not suitable for a fresh image.
+Run the new **experimental** system installer from the checkout as a regular sudo-enabled user. For a Pi with a physical 64×32 HUB75 panel and compatible Adafruit HAT mapping:
+
+```bash
+bash scripts/install-system.sh --mode physical
+```
+
+For browser-only testing without an LED matrix:
+
+```bash
+bash scripts/install-system.sh --mode emulator
+```
+
+The installer will prompt for an administrator password (minimum 12 characters), execute the tests, and enable system services. The physical mode compiles the RGB matrix driver and uses default mapping `adafruit-hat`, brightness `40`, GPIO slowdown `4`. These defaults are hardware-specific and must be checked before physical testing. Keep the panel's power supply disconnected while assembling wiring.
+
+**Do not run the legacy `scripts/install.sh`** on this installation. The existing `scripts/stage-system-services.sh` and `scripts/cutover-to-system.sh` are **migration tools**: they require a previously migrated `/opt/uls/app`, `/etc/uls/admin.json`, and, for cutover, a running legacy service. They are not suitable for a fresh image.
 
 ## Known-good deployed layout (existing installations)
 
