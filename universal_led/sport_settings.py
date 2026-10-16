@@ -103,7 +103,7 @@ def validate_settings(value):
         raise ValueError('Invalid NFL settings')
     teams=nfl['favorite_teams']
     if (not isinstance(teams,list) or
-        any(not isinstance(t,str) or len(t)!=3 or not t.isalpha() or t!=t.upper() for t in teams) or
+        any(not isinstance(t,str) or not 2<=len(t)<=3 or not t.isalpha() or t!=t.upper() for t in teams) or
         len(teams)!=len(set(teams))):
         raise ValueError('Invalid NFL favorite teams')
     if nfl['mode'] not in ('favorite','fallback','all'):
