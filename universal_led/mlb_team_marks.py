@@ -123,9 +123,10 @@ def draw_team_mark(fb, team, x, y):
     mark = MARKS.get(team.upper())
     if mark is None:
         return False
-    sprite = SPRITES.get(team.upper())
+    sprite_key = {'TB': 'TBR'}.get(team.upper(), team.upper())
+    sprite = SPRITES.get(sprite_key)
     if sprite is not None:
-        colors = SPRITE_COLORS[team.upper()]
+        colors = SPRITE_COLORS[sprite_key]
         for dy, row in enumerate(sprite):
             for dx, symbol in enumerate(row):
                 if symbol != '.':
