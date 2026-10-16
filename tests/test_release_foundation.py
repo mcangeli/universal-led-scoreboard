@@ -36,8 +36,8 @@ class ReleaseFoundationTests(unittest.TestCase):
 
     def test_rendered_dashboard_has_valid_javascript_string_escape(self):
         from universal_led.configurator import HTML
-        self.assertIn("+'\\\\n'+", HTML)
-        self.assertNotIn("+'\\n'+", HTML)
+        self.assertIn("+'\\n'+", HTML)
+        self.assertNotIn("+'\n'+", HTML)
 
 
 if __name__ == '__main__':
