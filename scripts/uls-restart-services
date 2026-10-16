@@ -2,7 +2,5 @@
 # Root-owned, argument-free restart entrypoint for the dashboard.
 set -eu
 [ "$#" -eq 0 ] || exit 2
-/usr/bin/systemctl restart uls-web.service
-/usr/bin/systemctl restart uls-matrix.service
-/usr/bin/systemctl is-active --quiet uls-web.service
-/usr/bin/systemctl is-active --quiet uls-matrix.service
+# Schedule in systemd's own cgroup so restarting uls-web cannot kill this job.
+/usr/bin/systemd-run --quiet --collect --unit=uls-dashboard-restart --on-active=2s /usr/local/libexec/uls-restart-worker
