@@ -25,7 +25,7 @@ main()
 EOF
 chown root:root /usr/local/libexec/universal-led-wifi-control
 chmod 0755 /usr/local/libexec/universal-led-wifi-control
-printf '%s ALL=(root) NOPASSWD: /usr/local/libexec/universal-led-wifi-control ""\n' "$SUDO_USER" > /etc/sudoers.d/universal-led-wifi-control
+printf '%s ALL=(root) NOPASSWD: /usr/local/libexec/universal-led-wifi-control ""\n' "uls" > /etc/sudoers.d/universal-led-wifi-control
 chmod 0440 /etc/sudoers.d/universal-led-wifi-control
 visudo -cf /etc/sudoers.d/universal-led-wifi-control
 # Syntax-check installed files before reporting success.
