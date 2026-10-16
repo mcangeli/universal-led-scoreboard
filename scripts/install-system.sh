@@ -32,15 +32,18 @@ sudo apt-get install -y git curl python3 python3-venv python3-dev python3-pip bu
 echo "Creating system account and directories..."
 id uls >/dev/null 2>&1 || sudo useradd --system --home-dir "$DATA" --shell /usr/sbin/nologin uls
 sudo install -d -o "$USER" -g "$(id -gn)" -m 0755 /opt/uls
+sudo install -d -o "$USER" -g "$(id -gn)" -m 0755 "$APP"
 sudo install -d -o uls -g uls -m 0700 "$CONFIG" "$CONFIG/secrets" "$DATA"
 sudo install -d -o uls -g uls -m 0755 /run/uls
 echo "Cloning scoreboard..."
 git clone --branch "$BRANCH" --single-branch "$REPO" "$APP"
-python3 -m venv "$VENV"
+sudo python3 -m venv "$VENV"
+sudo chown -R "$USER:$(id -gn)" "$VENV"
 "$VENV/bin/python" -m pip install --upgrade pip
 echo "Running baseline tests..."
 (cd "$APP" && "$VENV/bin/python" -m unittest discover -s tests -p 'test_*.py')
 echo "Set administrator password (12 or more characters)."
+sudo chown "$USER:$(id -gn)" "$CONFIG"
 (cd "$APP" && "$VENV/bin/python" -m universal_led.configurator --config-dir "$CONFIG" --set-admin-password)
 sudo chown -R uls:uls "$CONFIG" "$DATA"
 sudo find "$CONFIG" -type f -exec chmod 0600 {} +
@@ -71,6 +74,7 @@ EOF
 if [[ "$MODE" == physical ]]; then
   echo "Building physical HUB75 driver (this can take several minutes)..."
   sudo apt-get install -y cython3 cmake ninja-build python3-setuptools
+  "$VENV/bin/python" -m pip install cython scikit-build-core
   mkdir -p "$HOME/.local/src"
   git clone https://github.com/hzeller/rpi-rgb-led-matrix.git "$HOME/.local/src/rpi-rgb-led-matrix"
   make -C "$HOME/.local/src/rpi-rgb-led-matrix/lib"
