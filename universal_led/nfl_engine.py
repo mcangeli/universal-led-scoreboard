@@ -19,7 +19,7 @@ class ConfiguredNFLRenderer:
         if type(rotation_seconds) not in (int, float) or not 1 <= rotation_seconds <= 3600:
             raise ValueError("Invalid NFL rotation duration")
         teams = list(favorite_teams or [])
-        if any(not isinstance(t, str) or len(t) != 3 or not t.isalpha() for t in teams):
+        if any(not isinstance(t, str) or not 2 <= len(t) <= 3 or not t.isalpha() for t in teams):
             raise ValueError("Invalid NFL favorite team")
         self.favorite_teams = [t.upper() for t in teams]
         self.mode = mode
