@@ -30,11 +30,6 @@ echo "Checking candidate code before changing the installation..."
 as_owner "$VENV/bin/python" -m compileall -q "$STAGE/universal_led" "$STAGE/tests"
 (cd "$STAGE" && as_owner "$VENV/bin/python" -m unittest discover -s tests -p 'test_*.py')
 echo "Tests passed. Installing fast-forward..."
-CHANGED=$(as_owner git diff --name-only "$OLD" "$NEW")
-MATRIX_CHANGED=0
-if grep -Eq '^(universal_led/(matrix_worker|matrix_output|display|frame_bridge)\\.py|scripts/.*matrix|systemd/.*matrix)' <<< "$CHANGED"; then
-  MATRIX_CHANGED=1
-fi
 rollback() {
   local failed_status=$?
   trap - ERR
@@ -43,16 +38,16 @@ rollback() {
     echo "CRITICAL: Could not restore Git checkout automatically." >&2
   fi
   systemctl restart uls-web.service || true
-  if (( MATRIX_CHANGED )); then systemctl restart uls-matrix.service || true; fi
+  systemctl restart uls-matrix.service || true
   echo "Rollback attempted; check: sudo ulsctl status" >&2
   exit "$failed_status"
 }
 trap rollback ERR
 as_owner git merge --ff-only "$NEW"
-if (( MATRIX_CHANGED )); then
-  systemctl restart uls-matrix.service
-fi
 systemctl restart uls-web.service
+# Always restart the physical worker: its 30-second startup splash provides
+# visible confirmation that the updated scoreboard has restarted.
+systemctl restart uls-matrix.service
 systemctl is-active --quiet uls-web.service
 systemctl is-active --quiet uls-matrix.service
 # is-active alone can succeed during a crash loop; confirm the HTTP endpoint.
