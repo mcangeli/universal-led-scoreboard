@@ -23,31 +23,21 @@ Development targets Raspberry Pi 5, with Raspberry Pi 3 as a production target. 
 
 For a physical board you need a compatible 64×32 RGB LED matrix, appropriate power supply, and an RGB matrix interface/HAT supported by the `rpi-rgb-led-matrix` driver. **The web emulator does not require matrix hardware.** Hardware wiring and service setup depend on the interface used.
 
-## Quick installation (browser emulator)
+## Installation status
 
-On Raspberry Pi OS Lite Bookworm or Trixie, sign in as your normal user (not root), then run:
+**v0.1.0 is a release candidate, not yet tagged.** The active Raspberry Pi 5 installation runs two **system-level** services (`uls-web.service` and `uls-matrix.service`) from `/opt/uls/app`. The older `scripts/install.sh` installs a separate user-level preview service and **must not be used as the clean-install procedure for the current system layout**.
 
-```bash
-sudo apt update
-sudo apt install -y git
-git clone -b feature/0.1.0-core-foundation https://github.com/mcangeli/universal-led-scoreboard.git
-cd universal-led-scoreboard
-bash scripts/install.sh
-```
+A production-style clean-image installer is the remaining release blocker. See [Installation and first-run guide](docs/INSTALLATION.md) for preparation and known limitations, and [Foundation release checklist](docs/FOUNDATION-RELEASE-CHECKLIST.md) for the acceptance gate. Preserve a known-good boot card and use a second microSD card for fresh-image validation.
 
-The installer installs basic Python dependencies, prompts for a 12+ character administrator password on a new installation, and creates and enables the **user-level** `universal-led-scoreboard.service`. It also enables systemd user lingering so the service can start after boot without an interactive login. It preserves existing application configuration and credentials when rerun. It does **not** install the physical RGB matrix driver.
-
-Open `http://<pi-ip>:8080` from another device on the same network and sign in. Select **Open Board View** to preview the 64×32 output.
-
-Optional installer flags:
+### Updating an existing system installation
 
 ```bash
-bash scripts/install.sh --skip-apt   # dependencies already installed
-bash scripts/install.sh --no-start   # install and enable service, but don't launch it
-bash scripts/install.sh --port 8081  # use a different HTTP port
+sudo ulsctl update
+sudo ulsctl health
+sudo ulsctl status
 ```
 
-To run without installing a service, set the administrator password with `python3 -m universal_led.configurator --set-admin-password`, then launch `python3 -m universal_led.configurator --host 0.0.0.0 --port 8080` from the checkout.
+The updater validates the candidate test suite before installation, synchronizes the installed `ulsctl` command, and restarts both services. Configuration under `/etc/uls` and data under `/var/lib/uls` are preserved.
 
 **Security:** The configurator uses HTTP on the LAN. Do not expose port 8080 to the public internet without HTTPS and appropriate access controls.
 
@@ -59,44 +49,33 @@ Under **Display Settings → Time & Weather**, enable the clock, choose a timezo
 
 Use the news settings to enable official MLB headlines or add RSS/Atom feeds. Use the color controls to customize the scoreboard palette. **Open Board View** provides a convenient 64×32 preview without hardware.
 
-## Run as a service
+## Service management and testing
 
-For an installation that already has the user-level systemd service configured:
+For the current system installation:
 
 ```bash
-systemctl --user status universal-led-scoreboard.service
-systemctl --user restart universal-led-scoreboard.service
-systemctl --user stop universal-led-scoreboard.service
-systemctl --user start universal-led-scoreboard.service
-journalctl --user -u universal-led-scoreboard.service -n 100 --no-pager
+sudo ulsctl status
+sudo ulsctl restart
+sudo ulsctl logs
+sudo ulsctl health
 ```
 
-These commands **manage an existing service**; they do not install one. A new installation can use the foreground command above while hardware and service deployment are being configured.
+The physical worker shows an approximately 30-second startup splash before normal frames. The health command verifies both services, the HTTP endpoint, and freshness of the published framebuffer. A clean-image installer and compatibility testing are still required before the foundation release.
 
-## Updating and testing
-
-From the preview checkout:
+From a development checkout:
 
 ```bash
-git pull --ff-only origin feature/0.1.0-core-foundation
-python3 -m unittest discover -s tests
-```
-
-If the tests pass and you run the systemd service, restart it to load the updated code. Keep local settings and API credentials out of Git. The project's release history and detailed changes are in [CHANGELOG.md](CHANGELOG.md), not this README.
-
-To generate a splash-screen image without a matrix:
-
-```bash
+python3 -m unittest discover -s tests -p 'test_*.py'
 python3 -m universal_led --output splash.ppm
 ```
 
 ## Troubleshooting
 
-- **Cannot sign in:** Run the administrator password setup command against the same configuration directory as the server.
+- **Cannot sign in:** Check credentials and permissions in the deployed configuration directory (`/etc/uls` for the system installation).
 - **Cannot open the configurator:** Check that the process or service is running, verify the Pi's IP address and confirm port 8080 is reachable from your LAN.
 - **Weather does not appear:** Check that weather is enabled, the location is valid and the selected provider is configured. OpenWeatherMap requires a working API key. Background data may take a moment to load.
 - **A screen is not appearing:** A live favorite-team game intentionally takes priority. Otherwise, check which screens are enabled and allow the rotation to advance.
-- **Service does not start:** Inspect `journalctl --user -u universal-led-scoreboard.service -n 100 --no-pager`.
+- **Service does not start:** Run `sudo ulsctl logs` and `sudo ulsctl status` for the system installation.
 - **Changes are not visible in the browser:** Refresh the page after restarting the service.
 
 ## Project status and credits
