@@ -53,8 +53,8 @@ class ConfiguredNHLRenderer:
         # Keep live NHL games uninterrupted. Rotate headlines during non-live periods.
         if game is None or game.status != "live":
             settings = self.settings_getter() if self.settings_getter else None
-            if settings and settings["sports"]["nhl"]["enabled"] and settings["sports"]["nhl"]["news_enabled"] and self.news is not None:
-                headlines = [item for item in self.news.items() if item.source == "nhl"]
+            if settings and settings["sports"]["nhl"]["enabled"] and self.news is not None:
+                headlines = [item for item in self.news.items() if item.source not in ("mlb", "nhl") or (item.source == "nhl" and settings["sports"]["nhl"]["news_enabled"])]
                 if headlines:
                     elapsed = max(0.0, self.clock() - self.started)
                     interval = self.rotation_seconds
