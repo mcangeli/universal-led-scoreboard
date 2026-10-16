@@ -850,11 +850,25 @@ def main():
     renderer=ConfiguredMLBRenderer(args.config_dir,feed,news=news,weather=weather)
     weather.start()
     news.start(renderer.settings)
+    # NHL remains opt-in. Both browser and matrix consume the same routed frame.
+    from .nhl_feed import NHLFeed
+    from .nhl_runtime import BackgroundNHLFeed
+    from .nhl_engine import ConfiguredNHLRenderer
+    from .multisport_runtime import MultiSportRenderer
+    nhl_feed = BackgroundNHLFeed(NHLFeed())
+    nhl_renderer = ConfiguredNHLRenderer(nhl_feed)
+    board = MultiSportRenderer(renderer, nhl_renderer)
     def game():
-        return renderer.game()
+        return board.game()
     def apply_settings(settings):
         renderer.apply(settings)
         feed.feed.refresh_seconds=settings['mlb']['refresh_seconds']
+        # NHL is enabled only when a validated settings version supports it.
+        if settings['active_sport'] == 'nhl':
+            nhl_feed.start()
+            board.set_active_sport('nhl')
+        else:
+            board.set_active_sport('mlb')
     def feed_status():
         return feed.status()
     def countdown_status():
@@ -879,14 +893,14 @@ def main():
     def publish_frames():
         while not frame_stop.is_set():
             try:
-                write_frame(frame_path, renderer.frame())
+                write_frame(frame_path, board.frame())
             except Exception as exc:
                 print(f'Frame publishing failed: {exc}', flush=True)
             frame_stop.wait(1.0)
     frame_thread = threading.Thread(target=publish_frames, daemon=True, name='frame-publisher')
     frame_thread.start()
     try:
-        with ThreadingHTTPServer((args.host,args.port),make_handler(args.config_dir,token,game,apply_settings,feed_status,renderer.frame,countdown_status)) as server:
+        with ThreadingHTTPServer((args.host,args.port),make_handler(args.config_dir,token,game,apply_settings,feed_status,board.frame,countdown_status)) as server:
             print(f'Configurator listening on {args.host}:{args.port}',flush=True)
             server.serve_forever()
     finally:
@@ -895,5 +909,6 @@ def main():
         weather.stop()
         news.stop()
         feed.stop()
+        nhl_feed.stop()
 if __name__=='__main__':
     main()
