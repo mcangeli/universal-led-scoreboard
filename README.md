@@ -19,15 +19,15 @@ The current screen layouts target a **64×32 RGB LED matrix**. You can use the b
 
 ## Hardware and software
 
-Development targets Raspberry Pi 5, with Raspberry Pi 3 as a production target. The hardware targets include Pi Zero 2 W, Pi 3, Pi 4 and Pi 5. **Raspberry Pi OS Trixie 64-bit is required**; Bookworm is not supported. Only the Pi 5 development configuration has been exercised with a physical matrix so far. Performance and hardware-driver behavior may vary by model.
+Development targets Raspberry Pi 5, with Raspberry Pi 3 as a production target. The hardware targets include Pi Zero 2 W, Pi 3, Pi 4 and Pi 5. **Raspberry Pi OS Trixie 64-bit is required**; Bookworm is not supported. The physical matrix and dashboard have been validated on the production Raspberry Pi 3; compatibility and performance on other models still require device-specific verification. Performance and hardware-driver behavior may vary by model.
 
 For a physical board you need a compatible 64×32 RGB LED matrix, appropriate power supply, and an RGB matrix interface/HAT supported by the `rpi-rgb-led-matrix` driver. **The web emulator does not require matrix hardware.** Hardware wiring and service setup depend on the interface used.
 
 ## Installation status
 
-**v0.1.0 is a release candidate, not yet tagged.** The active Raspberry Pi 5 installation runs two **system-level** services (`uls-web.service` and `uls-matrix.service`) from `/opt/uls/app`. The older `scripts/install.sh` installs a separate user-level preview service and **must not be used as the clean-install procedure for the current system layout**.
+**v0.1.0 is a release candidate, not yet tagged.** The validated production installation runs two **system-level** services (`uls-web.service` and `uls-matrix.service`) from `/opt/uls/app`. The older `scripts/install.sh` installs a separate user-level preview service and **must not be used as the clean-install procedure for the current system layout**.
 
-A production-style clean-image installer is the remaining release blocker. See [Installation and first-run guide](docs/INSTALLATION.md) for preparation and known limitations, and [Foundation release checklist](docs/FOUNDATION-RELEASE-CHECKLIST.md) for the acceptance gate. Preserve a known-good boot card and use a second microSD card for fresh-image validation.
+The system installer and CLI updater have been exercised on the Raspberry Pi installation. Dashboard-initiated update installation and the final release regression suite remain acceptance gates. See [Installation and first-run guide](docs/INSTALLATION.md) and [Foundation release checklist](docs/FOUNDATION-RELEASE-CHECKLIST.md). Preserve a known-good boot card during hardware experiments.
 
 ### Updating an existing system installation
 
