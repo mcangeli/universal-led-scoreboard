@@ -54,6 +54,10 @@ if [[ "$OUTPUT_MODE" == keep ]]; then
   OUTPUT_MODE="$(cat "$OUTPUT_FILE" 2>/dev/null || echo emulator)"
 fi
 if [[ "$OUTPUT_MODE" == physical || "$OUTPUT_MODE" == both ]]; then
+  MATRIX_PY="$HOME/.local/share/universal-led-scoreboard/matrix-venv/bin/python"
+  if [[ -x "$MATRIX_PY" ]] && "$MATRIX_PY" -c "from rgbmatrix import RGBMatrix, RGBMatrixOptions" >/dev/null 2>&1; then
+    echo "Existing RGBMatrix Python bindings verified; skipping driver rebuild."
+  else
   echo "Installing optional HUB75 matrix Python bindings..."
   if ((SKIP_APT == 0)); then
     sudo apt-get install -y build-essential python3-dev python3-venv python3-pip python3-setuptools cython3 cmake ninja-build
@@ -79,6 +83,7 @@ if [[ "$OUTPUT_MODE" == physical || "$OUTPUT_MODE" == both ]]; then
   fi
   "$MATRIX_PY" -c 'from rgbmatrix import RGBMatrix, RGBMatrixOptions; print("RGBMatrix bindings verified")'
   echo "Physical driver installed. Hardware output integration into the runtime is still required."
+  fi
 fi
 mkdir -p "$(dirname "$OUTPUT_FILE")"
 printf '%s\\n' "$OUTPUT_MODE" > "$OUTPUT_FILE"
