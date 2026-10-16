@@ -7,7 +7,9 @@ from universal_led import configurator
 class NHLConfiguratorIntegrationTests(unittest.TestCase):
     def test_shared_frame_router_used_by_publisher_and_preview(self):
         source = inspect.getsource(configurator.main)
-        self.assertIn("MultiSportRenderer(renderer, nhl_renderer, news=news, settings_getter=renderer.settings)", source)
+        self.assertIn("MultiSportRenderer(renderer, nhl_renderer, news=news, settings_getter=renderer.settings, nba_renderer=nba_renderer)", source)
+        self.assertIn("nba_renderer = ConfiguredNBARenderer(nba_feed)", source)
+        self.assertIn("enabled = [sport for sport in ('mlb', 'nhl', 'nba')", source)
         self.assertIn("write_frame(frame_path, board.frame())", source)
         self.assertIn("feed_status,board.frame,countdown_status", source)
 
