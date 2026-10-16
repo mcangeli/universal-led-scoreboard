@@ -896,9 +896,11 @@ def main():
                                mode=nhl['mode'],
                                rotation_seconds=nhl['rotation_seconds'])
         nhl_feed.feed.refresh_seconds = nhl['refresh_seconds']
-        if settings['active_sport'] == 'nhl':
+        if settings['sports']['nhl']['enabled']:
             nhl_feed.start()
-        board.set_active_sport(settings['active_sport'])
+        enabled = [sport for sport in ('mlb', 'nhl') if settings['sports'][sport]['enabled']]
+        board.configure_rotation(enabled, interval=settings['mlb']['rotation_seconds'],
+                                 preferred=settings['active_sport'])
     apply_settings(initial)
     def feed_status():
         return feed.status()
