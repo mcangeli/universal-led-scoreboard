@@ -1,6 +1,6 @@
 """v0.4.5 Preview 1 dashboard presentation regression checks."""
 import unittest
-from universal_led.configurator import HTML
+from universal_led.configurator import HTML, LOGIN_HTML
 
 
 class DashboardPolishTests(unittest.TestCase):
@@ -20,8 +20,13 @@ class DashboardPolishTests(unittest.TestCase):
         self.assertIn('grid-template-columns:repeat(2,minmax(0,1fr))', HTML)
         self.assertIn('@media(max-width:680px)', HTML)
 
-    def test_board_link_is_safe(self):
+    def test_board_link_is_safe_and_unique(self):
+        self.assertEqual(HTML.count('href="/board"'), 1)
         self.assertIn('href="/board" target="_blank" rel="noopener"', HTML)
+
+    def test_dashboard_css_is_not_on_login(self):
+        self.assertNotIn('/* v0.4.5 Preview 1:', LOGIN_HTML)
+        self.assertIn('/* v0.4.5 Preview 1:', HTML)
 
 
 if __name__ == '__main__':
