@@ -1,0 +1,22 @@
+#!/usr/bin/env bash
+set -Eeuo pipefail
+usage() { echo "Usage: ulsctl {status|start|stop|restart|logs|health} [web|matrix|all]"; }
+action="${1:-status}"
+target="${2:-all}"
+case "$target" in
+  web) units=(uls-web.service) ;;
+  matrix) units=(uls-matrix.service) ;;
+  all) units=(uls-web.service uls-matrix.service) ;;
+  *) usage >&2; exit 2 ;;
+esac
+case "$action" in
+  status) sudo systemctl status --no-pager "${units[@]}" ;;
+  start|stop|restart) sudo systemctl "$action" "${units[@]}" ;;
+  logs) sudo journalctl -u "${units[0]}" $( [[ "$target" == all ]] && printf '%s' '-u uls-matrix.service' ) -n 80 --no-pager ;;
+  health)
+    sudo systemctl is-active "${units[@]}"
+    if [[ "$target" != matrix ]]; then curl --fail --silent --output /dev/null http://127.0.0.1:8080/ && echo "Web endpoint OK"; fi
+    if [[ "$target" != web ]]; then test -s /run/uls/live-frame.ppm && echo "Frame available"; fi
+    ;;
+  *) usage >&2; exit 2 ;;
+esac
