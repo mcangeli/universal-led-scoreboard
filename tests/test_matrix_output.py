@@ -26,7 +26,7 @@ class FakeMatrix:
     height = 32
     def __init__(self, options):
         self.options = options
-        self.canvas = FakeCanvas()
+        self.canvas = FakeCanvas()\n        self.canvas_creations = 0
     def CreateFrameCanvas(self):
         return self.canvas
     def SwapOnVSync(self, canvas):
@@ -46,7 +46,7 @@ class MatrixOutputTests(unittest.TestCase):
         draw_frame(matrix, frame)
         self.assertEqual(matrix.canvas.pixels[(3, 4)], (1, 2, 3))
 
-    def test_mismatched_frame(self):
+    def test_reuses_canvas_across_frames(self):\n        matrix = FakeMatrix(FakeOptions())\n        canvas = matrix.CreateFrameCanvas()\n        frame = Framebuffer()\n        for _ in range(100):\n            canvas = draw_frame(matrix, frame, canvas=canvas)\n        self.assertEqual(matrix.canvas_creations, 1)\n\n    def test_mismatched_frame(self):
         matrix = FakeMatrix(FakeOptions())
         with self.assertRaises(ValueError):
             draw_frame(matrix, Framebuffer(32, 32))
