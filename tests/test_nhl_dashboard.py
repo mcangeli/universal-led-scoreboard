@@ -18,6 +18,16 @@ class NHLDashboardTests(unittest.TestCase):
                 self.assertIn('id="' + field + '"', sports)
                 self.assertNotIn('id="' + field + '"', display)
 
+    def test_nhl_favorites_use_team_checkboxes(self):
+        self.assertIn('id="nhl-teams" class="favorite-team-grid"', HTML)
+        self.assertIn('value="BOS"', HTML)
+        self.assertIn('value="NYR"', HTML)
+        self.assertIn('value="UTA"', HTML)
+        self.assertIn('function getNHLFavorites()', HTML)
+        self.assertIn('setNHLFavorites(nhl.favorite_teams)', HTML)
+        self.assertIn('next.nhl.favorite_teams=getNHLFavorites()', HTML)
+        self.assertNotIn("document.getElementById('nhl-teams').value=", HTML)
+
     def test_nhl_fields_present(self):
         for field in ("nhl-enabled", "nhl-teams", "nhl-mode",
                       "nhl-rotation", "nhl-refresh"):
