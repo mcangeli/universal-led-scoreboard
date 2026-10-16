@@ -1,6 +1,6 @@
 # Installation and first-run guide (v0.1.0 candidate)
 
-**Important: the new clean system-service installer is experimental and has not yet been validated on a fresh image.** Do not wipe a working scoreboard or assume `scripts/install.sh` provisions the production layout. That script creates an older **user-level** `universal-led-scoreboard.service`. The current working installation uses **system-level** `uls-web.service` and `uls-matrix.service`.
+**Status: fresh Trixie physical installation, matrix output, dashboard, and Wi-Fi scanning have been verified on a Raspberry Pi. Automatic hotspot fallback and dashboard-initiated updates remain unverified on physical hardware.** Do not wipe a working scoreboard or assume `scripts/install.sh` provisions the production layout. That script creates an older **user-level** `universal-led-scoreboard.service`. The current working installation uses **system-level** `uls-web.service` and `uls-matrix.service`.
 
 ## Before a clean-install test
 
@@ -97,3 +97,16 @@ systemctl is-enabled uls-matrix.service # physical mode only
 ```
 
 Open the dashboard, sign in, check **System → Software Updates**, and confirm it reports the installed commit. Restart the Pi and repeat the health check after the 30-second physical splash. Preserve installer and service error output if any step fails. Do not format the known-good card.
+
+
+## Recovery hotspot provisioning
+
+The system installer provisions a dedicated NetworkManager access-point profile named `Universal-LED-Setup` and generates a unique 32-character-ish password in `/etc/uls/secrets/hotspot-password` (root-only, mode 0600). The profile is **disabled by default** and cannot unexpectedly interrupt an existing network connection. To retrieve the initial password locally:
+
+```bash
+sudo cat /etc/uls/secrets/hotspot-password
+```
+
+The dashboard's Wi-Fi settings use a separate root-owned, narrowly scoped control helper to change the AP password. Changing it in the dashboard updates NetworkManager, not the original one-time installation secret; the initial password file should not be treated as authoritative after a change. Never include hotspot passwords in support logs.
+
+**Not yet guaranteed:** automatic activation when all saved networks fail. That requires verified recovery scheduling and explicit safeguards against disconnecting the Pi. Do not claim unattended hotspot fallback until its service is implemented and tested.
