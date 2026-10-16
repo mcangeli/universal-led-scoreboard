@@ -38,7 +38,8 @@ def draw_frame(matrix, frame: Framebuffer, *, canvas=None):
             f"Framebuffer {frame.width}x{frame.height} does not match "
             f"matrix {matrix.width}x{matrix.height}"
         )
-    if canvas is None:\n        canvas = matrix.CreateFrameCanvas()
+    if canvas is None:
+        canvas = matrix.CreateFrameCanvas()
     canvas.Clear()
     for y, row in enumerate(frame.pixels):
         for x, (red, green, blue) in enumerate(row):
