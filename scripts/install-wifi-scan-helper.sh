@@ -2,8 +2,7 @@
 set -euo pipefail
 # Run with sudo from the checked-out repository. Installs ONLY read-only scan permission.
 if [[ "${EUID}" -ne 0 ]]; then echo "Run with sudo" >&2; exit 1; fi
-USER_NAME="${SUDO_USER:-}"
-if [[ -z "$USER_NAME" || "$USER_NAME" == root ]]; then echo "Run via sudo from the scoreboard user" >&2; exit 1; fi
+
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 TARGET=/usr/local/libexec/universal-led-wifi-scan
 install -d -o root -g root -m 0755 /usr/local/libexec
