@@ -1,0 +1,43 @@
+#!/usr/bin/env bash
+# Safe fast-forward updater for the /opt/uls system installation.
+set -Eeuo pipefail
+APP=/opt/uls/app
+VENV=/opt/uls/venv
+BRANCH=feature/0.1.0-core-foundation
+REMOTE=origin
+if (( EUID != 0 )); then
+  echo "Run: sudo ulsctl update" >&2
+  exit 1
+fi
+[[ -d "$APP/.git" && -x "$VENV/bin/python" ]] || { echo "Missing ULS checkout or Python environment" >&2; exit 1; }
+OWNER=$(stat -c %U "$APP")
+[[ "$OWNER" != root ]] || { echo "Refusing to run git as root: /opt/uls/app must belong to an installer user" >&2; exit 1; }
+as_owner() { runuser -u "$OWNER" -- "$@"; }
+cd "$APP"
+[[ "$(as_owner git branch --show-current)" == "$BRANCH" ]] || { echo "Wrong branch. Expected $BRANCH" >&2; exit 1; }
+[[ -z "$(as_owner git status --porcelain)" ]] || { echo "Working tree has local changes; update cancelled." >&2; exit 1; }
+echo "Fetching $REMOTE/$BRANCH..."
+as_owner git fetch "$REMOTE" "$BRANCH"
+OLD=$(as_owner git rev-parse HEAD)
+NEW=$(as_owner git rev-parse "refs/remotes/$REMOTE/$BRANCH")
+if [[ "$OLD" == "$NEW" ]]; then echo "Already up to date ($OLD)."; exit 0; fi
+as_owner git merge-base --is-ancestor "$OLD" "$NEW" || { echo "Not a fast-forward; update cancelled." >&2; exit 1; }
+STAGE=$(as_owner mktemp -d /tmp/uls-update.XXXXXXXX)
+cleanup() { as_owner git -C "$APP" worktree remove --force "$STAGE" >/dev/null 2>&1 || true; as_owner rm -rf -- "$STAGE"; }
+trap cleanup EXIT
+as_owner git worktree add --detach "$STAGE" "$NEW"
+echo "Checking candidate code before changing the installation..."
+as_owner "$VENV/bin/python" -m compileall -q "$STAGE/universal_led" "$STAGE/tests"
+(cd "$STAGE" && as_owner "$VENV/bin/python" -m unittest discover -s tests -p 'test_*.py')
+echo "Tests passed. Installing fast-forward..."
+CHANGED=$(as_owner git diff --name-only "$OLD" "$NEW")
+as_owner git merge --ff-only "$NEW"
+# Matrix service is restarted only if its worker, driver, or drawing code changed.
+if grep -Eq '^(universal_led/(matrix_worker|matrix_output|display|frame_bridge)\.py|scripts/.*matrix|systemd/.*matrix)' <<< "$CHANGED"; then
+  systemctl restart uls-matrix.service
+fi
+systemctl restart uls-web.service
+systemctl is-active --quiet uls-web.service
+systemctl is-active --quiet uls-matrix.service
+echo "ULS updated successfully: $OLD -> $NEW"
+echo "Settings in /etc/uls and persistent data in /var/lib/uls were untouched."
