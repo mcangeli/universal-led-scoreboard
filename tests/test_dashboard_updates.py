@@ -26,6 +26,17 @@ class DashboardUpdateTests(unittest.TestCase):
             source = (ROOT / 'scripts' / name).read_text()
             self.assertIn('install-dashboard-update-helper.sh', source)
 
+    def test_emulator_update_does_not_require_matrix_service(self):
+        updater = (ROOT / 'scripts' / 'uls-update').read_text()
+        cli = (ROOT / 'scripts' / 'ulsctl').read_text()
+        self.assertIn('list-unit-files uls-matrix.service', updater)
+        self.assertIn('list-unit-files uls-matrix.service', cli)
+
+    def test_dashboard_polls_update_progress(self):
+        source = (ROOT / 'universal_led' / 'configurator.py').read_text()
+        self.assertIn('setInterval(()=>', source)
+        self.assertIn('refreshUpdateProgress()', source)
+
     def test_detached_job_survives_web_restart(self):
         source = (ROOT / 'scripts' / 'uls-update-launch').read_text()
         self.assertIn('systemd-run', source)
