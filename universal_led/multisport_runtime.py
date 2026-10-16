@@ -59,10 +59,9 @@ class MultiSportRenderer:
     def frame(self):
         sport = self._selected()
         renderer = self.nhl if sport == "nhl" else self.mlb
-        game = renderer.game()
-        if self.news is not None and self.settings_getter is not None and (game is None or game.status != "live"):
+        if self.news is not None and self.settings_getter is not None:
             headlines = self.news.items()
-            if headlines:
+            if headlines and (renderer.game() is None or renderer.game().status != "live"):
                 grouped = {}
                 for item in headlines:
                     grouped.setdefault(item.source, []).append(item)
