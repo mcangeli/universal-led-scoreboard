@@ -51,28 +51,32 @@ MARKS = {
 }
 
 
-# Hand-drawn 9x7 transparent sprites. Each row is exactly nine pixels.
-# MIL: a compact glove silhouette with ball and pocket.
-# LAD: interlocking L/A-inspired diagonal strokes.
-# '.' is transparent; symbols map to each sprite's own palette.
+# Transparent 11x9 pixel artwork for the live Classic screen.
+# MIL is a glove-inspired open pocket around a baseball.
+# LAD uses a taller interlocking L/A-inspired silhouette.
+# Dots are transparent; no square badge backgrounds.
 SPRITES = {
     'MIL': (
-        '...GGG...',
-        '..G...G..',
-        '.G.WW..G.',
-        '.G.WW..G.',
-        '.G.....G.',
-        '..GGGGG..',
-        '...GGG...',
+        '...GG.GG...',
+        '..GGG.GGG..',
+        '.GG.....GG.',
+        '.G..WWW..G.',
+        '.G..WWW..G.',
+        '.G..WWW..G.',
+        '..G.....G..',
+        '..GGGGGGG..',
+        '...GGGGG...',
     ),
     'LAD': (
-        'B...B....',
-        'B...B.B..',
-        'B...BBB..',
-        'B...B.B..',
-        'BBBBB.B..',
-        '....B.B..',
-        '....B.B..',
+        'B......B...',
+        'B.....B.B..',
+        'B....B...B.',
+        'B....BBBBB.',
+        'B....B...B.',
+        'B....B...B.',
+        'BBBB.B...B.',
+        '.....B...B.',
+        '.....B...B.',
     ),
 }
 SPRITE_COLORS = {
