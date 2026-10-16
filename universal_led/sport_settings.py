@@ -4,7 +4,7 @@ import json
 from pathlib import Path
 from .config_store import save_config
 
-SPORTS=('mlb','nba','nfl','nhl','mls','efl')
+SPORTS=('mlb','nba','wnba','nfl','nhl','mls','efl')
 DEFAULT_SETTINGS={
     'version':1,
     'active_sport':'mlb',
@@ -13,15 +13,17 @@ DEFAULT_SETTINGS={
            'live_classic_percent':50,'live_matchup_percent':25},
     'nhl':{'favorite_teams':[],'mode':'fallback','refresh_seconds':60,'rotation_seconds':12},
     'nba':{'favorite_teams':[],'mode':'fallback','refresh_seconds':60,'rotation_seconds':12},
+    'wnba':{'favorite_teams':[],'mode':'fallback','refresh_seconds':60,'rotation_seconds':12},
     'news':{'rotation_interval':5,'headline_seconds':12,'scroll_chars_per_second':3}
 }
 
 def validate_settings(value):
-    if not isinstance(value,dict) or not (set(DEFAULT_SETTINGS)-{'news','nhl','nba'} <= set(value) <= set(DEFAULT_SETTINGS)):
+    if not isinstance(value,dict) or not (set(DEFAULT_SETTINGS)-{'news','nhl','nba','wnba'} <= set(value) <= set(DEFAULT_SETTINGS)):
         raise ValueError('Settings require version, active_sport, sports and mlb')
     value=dict(value,news=dict(DEFAULT_SETTINGS['news']) | value.get('news',{}),
                nhl=dict(DEFAULT_SETTINGS['nhl']) | value.get('nhl',{}),
-               nba=dict(DEFAULT_SETTINGS['nba']) | value.get('nba',{}))
+               nba=dict(DEFAULT_SETTINGS['nba']) | value.get('nba',{}),
+               wnba=dict(DEFAULT_SETTINGS['wnba']) | value.get('wnba',{}))
     if set(value['news'])!=set(DEFAULT_SETTINGS['news']):
         raise ValueError('Invalid news rotation settings')
     for key,minimum,maximum in (('rotation_interval',1,20),('headline_seconds',3,120),('scroll_chars_per_second',1,15)):
@@ -45,8 +47,8 @@ def validate_settings(value):
     value=dict(value,sports=sports)
     if not sports[value['active_sport']]['enabled']:
         raise ValueError('Active sport must be enabled')
-    if value['active_sport'] not in ('mlb','nhl','nba'):
-        raise ValueError('Only MLB, NHL and NBA are supported by the current rendering engine')
+    if value['active_sport'] not in ('mlb','nhl','nba','wnba'):
+        raise ValueError('Only MLB, NHL, NBA and WNBA are supported by the current rendering engine')
     nhl=value['nhl']
     if not isinstance(nhl,dict) or set(nhl)!=set(DEFAULT_SETTINGS['nhl']):
         raise ValueError('Invalid NHL settings')
@@ -76,6 +78,21 @@ def validate_settings(value):
         number=nba[key]
         if type(number) not in (int,float) or not 5<=number<=3600:
             raise ValueError('Invalid NBA '+key)
+
+    wnba=value['wnba']
+    if not isinstance(wnba,dict) or set(wnba)!=set(DEFAULT_SETTINGS['wnba']):
+        raise ValueError('Invalid WNBA settings')
+    teams=wnba['favorite_teams']
+    if (not isinstance(teams,list) or
+        any(not isinstance(t,str) or len(t)!=3 or not t.isalpha() or t!=t.upper() for t in teams) or
+        len(teams)!=len(set(teams))):
+        raise ValueError('Invalid WNBA favorite teams')
+    if wnba['mode'] not in ('favorite','fallback','all'):
+        raise ValueError('Invalid WNBA rotation mode')
+    for key in ('refresh_seconds','rotation_seconds'):
+        number=wnba[key]
+        if type(number) not in (int,float) or not 5<=number<=3600:
+            raise ValueError('Invalid WNBA '+key)
 
     mlb=value['mlb']
     if not isinstance(mlb,dict):
