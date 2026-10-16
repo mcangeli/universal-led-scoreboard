@@ -70,6 +70,7 @@ button{border:1px solid #354968}button:focus-visible,aside a:focus-visible{outli
 <p class="muted">Shared clock, weather and countdown settings are on the Display page.</p><button id="save-settings">Save Sport Settings</button><span id="settings-status" role="status"></span></section><section data-page="display" hidden><h2>Shared Display Settings</h2><fieldset class="favorite-fieldset"><legend>Time &amp; Weather</legend><label><input id="clock-enabled" type="checkbox"> Enable clock rotation</label><label>Time zone <select id="clock-timezone"><option value="America/New_York">Eastern (ET)</option><option value="America/Chicago">Central (CT)</option><option value="America/Denver">Mountain (MT)</option><option value="America/Phoenix">Arizona (MST, no DST)</option><option value="America/Los_Angeles">Pacific (PT)</option><option value="America/Anchorage">Alaska (AKT)</option><option value="Pacific/Honolulu">Hawaii (HST)</option><option value="UTC">UTC</option><option value="Europe/London">London (UK)</option><option value="Europe/Paris">Central Europe</option><option value="Asia/Tokyo">Japan</option><option value="Australia/Sydney">Sydney</option></select></label><label>Time format <select id="clock-format"><option value="12h">12-hour</option><option value="24h">24-hour</option></select></label><label>Clock every N non-live slots <input id="clock-interval" type="number" min="1" max="20" value="5"></label><label><input id="weather-enabled" type="checkbox"> Enable weather display</label><label>Weather location <input id="weather-location" type="text" placeholder="City or ZIP"></label><label>Temperature unit <select id="weather-unit"><option value="fahrenheit">Fahrenheit</option><option value="celsius">Celsius</option></select></label><label>Weather provider <select id="weather-provider"><option value="open-meteo">Open-Meteo (no key)</option><option value="openweathermap">OpenWeatherMap (API key)</option></select></label><label>OpenWeatherMap API key <input id="weather-key" type="password" autocomplete="new-password" placeholder="Leave blank to keep saved key"></label><button type="button" onclick="saveClockSettings()">Save Time &amp; Weather</button><p id="clock-status" role="status"></p></fieldset><fieldset class="favorite-fieldset"><legend>Season Opening Countdown</legend><p class="muted">Optional shared countdown. Enter an opening date with its timezone offset, such as 2027-03-25T13:00:00-04:00. Disabled until configured.</p><p><label><input id="countdown-enabled" type="checkbox"> Enable countdown</label></p><p><label>Sport <select id="countdown-sport"><option value="mlb">MLB</option><option value="nba">NBA</option><option value="nfl">NFL</option><option value="nhl">NHL</option><option value="mls">MLS</option><option value="efl">EFL</option></select></label> <label>Season <input id="countdown-season" type="text" placeholder="2027"></label></p><p><label>Date source <select id="countdown-source"><option value="manual">Manual date</option><option value="automatic">Automatic MLB schedule</option></select></label></p><p><label>Opening date/time (ISO with timezone) <input id="countdown-opening" type="text" placeholder="2027-03-25T13:00:00-04:00"></label></p><p><label>Target <select id="countdown-target"><option value="league">League opening</option><option value="favorite">Favorite team opening</option></select></label> <label>Team code <input id="countdown-team" type="text" placeholder="ATL"></label></p><p><label>Display <select id="countdown-window"><option value="offseason">Offseason only</option><option value="within_days">Within N days</option><option value="always">Always when no live game</option></select></label> <label>Days <input id="countdown-days" type="number" min="1" max="366" value="30"></label></p><button type="button" onclick="saveCountdown()">Save Countdown</button><p id="countdown-status" role="status" aria-live="polite"></p><p id="countdown-feed-status" class="muted" role="status" aria-live="polite">Schedule status not checked.</p><button type="button" onclick="refreshCountdownStatus()">Check Schedule Status</button></fieldset></section><section data-page="wifi" hidden><h2>Wi-Fi & Hotspot</h2><p id="wifi-recovery-readiness" class="muted" role="status">Checking recovery protection…</p><p id="wifi-info">Loading…</p><h4>Saved Wi-Fi connections</h4><div id="wifi-profiles" class="grid"><p class="muted">Loading saved profiles…</p></div><button type="button" onclick="refreshWifi()">Refresh Wi-Fi</button> <button type="button" onclick="scanWifi()">Scan Networks</button><p id="wifi-scan-status" class="muted" role="status" aria-live="polite">Click Scan Networks to list nearby access points.</p><div id="wifi-networks" class="grid"></div><div id="wifi-selection" hidden><h4>Selected network: <span id="wifi-selected-name"></span></h4><p id="wifi-selected-security"></p><label>Network password <input id="wifi-password" type="password" autocomplete="off" minlength="8" maxlength="63"></label><p id="wifi-connect-note" class="muted">Network switching requires the privileged helper and recovery worker. Keep Ethernet connected during initial testing.</p><button type="button" onclick="connectWifi()">Connect Wi-Fi</button><p id="wifi-connect-result" role="status"></p></div><h4>Hotspot Settings</h4><p class="muted">Change the password for Universal-LED-Setup. Changes take effect the next time the hotspot starts.</p><label>New hotspot password <input id="hotspot-password" type="password" minlength="8" maxlength="63" autocomplete="new-password"></label> <label>Confirm password <input id="hotspot-confirm" type="password" minlength="8" maxlength="63" autocomplete="new-password"></label> <button type="button" onclick="saveHotspotPassword()">Save Hotspot Password</button><p id="hotspot-result" role="status"></p></section><section data-page="system" hidden><h2>System</h2><h3>Software Updates</h3><p id="update-status" class="muted" role="status">Update status not checked.</p><button type="button" onclick="checkSoftwareUpdate()">Check for Updates</button> <button type="button" id="install-update" onclick="installSoftwareUpdate()" disabled>Install Update</button><pre id="update-log" style="white-space:pre-wrap;overflow-wrap:anywhere;max-height:220px;overflow:auto"></pre><p id="system-info">Checking server information…</p><div id="pi-info" class="grid"><p class="muted">Loading Raspberry Pi diagnostics…</p></div><p class="muted">Service status is read-only. Hardware output and remote service controls are not enabled.</p></section><div data-page="colors" hidden><section><h2>64 × 32 Live Preview</h2><canvas id="matrix" width="64" height="32"></canvas>
 <p class="muted">Changes preview immediately. Saving is optional.</p><label for="preview-team">Preview favorite team: </label><select id="preview-team"></select><span id="dirty" role="status">All changes saved</span></section>
 <section><h2>Scoreboard Colors</h2><p class="muted">General display text, accents, separators and status colors.</p><div id="scoreboard" class="grid"></div></section>
+<section><h2>NHL Team Colors</h2><p class="muted">NHL colors are stored separately from MLB. Changes to the matrix display will follow in the renderer update.</p><label for="nhl-edit-team">NHL team to edit</label> <select id="nhl-edit-team"></select><div id="nhl-color-editor" class="grid"></div><button type="button" id="nhl-save-color">Save NHL Color</button> <button type="button" id="nhl-reset-color">Reset NHL Color</button> <span id="nhl-color-status" role="status"></span></section>
 <section><h2>MLB Team Colors</h2><p class="muted">Choose a team to edit its color. All other team colors remain unchanged.</p><label for="edit-team">Team to edit</label> <select id="edit-team"></select><div id="teams" class="grid"></div></section>
 <section><button id="save">Save Color Settings</button> <button id="cancel" type="button">Cancel Changes</button> <button id="reset" type="button">Reset Selected Color</button> <span id="status" role="status"></span>
 <p class="muted">Available on your trusted LAN. Backups are created before overwriting existing files.</p></section></div><div data-page="news" hidden><section><h2>Content &amp; News Sources</h2><p class="muted">Configure RSS or Atom feeds for future ticker use. Automatic and custom feeds display during available news rotation slots.</p><fieldset class="favorite-fieldset"><legend>Automatic Sports News</legend><p class="muted">Official news is enabled automatically when supported. Other sports become available with their modules.</p><label><input type="checkbox" id="mlb-news-enabled"> MLB official headlines</label> <button type="button" onclick="saveAutomaticNews()">Save Automatic News</button><p id="auto-news-status" role="status"></p></fieldset><fieldset class="favorite-fieldset"><legend>News Display Timing</legend><label>Show news every N non-live slots <input id="news-interval" type="number" min="1" max="20"></label> <label>Headline duration (seconds) <input id="news-duration" type="number" min="3" max="120"></label> <label>Scroll speed (characters/second) <input id="news-speed" type="number" min="1" max="15"></label> <button type="button" onclick="saveNewsTiming()">Save News Timing</button><p id="news-timing-status" role="status"></p></fieldset><h3>Additional Custom Feeds</h3><div id="news-sources"></div><button type="button" id="news-add" onclick="addNewsSource()">Add Source</button> <button type="button" onclick="saveNewsSources()">Save News Sources</button> <p id="news-status" role="status"></p></section></div></main></div>
@@ -173,7 +174,7 @@ async function load(){
  const editor=document.getElementById('edit-team');editor.replaceChildren();
  Object.keys(state.teams).sort().forEach(team=>{const option=document.createElement('option');option.value=team;option.textContent=team;picker.append(option);editor.append(option.cloneNode(true))});
  picker.value=selectedTeam in state.teams?selectedTeam:Object.keys(state.teams).sort()[0];selectedTeam=picker.value;editor.value=selectedTeam;
- section('scoreboard');section('teams');markDirty();draw();
+ section('scoreboard');section('teams');markDirty();draw();await loadNHLColors();
 }
 async function draw(){
  if(!state)return;
@@ -206,6 +207,49 @@ document.getElementById('save').onclick=async()=>{
   const result=await response.json();
   if(!response.ok)throw Error(result.error||'Save failed');
   saved=clone(state);markDirty();status.textContent='Saved. Other running preview processes may require restart to reload colors.';
+ }catch(err){status.textContent=err.message}
+};
+let nhlColors=null,nhlColorDefaults=null;
+function showNHLColorEditor(){
+ const code=document.getElementById('nhl-edit-team').value, target=document.getElementById('nhl-color-editor');
+ target.replaceChildren();
+ if(!nhlColors||!nhlColors[code])return;
+ const picker=document.createElement('input');picker.type='color';picker.id='nhl-color-picker';picker.value=hex(nhlColors[code]);
+ const output=document.createElement('output');output.textContent=picker.value.toUpperCase();
+ const sliders=[];
+ const sync=value=>{nhlColors[code]=value;picker.value=hex(value);output.textContent=picker.value.toUpperCase();sliders.forEach((entry,i)=>{entry.input.value=value[i];entry.output.textContent=value[i]})};
+ ['Red','Green','Blue'].forEach((channel,i)=>{
+  const label=document.createElement('label');label.textContent=channel+' ';
+  const input=document.createElement('input');input.type='range';input.min='0';input.max='255';input.value=nhlColors[code][i];
+  const out=document.createElement('output');out.textContent=input.value;
+  input.oninput=()=>{const next=[...nhlColors[code]];next[i]=Number(input.value);sync(next)};
+  label.append(input,out);target.append(label);sliders.push({input,output:out});
+ });
+ picker.oninput=()=>sync(rgb(picker.value));
+ const label=document.createElement('label');label.textContent=code+' primary color ';label.append(picker,output);target.prepend(label);
+}
+async function loadNHLColors(){
+ const response=await fetch('/api/nhl-colors',{cache:'no-store'});if(!response.ok)throw Error('Cannot load NHL colors');
+ nhlColors=await response.json();
+ const defaults=await fetch('/api/defaults');if(!defaults.ok)throw Error('Cannot load default colors');
+ nhlColorDefaults=(await defaults.json()).nhl_teams;
+ const select=document.getElementById('nhl-edit-team'),previous=select.value;select.replaceChildren();
+ NHL_TEAMS.forEach(([code,name])=>{const option=document.createElement('option');option.value=code;option.textContent=name+' ('+code+')';select.append(option)});
+ if(previous&&nhlColors[previous])select.value=previous;
+ showNHLColorEditor();
+}
+document.getElementById('nhl-edit-team').onchange=showNHLColorEditor;
+document.getElementById('nhl-reset-color').onclick=()=>{
+ const code=document.getElementById('nhl-edit-team').value;
+ nhlColors[code]=[...nhlColorDefaults[code]];showNHLColorEditor();
+ document.getElementById('nhl-color-status').textContent='Default restored in editor. Save to apply.';
+};
+document.getElementById('nhl-save-color').onclick=async()=>{
+ const code=document.getElementById('nhl-edit-team').value,status=document.getElementById('nhl-color-status');status.textContent='Saving…';
+ try{
+  const response=await fetch('/api/nhl-colors',{method:'POST',headers:{'Content-Type':'application/json','X-Configurator-Token':token},body:JSON.stringify({[code]:nhlColors[code]})});
+  const result=await response.json();if(!response.ok)throw Error(result.error||'Save failed');
+  status.textContent='Saved NHL '+code+' color. Restart the matrix after renderer support is installed.';
  }catch(err){status.textContent=err.message}
 };
 const NHL_TEAMS=[["ANA","Anaheim Ducks"],["BOS","Boston Bruins"],["BUF","Buffalo Sabres"],["CGY","Calgary Flames"],["CAR","Carolina Hurricanes"],["CHI","Chicago Blackhawks"],["COL","Colorado Avalanche"],["CBJ","Columbus Blue Jackets"],["DAL","Dallas Stars"],["DET","Detroit Red Wings"],["EDM","Edmonton Oilers"],["FLA","Florida Panthers"],["LAK","Los Angeles Kings"],["MIN","Minnesota Wild"],["MTL","Montréal Canadiens"],["NSH","Nashville Predators"],["NJD","New Jersey Devils"],["NYI","New York Islanders"],["NYR","New York Rangers"],["OTT","Ottawa Senators"],["PHI","Philadelphia Flyers"],["PIT","Pittsburgh Penguins"],["SJS","San Jose Sharks"],["SEA","Seattle Kraken"],["STL","St. Louis Blues"],["TBL","Tampa Bay Lightning"],["TOR","Toronto Maple Leafs"],["UTA","Utah Mammoth"],["VAN","Vancouver Canucks"],["VGK","Vegas Golden Knights"],["WSH","Washington Capitals"],["WPG","Winnipeg Jets"]];
@@ -642,6 +686,10 @@ def make_handler(config_dir,token,frame_provider=None,settings_callback=None,fee
             elif path=='/api/config':
                 try:self.send_json(200,read_config(config_dir))
                 except (OSError,ValueError) as exc:self.send_json(500,{'error':str(exc)})
+            elif path=='/api/nhl-colors':
+                from .config_store import read_nhl_colors
+                try:self.send_json(200,read_nhl_colors(config_dir))
+                except (OSError,ValueError) as exc:self.send_json(500,{'error':str(exc)})
             elif path=='/api/news-sources':
                 from .news_settings import load_news_settings
                 try:self.send_json(200,load_news_settings(config_dir))
@@ -702,7 +750,8 @@ def make_handler(config_dir,token,frame_provider=None,settings_callback=None,fee
                 self.send_json(200,feed_status() if feed_status else {'state':'unavailable'})
             elif path=='/api/defaults':
                 from .colors import TEAM_COLORS,DEFAULT_SCOREBOARD
-                self.send_json(200,{'teams':TEAM_COLORS,'scoreboard':DEFAULT_SCOREBOARD})
+                from .nhl_colors import NHL_TEAM_COLORS
+                self.send_json(200,{'teams':TEAM_COLORS,'scoreboard':DEFAULT_SCOREBOARD,'nhl_teams':NHL_TEAM_COLORS})
             elif path=='/health':
                 self.send_json(200,{'status':'ok'})
             else:self.send_error(404)
@@ -734,7 +783,7 @@ def make_handler(config_dir,token,frame_provider=None,settings_callback=None,fee
                 self.send_response(204)
                 self.send_header('Set-Cookie','uls_session=; HttpOnly; SameSite=Strict; Path=/; Max-Age=0')
                 self.end_headers();return
-            if path not in ('/api/config','/api/frame','/api/settings','/api/wifi/control','/api/service/restart','/api/news-sources','/api/time-weather','/api/weather-key','/api/season-countdown','/api/update/install'):
+            if path not in ('/api/nhl-colors','/api/config','/api/frame','/api/settings','/api/wifi/control','/api/service/restart','/api/news-sources','/api/time-weather','/api/weather-key','/api/season-countdown','/api/update/install'):
                 self.send_error(404);return
             if not secrets.compare_digest(self.headers.get('X-Configurator-Token',''),token):
                 self.send_json(403,{'error':'Invalid session token'});return
@@ -745,6 +794,16 @@ def make_handler(config_dir,token,frame_provider=None,settings_callback=None,fee
                 if self.headers.get('Content-Type','').split(';')[0].strip()!='application/json':
                     self.send_json(415,{'error':'JSON required'});return
                 data=json.loads(self.rfile.read(size))
+                if path=='/api/nhl-colors':
+                    from .config_store import read_nhl_colors
+                    from .colors import normalize_team_colors
+                    from .nhl_colors import NHL_TEAM_COLORS
+                    updates=normalize_team_colors(data)
+                    if set(updates)-set(NHL_TEAM_COLORS):raise ValueError('Unknown NHL team')
+                    merged=read_nhl_colors(config_dir)
+                    merged.update(updates)
+                    save_config(config_dir,'nhl_teams',merged)
+                    self.send_json(200,{'saved':True});return
                 if path=='/api/update/install':
                     if data != {'confirm':True}:
                         raise ValueError('Explicit update confirmation required')
