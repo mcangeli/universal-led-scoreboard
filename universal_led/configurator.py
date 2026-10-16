@@ -858,17 +858,21 @@ def main():
     nhl_feed = BackgroundNHLFeed(NHLFeed())
     nhl_renderer = ConfiguredNHLRenderer(nhl_feed)
     board = MultiSportRenderer(renderer, nhl_renderer)
+    # Apply persisted sport choice on service startup, not just after web saves.
     def game():
         return board.game()
     def apply_settings(settings):
         renderer.apply(settings)
         feed.feed.refresh_seconds=settings['mlb']['refresh_seconds']
-        # NHL is enabled only when a validated settings version supports it.
+        nhl = settings['nhl']
+        nhl_renderer.configure(favorite_teams=nhl['favorite_teams'],
+                               mode=nhl['mode'],
+                               rotation_seconds=nhl['rotation_seconds'])
+        nhl_feed.feed.refresh_seconds = nhl['refresh_seconds']
         if settings['active_sport'] == 'nhl':
             nhl_feed.start()
-            board.set_active_sport('nhl')
-        else:
-            board.set_active_sport('mlb')
+        board.set_active_sport(settings['active_sport'])
+    apply_settings(initial)
     def feed_status():
         return feed.status()
     def countdown_status():
