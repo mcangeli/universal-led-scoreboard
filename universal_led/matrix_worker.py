@@ -9,7 +9,7 @@ from .matrix_output import create_matrix, draw_frame
 
 def main():
     parser = argparse.ArgumentParser(description="Physical 64x32 scoreboard worker")
-    parser.add_argument("--frame-file", type=Path, default=Path.home() / ".local/share/universal-led-scoreboard/runtime/live-frame.ppm")
+    parser.add_argument("--frame-file", type=Path, default=Path("/run/universal-led-scoreboard/live-frame.ppm"))
     parser.add_argument("--mapping", default="adafruit-hat")
     parser.add_argument("--brightness", type=int, default=40)
     parser.add_argument("--gpio-slowdown", type=int, default=4)
