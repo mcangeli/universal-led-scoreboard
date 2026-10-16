@@ -1,6 +1,7 @@
 """NHL background worker and team selection."""
 import threading
 from datetime import datetime, timezone
+from zoneinfo import ZoneInfo
 
 
 def select_games(games, team=None, mode="fallback"):
@@ -14,9 +15,18 @@ def select_games(games, team=None, mode="fallback"):
 
 
 class BackgroundNHLFeed:
-    def __init__(self, feed, day_provider=None):
+    def __init__(self, feed, day_provider=None, timezone_name="America/New_York"):
         self.feed = feed
-        self.day_provider = day_provider or (lambda: datetime.now(timezone.utc).date())
+        self.timezone_name = timezone_name
+        ZoneInfo(timezone_name)
+        self.day_provider = day_provider or self._local_day
+
+    def _local_day(self):
+        return datetime.now(ZoneInfo(self.timezone_name)).date()
+
+    def set_timezone(self, timezone_name):
+        ZoneInfo(timezone_name)
+        self.timezone_name = timezone_name
         self._stop = threading.Event()
         self._thread = None
 
