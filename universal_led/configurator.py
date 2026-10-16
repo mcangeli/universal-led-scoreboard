@@ -897,6 +897,7 @@ def main():
         if settings['sports']['nhl']['enabled']:
             nhl_feed.start()
         enabled = [sport for sport in ('mlb', 'nhl') if settings['sports'][sport]['enabled']]
+        renderer.set_supplemental_stride(len(enabled))
         board.configure_rotation(enabled, interval=settings['mlb']['rotation_seconds'],
                                  preferred=settings['active_sport'])
     apply_settings(initial)
