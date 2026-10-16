@@ -1,0 +1,16 @@
+#!/usr/bin/env bash
+set -Eeuo pipefail
+[[ $# -eq 0 ]] || exit 2
+APP=/opt/uls/app
+BRANCH=feature/0.1.0-core-foundation
+[[ -d "$APP/.git" ]] || { echo '{"error":"Installation missing"}'; exit 1; }
+cd "$APP"
+installed=$(git rev-parse HEAD)
+branch=$(git branch --show-current)
+if [[ "$branch" != "$BRANCH" ]]; then
+  printf '{"error":"Unexpected installed branch"}\n'; exit 1
+fi
+# Read-only network check; never modify the installed Git checkout.
+remote=$(git ls-remote --exit-code origin "refs/heads/$BRANCH" | awk 'NR==1{print $1}')
+[[ "$remote" =~ ^[a-f0-9]{40}$ ]] || { echo '{"error":"Remote branch unavailable"}'; exit 1; }
+printf '{"branch":"%s","installed":"%s","remote":"%s","update_available":%s}\n' "$BRANCH" "$installed" "$remote" "$([[ "$installed" == "$remote" ]] && echo false || echo true)"
