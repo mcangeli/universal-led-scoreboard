@@ -1,5 +1,35 @@
 # Changelog
 
+## v0.3.0 (2026-10-16)
+
+### Added
+- NBA and WNBA scoreboard modules with scheduled, live and final game displays for 64×32 RGB LED matrices.
+- Configurable NBA and WNBA favorite teams, game selection modes, refresh and rotation intervals, and sport enablement through the web dashboard.
+- NBA and WNBA automatic news providers with independent enable/disable controls, integrated into the shared headline rotation.
+- Pregame win-loss records for NBA and WNBA when supplied by the game feed.
+
+### Improved
+- NHL scheduled-game displays show team records when available, with a safe fallback when absent.
+- Shared multi-sport rotation and settings migration accommodate NBA and WNBA while preserving older configurations.
+
+### Validation
+- Full Raspberry Pi regression run: **752 tests passed, 15 skipped**.
+- NBA and WNBA configuration and physical 64×32 display confirmed; NHL pregame records observed on the physical board.
+- Changes merged into `main` via pull request #3 (merge commit `ab646bb`).
+- Live NBA/WNBA headline delivery and complete in-game transition coverage remain follow-up checks.
+
+## v0.2.0 (2026-10-16)
+
+### Added
+- NHL scoreboard integration, including classic and visual 64×32 layouts and favorite-team selection.
+- Shared universal news rotation for MLB and NHL alongside administrator-defined RSS/Atom sources.
+- Multi-sport display selection and rotation.
+
+### Validation
+- Raspberry Pi 3 production installation: **717 tests passed, 15 skipped**.
+- MLB, NHL and news rotation verified on the physical matrix.
+- Web and matrix system services verified after reboot.
+
 ## 0.1.0 preview (unreleased)
 
 ### Added
