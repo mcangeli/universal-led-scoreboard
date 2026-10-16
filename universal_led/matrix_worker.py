@@ -4,6 +4,7 @@ import argparse
 from pathlib import Path
 import signal
 import time
+from .display import splash
 from .frame_bridge import read_frame
 from .matrix_output import create_matrix, draw_frame
 
@@ -28,6 +29,13 @@ def main():
     canvas = matrix.CreateFrameCanvas()
     last_mtime = None
     try:
+        # Fixed startup splash on every physical worker start, independent of feeds.
+        canvas = draw_frame(matrix, splash(matrix.width, matrix.height), canvas=canvas)
+        deadline = time.monotonic() + 30.0
+        while running and time.monotonic() < deadline:
+            time.sleep(min(0.2, max(0.0, deadline - time.monotonic())))
+        if not running:
+            return
         while running:
             try:
                 stat = args.frame_file.stat()
