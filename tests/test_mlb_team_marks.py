@@ -2,7 +2,7 @@ import unittest
 from universal_led.display import Framebuffer
 from universal_led.mlb_classic import BaseballGame
 from universal_led.mlb_palette_v11 import MLBPaletteScreen
-from universal_led.mlb_team_marks import draw_team_mark, MARKS
+from universal_led.mlb_team_marks import draw_team_mark, MARKS, SPRITES
 
 class MLBTeamMarksTests(unittest.TestCase):
     def test_known_and_unknown_marks(self):
@@ -21,6 +21,30 @@ class MLBTeamMarksTests(unittest.TestCase):
                 frame = Framebuffer()
                 self.assertTrue(draw_team_mark(frame, team, 25, 7))
                 self.assertNotEqual(frame.pixels[7][25], (0, 0, 0))
+
+    def test_custom_sprites_are_transparent_and_fit(self):
+        self.assertEqual(set(SPRITES), {'MIL', 'LAD'})
+        for team, rows in SPRITES.items():
+            with self.subTest(team=team):
+                self.assertEqual(len(rows), 7)
+                self.assertTrue(all(len(row) == 9 for row in rows))
+                frame = Framebuffer()
+                self.assertTrue(draw_team_mark(frame, team, 25, 7))
+                self.assertEqual(frame.pixels[7][25], (0, 0, 0))
+                self.assertTrue(any(pixel != (0, 0, 0)
+                                    for row in frame.pixels[7:14]
+                                    for pixel in row[25:34]))
+                self.assertTrue(all(pixel == (0, 0, 0)
+                                    for row in frame.pixels[7:14]
+                                    for pixel in row[34:42]))
+
+    def test_custom_sprites_render_on_live_classic(self):
+        game = BaseballGame(away='MIL', home='LAD')
+        live = MLBPaletteScreen(game).render()
+        final = MLBPaletteScreen(BaseballGame(away='MIL', home='LAD', status='final')).render()
+        self.assertEqual(live.pixels[7][25], (0, 0, 0))
+        self.assertNotEqual(live.pixels[7][28], (0, 0, 0))
+        self.assertEqual(final.pixels[7][28], (0, 0, 0))
 
     def test_marks_only_on_live_classic(self):
         live = MLBPaletteScreen(BaseballGame(away='PHI', home='ATL')).render()
