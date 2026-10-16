@@ -60,14 +60,19 @@ class NBAScreen:
         if self.game is None:
             small(fb, "NO GAMES", 12, 15, WHITE)
             return fb
-        for y, team, score in ((10, self.game.away, self.game.away_score),
-                               (18, self.game.home, self.game.home_score)):
+        pregame = self.game.status == "scheduled"
+        for y, team, score, record in ((10, self.game.away, self.game.away_score, self.game.away_record),
+                                       (18, self.game.home, self.game.home_score, self.game.home_record)):
             small(fb, team[:3].ljust(3), 2, y, TEAM if y == 18 else WHITE)
-            # Three digits occupy 12 pixels; never truncate a normal NBA score.
-            digits = "-" if score is None else str(score)
-            if len(digits) > 4:
-                digits = "9999+"
-            small(fb, digits, max(24, 62 - 4 * len(digits)), y, ORANGE)
+            # Pregame uses the score column for provider-supplied W-L records.
+            digits = record if pregame and record else ("-" if pregame or score is None else str(score))
+            if pregame:
+                digits = digits[:9]
+                small(fb, digits, max(22, 62 - 4 * len(digits)), y, ORANGE)
+            else:
+                if len(digits) > 4:
+                    digits = "9999+"
+                small(fb, digits, max(24, 62 - 4 * len(digits)), y, ORANGE)
         label = status_text(self.game, self.timezone_name, self.time_format)[:15]
         small(fb, label, 2, 27, RED if self.game.status == "postponed" else ORANGE)
         return fb
