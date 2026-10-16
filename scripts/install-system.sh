@@ -32,6 +32,7 @@ if (( RESUME )); then
   [[ "$(stat -c %U "$APP")" == "$USER" ]] || { echo "Cannot resume: checkout owned by another user." >&2; exit 1; }
   [[ "$(git -C "$APP" branch --show-current)" == "$BRANCH" ]] || { echo "Cannot resume: branch mismatch." >&2; exit 1; }
   [[ -z "$(git -C "$APP" status --porcelain)" ]] || { echo "Cannot resume: checkout has local changes." >&2; exit 1; }
+  [[ -f "$CONFIG/secrets/auth.json" || -d "$CONFIG/secrets" ]] || { echo "Cannot resume: configuration directory missing." >&2; exit 1; }
   [[ ! -e /etc/systemd/system/uls-matrix.service || "$MODE" == physical ]] || { echo "Cannot resume physical install as emulator." >&2; exit 1; }
 else
   [[ ! -e "$APP" && ! -e /etc/systemd/system/uls-web.service && ! -e /etc/systemd/system/uls-matrix.service ]] || { echo "Existing ULS installation detected. Use --resume for an interrupted installation or sudo ulsctl update for a working installation." >&2; exit 1; }
@@ -92,7 +93,7 @@ EOF
 if [[ "$MODE" == physical ]]; then
   echo "Building physical HUB75 driver (this can take several minutes)..."
   sudo apt-get install -y cython3 cmake ninja-build python3-setuptools python3-pil python3-pil.imagetk
-  "$VENV/bin/python" -m pip install cython scikit-build-core Pillow
+  "$VENV/bin/python" -m pip install cython scikit-build-core Pillow setuptools wheel
   mkdir -p "$HOME/.local/src"
   if [[ ! -d "$HOME/.local/src/rpi-rgb-led-matrix/.git" ]]; then
     git clone https://github.com/hzeller/rpi-rgb-led-matrix.git "$HOME/.local/src/rpi-rgb-led-matrix"
