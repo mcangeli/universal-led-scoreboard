@@ -1,9 +1,9 @@
-"""Cached NHL official headlines using the NHL's public news RSS feed."""
+"""Cached NHL.com headlines from a third-party RSS aggregator."""
 from __future__ import annotations
 
 from .news_feeds import MultiSourceNewsFeed, NewsSource
 
-NHL_NEWS_RSS = 'https://www.nhl.com/news/rss'
+NHL_NEWS_RSS = 'https://freenewsapi.ai/v1/rss?host=www.nhl.com&size=20'
 
 
 class NHLNewsFeed:
