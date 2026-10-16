@@ -34,6 +34,10 @@ class ReleaseFoundationTests(unittest.TestCase):
         self.assertIn('if (( NEW_PROFILE == 0 )); then', source)
         self.assertIn('Existing recovery hotspot profile preserved.', source)
 
+    def test_dashboard_worker_invokes_updater_via_bash(self):
+        worker = (ROOT / 'scripts' / 'uls-update-worker').read_text()
+        self.assertIn('/usr/bin/bash /opt/uls/app/scripts/uls-update', worker)
+
     def test_dashboard_update_install_is_allowed_by_post_route_guard(self):
         source = (ROOT / 'universal_led' / 'configurator.py').read_text()
         guard = source.split("if path not in (", 1)[1].split("):", 1)[0]
