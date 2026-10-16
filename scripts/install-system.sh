@@ -32,7 +32,7 @@ if (( RESUME )); then
   [[ "$(stat -c %U "$APP")" == "$USER" ]] || { echo "Cannot resume: checkout owned by another user." >&2; exit 1; }
   [[ "$(git -C "$APP" branch --show-current)" == "$BRANCH" ]] || { echo "Cannot resume: branch mismatch." >&2; exit 1; }
   [[ -z "$(git -C "$APP" status --porcelain)" ]] || { echo "Cannot resume: checkout has local changes." >&2; exit 1; }
-  [[ -f "$CONFIG/secrets/auth.json" || -d "$CONFIG/secrets" ]] || { echo "Cannot resume: configuration directory missing." >&2; exit 1; }
+  sudo test -d "$CONFIG/secrets" || { echo "Cannot resume: configuration directory missing." >&2; exit 1; }
   [[ ! -e /etc/systemd/system/uls-matrix.service || "$MODE" == physical ]] || { echo "Cannot resume physical install as emulator." >&2; exit 1; }
 else
   [[ ! -e "$APP" && ! -e /etc/systemd/system/uls-web.service && ! -e /etc/systemd/system/uls-matrix.service ]] || { echo "Existing ULS installation detected. Use --resume for an interrupted installation or sudo ulsctl update for a working installation." >&2; exit 1; }
