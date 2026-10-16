@@ -28,6 +28,7 @@ class ConfiguredMLBRenderer:
         self.opening_feed=MLBOpeningDayFeed()
         self._lock=threading.Lock()
         self._started=time.monotonic()
+        self._supplemental_stride=1
         self._settings=load_settings(directory)
 
     def settings(self):
@@ -42,6 +43,14 @@ class ConfiguredMLBRenderer:
                 settings={**settings,'mlb':{**settings['mlb']}}
                 settings['mlb']['favorite_teams']=[settings['mlb'].pop('favorite_team')]
             self._settings=validate_settings(settings)
+            self._started=time.monotonic()
+
+    def set_supplemental_stride(self, stride):
+        """Advance supplemental slots once per MLB appearance in multisport mode."""
+        if not isinstance(stride, int) or stride < 1:
+            raise ValueError('stride must be a positive integer')
+        with self._lock:
+            self._supplemental_stride=stride
             self._started=time.monotonic()
 
     def _selection(self):
@@ -108,7 +117,7 @@ class ConfiguredMLBRenderer:
             slot=self.settings()['mlb']['rotation_seconds']
             opening = current_countdown(self.directory, season_active=game is not None,
                                         provider=self.opening_feed)
-            selected=choose_screen(int(elapsed//slot),has_game=game is not None,
+            selected=choose_screen(int(elapsed//(slot*self._supplemental_stride)),has_game=game is not None,
                                    clock=clock_enabled,weather=snapshot is not None,
                                    news=bool(headlines),countdown=opening is not None)
             if selected=='countdown':

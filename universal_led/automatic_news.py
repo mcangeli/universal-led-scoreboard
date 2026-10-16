@@ -4,13 +4,14 @@ A missing provider returns no headlines, never an error to the score renderer.
 Network-backed providers remain independent from game feeds.
 """
 from .mlb_news import MLBNewsFeed
+from .nhl_news import NHLNewsFeed
 
-SUPPORTED_NEWS = ('mlb',)
+SUPPORTED_NEWS = ('mlb', 'nhl')
 
 
 class AutomaticSportsNews:
     def __init__(self, providers=None):
-        self.providers = {'mlb': MLBNewsFeed()} if providers is None else dict(providers)
+        self.providers = {'mlb': MLBNewsFeed(), 'nhl': NHLNewsFeed()} if providers is None else dict(providers)
 
     def items(self, settings):
         headlines = []

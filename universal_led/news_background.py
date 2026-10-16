@@ -38,7 +38,7 @@ class BackgroundNews:
                             self._custom_feed = MultiSourceNewsFeed(sources) if sources else None
                             self._custom_sources = signature
                         custom = self._custom_feed.items() if self._custom_feed else []
-                        items = normalize_items(self.automatic.items(settings) + custom)
+                        items = normalize_items(self.automatic.items(settings) + custom, max_items=200)
                         with self._lock:
                             self._items = items
                     except (OSError, ValueError, TypeError):
@@ -50,6 +50,14 @@ class BackgroundNews:
     def items(self):
         with self._lock:
             return list(self._items)
+
+    def diagnostics(self):
+        with self._lock:
+            counts = {}
+            for item in self._items:
+                counts[item.source] = counts.get(item.source, 0) + 1
+            errors = dict(self._custom_feed.errors) if self._custom_feed else {}
+            return {'counts': counts, 'custom_errors': errors}
 
     def stop(self):
         self._running = False
