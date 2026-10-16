@@ -5,13 +5,15 @@ Network-backed providers remain independent from game feeds.
 """
 from .mlb_news import MLBNewsFeed
 from .nhl_news import NHLNewsFeed
+from .nba_news import NBANewsFeed
+from .wnba_news import WNBANewsFeed
 
-SUPPORTED_NEWS = ('mlb', 'nhl')
+SUPPORTED_NEWS = ('mlb', 'nhl', 'nba', 'wnba')
 
 
 class AutomaticSportsNews:
     def __init__(self, providers=None):
-        self.providers = {'mlb': MLBNewsFeed(), 'nhl': NHLNewsFeed()} if providers is None else dict(providers)
+        self.providers = {'mlb': MLBNewsFeed(), 'nhl': NHLNewsFeed(), 'nba': NBANewsFeed(), 'wnba': WNBANewsFeed()} if providers is None else dict(providers)
 
     def items(self, settings):
         headlines = []
