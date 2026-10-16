@@ -81,7 +81,7 @@ def parse_game(event):
         period = None
     possession = ""
     for side in ("away", "home"):
-        if teams[side].get("id") is not None and str(teams[side]["id"]) == str(competition.get("situation", {}).get("possession")):
+        if teams[side].get("id") is not None and str(teams[side]["id"]) == str((competition.get("situation") or {}).get("possession")):
             possession = away if side == "away" else home
     situation = competition.get("situation") or {}
     down = situation.get("down")
