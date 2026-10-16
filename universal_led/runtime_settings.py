@@ -47,8 +47,14 @@ class ConfiguredMLBRenderer:
         favorites=set(settings.get('favorite_teams',settings.get('favorite_team',['ATL'])))
         selected=select_games(all_games,settings.get('favorite_teams',settings.get('favorite_team',['ATL'])),settings['mode'])
         favorite_live=[g for g in all_games if g.status=='live' and (g.away in favorites or g.home in favorites)]
-        eligible_live=[g for g in selected if g.status=='live']
-        games=favorite_live or eligible_live or selected
+        all_live=[g for g in all_games if g.status=='live']
+        mode=settings['mode']
+        if mode=='favorite':
+            games=favorite_live or selected
+        elif mode=='fallback':
+            games=favorite_live or all_live or selected
+        else:
+            games=all_live or selected
         if not games:
             return None,0
         with self._lock:
