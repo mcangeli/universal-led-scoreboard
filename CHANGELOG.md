@@ -1,5 +1,19 @@
 # Changelog
 
+## v0.4.0 (release candidate, 2026-10-16)
+
+### Added
+- NFL scoreboard with 64×32 scheduled, live, final, possession, down and distance views.
+- NFL favorite teams, game-selection mode, refresh and rotation settings.
+- ESPN NFL RSS headlines with an independent news toggle.
+- Empty-game skipping in multi-sport rotation and backward-compatible NFL settings defaults.
+
+### Validation
+- Raspberry Pi 3: 777 tests passed, 15 skipped, before the final NFL news and migration tests.
+- Live NFL news and Sunday game transitions remain to be observed on the physical matrix.
+- Final regression run and release tag are pending.
+
+
 ## v0.3.0 (2026-10-16)
 
 ### Added
