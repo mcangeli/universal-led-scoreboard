@@ -2,7 +2,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-from datetime import timezone
+from zoneinfo import ZoneInfo
 
 from .display import Framebuffer
 from .mlb_classic import small
@@ -15,13 +15,16 @@ ICE = (105, 185, 235)
 RED = (240, 80, 70)
 
 
-def status_text(game: HockeyGame) -> str:
+def status_text(game: HockeyGame, timezone_name: str = 'America/New_York', time_format: str = '12h') -> str:
     if game.status == "postponed":
         return "PPD"
     if game.status == "scheduled":
         if game.start_utc is None:
             return "PREGAME"
-        return game.start_utc.astimezone(timezone.utc).strftime("%H:%M") + " UTC"
+        local = game.start_utc.astimezone(ZoneInfo(timezone_name))
+        if time_format == '24h':
+            return local.strftime('%H:%M %Z')
+        return local.strftime('%I:%M%p').lstrip('0') + ' ' + local.tzname()
     if game.status == "final":
         if game.shootout:
             return "FINAL SO"
@@ -43,6 +46,8 @@ def status_text(game: HockeyGame) -> str:
 class NHLScreen:
     game: HockeyGame | None = None
     name: str = "nhl-classic"
+    timezone_name: str = "America/New_York"
+    time_format: str = "12h"
 
     def render(self) -> Framebuffer:
         fb = Framebuffer(64, 32)
@@ -63,6 +68,6 @@ class NHLScreen:
         for x in range(1, 63):
             fb.pixel(x, 25, DIM)
         # Bottom status is truncated to the available 15 glyph cells.
-        label = status_text(g)[:15]
+        label = status_text(g, self.timezone_name, self.time_format)[:15]
         small(fb, label, 2, 27, RED if g.status == "postponed" else GOLD)
         return fb
