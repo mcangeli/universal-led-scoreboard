@@ -10,7 +10,7 @@ target="${2:-all}"
 case "$target" in
   web) units=(uls-web.service) ;;
   matrix) units=(uls-matrix.service) ;;
-  all) units=(uls-web.service uls-matrix.service) ;;
+  all) units=(uls-web.service); if systemctl list-unit-files uls-matrix.service --no-legend 2>/dev/null | grep -q uls-matrix.service; then units+=(uls-matrix.service); fi ;;
   *) usage >&2; exit 2 ;;
 esac
 case "$action" in
@@ -20,7 +20,7 @@ case "$action" in
   health)
     sudo systemctl is-active "${units[@]}"
     if [[ "$target" != matrix ]]; then curl --fail --silent --output /dev/null --max-time 3 http://127.0.0.1:8080/health && echo "Web endpoint OK"; fi
-    if [[ "$target" != web ]]; then
+    if [[ "$target" != web ]] && systemctl list-unit-files uls-matrix.service --no-legend 2>/dev/null | grep -q uls-matrix.service; then
       frame=/run/uls/live-frame.ppm
       test -s "$frame" || { echo "Frame missing or empty" >&2; exit 1; }
       age=$(( $(date +%s) - $(stat -c %Y "$frame") ))
