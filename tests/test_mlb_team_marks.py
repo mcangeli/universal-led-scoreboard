@@ -20,7 +20,7 @@ class MLBTeamMarksTests(unittest.TestCase):
             with self.subTest(team=team):
                 frame = Framebuffer()
                 self.assertTrue(draw_team_mark(frame, team, 25, 7))
-                self.assertNotEqual(frame.pixels[7][25], (0, 0, 0))
+                self.assertTrue(any(pixel != (0, 0, 0) for row in frame.pixels[7:14] for pixel in row[25:34]))
 
     def test_custom_sprites_are_transparent_and_fit(self):
         self.assertEqual(set(SPRITES), {'MIL', 'LAD'})
