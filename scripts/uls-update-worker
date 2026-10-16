@@ -7,8 +7,10 @@ flock -n 9 || { echo 'An update is already running'; exit 1; }
 log=/var/lib/uls/update/latest.log
 status=/var/lib/uls/update/status
 printf 'running\n' > "$status"
+chgrp uls "$status"
 chmod 0640 "$status"
 : > "$log"
+chgrp uls "$log"
 chmod 0640 "$log"
 if /opt/uls/app/scripts/uls-update > "$log" 2>&1; then
   printf 'completed\n' > "$status"
