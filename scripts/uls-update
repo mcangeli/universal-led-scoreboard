@@ -31,13 +31,38 @@ as_owner "$VENV/bin/python" -m compileall -q "$STAGE/universal_led" "$STAGE/test
 (cd "$STAGE" && as_owner "$VENV/bin/python" -m unittest discover -s tests -p 'test_*.py')
 echo "Tests passed. Installing fast-forward..."
 CHANGED=$(as_owner git diff --name-only "$OLD" "$NEW")
+MATRIX_CHANGED=0
+if grep -Eq '^(universal_led/(matrix_worker|matrix_output|display|frame_bridge)\\.py|scripts/.*matrix|systemd/.*matrix)' <<< "$CHANGED"; then
+  MATRIX_CHANGED=1
+fi
+rollback() {
+  local failed_status=$?
+  trap - ERR
+  echo "Update failed (exit $failed_status). Restoring $OLD..." >&2
+  if ! as_owner git reset --hard "$OLD"; then
+    echo "CRITICAL: Could not restore Git checkout automatically." >&2
+  fi
+  systemctl restart uls-web.service || true
+  if (( MATRIX_CHANGED )); then systemctl restart uls-matrix.service || true; fi
+  echo "Rollback attempted; check: sudo ulsctl status" >&2
+  exit "$failed_status"
+}
+trap rollback ERR
 as_owner git merge --ff-only "$NEW"
-# Matrix service is restarted only if its worker, driver, or drawing code changed.
-if grep -Eq '^(universal_led/(matrix_worker|matrix_output|display|frame_bridge)\.py|scripts/.*matrix|systemd/.*matrix)' <<< "$CHANGED"; then
+if (( MATRIX_CHANGED )); then
   systemctl restart uls-matrix.service
 fi
 systemctl restart uls-web.service
 systemctl is-active --quiet uls-web.service
 systemctl is-active --quiet uls-matrix.service
+# is-active alone can succeed during a crash loop; confirm the HTTP endpoint.
+for i in {1..20}; do
+  if curl --fail --silent --output /dev/null --max-time 2 http://127.0.0.1:8080/; then
+    break
+  fi
+  sleep 1
+done
+curl --fail --silent --output /dev/null --max-time 2 http://127.0.0.1:8080/
+trap - ERR
 echo "ULS updated successfully: $OLD -> $NEW"
 echo "Settings in /etc/uls and persistent data in /var/lib/uls were untouched."
