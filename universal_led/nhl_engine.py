@@ -1,0 +1,45 @@
+"""NHL game-to-frame adapter, independent of the MLB rendering pipeline."""
+from __future__ import annotations
+
+import time
+from .nhl_runtime import select_games
+from .nhl_visual import NHLVisualScreen
+
+
+class ConfiguredNHLRenderer:
+    """Read cached feed snapshots; never perform network I/O during render."""
+
+    def __init__(self, feed, *, favorite_teams=None, mode="fallback",
+                 rotation_seconds=12, clock=time.monotonic):
+        self.feed = feed
+        self.clock = clock
+        self.started = clock()
+        self.configure(favorite_teams=favorite_teams, mode=mode,
+                       rotation_seconds=rotation_seconds)
+
+    def configure(self, *, favorite_teams=None, mode="fallback",
+                  rotation_seconds=12):
+        if mode not in ("favorite", "fallback", "all"):
+            raise ValueError("Invalid NHL rotation mode")
+        if not isinstance(rotation_seconds, (int, float)) or isinstance(rotation_seconds, bool) or not 1 <= rotation_seconds <= 3600:
+            raise ValueError("Invalid NHL rotation duration")
+        teams = [] if favorite_teams is None else list(favorite_teams)
+        if any(not isinstance(team, str) or len(team) != 3 or not team.isalpha() for team in teams):
+            raise ValueError("Invalid NHL favorite team")
+        self.favorite_teams = [team.upper() for team in teams]
+        self.mode = mode
+        self.rotation_seconds = rotation_seconds
+        self.started = self.clock()
+
+    def game(self):
+        games = select_games(self.feed.games(), self.favorite_teams, self.mode)
+        if not games:
+            return None
+        live = [game for game in games if game.status == "live"]
+        if live:
+            games = live
+        slot = int(max(0, self.clock() - self.started) // self.rotation_seconds)
+        return games[slot % len(games)]
+
+    def frame(self):
+        return NHLVisualScreen(self.game()).render()
