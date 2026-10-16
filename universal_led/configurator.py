@@ -4,6 +4,7 @@ import os
 import argparse
 import json
 import secrets
+import stat
 import subprocess
 import threading
 import time
@@ -719,6 +720,29 @@ def make_handler(config_dir,token,frame_provider=None,settings_callback=None,fee
                 self.send_json(500,{'error':str(exc)})
     return Handler
 
+def persistent_form_token(directory):
+    """Keep the form CSRF token stable across web service restarts.
+
+    Authentication still requires the separate, revocable session cookie.
+    """
+    path = Path(directory) / 'form_token'
+    try:
+        value = path.read_text(encoding='ascii').strip()
+        if len(value) < 32:
+            raise ValueError('Invalid form token')
+        return value
+    except FileNotFoundError:
+        pass
+    value = secrets.token_urlsafe(32)
+    path.parent.mkdir(parents=True, exist_ok=True)
+    try:
+        with path.open('x', encoding='ascii') as stream:
+            os.chmod(path, 0o600)
+            stream.write(value + '\\n')
+    except FileExistsError:
+        return persistent_form_token(directory)
+    return value
+
 def main():
     p=argparse.ArgumentParser()
     p.add_argument('--host',default='0.0.0.0')
@@ -734,7 +758,7 @@ def main():
         return
     if not (Path(args.config_dir)/'admin.json').exists():
         p.error('Administrator password missing. Run python3 -m universal_led.configurator --set-admin-password first.')
-    token=secrets.token_urlsafe(32)
+    token=persistent_form_token(args.config_dir)
     from .runtime_settings import ConfiguredMLBRenderer
     from .sport_settings import load_settings
     initial=load_settings(args.config_dir)
