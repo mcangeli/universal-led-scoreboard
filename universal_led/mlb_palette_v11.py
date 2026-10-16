@@ -51,7 +51,7 @@ class MLBPaletteScreen:
             (18,g.home,(g.home_runs,g.home_hits,g.home_errors))):
             fb.text(team,1,y-1,self.team_colors.get(team,c['text']))
             if g.status == 'live':
-                if team.upper() in SPRITES:
+                if team.upper() in SPRITES or team.upper() == 'TB':
                     draw_team_mark(fb,team,24,y-2)
                 else:
                     draw_team_mark(fb,team,25,y-1)
