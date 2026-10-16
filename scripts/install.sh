@@ -56,7 +56,7 @@ fi
 if [[ "$OUTPUT_MODE" == physical || "$OUTPUT_MODE" == both ]]; then
   echo "Installing optional HUB75 matrix Python bindings..."
   if ((SKIP_APT == 0)); then
-    sudo apt-get install -y build-essential python3-dev python3-venv python3-pip python3-setuptools
+    sudo apt-get install -y build-essential python3-dev python3-venv python3-pip python3-setuptools cython3 cmake ninja-build
   fi
   DRIVER_DIR="$HOME/.local/src/rpi-rgb-led-matrix"
   mkdir -p "$(dirname "$DRIVER_DIR")"
@@ -70,8 +70,13 @@ if [[ "$OUTPUT_MODE" == physical || "$OUTPUT_MODE" == both ]]; then
   make -C "$DRIVER_DIR/lib"
   python3 -m venv --system-site-packages "$HOME/.local/share/universal-led-scoreboard/matrix-venv"
   MATRIX_PY="$HOME/.local/share/universal-led-scoreboard/matrix-venv/bin/python"
-  make -C "$DRIVER_DIR/bindings/python" build-python PYTHON="$MATRIX_PY"
-  make -C "$DRIVER_DIR/bindings/python" install-python PYTHON="$MATRIX_PY"
+  # Upstream switched to a root-level pyproject.toml (scikit-build-core) in 2026.
+  # Older checkouts used root-level Makefile targets instead.
+  if [[ -f "$DRIVER_DIR/pyproject.toml" ]]; then
+    "$MATRIX_PY" -m pip install "$DRIVER_DIR"
+  else
+    make -C "$DRIVER_DIR" install-python PYTHON="$MATRIX_PY"
+  fi
   "$MATRIX_PY" -c 'from rgbmatrix import RGBMatrix, RGBMatrixOptions; print("RGBMatrix bindings verified")'
   echo "Physical driver installed. Hardware output integration into the runtime is still required."
 fi
