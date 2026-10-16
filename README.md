@@ -19,7 +19,7 @@ The current screen layouts target a **64×32 RGB LED matrix**. You can use the b
 
 ## Hardware and software
 
-Development targets Raspberry Pi 5, with Raspberry Pi 3 as a production target. The intended compatibility range includes Pi Zero 2 W, Pi 3, Pi 4 and Pi 5 running Raspberry Pi OS Bookworm or Trixie. Performance and hardware-driver behavior may vary by model.
+Development targets Raspberry Pi 5, with Raspberry Pi 3 as a production target. The hardware targets include Pi Zero 2 W, Pi 3, Pi 4 and Pi 5. **Raspberry Pi OS Trixie 64-bit is required**; Bookworm is not supported. Only the Pi 5 development configuration has been exercised with a physical matrix so far. Performance and hardware-driver behavior may vary by model.
 
 For a physical board you need a compatible 64×32 RGB LED matrix, appropriate power supply, and an RGB matrix interface/HAT supported by the `rpi-rgb-led-matrix` driver. **The web emulator does not require matrix hardware.** Hardware wiring and service setup depend on the interface used.
 
