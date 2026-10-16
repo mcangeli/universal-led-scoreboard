@@ -72,13 +72,17 @@ class MultiSportRenderer:
             renderer = self._renderer(sport)
             if renderer is None:
                 continue
-            # A game snapshot exists only when the sport has a selected game.
-            # Never interpret feed errors as an instruction to crash rotation.
+            # Only renderers with an explicit availability contract can be
+            # skipped. Legacy renderers and test doubles remain eligible.
+            checker = getattr(renderer, "has_games", None)
+            if not callable(checker):
+                available.append(sport)
+                continue
             try:
-                game = renderer.game()
+                if checker():
+                    available.append(sport)
             except Exception:
-                game = None
-            if game is not None and getattr(game, "status", None) not in ("unknown", "postponed"):
+                # Feed errors must not remove a sport from rotation.
                 available.append(sport)
         return tuple(available)
 
