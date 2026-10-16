@@ -40,7 +40,7 @@ class MLBOpeningDayFeed:
             payload = self.fetch(year)
             if not isinstance(payload, dict):
                 raise ValueError('Invalid schedule response')
-        except (OSError, ValueError, TypeError, KeyError) as exc:
+        except Exception as exc:
             with self._lock:
                 self.last_error = str(exc)
         else:
