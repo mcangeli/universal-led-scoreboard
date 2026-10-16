@@ -88,6 +88,12 @@ fi
 mkdir -p "$(dirname "$OUTPUT_FILE")"
 printf '%s\\n' "$OUTPUT_MODE" > "$OUTPUT_FILE"
 
+# Shared frames live under /run because the RGBMatrix driver may drop privileges.
+# systemd-tmpfiles recreates this writable directory on every boot.
+if [[ "$OUTPUT_MODE" == physical || "$OUTPUT_MODE" == both ]]; then
+  printf 'd /run/universal-led-scoreboard 0755 %s %s -\n' "$USER" "$(id -gn)" | sudo tee /etc/tmpfiles.d/universal-led-scoreboard.conf >/dev/null
+  sudo systemd-tmpfiles --create /etc/tmpfiles.d/universal-led-scoreboard.conf
+fi
 CONFIG_DIR="$HOME/.config/universal-led-scoreboard"
 UNIT_DIR="$HOME/.config/systemd/user"
 mkdir -p "$CONFIG_DIR" "$UNIT_DIR"
