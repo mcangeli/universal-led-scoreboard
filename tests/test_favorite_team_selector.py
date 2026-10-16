@@ -5,7 +5,8 @@ from universal_led.configurator import HTML
 
 class FavoriteTeamSelectorTests(unittest.TestCase):
     def test_all_30_mlb_teams_have_checkboxes(self):
-        options=re.findall(r'<input type="checkbox" value="([A-Z]{3})"> ([^<]+)',HTML)
+        mlb_section=HTML.split('<div id="favorite-teams" class="favorite-team-grid">',1)[1].split('</div>',1)[0]
+        options=re.findall(r'<input type="checkbox" value="([A-Z]{3})"> ([^<]+)',mlb_section)
         self.assertEqual(len(options),30)
         self.assertEqual(len({code for code,_ in options}),30)
         self.assertEqual(dict(options)['ATL'],'Atlanta Braves')
