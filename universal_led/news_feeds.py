@@ -100,4 +100,4 @@ class MultiSourceNewsFeed:
                     except (OSError,ValueError,ElementTree.ParseError) as exc:
                         self.errors[source.name]=str(exc)
                 combined.extend(self._cache.get(source.name,()))
-            return normalize_items(combined)
+            return normalize_items(combined, max_items=max(30, 30 * len(self.sources)))
