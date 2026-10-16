@@ -9,6 +9,15 @@ class NHLDashboardTests(unittest.TestCase):
         self.assertIn('id="nhl-enabled"', HTML)
         self.assertNotIn('id="active-sport"', HTML)
 
+    def test_mlb_and_nhl_controls_share_sports_page(self):
+        sports = HTML.split('<section data-page="sports"', 1)[1].split('<section data-page="display"', 1)[0]
+        display = HTML.split('<section data-page="display"', 1)[1]
+        for field in ('mlb-enabled', 'nhl-enabled', 'mode', 'rotation', 'refresh',
+                      'live-classic', 'live-matchup', 'nhl-mode', 'nhl-rotation', 'nhl-refresh'):
+            with self.subTest(field=field):
+                self.assertIn('id="' + field + '"', sports)
+                self.assertNotIn('id="' + field + '"', display)
+
     def test_nhl_fields_present(self):
         for field in ("nhl-enabled", "nhl-teams", "nhl-mode",
                       "nhl-rotation", "nhl-refresh"):
