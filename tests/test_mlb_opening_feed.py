@@ -61,6 +61,13 @@ class OpeningFeedTests(unittest.TestCase):
         feed = MLBOpeningDayFeed(fetch=lambda year: (_ for _ in ()).throw(OSError('offline')))
         self.assertIsNone(feed.opening(2027))
 
+    def test_unexpected_fetch_failure_is_contained(self):
+        feed = MLBOpeningDayFeed(fetch=lambda year: (_ for _ in ()).throw(RuntimeError('unexpected')))
+        self.assertIsNone(feed.opening(2027))
+        self.await_refresh(feed)
+        self.assertEqual(feed.status(2027)['error'], 'unexpected')
+        self.assertFalse(feed.status(2027)['available'])
+
     def test_slow_network_never_blocks_frame(self):
         release = threading.Event()
         entered = threading.Event()
