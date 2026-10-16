@@ -12,7 +12,7 @@ esac
 case "$action" in
   status) sudo systemctl status --no-pager "${units[@]}" ;;
   start|stop|restart) sudo systemctl "$action" "${units[@]}" ;;
-  logs) sudo journalctl -u "${units[0]}" $( [[ "$target" == all ]] && printf '%s' '-u uls-matrix.service' ) -n 80 --no-pager ;;
+  logs) args=(); for unit in "${units[@]}"; do args+=(-u "$unit"); done; sudo journalctl "${args[@]}" -n 80 --no-pager ;;
   health)
     sudo systemctl is-active "${units[@]}"
     if [[ "$target" != matrix ]]; then curl --fail --silent --output /dev/null http://127.0.0.1:8080/ && echo "Web endpoint OK"; fi
