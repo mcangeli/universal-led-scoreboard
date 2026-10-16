@@ -30,7 +30,9 @@ class MLBTeamMarksTests(unittest.TestCase):
                 self.assertTrue(all(len(row) == 9 for row in rows))
                 frame = Framebuffer()
                 self.assertTrue(draw_team_mark(frame, team, 25, 7))
-                self.assertEqual(frame.pixels[7][25], (0, 0, 0))
+                self.assertTrue(any(pixel == (0, 0, 0)
+                                    for row in frame.pixels[7:14]
+                                    for pixel in row[25:34]))
                 self.assertTrue(any(pixel != (0, 0, 0)
                                     for row in frame.pixels[7:14]
                                     for pixel in row[25:34]))
@@ -42,7 +44,8 @@ class MLBTeamMarksTests(unittest.TestCase):
         game = BaseballGame(away='MIL', home='LAD')
         live = MLBPaletteScreen(game).render()
         final = MLBPaletteScreen(BaseballGame(away='MIL', home='LAD', status='final')).render()
-        self.assertEqual(live.pixels[7][25], (0, 0, 0))
+        self.assertEqual(live.pixels[7][25], (0, 0, 0))  # MIL transparent corner
+        self.assertEqual(live.pixels[17][25], (40, 110, 230))  # LAD blue corner
         self.assertNotEqual(live.pixels[7][28], (0, 0, 0))
         self.assertEqual(final.pixels[7][28], (0, 0, 0))
 
