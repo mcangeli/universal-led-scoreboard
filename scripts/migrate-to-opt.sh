@@ -28,10 +28,12 @@ sudo cp -a "$SOURCE_DIR/." /opt/uls/app/
 # Preserve settings from existing user install without overwriting migrated values.
 LEGACY_CONFIG="$HOME/.config/universal-led-scoreboard"
 if [[ -d "$LEGACY_CONFIG" ]]; then
-  sudo cp -an "$LEGACY_CONFIG/." /etc/uls/\n  sudo rm -f /etc/uls/live-frame.ppm
+  sudo cp -an "$LEGACY_CONFIG/." /etc/uls/
+  sudo rm -f /etc/uls/live-frame.ppm
 fi
 # Restrict copied secrets, which may include administrator hashes and API keys.
-sudo rm -f /etc/uls/live-frame.ppm\nsudo chmod 0700 /etc/uls /etc/uls/secrets
+sudo rm -f /etc/uls/live-frame.ppm
+sudo chmod 0700 /etc/uls /etc/uls/secrets
 sudo find /etc/uls -type f -exec chmod 0600 {} +
 # Copy the verified driver environment without rebuilding or changing the original.
 LEGACY_VENV="$HOME/.local/share/universal-led-scoreboard/matrix-venv"
