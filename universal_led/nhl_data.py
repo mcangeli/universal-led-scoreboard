@@ -26,6 +26,8 @@ class HockeyGame:
     clock: str | None = None
     intermission: bool = False
     shootout: bool = False
+    away_record: str = ""
+    home_record: str = ""
 
 
 def _team(value: Any) -> tuple[str, str]:
@@ -34,6 +36,17 @@ def _team(value: Any) -> tuple[str, str]:
     name_value = obj.get("name") or {}
     name = (name_value.get("default") if isinstance(name_value, dict) else name_value) or abbreviation
     return abbreviation[:3], str(name)
+
+
+def _record(team: Any) -> str:
+    if not isinstance(team, dict):
+        return ""
+    value = team.get('record')
+    if isinstance(value, str):
+        return value[:12]
+    if isinstance(value, dict):
+        return str(value.get('summary') or '')[:12]
+    return ""
 
 
 def _score(value: Any) -> int | None:
@@ -99,6 +112,7 @@ def parse_game(item: dict[str, Any]) -> HockeyGame:
         period=period, period_label=label, clock=clock,
         intermission=clock_obj.get("inIntermission") is True,
         shootout=label == "SO",
+        away_record=_record(away_obj), home_record=_record(home_obj),
     )
 
 

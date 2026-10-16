@@ -1,4 +1,4 @@
-"""Shared MLB/NHL frame rotation, preserving the MLB supplemental rotation."""
+"""Shared MLB/NHL/NBA frame rotation, preserving the MLB supplemental rotation."""
 from __future__ import annotations
 
 import threading
@@ -9,9 +9,11 @@ from .news_screen import NewsHeadlineScreen
 class MultiSportRenderer:
     """Route cached frames without network access; retain legacy single-sport mode."""
 
-    def __init__(self, mlb_renderer, nhl_renderer, active_sport="mlb", clock=time.monotonic, news=None, settings_getter=None):
+    def __init__(self, mlb_renderer, nhl_renderer, active_sport="mlb", clock=time.monotonic, news=None, settings_getter=None, nba_renderer=None, wnba_renderer=None):
         self.mlb = mlb_renderer
         self.nhl = nhl_renderer
+        self.nba = nba_renderer
+        self.wnba = wnba_renderer
         self.clock = clock
         self.news = news
         self.settings_getter = settings_getter
@@ -29,16 +31,20 @@ class MultiSportRenderer:
             return self._active
 
     def set_active_sport(self, sport):
-        if sport not in ("mlb", "nhl"):
+        if sport not in self._supported():
             raise ValueError("Unsupported active sport")
         with self._lock:
             self._active = sport
             self._enabled = (sport,)
             self._started = self.clock()
 
+    def _supported(self):
+        return ("mlb", "nhl") + (("nba",) if self.nba is not None else ()) + (("wnba",) if self.wnba is not None else ())
+
     def configure_rotation(self, enabled_sports, interval=12, preferred="mlb"):
-        enabled = tuple(s for s in ("mlb", "nhl") if s in enabled_sports)
-        if not enabled or preferred not in ("mlb", "nhl"):
+        supported = self._supported()
+        enabled = tuple(s for s in supported if s in enabled_sports)
+        if not enabled or preferred not in supported:
             raise ValueError("Invalid sport rotation")
         if type(interval) not in (int, float) or not 1 <= interval <= 3600:
             raise ValueError("Invalid sport rotation interval")
@@ -58,7 +64,7 @@ class MultiSportRenderer:
 
     def frame(self):
         sport = self._selected()
-        renderer = self.nhl if sport == "nhl" else self.mlb
+        renderer = self.nhl if sport == "nhl" else self.nba if sport == "nba" else self.wnba if sport == "wnba" else self.mlb
         if self.news is not None and self.settings_getter is not None:
             headlines = self.news.items()
             game = renderer.game() if headlines else None
@@ -84,4 +90,5 @@ class MultiSportRenderer:
         return renderer.frame()
 
     def game(self):
-        return (self.nhl if self._selected() == "nhl" else self.mlb).game()
+        sport = self._selected()
+        return (self.nhl if sport == "nhl" else self.nba if sport == "nba" else self.wnba if sport == "wnba" else self.mlb).game()

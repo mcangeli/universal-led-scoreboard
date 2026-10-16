@@ -66,14 +66,14 @@ button{border:1px solid #354968}button:focus-visible,aside a:focus-visible{outli
 <p><label>NHL game selection <select id="nhl-mode"><option value="favorite">Favorites only</option><option value="fallback">Favorites, otherwise all</option><option value="all">All games</option></select></label></p>
 <p><label>NHL rotation seconds <input id="nhl-rotation" type="number" min="5" max="3600" value="12"></label>
 <label>NHL feed refresh seconds <input id="nhl-refresh" type="number" min="5" max="3600" value="60"></label></p>
-<p class="muted">Enable both sports to alternate MLB and NHL on the board. At least one sport must remain enabled.</p></fieldset>
+</fieldset><fieldset class="favorite-fieldset"><legend>NBA configuration</legend><p><label><input type="checkbox" id="nba-enabled"> Enable NBA</label></p><h3>Favorite NBA teams</h3><div id="nba-teams" class="favorite-team-grid"><label><input type="checkbox" value="ATL"> Atlanta Hawks</label><label><input type="checkbox" value="BOS"> Boston Celtics</label><label><input type="checkbox" value="BKN"> Brooklyn Nets</label><label><input type="checkbox" value="CHA"> Charlotte Hornets</label><label><input type="checkbox" value="CHI"> Chicago Bulls</label><label><input type="checkbox" value="CLE"> Cleveland Cavaliers</label><label><input type="checkbox" value="DAL"> Dallas Mavericks</label><label><input type="checkbox" value="DEN"> Denver Nuggets</label><label><input type="checkbox" value="DET"> Detroit Pistons</label><label><input type="checkbox" value="GSW"> Golden State Warriors</label><label><input type="checkbox" value="HOU"> Houston Rockets</label><label><input type="checkbox" value="IND"> Indiana Pacers</label><label><input type="checkbox" value="LAC"> LA Clippers</label><label><input type="checkbox" value="LAL"> Los Angeles Lakers</label><label><input type="checkbox" value="MEM"> Memphis Grizzlies</label><label><input type="checkbox" value="MIA"> Miami Heat</label><label><input type="checkbox" value="MIL"> Milwaukee Bucks</label><label><input type="checkbox" value="MIN"> Minnesota Timberwolves</label><label><input type="checkbox" value="NOP"> New Orleans Pelicans</label><label><input type="checkbox" value="NYK"> New York Knicks</label><label><input type="checkbox" value="OKC"> Oklahoma City Thunder</label><label><input type="checkbox" value="ORL"> Orlando Magic</label><label><input type="checkbox" value="PHI"> Philadelphia 76ers</label><label><input type="checkbox" value="PHX"> Phoenix Suns</label><label><input type="checkbox" value="POR"> Portland Trail Blazers</label><label><input type="checkbox" value="SAC"> Sacramento Kings</label><label><input type="checkbox" value="SAS"> San Antonio Spurs</label><label><input type="checkbox" value="TOR"> Toronto Raptors</label><label><input type="checkbox" value="UTA"> Utah Jazz</label><label><input type="checkbox" value="WSH"> Washington Wizards</label></div><p><label>NBA game selection <select id="nba-mode"><option value="favorite">Favorites only</option><option value="fallback">Favorites, otherwise all</option><option value="all">All games</option></select></label></p><p><label>NBA rotation seconds <input id="nba-rotation" type="number" min="5" max="3600" value="12"></label> <label>NBA feed refresh seconds <input id="nba-refresh" type="number" min="5" max="3600" value="60"></label></p></fieldset><fieldset class="favorite-fieldset"><legend>WNBA configuration</legend><p><label><input type="checkbox" id="wnba-enabled"> Enable WNBA</label></p><h3>Favorite WNBA teams</h3><div id="wnba-teams" class="favorite-team-grid"><label><input type="checkbox" value="ATL"> Atlanta Dream</label><label><input type="checkbox" value="CHI"> Chicago Sky</label><label><input type="checkbox" value="CON"> Connecticut Sun</label><label><input type="checkbox" value="DAL"> Dallas Wings</label><label><input type="checkbox" value="GSV"> Golden State Valkyries</label><label><input type="checkbox" value="IND"> Indiana Fever</label><label><input type="checkbox" value="LVA"> Las Vegas Aces</label><label><input type="checkbox" value="LAS"> Los Angeles Sparks</label><label><input type="checkbox" value="MIN"> Minnesota Lynx</label><label><input type="checkbox" value="NYL"> New York Liberty</label><label><input type="checkbox" value="PHX"> Phoenix Mercury</label><label><input type="checkbox" value="SEA"> Seattle Storm</label><label><input type="checkbox" value="WAS"> Washington Mystics</label><label><input type="checkbox" value="POR"> Portland Fire</label><label><input type="checkbox" value="TOR"> Toronto Tempo</label></div><p><label>WNBA game selection <select id="wnba-mode"><option value="favorite">Favorites only</option><option value="fallback">Favorites, otherwise all</option><option value="all">All games</option></select></label></p><p><label>WNBA rotation seconds <input id="wnba-rotation" type="number" min="5" max="3600" value="12"></label> <label>WNBA feed refresh seconds <input id="wnba-refresh" type="number" min="5" max="3600" value="60"></label></p></fieldset><p class="muted">Enable one or more sports to rotate MLB, NHL, NBA and WNBA.</p>
 <p class="muted">Shared clock, weather and countdown settings are on the Display page.</p><button id="save-settings">Save Sport Settings</button><span id="settings-status" role="status"></span></section><section data-page="display" hidden><h2>Shared Display Settings</h2><fieldset class="favorite-fieldset"><legend>Time &amp; Weather</legend><label><input id="clock-enabled" type="checkbox"> Enable clock rotation</label><label>Time zone <select id="clock-timezone"><option value="America/New_York">Eastern (ET)</option><option value="America/Chicago">Central (CT)</option><option value="America/Denver">Mountain (MT)</option><option value="America/Phoenix">Arizona (MST, no DST)</option><option value="America/Los_Angeles">Pacific (PT)</option><option value="America/Anchorage">Alaska (AKT)</option><option value="Pacific/Honolulu">Hawaii (HST)</option><option value="UTC">UTC</option><option value="Europe/London">London (UK)</option><option value="Europe/Paris">Central Europe</option><option value="Asia/Tokyo">Japan</option><option value="Australia/Sydney">Sydney</option></select></label><label>Time format <select id="clock-format"><option value="12h">12-hour</option><option value="24h">24-hour</option></select></label><label>Clock every N non-live slots <input id="clock-interval" type="number" min="1" max="20" value="5"></label><label><input id="weather-enabled" type="checkbox"> Enable weather display</label><label>Weather location <input id="weather-location" type="text" placeholder="City or ZIP"></label><label>Temperature unit <select id="weather-unit"><option value="fahrenheit">Fahrenheit</option><option value="celsius">Celsius</option></select></label><label>Weather provider <select id="weather-provider"><option value="open-meteo">Open-Meteo (no key)</option><option value="openweathermap">OpenWeatherMap (API key)</option></select></label><label>OpenWeatherMap API key <input id="weather-key" type="password" autocomplete="new-password" placeholder="Leave blank to keep saved key"></label><button type="button" onclick="saveClockSettings()">Save Time &amp; Weather</button><p id="clock-status" role="status"></p></fieldset><fieldset class="favorite-fieldset"><legend>Season Opening Countdown</legend><p class="muted">Optional shared countdown. Enter an opening date with its timezone offset, such as 2027-03-25T13:00:00-04:00. Disabled until configured.</p><p><label><input id="countdown-enabled" type="checkbox"> Enable countdown</label></p><p><label>Sport <select id="countdown-sport"><option value="mlb">MLB</option><option value="nba">NBA</option><option value="nfl">NFL</option><option value="nhl">NHL</option><option value="mls">MLS</option><option value="efl">EFL</option></select></label> <label>Season <input id="countdown-season" type="text" placeholder="2027"></label></p><p><label>Date source <select id="countdown-source"><option value="manual">Manual date</option><option value="automatic">Automatic MLB schedule</option></select></label></p><p><label>Opening date/time (ISO with timezone) <input id="countdown-opening" type="text" placeholder="2027-03-25T13:00:00-04:00"></label></p><p><label>Target <select id="countdown-target"><option value="league">League opening</option><option value="favorite">Favorite team opening</option></select></label> <label>Team code <input id="countdown-team" type="text" placeholder="ATL"></label></p><p><label>Display <select id="countdown-window"><option value="offseason">Offseason only</option><option value="within_days">Within N days</option><option value="always">Always when no live game</option></select></label> <label>Days <input id="countdown-days" type="number" min="1" max="366" value="30"></label></p><button type="button" onclick="saveCountdown()">Save Countdown</button><p id="countdown-status" role="status" aria-live="polite"></p><p id="countdown-feed-status" class="muted" role="status" aria-live="polite">Schedule status not checked.</p><button type="button" onclick="refreshCountdownStatus()">Check Schedule Status</button></fieldset></section><section data-page="wifi" hidden><h2>Wi-Fi & Hotspot</h2><p id="wifi-recovery-readiness" class="muted" role="status">Checking recovery protection…</p><p id="wifi-info">Loading…</p><h4>Saved Wi-Fi connections</h4><div id="wifi-profiles" class="grid"><p class="muted">Loading saved profiles…</p></div><button type="button" onclick="refreshWifi()">Refresh Wi-Fi</button> <button type="button" onclick="scanWifi()">Scan Networks</button><p id="wifi-scan-status" class="muted" role="status" aria-live="polite">Click Scan Networks to list nearby access points.</p><div id="wifi-networks" class="grid"></div><div id="wifi-selection" hidden><h4>Selected network: <span id="wifi-selected-name"></span></h4><p id="wifi-selected-security"></p><label>Network password <input id="wifi-password" type="password" autocomplete="off" minlength="8" maxlength="63"></label><p id="wifi-connect-note" class="muted">Network switching requires the privileged helper and recovery worker. Keep Ethernet connected during initial testing.</p><button type="button" onclick="connectWifi()">Connect Wi-Fi</button><p id="wifi-connect-result" role="status"></p></div><h4>Hotspot Settings</h4><p class="muted">Change the password for Universal-LED-Setup. Changes take effect the next time the hotspot starts.</p><label>New hotspot password <input id="hotspot-password" type="password" minlength="8" maxlength="63" autocomplete="new-password"></label> <label>Confirm password <input id="hotspot-confirm" type="password" minlength="8" maxlength="63" autocomplete="new-password"></label> <button type="button" onclick="saveHotspotPassword()">Save Hotspot Password</button><p id="hotspot-result" role="status"></p></section><section data-page="system" hidden><h2>System</h2><h3>Software Updates</h3><p id="update-status" class="muted" role="status">Update status not checked.</p><button type="button" onclick="checkSoftwareUpdate()">Check for Updates</button> <button type="button" id="install-update" onclick="installSoftwareUpdate()" disabled>Install Update</button><pre id="update-log" style="white-space:pre-wrap;overflow-wrap:anywhere;max-height:220px;overflow:auto"></pre><p id="system-info">Checking server information…</p><div id="pi-info" class="grid"><p class="muted">Loading Raspberry Pi diagnostics…</p></div><p class="muted">Service status is read-only. Hardware output and remote service controls are not enabled.</p></section><div data-page="colors" hidden><section><h2>64 × 32 Live Preview</h2><canvas id="matrix" width="64" height="32"></canvas>
 <p class="muted">Changes preview immediately. Saving is optional.</p><label for="preview-team">Preview favorite team: </label><select id="preview-team"></select><span id="dirty" role="status">All changes saved</span></section>
 <section><h2>Scoreboard Colors</h2><p class="muted">General display text, accents, separators and status colors.</p><div id="scoreboard" class="grid"></div></section>
 <section><h2>NHL Team Colors</h2><p class="muted">NHL colors are stored separately from MLB. Changes to the matrix display will follow in the renderer update.</p><label for="nhl-edit-team">NHL team to edit</label> <select id="nhl-edit-team"></select><div id="nhl-color-editor" class="grid"></div><button type="button" id="nhl-save-color">Save NHL Color</button> <button type="button" id="nhl-reset-color">Reset NHL Color</button> <span id="nhl-color-status" role="status"></span></section>
 <section><h2>MLB Team Colors</h2><p class="muted">Edit one team at a time, using the same compact controls as NHL. All other team colors remain unchanged.</p><label for="edit-team">MLB team to edit</label> <select id="edit-team"></select><div id="teams" class="grid"></div><button id="mlb-save-color" type="button">Save MLB Color</button> <button id="mlb-reset-color" type="button">Reset MLB Color</button> <span id="mlb-color-status" role="status"></span></section>
 <section><button id="save">Save Color Settings</button> <button id="cancel" type="button">Cancel Changes</button> <button id="reset" type="button">Reset Selected Color</button> <span id="status" role="status"></span>
-<p class="muted">Available on your trusted LAN. Backups are created before overwriting existing files.</p></section></div><div data-page="news" hidden><section><h2>Content &amp; News Sources</h2><p class="muted">Configure RSS or Atom feeds for future ticker use. Automatic and custom feeds display during available news rotation slots.</p><fieldset class="favorite-fieldset"><legend>Automatic Sports News</legend><p class="muted">Official news is enabled automatically when supported. Other sports become available with their modules.</p><label><input type="checkbox" id="mlb-news-enabled"> MLB official headlines</label> <label><input type="checkbox" id="nhl-news-enabled"> NHL official headlines</label> <button type="button" onclick="saveAutomaticNews()">Save Automatic News</button><p id="auto-news-status" role="status"></p></fieldset><fieldset class="favorite-fieldset"><legend>News Display Timing</legend><label>Show news every N non-live slots <input id="news-interval" type="number" min="1" max="20"></label> <label>Headline duration (seconds) <input id="news-duration" type="number" min="3" max="120"></label> <label>Scroll speed (characters/second) <input id="news-speed" type="number" min="1" max="15"></label> <button type="button" onclick="saveNewsTiming()">Save News Timing</button><p id="news-timing-status" role="status"></p></fieldset><h3>Additional Custom Feeds</h3><div id="news-sources"></div><button type="button" id="news-add" onclick="addNewsSource()">Add Source</button> <button type="button" onclick="saveNewsSources()">Save News Sources</button> <p id="news-status" role="status"></p></section></div></main></div>
+<p class="muted">Available on your trusted LAN. Backups are created before overwriting existing files.</p></section></div><div data-page="news" hidden><section><h2>Content &amp; News Sources</h2><p class="muted">Configure RSS or Atom feeds for future ticker use. Automatic and custom feeds display during available news rotation slots.</p><fieldset class="favorite-fieldset"><legend>Automatic Sports News</legend><p class="muted">Enable headlines separately for each sport. News appears during non-live rotation slots when that sport is enabled.</p><label><input type="checkbox" id="mlb-news-enabled"> MLB official headlines</label> <label><input type="checkbox" id="nhl-news-enabled"> NHL headlines</label> <label><input type="checkbox" id="nba-news-enabled"> NBA headlines</label> <label><input type="checkbox" id="wnba-news-enabled"> WNBA headlines</label> <button type="button" onclick="saveAutomaticNews()">Save Automatic News</button><p id="auto-news-status" role="status"></p></fieldset><fieldset class="favorite-fieldset"><legend>News Display Timing</legend><label>Show news every N non-live slots <input id="news-interval" type="number" min="1" max="20"></label> <label>Headline duration (seconds) <input id="news-duration" type="number" min="3" max="120"></label> <label>Scroll speed (characters/second) <input id="news-speed" type="number" min="1" max="15"></label> <button type="button" onclick="saveNewsTiming()">Save News Timing</button><p id="news-timing-status" role="status"></p></fieldset><h3>Additional Custom Feeds</h3><div id="news-sources"></div><button type="button" id="news-add" onclick="addNewsSource()">Add Source</button> <button type="button" onclick="saveNewsSources()">Save News Sources</button> <p id="news-status" role="status"></p></section></div></main></div>
 <script>
 const token=__TOKEN__;
 async function logout(){await fetch('/logout',{method:'POST',headers:{'X-Configurator-Token':token}});location.href='/login'}
@@ -81,12 +81,12 @@ let state=null,saved=null,dirty=false,selectedTeam='ATL',selected=null,settings=
 function showPage(name){document.querySelectorAll('.nav-item').forEach(button=>button.classList.toggle('active',button.getAttribute('onclick')==="showPage('"+name+"')"));document.querySelectorAll('[data-page]').forEach(el=>el.hidden=el.dataset.page!==name);if(name==='news'){loadNewsSources();loadAutomaticNews();loadNewsTiming()}if(name==='display'){loadClockSettings();loadCountdown();}if(name==='dashboard'||name==='system')refreshStatus();if(name==='system'){refreshSystem();refreshUpdateProgress();}if(name==='wifi'){refreshWifi();refreshWifiProfiles();refreshRecoveryReadiness();scanWifi()}}
 async function loadAutomaticNews(){
  const status=document.getElementById('auto-news-status');
- try{const response=await fetch('/api/settings',{cache:'no-store'});if(!response.ok)throw Error('Unable to load sports settings');const data=await response.json();document.getElementById('mlb-news-enabled').checked=data.sports.mlb.news_enabled;document.getElementById('nhl-news-enabled').checked=data.sports.nhl.news_enabled;status.textContent=''}
+ try{const response=await fetch('/api/settings',{cache:'no-store'});if(!response.ok)throw Error('Unable to load sports settings');const data=await response.json();document.getElementById('mlb-news-enabled').checked=data.sports.mlb.news_enabled;document.getElementById('nhl-news-enabled').checked=data.sports.nhl.news_enabled;document.getElementById('nba-news-enabled').checked=data.sports.nba.news_enabled;document.getElementById('wnba-news-enabled').checked=data.sports.wnba.news_enabled;status.textContent=''}
  catch(err){status.textContent=err.message}
 }
 async function saveAutomaticNews(){
  const status=document.getElementById('auto-news-status');status.textContent='Saving…';
- try{const response=await fetch('/api/settings',{cache:'no-store'});if(!response.ok)throw Error('Unable to load sports settings');const data=await response.json();data.sports.mlb.news_enabled=document.getElementById('mlb-news-enabled').checked;data.sports.nhl.news_enabled=document.getElementById('nhl-news-enabled').checked;
+ try{const response=await fetch('/api/settings',{cache:'no-store'});if(!response.ok)throw Error('Unable to load sports settings');const data=await response.json();data.sports.mlb.news_enabled=document.getElementById('mlb-news-enabled').checked;data.sports.nhl.news_enabled=document.getElementById('nhl-news-enabled').checked;data.sports.nba.news_enabled=document.getElementById('nba-news-enabled').checked;data.sports.wnba.news_enabled=document.getElementById('wnba-news-enabled').checked;
  const saved=await fetch('/api/settings',{method:'POST',headers:{'Content-Type':'application/json','X-Configurator-Token':token},body:JSON.stringify(data)});
  const result=await saved.json();if(!saved.ok)throw Error(result.error||'Save failed');settings=result.settings;status.textContent='Automatic sports news preferences saved.'}
  catch(err){status.textContent=err.message}
@@ -374,8 +374,20 @@ async function loadSettings(){
  settings=await response.json();
  const mlb=settings.mlb;
  const nhl=settings.nhl;
+ const nba=settings.nba;
+ const wnba=settings.wnba;
  document.getElementById('mlb-enabled').checked=settings.sports.mlb.enabled;
  document.getElementById('nhl-enabled').checked=settings.sports.nhl.enabled;
+ document.getElementById('nba-enabled').checked=settings.sports.nba.enabled;
+ document.getElementById('wnba-enabled').checked=settings.sports.wnba.enabled;
+ document.querySelectorAll('#wnba-teams input').forEach(el=>el.checked=wnba.favorite_teams.includes(el.value));
+ document.getElementById('wnba-mode').value=wnba.mode;
+ document.getElementById('wnba-rotation').value=wnba.rotation_seconds;
+ document.getElementById('wnba-refresh').value=wnba.refresh_seconds;
+ document.querySelectorAll('#nba-teams input').forEach(el=>el.checked=nba.favorite_teams.includes(el.value));
+ document.getElementById('nba-mode').value=nba.mode;
+ document.getElementById('nba-rotation').value=nba.rotation_seconds;
+ document.getElementById('nba-refresh').value=nba.refresh_seconds;
  setNHLFavorites(nhl.favorite_teams);
  document.getElementById('nhl-mode').value=nhl.mode;
  document.getElementById('nhl-rotation').value=nhl.rotation_seconds;
@@ -387,7 +399,7 @@ async function loadSettings(){
  document.getElementById('live-classic').value=mlb.live_classic_percent;
  document.getElementById('live-matchup').value=mlb.live_matchup_percent;
  updateLiveShare();
- document.getElementById('summary').textContent='Enabled sports: '+['mlb','nhl'].filter(s=>settings.sports[s].enabled).join(', ').toUpperCase()+' | MLB favorites: '+mlb.favorite_teams.join(', ')+' | Rotation: '+mlb.mode;
+ document.getElementById('summary').textContent='Enabled sports: '+['mlb','nhl','nba'].filter(s=>settings.sports[s].enabled).join(', ').toUpperCase()+' | MLB favorites: '+mlb.favorite_teams.join(', ')+' | Rotation: '+mlb.mode;
 }
 function updateLiveShare(){
  const classic=Number(document.getElementById('live-classic').value);
@@ -406,8 +418,18 @@ async function saveSportSettings(source){
   next.mlb.favorite_teams=getFavoriteTeams();
   next.sports.mlb.enabled=document.getElementById('mlb-enabled').checked;
   next.sports.nhl.enabled=document.getElementById('nhl-enabled').checked;
-  if(!next.sports.mlb.enabled&&!next.sports.nhl.enabled){status.textContent='Enable at least one sport.';return;}
-  if(!next.sports[next.active_sport].enabled)next.active_sport=next.sports.mlb.enabled?'mlb':'nhl';
+  next.sports.nba.enabled=document.getElementById('nba-enabled').checked;
+  next.sports.wnba.enabled=document.getElementById('wnba-enabled').checked;
+  next.wnba.favorite_teams=Array.from(document.querySelectorAll('#wnba-teams input:checked'),el=>el.value);
+  next.wnba.mode=document.getElementById('wnba-mode').value;
+  next.wnba.rotation_seconds=Number(document.getElementById('wnba-rotation').value);
+  next.wnba.refresh_seconds=Number(document.getElementById('wnba-refresh').value);
+  next.nba.favorite_teams=Array.from(document.querySelectorAll('#nba-teams input:checked'),el=>el.value);
+  next.nba.mode=document.getElementById('nba-mode').value;
+  next.nba.rotation_seconds=Number(document.getElementById('nba-rotation').value);
+  next.nba.refresh_seconds=Number(document.getElementById('nba-refresh').value);
+  if(!next.sports.mlb.enabled&&!next.sports.nhl.enabled&&!next.sports.nba.enabled&&!next.sports.wnba.enabled){status.textContent='Enable at least one sport.';return;}
+  if(!next.sports[next.active_sport].enabled)next.active_sport=next.sports.mlb.enabled?'mlb':next.sports.nhl.enabled?'nhl':next.sports.nba.enabled?'nba':'wnba';
   next.nhl.favorite_teams=getNHLFavorites();
   next.nhl.mode=document.getElementById('nhl-mode').value;
   next.nhl.rotation_seconds=Number(document.getElementById('nhl-rotation').value);
@@ -966,8 +988,17 @@ def main():
     from .multisport_runtime import MultiSportRenderer
     nhl_feed = BackgroundNHLFeed(NHLFeed())
     nhl_renderer = ConfiguredNHLRenderer(nhl_feed, config_dir=args.config_dir)
+    from .nba_feed import NBAFeed
+    from .nba_runtime import BackgroundNBAFeed
+    from .nba_engine import ConfiguredNBARenderer
+    nba_feed = BackgroundNBAFeed(NBAFeed())
+    nba_renderer = ConfiguredNBARenderer(nba_feed)
+    from .wnba_feed import WNBAFeed
+    from .wnba_engine import ConfiguredWNBARenderer
+    wnba_feed = BackgroundNBAFeed(WNBAFeed())
+    wnba_renderer = ConfiguredWNBARenderer(wnba_feed)
     renderer.news = None  # Universal news is owned by the shared board scheduler.
-    board = MultiSportRenderer(renderer, nhl_renderer, news=news, settings_getter=renderer.settings)
+    board = MultiSportRenderer(renderer, nhl_renderer, news=news, settings_getter=renderer.settings, nba_renderer=nba_renderer, wnba_renderer=wnba_renderer)
     # Apply persisted sport choice on service startup, not just after web saves.
     def game():
         return board.game()
@@ -977,6 +1008,12 @@ def main():
         from .time_weather_settings import load_time_weather
         time_preferences = load_time_weather(args.config_dir)
         nhl_feed.set_timezone(time_preferences['timezone'])
+        nba_feed.set_timezone(time_preferences['timezone'])
+        wnba_feed.set_timezone(time_preferences['timezone'])
+        wnba_renderer.timezone_name=time_preferences['timezone']
+        wnba_renderer.time_format=time_preferences['time_format']
+        nba_renderer.timezone_name = time_preferences['timezone']
+        nba_renderer.time_format = time_preferences['time_format']
         nhl_renderer.timezone_name = time_preferences['timezone']
         nhl_renderer.time_format = time_preferences['time_format']
         nhl = settings['nhl']
@@ -986,7 +1023,17 @@ def main():
         nhl_feed.feed.refresh_seconds = nhl['refresh_seconds']
         if settings['sports']['nhl']['enabled']:
             nhl_feed.start()
-        enabled = [sport for sport in ('mlb', 'nhl') if settings['sports'][sport]['enabled']]
+        nba = settings['nba']
+        nba_renderer.configure(favorite_teams=nba['favorite_teams'], mode=nba['mode'], rotation_seconds=nba['rotation_seconds'])
+        nba_feed.feed.refresh_seconds = nba['refresh_seconds']
+        if settings['sports']['nba']['enabled']:
+            nba_feed.start()
+        wnba = settings['wnba']
+        wnba_renderer.configure(favorite_teams=wnba['favorite_teams'], mode=wnba['mode'], rotation_seconds=wnba['rotation_seconds'])
+        wnba_feed.feed.refresh_seconds = wnba['refresh_seconds']
+        if settings['sports']['wnba']['enabled']:
+            wnba_feed.start()
+        enabled = [sport for sport in ('mlb', 'nhl', 'nba', 'wnba') if settings['sports'][sport]['enabled']]
         renderer.set_supplemental_stride(len(enabled))
         board.configure_rotation(enabled, interval=settings['mlb']['rotation_seconds'],
                                  preferred=settings['active_sport'])
@@ -1032,5 +1079,7 @@ def main():
         news.stop()
         feed.stop()
         nhl_feed.stop()
+        nba_feed.stop()
+        wnba_feed.stop()
 if __name__=='__main__':
     main()
