@@ -39,7 +39,7 @@ rollback() {
   fi
   install -m 755 "$APP/scripts/ulsctl" /usr/local/bin/ulsctl || true
   systemctl restart uls-web.service || true
-  systemctl restart uls-matrix.service || true
+  if systemctl list-unit-files uls-matrix.service --no-legend 2>/dev/null | grep -q uls-matrix.service; then systemctl restart uls-matrix.service || true; fi
   echo "Rollback attempted; check: sudo ulsctl status" >&2
   exit "$failed_status"
 }
@@ -52,9 +52,11 @@ bash "$APP/scripts/install-dashboard-update-helper.sh"
 systemctl restart uls-web.service
 # Always restart the physical worker: its 30-second startup splash provides
 # visible confirmation that the updated scoreboard has restarted.
-systemctl restart uls-matrix.service
+if systemctl list-unit-files uls-matrix.service --no-legend 2>/dev/null | grep -q uls-matrix.service; then
+  systemctl restart uls-matrix.service
+  systemctl is-active --quiet uls-matrix.service
+fi
 systemctl is-active --quiet uls-web.service
-systemctl is-active --quiet uls-matrix.service
 # is-active alone can succeed during a crash loop; confirm the HTTP endpoint.
 for i in {1..20}; do
   if curl --fail --silent --output /dev/null --max-time 2 http://127.0.0.1:8080/; then
