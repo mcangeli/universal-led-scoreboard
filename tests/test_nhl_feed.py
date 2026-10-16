@@ -84,8 +84,14 @@ class NHLFeedTests(unittest.TestCase):
                 return b'{"games":[]}'
         with patch("universal_led.nhl_feed.urlopen", return_value=Response()) as url:
             self.assertEqual(fetch_scores(DAY), {"games": []})
-            url.assert_called_once_with(
-                "https://api-web.nhle.com/v1/score/2026-10-16", timeout=5.0)
+            url.assert_called_once()
+            request = url.call_args.args[0]
+            self.assertEqual(
+                request.full_url,
+                "https://api-web.nhle.com/v1/score/2026-10-16")
+            self.assertEqual(url.call_args.kwargs["timeout"], 5.0)
+            self.assertIn("UniversalLEDScoreboard", request.get_header("User-agent"))
+            self.assertEqual(request.get_header("Accept"), "application/json")
 
     def test_transport_rejects_invalid_timeout(self):
         with self.assertRaises(ValueError):
