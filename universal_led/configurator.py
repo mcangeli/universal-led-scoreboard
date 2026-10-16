@@ -347,7 +347,7 @@ async function checkSoftwareUpdate(){
  out.textContent='Checking Git remote…';button.disabled=true;updateAvailable=false;
  try{
   const response=await fetch('/api/update/check',{cache:'no-store'});
-  const data=await response.json();if(!response.ok)throw Error(data.error||'Check failed');
+  const raw=await response.text();let data;try{data=JSON.parse(raw)}catch(_){throw Error('Update service returned a non-JSON response (HTTP '+response.status+'). Check web service logs.')}if(!response.ok)throw Error(data.error||'Check failed');
   updateAvailable=!!data.update_available;
   out.textContent='Branch: '+data.branch+' · Installed: '+data.installed.slice(0,8)+' · Remote: '+data.remote.slice(0,8)+(updateAvailable?' · Update available':' · Up to date');
   button.disabled=!updateAvailable;
@@ -370,7 +370,7 @@ async function installSoftwareUpdate(){
  document.getElementById('install-update').disabled=true;
  try{
   const response=await fetch('/api/update/install',{method:'POST',headers:{'Content-Type':'application/json','X-Configurator-Token':token},body:JSON.stringify({confirm:true})});
-  const data=await response.json();if(!response.ok)throw Error(data.error||'Update could not start');
+  const raw=await response.text();let data;try{data=JSON.parse(raw)}catch(_){throw Error('Update endpoint returned a non-JSON response (HTTP '+response.status+'). Check web service logs before retrying.')}if(!response.ok)throw Error(data.error||'Update could not start');
   out.textContent='Update scheduled. The dashboard may briefly disconnect during restart.';
   await refreshUpdateProgress();
  }catch(error){out.textContent='Update error: '+error.message}
