@@ -9,7 +9,7 @@ class MLBTeamMarksTests(unittest.TestCase):
         frame = Framebuffer()
         self.assertTrue(draw_team_mark(frame, 'ATL', 25, 7))
         self.assertTrue(draw_team_mark(frame, 'PHI', 25, 17))
-        self.assertFalse(draw_team_mark(frame, 'NYM', 25, 7))
+        self.assertFalse(draw_team_mark(frame, 'ZZZ', 25, 7))
         self.assertNotEqual(frame.pixels[7][25], (0, 0, 0))
 
     def test_all_thirty_clubs_have_marks(self):
