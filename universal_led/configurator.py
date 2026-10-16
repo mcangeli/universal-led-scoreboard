@@ -965,8 +965,9 @@ def main():
     from .nhl_engine import ConfiguredNHLRenderer
     from .multisport_runtime import MultiSportRenderer
     nhl_feed = BackgroundNHLFeed(NHLFeed())
-    nhl_renderer = ConfiguredNHLRenderer(nhl_feed, config_dir=args.config_dir, news=news, settings_getter=renderer.settings)
-    board = MultiSportRenderer(renderer, nhl_renderer)
+    nhl_renderer = ConfiguredNHLRenderer(nhl_feed, config_dir=args.config_dir)
+    renderer.news = None  # Universal news is owned by the shared board scheduler.
+    board = MultiSportRenderer(renderer, nhl_renderer, news=news, settings_getter=renderer.settings)
     # Apply persisted sport choice on service startup, not just after web saves.
     def game():
         return board.game()
