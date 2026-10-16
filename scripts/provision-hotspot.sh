@@ -18,10 +18,17 @@ with os.fdopen(fd,'w') as f: f.write(password+'\n')
 PY
 fi
 chmod 0600 "$SECRET_FILE"
+NEW_PROFILE=0
 if ! nmcli -g connection.id connection show "$PROFILE" >/dev/null 2>&1; then
+  NEW_PROFILE=1
   nmcli connection add type wifi ifname '*' con-name "$PROFILE" ssid "$PROFILE" \
     802-11-wireless.mode ap ipv4.method shared ipv6.method disabled \
     connection.autoconnect no wifi-sec.key-mgmt wpa-psk >/dev/null
+fi
+# Do not reset a password changed later through the dashboard on upgrade.
+if (( NEW_PROFILE == 0 )); then
+  echo "Existing recovery hotspot profile preserved."
+  exit 0
 fi
 # Use nmcli editor stdin so the password never appears in command arguments.
 python3 - "$SECRET_FILE" <<'PY' | nmcli connection edit "$PROFILE" >/dev/null
