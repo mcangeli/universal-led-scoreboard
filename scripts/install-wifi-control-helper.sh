@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 set -euo pipefail
-if [[ "$EUID" -ne 0 || -z "${SUDO_USER:-}" || "$SUDO_USER" == root ]]; then
-  echo 'Run with sudo from scoreboard account' >&2; exit 1
+if [[ "$EUID" -ne 0 ]]; then
+  echo 'Run as root' >&2; exit 1
 fi
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 DEST=/usr/local/libexec/universal-led-wifi-python
