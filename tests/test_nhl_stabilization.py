@@ -24,7 +24,7 @@ class NHLStabilizationTests(unittest.TestCase):
         feed = NHLFeed(fetcher=lambda day: {"games": []})
         worker = BackgroundNHLFeed(feed, timezone_name="America/New_York")
         with patch("universal_led.nhl_runtime.datetime") as mocked:
-            mocked.now.return_value = datetime(2026, 10, 17, 1, 0, tzinfo=timezone.utc)
+            mocked.now.side_effect = lambda tz: datetime(2026, 10, 17, 1, 0, tzinfo=timezone.utc).astimezone(tz)
             self.assertEqual(worker._local_day(), date(2026, 10, 16))
             worker.set_timezone("Europe/London")
             self.assertEqual(worker._local_day(), date(2026, 10, 17))
