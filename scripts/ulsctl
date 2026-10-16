@@ -19,8 +19,14 @@ case "$action" in
   logs) args=(); for unit in "${units[@]}"; do args+=(-u "$unit"); done; sudo journalctl "${args[@]}" -n 80 --no-pager ;;
   health)
     sudo systemctl is-active "${units[@]}"
-    if [[ "$target" != matrix ]]; then curl --fail --silent --output /dev/null http://127.0.0.1:8080/ && echo "Web endpoint OK"; fi
-    if [[ "$target" != web ]]; then test -s /run/uls/live-frame.ppm && echo "Frame available"; fi
+    if [[ "$target" != matrix ]]; then curl --fail --silent --output /dev/null --max-time 3 http://127.0.0.1:8080/health && echo "Web endpoint OK"; fi
+    if [[ "$target" != web ]]; then
+      frame=/run/uls/live-frame.ppm
+      test -s "$frame" || { echo "Frame missing or empty" >&2; exit 1; }
+      age=$(( $(date +%s) - $(stat -c %Y "$frame") ))
+      if (( age < 0 || age > 15 )); then echo "Frame stale ($age seconds old)" >&2; exit 1; fi
+      echo "Frame available and fresh ($age seconds old)"
+    fi
     ;;
   *) usage >&2; exit 2 ;;
 esac
