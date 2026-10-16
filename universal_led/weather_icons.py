@@ -21,6 +21,10 @@ def _sun(f,x,y,partly=False):
             f.pixel(x+cx+dx+(1 if dx<0 else -1 if dx>0 else 0)*step,
                     y+cy+dy+(1 if dy<0 else -1 if dy>0 else 0)*step,SUN_EDGE)
 
+def _moon(f,x,y):
+    _disc(f,x,y,8,8,6,(229,233,194))
+    _disc(f,x,y,11,5,5,(0,0,0))
+
 def _cloud(f,x,y):
     _disc(f,x,y,6,9,4,CLOUD)
     _disc(f,x,y,11,7,4,CLOUD)
@@ -29,13 +33,13 @@ def _cloud(f,x,y):
         for px in range(3,16):
             f.pixel(x+px,y+py,CLOUD if py<12 else SHADE)
 
-def draw_weather_icon(frame,x,y,weather_code):
+def draw_weather_icon(frame,x,y,weather_code, *, is_day=True):
     """Draw condition-specific artwork without network calls or image assets."""
     code=int(weather_code)
     if code==0:
-        _sun(frame,x,y)
+        _sun(frame,x,y) if is_day else _moon(frame,x,y)
     elif code in (1,2):
-        _sun(frame,x,y,True)
+        _sun(frame,x,y,True) if is_day else _moon(frame,x,y)
         _cloud(frame,x,y)
     elif code==3:
         _cloud(frame,x,y)
