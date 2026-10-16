@@ -16,6 +16,8 @@ class BasketballGame:
     period: int | None = None
     clock: str | None = None
     detail: str = ""
+    away_record: str = ""
+    home_record: str = ""
 
 def _score(value):
     try:
@@ -54,6 +56,14 @@ def parse_game(event):
             raise ValueError("Invalid NBA team")
         abbr = str(data.get("abbreviation") or "UNK").upper()[:3]
         return abbr, str(data.get("displayName") or abbr), _score(obj.get("score"))
+    def record(side):
+        records = teams[side].get("records") or []
+        if not isinstance(records, list):
+            return ""
+        for item in records:
+            if isinstance(item, dict) and item.get("type") in ("total", "overall"):
+                return str(item.get("summary") or "")[:12]
+        return ""
     away, away_name, away_score = team("away")
     home, home_name, home_score = team("home")
     state = event.get("status") or competition.get("status") or {}
@@ -75,7 +85,8 @@ def parse_game(event):
         period = None
     return BasketballGame(str(event["id"]), _start(event.get("date")),
         away, home, away_name, home_name, away_score, home_score,
-        status, period, str(state.get("displayClock") or "") or None, short)
+        status, period, str(state.get("displayClock") or "") or None, short,
+        record("away"), record("home"))
 
 def parse_scoreboard(payload):
     if not isinstance(payload, dict) or not isinstance(payload.get("events"), list):
