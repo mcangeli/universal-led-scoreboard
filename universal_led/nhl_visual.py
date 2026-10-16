@@ -42,14 +42,14 @@ class NHLVisualScreen:
             small(fb, "NO GAMES", 12, 15, WHITE)
             return fb
         g = self.game
-        for y, team, score in ((10, g.away, g.away_score),
-                               (18, g.home, g.home_score)):
+        for y, team, score, record in ((10, g.away, g.away_score, g.away_record),
+                                       (18, g.home, g.home_score, g.home_record)):
             accent = (self.team_colors or TEAM_COLORS).get(team, WHITE)
             small(fb, team[:3].ljust(3), 2, y, accent)
             # Team-colored mini puck keeps the sport's visual language.
             draw_puck(fb, 24, y, accent)
-            digits = "-" if score is None else str(min(score, 99))
-            small(fb, digits, 59 - 4 * len(digits), y, GOLD)
+            digits = (record[:9] if record else "-") if g.status == "scheduled" else ("-" if score is None else str(min(score, 99)))
+            small(fb, digits, max(24, 59 - 4 * len(digits)), y, GOLD)
         label = status_text(g, self.timezone_name, self.time_format)[:15]
         small(fb, label, 2, 27, RED if g.status == "postponed" else GOLD)
         return fb
