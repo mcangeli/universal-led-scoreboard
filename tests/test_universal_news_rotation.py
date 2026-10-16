@@ -42,7 +42,7 @@ class UniversalNewsRotationTests(unittest.TestCase):
         board, _, _ = self.make_board(now, items=items)
         # The universal renderer returns the same framebuffer type for each source.
         frames = []
-        for moment in (10, 30, 50):
+        for moment in (20, 40, 60):
             now[0] = moment
             frames.append(board.frame())
         self.assertTrue(all(hasattr(frame, "ppm") for frame in frames))
@@ -52,15 +52,17 @@ class UniversalNewsRotationTests(unittest.TestCase):
         now = [10]
         board, mlb, nhl = self.make_board(now, mlb_status="live", nhl_status="live",
                                           items=[TickerItem("AP", "AP headline")])
+        now[0] = 20
         self.assertEqual(board.frame(), "game-frame")
         self.assertEqual(nhl.frames, 1)
-        now[0] = 20
+        now[0] = 30
         self.assertEqual(board.frame(), "game-frame")
         self.assertEqual(mlb.frames, 1)
 
     def test_no_news_uses_game_renderer(self):
         now = [10]
         board, _, nhl = self.make_board(now)
+        now[0] = 20
         self.assertEqual(board.frame(), "game-frame")
         self.assertEqual(nhl.frames, 1)
 
