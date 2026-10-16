@@ -31,14 +31,14 @@ def create_matrix(*, rows=32, cols=64, chain_length=1, parallel=1,
     return RGBMatrix(options=options)
 
 
-def draw_frame(matrix, frame: Framebuffer):
+def draw_frame(matrix, frame: Framebuffer, *, canvas=None):
     """Draw a complete framebuffer using the driver's double buffer."""
     if frame.width != matrix.width or frame.height != matrix.height:
         raise ValueError(
             f"Framebuffer {frame.width}x{frame.height} does not match "
             f"matrix {matrix.width}x{matrix.height}"
         )
-    canvas = matrix.CreateFrameCanvas()
+    if canvas is None:\n        canvas = matrix.CreateFrameCanvas()
     canvas.Clear()
     for y, row in enumerate(frame.pixels):
         for x, (red, green, blue) in enumerate(row):
