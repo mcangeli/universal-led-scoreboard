@@ -71,7 +71,7 @@ button{border:1px solid #354968}button:focus-visible,aside a:focus-visible{outli
 <p class="muted">Changes preview immediately. Saving is optional.</p><label for="preview-team">Preview favorite team: </label><select id="preview-team"></select><span id="dirty" role="status">All changes saved</span></section>
 <section><h2>Scoreboard Colors</h2><p class="muted">General display text, accents, separators and status colors.</p><div id="scoreboard" class="grid"></div></section>
 <section><h2>NHL Team Colors</h2><p class="muted">NHL colors are stored separately from MLB. Changes to the matrix display will follow in the renderer update.</p><label for="nhl-edit-team">NHL team to edit</label> <select id="nhl-edit-team"></select><div id="nhl-color-editor" class="grid"></div><button type="button" id="nhl-save-color">Save NHL Color</button> <button type="button" id="nhl-reset-color">Reset NHL Color</button> <span id="nhl-color-status" role="status"></span></section>
-<section><h2>MLB Team Colors</h2><p class="muted">Choose a team to edit its color. All other team colors remain unchanged.</p><label for="edit-team">Team to edit</label> <select id="edit-team"></select><div id="teams" class="grid"></div></section>
+<section><h2>MLB Team Colors</h2><p class="muted">Edit one team at a time, using the same compact controls as NHL.</p><label for="edit-team">MLB team to edit</label> <select id="edit-team"></select><div id="teams" class="grid"></div><button id="mlb-save-color" type="button">Save MLB Color</button> <button id="mlb-reset-color" type="button">Reset MLB Color</button> <span id="mlb-color-status" role="status"></span></section>
 <section><button id="save">Save Color Settings</button> <button id="cancel" type="button">Cancel Changes</button> <button id="reset" type="button">Reset Selected Color</button> <span id="status" role="status"></span>
 <p class="muted">Available on your trusted LAN. Backups are created before overwriting existing files.</p></section></div><div data-page="news" hidden><section><h2>Content &amp; News Sources</h2><p class="muted">Configure RSS or Atom feeds for future ticker use. Automatic and custom feeds display during available news rotation slots.</p><fieldset class="favorite-fieldset"><legend>Automatic Sports News</legend><p class="muted">Official news is enabled automatically when supported. Other sports become available with their modules.</p><label><input type="checkbox" id="mlb-news-enabled"> MLB official headlines</label> <button type="button" onclick="saveAutomaticNews()">Save Automatic News</button><p id="auto-news-status" role="status"></p></fieldset><fieldset class="favorite-fieldset"><legend>News Display Timing</legend><label>Show news every N non-live slots <input id="news-interval" type="number" min="1" max="20"></label> <label>Headline duration (seconds) <input id="news-duration" type="number" min="3" max="120"></label> <label>Scroll speed (characters/second) <input id="news-speed" type="number" min="1" max="15"></label> <button type="button" onclick="saveNewsTiming()">Save News Timing</button><p id="news-timing-status" role="status"></p></fieldset><h3>Additional Custom Feeds</h3><div id="news-sources"></div><button type="button" id="news-add" onclick="addNewsSource()">Add Source</button> <button type="button" onclick="saveNewsSources()">Save News Sources</button> <p id="news-status" role="status"></p></section></div></main></div>
 <script>
@@ -191,6 +191,23 @@ async function draw(){
 }
 document.getElementById('preview-team').onchange=event=>{selectedTeam=event.target.value;document.getElementById('edit-team').value=selectedTeam;section('teams');draw()};
 document.getElementById('edit-team').onchange=event=>{selectedTeam=event.target.value;document.getElementById('preview-team').value=selectedTeam;selected=null;section('teams');draw()};
+document.getElementById('mlb-save-color').onclick=async()=>{
+ const code=document.getElementById('edit-team').value,status=document.getElementById('mlb-color-status');
+ status.textContent='Saving…';
+ try{
+  const response=await fetch('/api/mlb-colors',{method:'POST',headers:{'Content-Type':'application/json','X-Configurator-Token':token},body:JSON.stringify({[code]:state.teams[code]})});
+  const result=await response.json();if(!response.ok)throw Error(result.error||'Save failed');
+  saved.teams[code]=clone(state.teams[code]);markDirty();status.textContent='Saved MLB '+code+' color.';
+ }catch(err){status.textContent=err.message}
+};
+document.getElementById('mlb-reset-color').onclick=async()=>{
+ const code=document.getElementById('edit-team').value,status=document.getElementById('mlb-color-status');
+ try{
+  const response=await fetch('/api/defaults');if(!response.ok)throw Error('Defaults unavailable');
+  state.teams[code]=clone((await response.json()).teams[code]);selected={name:'teams',key:code};
+  section('teams');markDirty();draw();status.textContent='Default restored in editor. Save to apply.';
+ }catch(err){status.textContent=err.message}
+};
 document.getElementById('cancel').onclick=()=>{state=clone(saved);selected=null;section('scoreboard');section('teams');markDirty();draw();document.getElementById('status').textContent='Unsaved changes discarded.'};
 document.getElementById('reset').onclick=async()=>{
  if(!selected){document.getElementById('status').textContent='Select a color first.';return}
@@ -783,7 +800,7 @@ def make_handler(config_dir,token,frame_provider=None,settings_callback=None,fee
                 self.send_response(204)
                 self.send_header('Set-Cookie','uls_session=; HttpOnly; SameSite=Strict; Path=/; Max-Age=0')
                 self.end_headers();return
-            if path not in ('/api/nhl-colors','/api/config','/api/frame','/api/settings','/api/wifi/control','/api/service/restart','/api/news-sources','/api/time-weather','/api/weather-key','/api/season-countdown','/api/update/install'):
+            if path not in ('/api/mlb-colors','/api/nhl-colors','/api/config','/api/frame','/api/settings','/api/wifi/control','/api/service/restart','/api/news-sources','/api/time-weather','/api/weather-key','/api/season-countdown','/api/update/install'):
                 self.send_error(404);return
             if not secrets.compare_digest(self.headers.get('X-Configurator-Token',''),token):
                 self.send_json(403,{'error':'Invalid session token'});return
@@ -794,6 +811,14 @@ def make_handler(config_dir,token,frame_provider=None,settings_callback=None,fee
                 if self.headers.get('Content-Type','').split(';')[0].strip()!='application/json':
                     self.send_json(415,{'error':'JSON required'});return
                 data=json.loads(self.rfile.read(size))
+                if path=='/api/mlb-colors':
+                    from .colors import normalize_team_colors, TEAM_COLORS
+                    updates=normalize_team_colors(data)
+                    if set(updates)-set(TEAM_COLORS):raise ValueError('Unknown MLB team')
+                    merged=read_config(config_dir)['teams']
+                    merged.update(updates)
+                    save_config(config_dir,'teams',merged)
+                    self.send_json(200,{'saved':True});return
                 if path=='/api/nhl-colors':
                     from .config_store import read_nhl_colors
                     from .colors import normalize_team_colors
