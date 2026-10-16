@@ -4,6 +4,7 @@ import json
 import threading
 import time
 from datetime import datetime
+from zoneinfo import ZoneInfo
 from urllib.parse import urlencode
 from urllib.request import urlopen
 from .mlb_classic import BaseballGame
@@ -44,8 +45,8 @@ def team_abbreviation(team):
     return TEAM_NAMES.get(name.lower(),name.upper()[:3] if name else 'UNK')
 
 
-# MLB Stats API returns UTC dates; using the local date on the Pi is a practical
-# default for the preview, with an explicit --date override for other time zones.
+# MLB's schedule day is anchored to Eastern Time, not the Pi's local timezone.
+# A Pi set to UTC may otherwise skip tonight's postseason game after 8 PM ET.
 def parse_schedule(payload: dict, team: str | None = None) -> list[BaseballGame]:
     games = []
     for day in payload.get('dates', []):
@@ -130,7 +131,7 @@ class MLBFeed:
         self.last_error: str | None = None
 
     def _fetch(self):
-        day = self.date or datetime.now().astimezone().date().isoformat()
+        day = self.date or datetime.now(ZoneInfo('America/New_York')).date().isoformat()
         url = API + '?' + urlencode({'sportId':1,'date':day,'hydrate':'linescore,probablePitcher'})
         with urlopen(url,timeout=8) as response:
             return json.load(response)
