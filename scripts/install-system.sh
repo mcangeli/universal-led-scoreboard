@@ -73,8 +73,8 @@ WantedBy=multi-user.target
 EOF
 if [[ "$MODE" == physical ]]; then
   echo "Building physical HUB75 driver (this can take several minutes)..."
-  sudo apt-get install -y cython3 cmake ninja-build python3-setuptools
-  "$VENV/bin/python" -m pip install cython scikit-build-core
+  sudo apt-get install -y cython3 cmake ninja-build python3-setuptools python3-pil python3-pil.imagetk
+  "$VENV/bin/python" -m pip install cython scikit-build-core Pillow
   mkdir -p "$HOME/.local/src"
   git clone https://github.com/hzeller/rpi-rgb-led-matrix.git "$HOME/.local/src/rpi-rgb-led-matrix"
   make -C "$HOME/.local/src/rpi-rgb-led-matrix/lib"
