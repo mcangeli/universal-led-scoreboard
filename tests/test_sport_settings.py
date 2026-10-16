@@ -12,11 +12,20 @@ class SportSettingsTests(unittest.TestCase):
             changed['mlb']['favorite_teams']=['NYM']
             save_settings(root,changed)
             self.assertEqual(load_settings(root)['mlb']['favorite_teams'],['NYM'])
-    def test_reject_unsupported_active_sport(self):
+    def test_allow_nba_active_sport(self):
         data=copy.deepcopy(DEFAULT_SETTINGS)
         data['sports']['nba']['enabled']=True
         data['active_sport']='nba'
+        self.assertEqual(validate_settings(data)['active_sport'], 'nba')
+    def test_reject_unsupported_active_sport(self):
+        data=copy.deepcopy(DEFAULT_SETTINGS)
+        data['sports']['nfl']['enabled']=True
+        data['active_sport']='nfl'
         with self.assertRaises(ValueError):validate_settings(data)
+    def test_legacy_settings_without_nba(self):
+        data=copy.deepcopy(DEFAULT_SETTINGS)
+        del data['nba']
+        self.assertEqual(validate_settings(data)['nba'], DEFAULT_SETTINGS['nba'])
     def test_reject_bad_refresh(self):
         data=copy.deepcopy(DEFAULT_SETTINGS)
         data['mlb']['refresh_seconds']=0
