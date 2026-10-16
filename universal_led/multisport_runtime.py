@@ -3,15 +3,19 @@ from __future__ import annotations
 
 import threading
 import time
+from .news_screen import NewsHeadlineScreen
 
 
 class MultiSportRenderer:
     """Route cached frames without network access; retain legacy single-sport mode."""
 
-    def __init__(self, mlb_renderer, nhl_renderer, active_sport="mlb", clock=time.monotonic):
+    def __init__(self, mlb_renderer, nhl_renderer, active_sport="mlb", clock=time.monotonic, news=None, settings_getter=None):
         self.mlb = mlb_renderer
         self.nhl = nhl_renderer
         self.clock = clock
+        self.news = news
+        self.settings_getter = settings_getter
+        self._news_started = clock()
         self._lock = threading.Lock()
         self._active = "mlb"
         self._enabled = ("mlb",)
@@ -53,7 +57,31 @@ class MultiSportRenderer:
             return enabled[slot % len(enabled)]
 
     def frame(self):
-        return (self.nhl if self._selected() == "nhl" else self.mlb).frame()
+        sport = self._selected()
+        renderer = self.nhl if sport == "nhl" else self.mlb
+        game = renderer.game()
+        if self.news is not None and self.settings_getter is not None and (game is None or game.status != "live"):
+            headlines = self.news.items()
+            if headlines:
+                grouped = {}
+                for item in headlines:
+                    grouped.setdefault(item.source, []).append(item)
+                sources = list(grouped)
+                ordered = []
+                for i in range(max(map(len, grouped.values()))):
+                    for source in sources:
+                        if i < len(grouped[source]):
+                            ordered.append(grouped[source][i])
+                timing = self.settings_getter()["news"]
+                elapsed = max(0.0, self.clock() - self._news_started)
+                interval = self._interval
+                frequency = timing["rotation_interval"]
+                if int(elapsed // interval) % frequency == frequency - 1:
+                    page = int(elapsed // (frequency * interval)) % len(ordered)
+                    item = ordered[page]
+                    offset = int((elapsed % interval) * timing["scroll_chars_per_second"])
+                    return NewsHeadlineScreen(item.text, item.source, offset=offset).render()
+        return renderer.frame()
 
     def game(self):
         return (self.nhl if self._selected() == "nhl" else self.mlb).game()
