@@ -1,6 +1,6 @@
 # Changelog
 
-## v0.4.0 (release candidate, 2026-10-16)
+## v0.4.0 (2026-10-16)
 
 ### Added
 - NFL scoreboard with 64×32 scheduled, live, final, possession, down and distance views.
@@ -9,9 +9,9 @@
 - Empty-game skipping in multi-sport rotation and backward-compatible NFL settings defaults.
 
 ### Validation
-- Raspberry Pi 3: 777 tests passed, 15 skipped, before the final NFL news and migration tests.
+- Raspberry Pi 3: **780 tests passed, 15 skipped, no failures**. Both web and matrix services active with fresh framebuffer.
 - Live NFL news and Sunday game transitions remain to be observed on the physical matrix.
-- Final regression run and release tag are pending.
+- Merged into `main` via pull request #4 (merge commit `8397f9d`).
 
 
 ## v0.3.0 (2026-10-16)
