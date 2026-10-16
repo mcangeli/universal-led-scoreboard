@@ -1117,5 +1117,6 @@ def main():
         nhl_feed.stop()
         nba_feed.stop()
         wnba_feed.stop()
+        nfl_feed.stop()
 if __name__=='__main__':
     main()
