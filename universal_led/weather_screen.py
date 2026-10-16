@@ -20,7 +20,8 @@ class WeatherScreen:
         blue = (112, 182, 240)
         location = fit_small(self.weather.location.upper().replace(',', ''), 60)
         small(frame, location, MARGIN, MARGIN, gold)
-        draw_weather_icon(frame, 2, 8, self.weather.weather_code)
+        draw_weather_icon(frame, 2, 8, self.weather.weather_code,
+                          is_day=self.weather.is_day)
         suffix = 'F' if self.unit == 'fahrenheit' else 'C'
         temperature = f'{round(self.weather.temperature)}{suffix}'
         small(frame, fit_small(temperature, 38), 24, 10, white)
