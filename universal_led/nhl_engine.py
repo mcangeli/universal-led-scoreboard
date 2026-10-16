@@ -14,6 +14,8 @@ class ConfiguredNHLRenderer:
         self.feed = feed
         self.clock = clock
         self.started = clock()
+        self.timezone_name = "America/New_York"
+        self.time_format = "12h"
         self.configure(favorite_teams=favorite_teams, mode=mode,
                        rotation_seconds=rotation_seconds)
 
@@ -42,4 +44,5 @@ class ConfiguredNHLRenderer:
         return games[slot % len(games)]
 
     def frame(self):
-        return NHLVisualScreen(self.game()).render()
+        return NHLVisualScreen(self.game(), timezone_name=self.timezone_name,
+                               time_format=self.time_format).render()
