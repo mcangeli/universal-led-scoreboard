@@ -1,12 +1,13 @@
-"""NHL dashboard controls regression checks."""
+"""Multisport dashboard controls regression checks."""
 import unittest
 from universal_led.configurator import HTML
 
 
 class NHLDashboardTests(unittest.TestCase):
-    def test_active_sport_control(self):
-        self.assertIn('id="active-sport"', HTML)
-        self.assertIn('<option value="nhl">NHL</option>', HTML)
+    def test_independent_sport_controls(self):
+        self.assertIn('id="mlb-enabled"', HTML)
+        self.assertIn('id="nhl-enabled"', HTML)
+        self.assertNotIn('id="active-sport"', HTML)
 
     def test_nhl_fields_present(self):
         for field in ("nhl-enabled", "nhl-teams", "nhl-mode",
@@ -14,14 +15,16 @@ class NHLDashboardTests(unittest.TestCase):
             with self.subTest(field=field):
                 self.assertIn('id="' + field + '"', HTML)
 
-    def test_save_payload_includes_nhl(self):
+    def test_save_payload_includes_both_sports(self):
+        self.assertIn("next.sports.mlb.enabled=", HTML)
         self.assertIn("next.sports.nhl.enabled=", HTML)
         self.assertIn("next.nhl.favorite_teams=", HTML)
-        self.assertIn("next.active_sport=", HTML)
+        self.assertIn("Enable at least one sport.", HTML)
 
     def test_dashboard_reads_saved_values(self):
         self.assertIn("settings.nhl", HTML)
-        self.assertIn("settings.active_sport", HTML)
+        self.assertIn("settings.sports.mlb.enabled", HTML)
+        self.assertIn("settings.sports.nhl.enabled", HTML)
 
 
 if __name__ == "__main__":
