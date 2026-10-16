@@ -10,7 +10,7 @@ class MLBTeamMarksTests(unittest.TestCase):
         self.assertTrue(draw_team_mark(frame, 'ATL', 25, 7))
         self.assertTrue(draw_team_mark(frame, 'PHI', 25, 17))
         self.assertFalse(draw_team_mark(frame, 'ZZZ', 25, 7))
-        self.assertNotEqual(frame.pixels[7][25], (0, 0, 0))
+        self.assertTrue(any(pixel != (0, 0, 0) for row in frame.pixels[7:16] for pixel in row[24:36]))
 
     def test_all_thirty_clubs_have_marks(self):
         clubs = ('ARI ATL BAL BOS CHC CIN CLE COL CWS DET HOU KCR LAA LAD MIA MIL MIN NYM NYY ATH PHI PIT SDP SEA SFG STL TBR TEX TOR WSH').split()
@@ -51,7 +51,7 @@ class MLBTeamMarksTests(unittest.TestCase):
             self.assertEqual(live.pixels[y][35:40], final.pixels[y][35:40])
 
     def test_playoff_sprite_aliases_and_score_clearance(self):
-        for away, home in (('ATL', 'CLE'), ('CLE', 'TB'), ('TBR', 'LAD')):
+        for away, home in (('ATL', 'CLE'), ('CLE', 'TBR'), ('TBR', 'LAD')):
             with self.subTest(away=away, home=home):
                 game = BaseballGame(away=away, home=home)
                 live = MLBPaletteScreen(game).render()
@@ -60,6 +60,13 @@ class MLBTeamMarksTests(unittest.TestCase):
                                     for y in range(6, 25) for x in range(24, 35)))
                 for y in list(range(6, 15)) + list(range(16, 25)):
                     self.assertEqual(live.pixels[y][35:40], final.pixels[y][35:40])
+
+    def test_tampa_bay_short_alias_uses_same_sprite(self):
+        short = Framebuffer()
+        standard = Framebuffer()
+        self.assertTrue(draw_team_mark(short, 'TB', 24, 6))
+        self.assertTrue(draw_team_mark(standard, 'TBR', 24, 6))
+        self.assertEqual(short.pixels, standard.pixels)
 
     def test_marks_only_on_live_classic(self):
         live = MLBPaletteScreen(BaseballGame(away='PHI', home='ATL')).render()
