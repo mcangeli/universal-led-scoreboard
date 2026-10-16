@@ -26,6 +26,7 @@ class MLBOpeningDayFeed:
         self._next_refresh = {}
         self._refreshing = set()
         self.last_error = None
+        self._last_success = {}
 
     @staticmethod
     def _fetch(season):
@@ -45,6 +46,7 @@ class MLBOpeningDayFeed:
         else:
             with self._lock:
                 self._cache[year] = payload
+                self._last_success[year] = datetime.now(timezone.utc).isoformat()
                 self.last_error = None
 
     def status(self, season):
@@ -53,7 +55,8 @@ class MLBOpeningDayFeed:
         with self._lock:
             return {'available': year in self._cache,
                     'refreshing': year in self._refreshing,
-                    'error': self.last_error}
+                    'error': self.last_error,
+                    'last_success': self._last_success.get(year)}
 
     def opening(self, season, *, target='league', team=None):
         year = int(season)
