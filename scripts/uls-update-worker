@@ -1,0 +1,18 @@
+#!/usr/bin/env bash
+set -Eeuo pipefail
+[[ $# -eq 0 && $EUID -eq 0 ]] || exit 2
+install -d -o root -g uls -m 0750 /var/lib/uls/update
+exec 9>/run/uls/update.lock
+flock -n 9 || { echo 'An update is already running'; exit 1; }
+log=/var/lib/uls/update/latest.log
+status=/var/lib/uls/update/status
+printf 'running\n' > "$status"
+chmod 0640 "$status"
+: > "$log"
+chmod 0640 "$log"
+if /opt/uls/app/scripts/uls-update > "$log" 2>&1; then
+  printf 'completed\n' > "$status"
+else
+  printf 'failed\n' > "$status"
+  exit 1
+fi
