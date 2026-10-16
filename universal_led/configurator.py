@@ -940,7 +940,7 @@ def main():
     from .nhl_engine import ConfiguredNHLRenderer
     from .multisport_runtime import MultiSportRenderer
     nhl_feed = BackgroundNHLFeed(NHLFeed())
-    nhl_renderer = ConfiguredNHLRenderer(nhl_feed)
+    nhl_renderer = ConfiguredNHLRenderer(nhl_feed, config_dir=args.config_dir)
     board = MultiSportRenderer(renderer, nhl_renderer)
     # Apply persisted sport choice on service startup, not just after web saves.
     def game():
