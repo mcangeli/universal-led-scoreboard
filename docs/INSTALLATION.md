@@ -31,7 +31,7 @@ For browser-only testing without an LED matrix:
 bash scripts/install-system.sh --mode emulator
 ```
 
-The installer will prompt for an administrator password (minimum 12 characters), execute the tests, and enable system services. The physical mode compiles the RGB matrix driver and uses default mapping `adafruit-hat`, brightness `40`, GPIO slowdown `4`. These defaults are hardware-specific and must be checked before physical testing. Keep the panel's power supply disconnected while assembling wiring.
+The installer will prompt for an administrator password (minimum 12 characters), execute the tests, install restricted dashboard restart/update helpers, and enable system services. After installation, the System page provides **Check for Updates** and **Install Update** controls with a persisted update log. These features are pending fresh-image validation. The physical mode compiles the RGB matrix driver and uses default mapping `adafruit-hat`, brightness `40`, GPIO slowdown `4`. These defaults are hardware-specific and must be checked before physical testing. Keep the panel's power supply disconnected while assembling wiring.
 
 **Do not run the legacy `scripts/install.sh`** on this installation. The existing `scripts/stage-system-services.sh` and `scripts/cutover-to-system.sh` are **migration tools**: they require a previously migrated `/opt/uls/app`, `/etc/uls/admin.json`, and, for cutover, a running legacy service. They are not suitable for a fresh image.
 
@@ -84,3 +84,16 @@ sudo bash /opt/uls/app/scripts/install-dashboard-restart-helper.sh
 ```
 
 The web interface uses HTTP on the local network. Do not expose it publicly without TLS and appropriate access controls.
+
+## Fresh-card acceptance commands
+
+After the installer finishes:
+
+```bash
+sudo ulsctl status
+sudo ulsctl health
+systemctl is-enabled uls-web.service
+systemctl is-enabled uls-matrix.service # physical mode only
+```
+
+Open the dashboard, sign in, check **System → Software Updates**, and confirm it reports the installed commit. Restart the Pi and repeat the health check after the 30-second physical splash. Preserve installer and service error output if any step fails. Do not format the known-good card.
