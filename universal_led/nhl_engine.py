@@ -4,14 +4,16 @@ from __future__ import annotations
 import time
 from .nhl_runtime import select_games
 from .nhl_visual import NHLVisualScreen
+from .config_store import read_nhl_colors
 
 
 class ConfiguredNHLRenderer:
     """Read cached feed snapshots; never perform network I/O during render."""
 
     def __init__(self, feed, *, favorite_teams=None, mode="fallback",
-                 rotation_seconds=12, clock=time.monotonic):
+                 rotation_seconds=12, clock=time.monotonic, config_dir=None):
         self.feed = feed
+        self.config_dir = config_dir
         self.clock = clock
         self.started = clock()
         self.timezone_name = "America/New_York"
@@ -44,5 +46,8 @@ class ConfiguredNHLRenderer:
         return games[slot % len(games)]
 
     def frame(self):
+        # Read saved colors at render time so dashboard edits take effect without
+        # restarting the web service. Failed reads retain the built-in defaults.
+        colors = read_nhl_colors(self.config_dir) if self.config_dir is not None else None
         return NHLVisualScreen(self.game(), timezone_name=self.timezone_name,
-                               time_format=self.time_format).render()
+                               time_format=self.time_format, team_colors=colors).render()
