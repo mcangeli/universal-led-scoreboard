@@ -6,7 +6,7 @@
 
 1. Preserve the existing boot card/image. Use a **second microSD card** on the Raspberry Pi 5.
 2. Record hardware mapping, brightness, and any driver-specific settings from the known-good device. Never publish administrator passwords, API keys, or Wi-Fi credentials.
-3. Flash Raspberry Pi OS Lite 64-bit **Trixie** and configure SSH and networking using Raspberry Pi Imager.
+3. Flash Raspberry Pi OS Lite 64-bit **Trixie** (required; Bookworm is unsupported) and configure SSH and networking using Raspberry Pi Imager.
 4. Boot and verify SSH, network connectivity, system clock, and OS version.
 5. Clone the candidate branch, but **do not run the legacy installer expecting a production setup**:
 
@@ -52,7 +52,7 @@ The reference hardware is a 64×32 HUB75 RGB matrix attached to a Raspberry Pi 5
 
 The fresh-install test must verify: installer completes without preexisting `/opt/uls` files; admin account setup; web login; board emulator; matrix driver and mapping; boot-time service startup; 30-second splash; live frame generation; Wi-Fi; dashboard restart; and safe update. Record the outcome in `docs/FOUNDATION-RELEASE-CHECKLIST.md`.
 
-Pi 3, Bookworm, and other boards remain separate compatibility validation targets.
+Pi 3 and other hardware remain separate compatibility validation targets. Bookworm is intentionally unsupported.
 
 ## Troubleshooting existing installations
 
