@@ -46,5 +46,19 @@ class NFLScreenTests(unittest.TestCase):
         self.assertEqual((NFLScreen(game(away_score=105)).render().width, NFLScreen(game(away_score=105)).render().height), (64, 32))
 
 
+    def test_live_possession_and_down_distance(self):
+        active = game(possession="ATL", down=2, distance=7)
+        frame = NFLScreen(active).render()
+        self.assertEqual((frame.width, frame.height), (64, 32))
+        self.assertEqual(frame.get_pixel(20, 11), (245, 175, 60))
+
+    def test_live_without_situation(self):
+        frame = NFLScreen(game(possession="", down=None, distance=None)).render()
+        self.assertEqual((frame.width, frame.height), (64, 32))
+
+    def test_pregame_ignores_live_situation(self):
+        frame = NFLScreen(game(status="scheduled", possession="ATL", down=2, distance=7)).render()
+        self.assertEqual((frame.width, frame.height), (64, 32))
+
 if __name__ == "__main__":
     unittest.main()
