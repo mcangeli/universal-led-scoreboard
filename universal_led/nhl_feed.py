@@ -5,7 +5,7 @@ import json
 import threading
 import time
 from datetime import date
-from urllib.request import urlopen
+from urllib.request import Request, urlopen
 
 from .nhl_data import HockeyGame, parse_scoreboard
 
@@ -18,7 +18,14 @@ def fetch_scores(day: date, *, timeout: float = 5.0) -> dict:
         raise TypeError("day must be a date")
     if not 0 < timeout <= 30:
         raise ValueError("timeout must be between 0 and 30 seconds")
-    with urlopen(f"{API_BASE}/{day.isoformat()}", timeout=timeout) as response:
+    request = Request(
+        f"{API_BASE}/{day.isoformat()}",
+        headers={
+            "User-Agent": "Mozilla/5.0 (compatible; UniversalLEDScoreboard/0.2; +https://github.com/mcangeli/universal-led-scoreboard)",
+            "Accept": "application/json",
+        },
+    )
+    with urlopen(request, timeout=timeout) as response:
         return json.load(response)
 
 
