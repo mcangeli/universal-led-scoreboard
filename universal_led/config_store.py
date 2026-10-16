@@ -6,16 +6,20 @@ import tempfile
 from datetime import datetime, timezone
 from pathlib import Path
 from .colors import load_palette, normalize_team_colors, normalize_scoreboard_colors
+from .nhl_colors import NHL_TEAM_COLORS
 
 def read_config(directory: str | Path):
     root=Path(directory)
     teams,scoreboard=load_palette(
         root/'teams.json' if (root/'teams.json').is_file() else None,
         root/'scoreboard.json' if (root/'scoreboard.json').is_file() else None)
-    return {'teams':teams,'scoreboard':scoreboard}
+    nhl=dict(NHL_TEAM_COLORS)
+    if (root/'nhl_teams.json').is_file():
+        nhl.update(normalize_team_colors(json.loads((root/'nhl_teams.json').read_text(encoding='utf-8'))))
+    return {'teams':teams,'scoreboard':scoreboard,'nhl_teams':nhl}
 
 def save_config(directory: str | Path, section: str, values: dict):
-    if section not in ('teams','scoreboard','settings','time_weather','season_countdown'):
+    if section not in ('teams','nhl_teams','scoreboard','settings','time_weather','season_countdown'):
         raise ValueError('Unknown configuration section')
     if section=='settings':
         from .sport_settings import validate_settings
@@ -26,9 +30,12 @@ def save_config(directory: str | Path, section: str, values: dict):
     elif section=='time_weather':
         from .time_weather_settings import validate_time_weather
         normalized=validate_time_weather(values)
+    elif section in ('teams','nhl_teams'):
+        normalized=normalize_team_colors(values)
+        if section=='nhl_teams' and set(normalized)-set(NHL_TEAM_COLORS):
+            raise ValueError('Unknown NHL team color keys')
     else:
-        normalized=(normalize_team_colors(values) if section=='teams'
-                    else normalize_scoreboard_colors(values))
+        normalized=normalize_scoreboard_colors(values)
     root=Path(directory)
     root.mkdir(parents=True,exist_ok=True)
     path=root/(section+'.json')
