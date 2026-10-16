@@ -17,6 +17,7 @@ from .config_store import read_config
 from .screen_rotation import choose_screen
 from .season_countdown_settings import current as current_countdown
 from .season_countdown_screen import SeasonCountdownScreen
+from .mlb_opening_feed import MLBOpeningDayFeed
 
 class ConfiguredMLBRenderer:
     def __init__(self,directory,feed,news=None,weather=None):
@@ -24,6 +25,7 @@ class ConfiguredMLBRenderer:
         self.feed=feed
         self.news=news
         self.weather=weather
+        self.opening_feed=MLBOpeningDayFeed()
         self._lock=threading.Lock()
         self._started=time.monotonic()
         self._settings=load_settings(directory)
@@ -104,7 +106,8 @@ class ConfiguredMLBRenderer:
             with self._lock:
                 elapsed=max(0.0,time.monotonic()-self._started)
             slot=self.settings()['mlb']['rotation_seconds']
-            opening = current_countdown(self.directory, season_active=game is not None)
+            opening = current_countdown(self.directory, season_active=game is not None,
+                                        provider=self.opening_feed)
             selected=choose_screen(int(elapsed//slot),has_game=game is not None,
                                    clock=clock_enabled,weather=snapshot is not None,
                                    news=bool(headlines),countdown=opening is not None)
