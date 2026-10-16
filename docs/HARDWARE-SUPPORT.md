@@ -1,38 +1,24 @@
 # Hardware and operating-system support policy
 
-## Target combinations (not yet certified)
+The **Raspberry Pi 5 running Raspberry Pi OS Trixie with a physical 64×32 HUB75 matrix** is the active development and manually tested reference environment. The physical board and matrix worker are operating on that setup. A clean-image install is still pending.
 
-| Board | Raspberry Pi OS Bookworm | Raspberry Pi OS Trixie | Output |
+| Board | Bookworm | Trixie | Physical matrix |
 | --- | --- | --- | --- |
-| Pi Zero 2 W / WH | Target | Target | Emulator; physical HUB75 pending validation |
-| Pi 3 | Target | Target | Emulator; physical HUB75 pending validation |
-| Pi 4 | Target | Target | Emulator; physical HUB75 pending validation |
-| Pi 5 | Target | Target | Emulator; physical HUB75 requires driver validation |
+| Pi Zero 2 W | Target, unverified | Target, unverified | Not validated |
+| Pi 3 | Target, unverified | Planned production validation | Not validated |
+| Pi 4 | Target, unverified | Target, unverified | Not validated |
+| Pi 5 | Target, unverified | Active development, existing install tested | Working on development setup; clean install pending |
 
-**Development hardware:** Raspberry Pi 5, Raspberry Pi OS Trixie, no HAT or matrix.
-
-**Initial production hardware:** Raspberry Pi 3, Raspberry Pi OS Trixie.
-
-These are product requirements, not claims of tested support. Validate OS/Python versions, CPU architectures, and driver builds per device. Pi 5 GPIO differs from older Pi models; never select a physical matrix driver solely by Raspberry Pi branding.
+These entries are **not hardware certification**. Pi 5 GPIO handling and driver support differ from earlier Pi models.
 
 ## Display backend contract
 
-- Emulator and physical output must consume the same RGB framebuffer.
-- Default to emulator mode on first install.
-- A missing HAT/matrix must never prevent configuration or software-only preview.
-- Unsupported hardware combinations must fail clearly and leave the web UI usable.
-- Brightness, matrix dimensions, GPIO mapping and refresh parameters belong to backend configuration.
+- Physical output and browser preview consume the same 64×32 framebuffer.
+- A missing HAT or matrix must not prevent emulator operation.
+- An unsupported hardware combination must fail clearly and leave configuration accessible.
+- Brightness, mapping, and GPIO slowdown must be verified for the actual HAT and panel.
+- Physical output requires a suitable external power supply.
 
-## Validation checklist
+## Validation
 
-1. Install from a clean supported OS image.
-2. Launch emulator without GPIO permissions.
-3. Run automated foundation and plugin tests.
-4. Confirm web configuration and boot-time service operation.
-5. Verify Wi-Fi reconnect and recovery hotspot.
-6. Test physical matrix only with supported hardware and explicit driver selection.
-7. Record CPU/memory usage and update/restart behavior on each model.
-
-## Status
-
-No physical matrix drivers have been integrated or certified in this repository yet.
+Use a separate clean boot card. Confirm install, web login, Wi-Fi recovery, services after reboot, physical splash, frame freshness, rotation, network-loss handling, and updates. Record tested OS, Pi model, driver revision, HAT mapping, and results before claiming compatibility.
