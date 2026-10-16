@@ -17,7 +17,7 @@ class MLBTeamMarksTests(unittest.TestCase):
         final = MLBPaletteScreen(BaseballGame(away='PHI', home='ATL', status='final')).render()
         self.assertNotEqual(live.pixels[7][25], (0, 0, 0))
         self.assertEqual(final.pixels[7][25], (0, 0, 0))
-        self.assertEqual(live.pixels[25][25], (90, 105, 120) if False else live.pixels[25][0])
+        self.assertEqual(live.pixels[25][25], live.pixels[25][0])
 
 if __name__ == '__main__':
     unittest.main()
