@@ -26,28 +26,29 @@ class MLBTeamMarksTests(unittest.TestCase):
         self.assertEqual(set(SPRITES), {'MIL', 'LAD'})
         for team, rows in SPRITES.items():
             with self.subTest(team=team):
-                self.assertEqual(len(rows), 7)
-                self.assertTrue(all(len(row) == 9 for row in rows))
+                self.assertEqual(len(rows), 9)
+                self.assertTrue(all(len(row) == 11 for row in rows))
                 frame = Framebuffer()
-                self.assertTrue(draw_team_mark(frame, team, 25, 7))
-                self.assertTrue(any(pixel == (0, 0, 0)
-                                    for row in frame.pixels[7:14]
-                                    for pixel in row[25:34]))
-                self.assertTrue(any(pixel != (0, 0, 0)
-                                    for row in frame.pixels[7:14]
-                                    for pixel in row[25:34]))
+                self.assertTrue(draw_team_mark(frame, team, 24, 6))
+                area = [pixel for row in frame.pixels[6:15] for pixel in row[24:35]]
+                self.assertIn((0, 0, 0), area)
+                self.assertTrue(any(pixel != (0, 0, 0) for pixel in area))
                 self.assertTrue(all(pixel == (0, 0, 0)
-                                    for row in frame.pixels[7:14]
-                                    for pixel in row[34:42]))
+                                    for row in frame.pixels[6:15]
+                                    for pixel in row[35:43]))
 
     def test_custom_sprites_render_on_live_classic(self):
         game = BaseballGame(away='MIL', home='LAD')
         live = MLBPaletteScreen(game).render()
         final = MLBPaletteScreen(BaseballGame(away='MIL', home='LAD', status='final')).render()
-        self.assertEqual(live.pixels[7][25], (0, 0, 0))  # MIL transparent corner
-        self.assertEqual(live.pixels[17][25], (40, 110, 230))  # LAD blue corner
-        self.assertNotEqual(live.pixels[7][28], (0, 0, 0))
-        self.assertEqual(final.pixels[7][28], (0, 0, 0))
+        self.assertEqual(live.pixels[6][24], (0, 0, 0))
+        self.assertEqual(live.pixels[16][24], (40, 110, 230))
+        self.assertEqual(live.pixels[6][27], (236, 190, 69))
+        self.assertEqual(final.pixels[6][27], (0, 0, 0))
+        self.assertEqual(live.pixels[25], final.pixels[25])
+        # Sprite artwork must not touch the first score column.
+        for y in list(range(6, 15)) + list(range(16, 25)):
+            self.assertEqual(live.pixels[y][35:40], final.pixels[y][35:40])
 
     def test_marks_only_on_live_classic(self):
         live = MLBPaletteScreen(BaseballGame(away='PHI', home='ATL')).render()
