@@ -4,16 +4,18 @@ from __future__ import annotations
 import threading
 import time
 from .news_screen import NewsHeadlineScreen
+from .display import Framebuffer
 
 
 class MultiSportRenderer:
     """Route cached frames without network access; retain legacy single-sport mode."""
 
-    def __init__(self, mlb_renderer, nhl_renderer, active_sport="mlb", clock=time.monotonic, news=None, settings_getter=None, nba_renderer=None, wnba_renderer=None):
+    def __init__(self, mlb_renderer, nhl_renderer, active_sport="mlb", clock=time.monotonic, news=None, settings_getter=None, nba_renderer=None, wnba_renderer=None, nfl_renderer=None):
         self.mlb = mlb_renderer
         self.nhl = nhl_renderer
         self.nba = nba_renderer
         self.wnba = wnba_renderer
+        self.nfl = nfl_renderer
         self.clock = clock
         self.news = news
         self.settings_getter = settings_getter
@@ -22,6 +24,7 @@ class MultiSportRenderer:
         self._active = "mlb"
         self._enabled = ("mlb",)
         self._interval = 12
+        self._auto_rotation = False
         self._started = clock()
         self.set_active_sport(active_sport)
 
@@ -36,10 +39,11 @@ class MultiSportRenderer:
         with self._lock:
             self._active = sport
             self._enabled = (sport,)
+            self._auto_rotation = False
             self._started = self.clock()
 
     def _supported(self):
-        return ("mlb", "nhl") + (("nba",) if self.nba is not None else ()) + (("wnba",) if self.wnba is not None else ())
+        return ("mlb", "nhl") + (("nba",) if self.nba is not None else ()) + (("wnba",) if self.wnba is not None else ()) + (("nfl",) if self.nfl is not None else ())
 
     def configure_rotation(self, enabled_sports, interval=12, preferred="mlb"):
         supported = self._supported()
@@ -50,24 +54,57 @@ class MultiSportRenderer:
             raise ValueError("Invalid sport rotation interval")
         with self._lock:
             self._enabled = enabled
+            self._auto_rotation = len(enabled) > 1
             self._active = preferred if preferred in enabled else enabled[0]
             self._interval = interval
             self._started = self.clock()
 
-    def _selected(self):
+    def _renderer(self, sport):
+        return {"mlb": self.mlb, "nhl": self.nhl, "nba": self.nba,
+                "wnba": self.wnba, "nfl": self.nfl}.get(sport)
+
+    def _available(self):
+        """Skip score pages with no games; cached feeds decide today's games."""
         with self._lock:
             enabled = self._enabled
-            if len(enabled) == 1:
-                return enabled[0]
-            slot = int(max(0, self.clock() - self._started) // self._interval)
-            return enabled[slot % len(enabled)]
+        available = []
+        for sport in enabled:
+            renderer = self._renderer(sport)
+            if renderer is None:
+                continue
+            # Only renderers with an explicit availability contract can be
+            # skipped. Legacy renderers and test doubles remain eligible.
+            checker = getattr(renderer, "has_games", None)
+            if not callable(checker):
+                available.append(sport)
+                continue
+            try:
+                if checker():
+                    available.append(sport)
+            except Exception:
+                # Feed errors must not remove a sport from rotation.
+                available.append(sport)
+        return tuple(available)
+
+    def _selected(self):
+        with self._lock:
+            if not self._auto_rotation:
+                return self._active
+        available = self._available()
+        if not available:
+            return None
+        with self._lock:
+            interval = self._interval
+            started = self._started
+        slot = int(max(0, self.clock() - started) // interval)
+        return available[slot % len(available)]
 
     def frame(self):
         sport = self._selected()
-        renderer = self.nhl if sport == "nhl" else self.nba if sport == "nba" else self.wnba if sport == "wnba" else self.mlb
+        renderer = self._renderer(sport)
         if self.news is not None and self.settings_getter is not None:
             headlines = self.news.items()
-            game = renderer.game() if headlines else None
+            game = renderer.game() if headlines and renderer is not None else None
             if headlines and (game is None or game.status != "live"):
                 grouped = {}
                 for item in headlines:
@@ -87,8 +124,9 @@ class MultiSportRenderer:
                     item = ordered[page]
                     offset = int((elapsed % interval) * timing["scroll_chars_per_second"])
                     return NewsHeadlineScreen(item.text, item.source, offset=offset).render()
-        return renderer.frame()
+        return renderer.frame() if renderer is not None else Framebuffer(64, 32)
 
     def game(self):
         sport = self._selected()
-        return (self.nhl if sport == "nhl" else self.nba if sport == "nba" else self.wnba if sport == "wnba" else self.mlb).game()
+        renderer = self._renderer(sport)
+        return renderer.game() if renderer is not None else None

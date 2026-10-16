@@ -17,11 +17,19 @@ class SportSettingsTests(unittest.TestCase):
         data['sports']['nba']['enabled']=True
         data['active_sport']='nba'
         self.assertEqual(validate_settings(data)['active_sport'], 'nba')
-    def test_reject_unsupported_active_sport(self):
+    def test_allow_nfl_active_sport(self):
         data=copy.deepcopy(DEFAULT_SETTINGS)
         data['sports']['nfl']['enabled']=True
         data['active_sport']='nfl'
-        with self.assertRaises(ValueError):validate_settings(data)
+        self.assertEqual(validate_settings(data)['active_sport'], 'nfl')
+    def test_reject_unsupported_active_sport(self):
+        for sport in ('mls', 'efl'):
+            with self.subTest(sport=sport):
+                data=copy.deepcopy(DEFAULT_SETTINGS)
+                data['sports'][sport]['enabled']=True
+                data['active_sport']=sport
+                with self.assertRaises(ValueError):
+                    validate_settings(data)
     def test_legacy_settings_without_nba(self):
         data=copy.deepcopy(DEFAULT_SETTINGS)
         del data['nba']

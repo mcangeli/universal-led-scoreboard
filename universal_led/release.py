@@ -8,8 +8,8 @@ import subprocess
 
 from . import __version__
 
-PREVIEW = "21.6"
-STAGE = 20
+PREVIEW = "0.4.0"
+STAGE = 4
 
 
 def installed_commit():

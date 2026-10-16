@@ -7,13 +7,14 @@ from .mlb_news import MLBNewsFeed
 from .nhl_news import NHLNewsFeed
 from .nba_news import NBANewsFeed
 from .wnba_news import WNBANewsFeed
+from .nfl_news import NFLNewsFeed
 
-SUPPORTED_NEWS = ('mlb', 'nhl', 'nba', 'wnba')
+SUPPORTED_NEWS = ('mlb', 'nhl', 'nba', 'wnba', 'nfl')
 
 
 class AutomaticSportsNews:
     def __init__(self, providers=None):
-        self.providers = {'mlb': MLBNewsFeed(), 'nhl': NHLNewsFeed(), 'nba': NBANewsFeed(), 'wnba': WNBANewsFeed()} if providers is None else dict(providers)
+        self.providers = {'mlb': MLBNewsFeed(), 'nhl': NHLNewsFeed(), 'nba': NBANewsFeed(), 'wnba': WNBANewsFeed(), 'nfl': NFLNewsFeed()} if providers is None else dict(providers)
 
     def items(self, settings):
         headlines = []
