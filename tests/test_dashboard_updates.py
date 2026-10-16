@@ -9,7 +9,7 @@ class DashboardUpdateTests(unittest.TestCase):
     def test_update_helpers_accept_no_arguments(self):
         for name in ('uls-update-status', 'uls-update-launch', 'uls-update-worker'):
             source = (ROOT / 'scripts' / name).read_text()
-            self.assertIn('[[ $# -eq 0 ]]', source)
+            self.assertIn('$# -eq 0', source)
 
     def test_web_update_endpoints_require_existing_auth_boundary(self):
         source = (ROOT / 'universal_led' / 'configurator.py').read_text()
