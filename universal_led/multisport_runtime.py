@@ -24,6 +24,7 @@ class MultiSportRenderer:
         self._active = "mlb"
         self._enabled = ("mlb",)
         self._interval = 12
+        self._auto_rotation = False
         self._started = clock()
         self.set_active_sport(active_sport)
 
@@ -38,6 +39,7 @@ class MultiSportRenderer:
         with self._lock:
             self._active = sport
             self._enabled = (sport,)
+            self._auto_rotation = False
             self._started = self.clock()
 
     def _supported(self):
@@ -52,6 +54,7 @@ class MultiSportRenderer:
             raise ValueError("Invalid sport rotation interval")
         with self._lock:
             self._enabled = enabled
+            self._auto_rotation = len(enabled) > 1
             self._active = preferred if preferred in enabled else enabled[0]
             self._interval = interval
             self._started = self.clock()
@@ -80,6 +83,9 @@ class MultiSportRenderer:
         return tuple(available)
 
     def _selected(self):
+        with self._lock:
+            if not self._auto_rotation:
+                return self._active
         available = self._available()
         if not available:
             return None
