@@ -723,7 +723,8 @@ def main():
         feed.feed.refresh_seconds=settings['mlb']['refresh_seconds']
     def feed_status():
         return feed.status()
-    # Publish the exact framebuffer used by /frame.json, without exposing an\n    # unauthenticated HTTP endpoint to the privileged matrix worker.\n    from .frame_bridge import write_frame\n    import os\n    frame_path = Path(args.config_dir) / 'live-frame.ppm'\n    frame_stop = threading.Event()\n    def publish_frames():\n        while not frame_stop.is_set():\n            try:\n                write_frame(frame_path, renderer.frame())\n            except Exception as exc:\n                print(f'Frame publishing failed: {exc}', flush=True)\n            frame_stop.wait(1.0)\n    frame_thread = threading.Thread(target=publish_frames, daemon=True, name='frame-publisher')\n    frame_thread.start()\n    try:
+    # Publish the exact framebuffer used by /frame.json, without exposing an\n    # unauthenticated HTTP endpoint to the privileged matrix worker.
+    from .frame_bridge import write_frame\n    import os\n    frame_path = Path(args.config_dir) / 'live-frame.ppm'\n    frame_stop = threading.Event()\n    def publish_frames():\n        while not frame_stop.is_set():\n            try:\n                write_frame(frame_path, renderer.frame())\n            except Exception as exc:\n                print(f'Frame publishing failed: {exc}', flush=True)\n            frame_stop.wait(1.0)\n    frame_thread = threading.Thread(target=publish_frames, daemon=True, name='frame-publisher')\n    frame_thread.start()\n    try:
         with ThreadingHTTPServer((args.host,args.port),make_handler(args.config_dir,token,game,apply_settings,feed_status,renderer.frame)) as server:
             print(f'Configurator listening on {args.host}:{args.port}',flush=True)
             server.serve_forever()
