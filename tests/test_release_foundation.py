@@ -34,6 +34,12 @@ class ReleaseFoundationTests(unittest.TestCase):
         self.assertIn('if (( NEW_PROFILE == 0 )); then', source)
         self.assertIn('Existing recovery hotspot profile preserved.', source)
 
+    def test_dashboard_update_install_is_allowed_by_post_route_guard(self):
+        source = (ROOT / 'universal_led' / 'configurator.py').read_text()
+        guard = source.split("if path not in (", 1)[1].split("):", 1)[0]
+        self.assertIn("'/api/update/install'", guard)
+        self.assertIn("if path=='/api/update/install':", source)
+
     def test_rendered_dashboard_has_valid_javascript_string_escape(self):
         from universal_led.configurator import HTML
         self.assertIn("+'\\n'+", HTML)
