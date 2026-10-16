@@ -726,7 +726,7 @@ def main():
     # Publish the exact framebuffer used by /frame.json, without exposing an
     # unauthenticated HTTP endpoint to the privileged matrix worker.
     from .frame_bridge import write_frame
-    frame_path = Path.home() / '.local/share/universal-led-scoreboard/runtime/live-frame.ppm'
+    frame_path = Path('/run/universal-led-scoreboard/live-frame.ppm')
     frame_stop = threading.Event()
     def publish_frames():
         while not frame_stop.is_set():
