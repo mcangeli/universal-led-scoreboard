@@ -11,13 +11,15 @@ DEFAULT_SETTINGS={
     'sports':{name:{'enabled':name=='mlb','news_enabled':name=='mlb'} for name in SPORTS},
     'mlb':{'favorite_teams':['ATL'],'mode':'fallback','refresh_seconds':60,'rotation_seconds':12,
            'live_classic_percent':50,'live_matchup_percent':25},
+    'nhl':{'favorite_teams':[],'mode':'fallback','refresh_seconds':60,'rotation_seconds':12},
     'news':{'rotation_interval':5,'headline_seconds':12,'scroll_chars_per_second':3}
 }
 
 def validate_settings(value):
-    if not isinstance(value,dict) or set(value) not in (set(DEFAULT_SETTINGS),set(DEFAULT_SETTINGS)-{'news'}):
+    if not isinstance(value,dict) or set(value) not in (set(DEFAULT_SETTINGS),set(DEFAULT_SETTINGS)-{'news','nhl'},set(DEFAULT_SETTINGS)-{'nhl'},set(DEFAULT_SETTINGS)-{'news'}):
         raise ValueError('Settings require version, active_sport, sports and mlb')
-    value=dict(value,news=dict(DEFAULT_SETTINGS['news']) | value.get('news',{}))
+    value=dict(value,news=dict(DEFAULT_SETTINGS['news']) | value.get('news',{}),
+               nhl=dict(DEFAULT_SETTINGS['nhl']) | value.get('nhl',{}))
     if set(value['news'])!=set(DEFAULT_SETTINGS['news']):
         raise ValueError('Invalid news rotation settings')
     for key,minimum,maximum in (('rotation_interval',1,20),('headline_seconds',3,120),('scroll_chars_per_second',1,15)):
@@ -41,8 +43,23 @@ def validate_settings(value):
     value=dict(value,sports=sports)
     if not sports[value['active_sport']]['enabled']:
         raise ValueError('Active sport must be enabled')
-    if value['active_sport']!='mlb':
-        raise ValueError('Only MLB is supported by the current rendering engine')
+    if value['active_sport'] not in ('mlb','nhl'):
+        raise ValueError('Only MLB and NHL are supported by the current rendering engine')
+    nhl=value['nhl']
+    if not isinstance(nhl,dict) or set(nhl)!=set(DEFAULT_SETTINGS['nhl']):
+        raise ValueError('Invalid NHL settings')
+    teams=nhl['favorite_teams']
+    if (not isinstance(teams,list) or
+        any(not isinstance(t,str) or len(t)!=3 or not t.isalpha() or t!=t.upper() for t in teams) or
+        len(teams)!=len(set(teams))):
+        raise ValueError('Invalid NHL favorite teams')
+    if nhl['mode'] not in ('favorite','fallback','all'):
+        raise ValueError('Invalid NHL rotation mode')
+    for key in ('refresh_seconds','rotation_seconds'):
+        number=nhl[key]
+        if type(number) not in (int,float) or not 5<=number<=3600:
+            raise ValueError('Invalid NHL '+key)
+
     mlb=value['mlb']
     if not isinstance(mlb,dict):
         raise ValueError('Invalid MLB settings')
