@@ -25,6 +25,7 @@ def main():
         running = False
     signal.signal(signal.SIGTERM, stop)
     signal.signal(signal.SIGINT, stop)
+    canvas = matrix.CreateFrameCanvas()
     last_mtime = None
     try:
         while running:
@@ -32,7 +33,7 @@ def main():
                 stat = args.frame_file.stat()
                 if stat.st_mtime_ns != last_mtime:
                     frame = read_frame(args.frame_file)
-                    draw_frame(matrix, frame)
+                    canvas = draw_frame(matrix, frame, canvas=canvas)
                     last_mtime = stat.st_mtime_ns
             except (FileNotFoundError, ValueError, OSError) as exc:
                 print(f"Frame unavailable: {exc}", flush=True) if last_mtime is None else None
