@@ -9,7 +9,7 @@ TARGET=/usr/local/libexec/universal-led-wifi-scan
 install -d -o root -g root -m 0755 /usr/local/libexec
 install -o root -g root -m 0755 "$ROOT/scripts/universal-led-wifi-scan" "$TARGET"
 # Exact executable path, no arguments; never grant blanket nmcli or shell access.
-printf '%s ALL=(root) NOPASSWD: %s \"\"\n' "$USER_NAME" "$TARGET" > /etc/sudoers.d/universal-led-wifi-scan
+printf '%s ALL=(root) NOPASSWD: %s \"\"\n' "uls" "$TARGET" > /etc/sudoers.d/universal-led-wifi-scan
 chmod 0440 /etc/sudoers.d/universal-led-wifi-scan
 visudo -cf /etc/sudoers.d/universal-led-wifi-scan
-echo "Read-only Wi-Fi scan helper installed for $USER_NAME"
+echo "Read-only Wi-Fi scan helper installed for uls"
