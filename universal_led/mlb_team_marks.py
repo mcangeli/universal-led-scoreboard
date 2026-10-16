@@ -51,37 +51,71 @@ MARKS = {
 }
 
 
-# Transparent 11x9 pixel artwork for the live Classic screen.
-# MIL is a glove-inspired open pocket around a baseball.
-# LAD uses a taller interlocking L/A-inspired silhouette.
-# Dots are transparent; no square badge backgrounds.
+# Original transparent 11x9 playoff-focused pixel marks.
+# Symbols are team-colored pixels; periods remain transparent.
 SPRITES = {
     'MIL': (
-        '...GG.GG...',
-        '..GGG.GGG..',
-        '.GG.....GG.',
-        '.G..WWW..G.',
-        '.G..WWW..G.',
-        '.G..WWW..G.',
-        '..G.....G..',
+        '..GG.GG.G..',
+        '.GGG.GGGG..',
+        'GG...G...G.',
+        'G...WWW..GG',
+        'G...WWW...G',
+        '.G..WWW...G',
+        '..G.....GG.',
         '..GGGGGGG..',
         '...GGGGG...',
     ),
     'LAD': (
-        'B......B...',
-        'B.....B.B..',
-        'B....B...B.',
-        'B....BBBBB.',
-        'B....B...B.',
-        'B....B...B.',
-        'BBBB.B...B.',
-        '.....B...B.',
-        '.....B...B.',
+        'B.....B....',
+        'B....B.B...',
+        'B...B...B..',
+        'B...BBBBB..',
+        'B...B...B..',
+        'B...B...B..',
+        'BBBBB...B..',
+        '....B...B..',
+        '....B...B..',
+    ),
+    'ATL': (
+        '....R......',
+        '...RRR.....',
+        '..R...R....',
+        '.R..R..R...',
+        '.RRRRRRR...',
+        '.R.....R...',
+        'RR.....RR..',
+        '...N.N.....',
+        '...NNN.....',
+    ),
+    'CLE': (
+        '..RRRRRR...',
+        '..R........',
+        '..R........',
+        '..R........',
+        '..R........',
+        '..R........',
+        '..R........',
+        '..RRRRRR...',
+        '...........',
+    ),
+    'TBR': (
+        'Y..........',
+        '.YY........',
+        '..YYY......',
+        '...YYYY....',
+        '..YYY......',
+        '.YY..B.....',
+        'Y....BB....',
+        '......BB...',
+        '.......B...',
     ),
 }
 SPRITE_COLORS = {
     'MIL': {'G': (236, 190, 69), 'W': (245, 245, 230)},
     'LAD': {'B': (40, 110, 230)},
+    'ATL': {'R': (225, 45, 65), 'N': (25, 55, 115)},
+    'CLE': {'R': (220, 35, 55)},
+    'TBR': {'Y': (245, 207, 65), 'B': (55, 150, 210)},
 }
 
 def draw_team_mark(fb, team, x, y):
