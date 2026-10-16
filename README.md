@@ -2,18 +2,18 @@
 
 Universal LED Scoreboard turns a Raspberry Pi and a compact RGB LED matrix into a configurable sports scoreboard, clock, weather display and news ticker. It combines classic score layouts with a browser-based configurator and a live 64×32 board preview, so most everyday changes do not require editing Python or JSON.
 
-The project is being built as a multi-sport platform. **MLB, NHL, NBA and WNBA are implemented in v0.3.0.** NFL, MLS and EFL integrations are planned; they are not available scoreboard modes yet.
+The project is being built as a multi-sport platform. **MLB, NHL, NBA, WNBA and NFL are implemented on the v0.4.0 feature branch.** MLS and EFL are planned.
 
 ## What it does
 
 - Displays MLB games with classic scoreboard, live matchup and previous-play views.
 - Displays NHL games on 64×32 classic and visual layouts, including scheduled, live, intermission, overtime, shootout, final and postponed status indicators. Scheduled-game screens show team records when available.
 - Displays NBA and WNBA scheduled, live and final games with pregame tipoff times and team records when supplied by the feed.
-- Lets you select favorite MLB, NHL, NBA and WNBA teams, configure basketball and hockey game selection modes, and rotate enabled sports.
+- Lets you select favorite MLB, NHL, NBA, WNBA and NFL teams, configure basketball and hockey game selection modes, and rotate enabled sports.
 - Gives **live games involving favorite teams** priority over the normal screen rotation. Other games, clock, weather and news share the remaining rotation.
 - Shows an optional clock with a timezone dropdown and 12/24-hour formats.
 - Shows optional weather with colored pixel-art icons, temperature and forecast high/low. Choose Open-Meteo or OpenWeatherMap; OpenWeatherMap requires your own API key.
-- Uses a shared universal news renderer for automatic MLB, NHL, NBA and WNBA headlines plus administrator-configured RSS/Atom sources; sources are interleaved rather than separated by sport.
+- Uses a shared universal news renderer for automatic MLB, NHL, NBA, WNBA and NFL headlines plus administrator-configured RSS/Atom sources; sources are interleaved rather than separated by sport.
 - Provides a password-protected web configurator for sports, display colors, time/weather, news, Wi-Fi and board preview.
 - Includes Wi-Fi connection and recovery functionality for supported Raspberry Pi installations.
 
@@ -45,11 +45,11 @@ The updater validates the candidate test suite before installation, synchronizes
 
 ## Configure and use
 
-After signing in, start with the MLB/NHL/NBA/WNBA team and sport rotation settings. Add your favorite team abbreviations (for example `ATL`), choose which games to display, and adjust rotation timing. When a favorite team's game is live, it takes display priority; otherwise eligible screens rotate.
+After signing in, start with the MLB/NHL/NBA/WNBA/NFL team and sport rotation settings. Add your favorite team abbreviations (for example `ATL`), choose which games to display, and adjust rotation timing. When a favorite team's game is live, it takes display priority; otherwise eligible screens rotate.
 
 Under **Display Settings → Time & Weather**, enable the clock, choose a timezone and time format, and optionally enable weather. Enter a city or US ZIP code and choose Fahrenheit or Celsius. Open-Meteo is the default provider; for OpenWeatherMap, select it and enter your API key in the dedicated field. The key is stored separately from ordinary settings. Weather requests run in the background and use a cache, so brief network interruptions need not blank the board.
 
-Use the news settings to enable automatic MLB/NHL/NBA/WNBA headlines or add RSS/Atom feeds. Use the color controls to customize the scoreboard palette. **Open Board View** provides a convenient 64×32 preview without hardware.
+Use the news settings to enable automatic MLB/NHL/NBA/WNBA/NFL headlines or add RSS/Atom feeds. Use the color controls to customize the scoreboard palette. **Open Board View** provides a convenient 64×32 preview without hardware.
 
 ## Service management and testing
 
@@ -80,6 +80,10 @@ python3 -m universal_led --output splash.ppm
 - **Service does not start:** Run `sudo ulsctl logs` and `sudo ulsctl status` for the system installation.
 - **Changes are not visible in the browser:** Refresh the page after restarting the service.
 
+## v0.4.0 NFL release candidate
+
+Configure NFL under Sports & Rotation. Enable NFL headlines separately under Content & News. The NFL feed currently targets the local game day, so Sunday's matchups may not appear on Friday. Verify live news and game transitions on the physical matrix before tagging.
+
 ## v0.3.0 verification
 
 - Production Raspberry Pi 3 on Raspberry Pi OS Trixie, 64×32 RGB LED matrix.
@@ -94,6 +98,6 @@ See [Changelog](CHANGELOG.md) for release details.
 
 ## Project status and credits
 
-The codebase is under active development. MLB, NHL, clock, weather, universal news and the native configurator are and NBA/WNBA are available in v0.3.0; NFL, MLS and EFL are future work. The original projects informing this effort include [MLB LED Scoreboard](https://github.com/MLB-LED-Scoreboard/mlb-led-scoreboard), [NBA LED Scoreboard](https://github.com/m0ranwad/nba-led-scoreboard), [NFL LED Scoreboard](https://github.com/mikemountain/nfl-led-scoreboard), [MLS LED Scoreboard](https://github.com/alexanderthebadatcoding/mls-led-scoreboard) and [NHL LED Scoreboard](https://github.com/falkyre/nhl-led-scoreboard).
+The codebase is under active development. MLB, NHL, clock, weather, universal news and the native configurator are and NBA/WNBA are available in v0.3.0; MLS and EFL are future work. The original projects informing this effort include [MLB LED Scoreboard](https://github.com/MLB-LED-Scoreboard/mlb-led-scoreboard), [NBA LED Scoreboard](https://github.com/m0ranwad/nba-led-scoreboard), [NFL LED Scoreboard](https://github.com/mikemountain/nfl-led-scoreboard), [MLS LED Scoreboard](https://github.com/alexanderthebadatcoding/mls-led-scoreboard) and [NHL LED Scoreboard](https://github.com/falkyre/nhl-led-scoreboard).
 
 Review the licenses of any reused source code, images, logos and third-party feeds before redistribution. The MLB LED Scoreboard foundation is GPLv3.
