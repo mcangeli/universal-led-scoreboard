@@ -31,6 +31,8 @@ class ReleaseFoundationTests(unittest.TestCase):
         self.assertIn('connection.autoconnect no', source)
         self.assertNotIn('nmcli connection up', source)
         self.assertIn('nmcli connection edit', source)
+        self.assertIn('if (( NEW_PROFILE == 0 )); then', source)
+        self.assertIn('Existing recovery hotspot profile preserved.', source)
 
     def test_rendered_dashboard_has_valid_javascript_string_escape(self):
         from universal_led.configurator import HTML
