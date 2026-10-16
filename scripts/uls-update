@@ -48,6 +48,7 @@ as_owner git merge --ff-only "$NEW"
 # Refresh the installed CLI after the candidate has passed its tests.
 # The operator invokes /usr/local/bin/ulsctl, not the Git checkout copy.
 install -m 755 "$APP/scripts/ulsctl" /usr/local/bin/ulsctl
+bash "$APP/scripts/install-dashboard-update-helper.sh"
 systemctl restart uls-web.service
 # Always restart the physical worker: its 30-second startup splash provides
 # visible confirmation that the updated scoreboard has restarted.
