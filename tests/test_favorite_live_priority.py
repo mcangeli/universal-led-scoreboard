@@ -39,12 +39,23 @@ class FavoriteLivePriorityTests(unittest.TestCase):
             favorite=BaseballGame(away='ATL',home='MIA',status='pregame')
             live=BaseballGame(away='NYM',home='PHI',status='live')
             renderer=ConfiguredMLBRenderer(directory,Feed([favorite,live]))
-            self.assertEqual(renderer.game(),favorite)
-            # Fallback mode selects favorite games only when they exist.
-            # Nonfavorite live games remain ineligible until mode is all.
+            self.assertEqual(renderer.game(),live)
             settings=renderer.settings()
+            renderer.apply({**settings,'mlb':{**settings['mlb'],'mode':'favorite'}})
+            self.assertEqual(renderer.game(),favorite)
             renderer.apply({**settings,'mlb':{**settings['mlb'],'mode':'all'}})
             self.assertEqual(renderer.game(),live)
+    def test_all_mode_rotates_all_live_games(self):
+        with tempfile.TemporaryDirectory() as directory:
+            favorite=BaseballGame(away='ATL',home='MIA',status='live')
+            other=BaseballGame(away='NYM',home='PHI',status='live')
+            renderer=ConfiguredMLBRenderer(directory,Feed([other,favorite]))
+            settings=renderer.settings()
+            renderer.apply({**settings,'mlb':{**settings['mlb'],'mode':'all'}})
+            with patch('universal_led.runtime_settings.time.monotonic',return_value=renderer._started):
+                self.assertEqual(renderer.game(),other)
+            with patch('universal_led.runtime_settings.time.monotonic',return_value=renderer._started+settings['mlb']['rotation_seconds']):
+                self.assertEqual(renderer.game(),favorite)
 
 if __name__=='__main__':
     unittest.main()
