@@ -8,12 +8,15 @@ from .nba_data import parse_scoreboard
 
 API_BASE = "https://site.api.espn.com/apis/site/v2/sports/basketball/nba/scoreboard"
 
-def fetch_scores(day: date, *, timeout=5.0):
+def fetch_scores(day: date, *, timeout=5.0, league="nba"):
     if not isinstance(day, date):
         raise TypeError("day must be a date")
     if not isinstance(timeout, (int, float)) or isinstance(timeout, bool) or not 0 < timeout <= 30:
         raise ValueError("Invalid timeout")
-    request = Request(f"{API_BASE}?dates={day:%Y%m%d}", headers={
+    if league not in ("nba", "wnba"):
+        raise ValueError("Unsupported basketball league")
+    endpoint = API_BASE if league == "nba" else API_BASE.replace("/nba/", "/wnba/")
+    request = Request(f"{endpoint}?dates={day:%Y%m%d}", headers={
         "User-Agent": "UniversalLEDScoreboard/0.3",
         "Accept": "application/json"})
     with urlopen(request, timeout=timeout) as response:
