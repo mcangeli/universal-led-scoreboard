@@ -44,10 +44,13 @@ class NBAScreen:
     name: str = "nba-classic"
     timezone_name: str = "America/New_York"
     time_format: str = "12h"
+    league: str = "NBA"
 
     def render(self) -> Framebuffer:
         fb = Framebuffer(64, 32)
-        small(fb, "NBA", 1, 1, ORANGE)
+        if self.league not in ("NBA", "WNBA"):
+            raise ValueError("Unsupported basketball league")
+        small(fb, self.league, 1, 1, ORANGE)
         # Basketball motif: an original tiny four-pixel ball/cross.
         for x, y in ((55, 2), (56, 1), (56, 3), (57, 2)):
             fb.pixel(x, y, ORANGE)
