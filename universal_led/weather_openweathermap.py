@@ -87,4 +87,7 @@ def fetch_openweathermap(location, unit='fahrenheit', api_key='', *, get_json=No
         high=high,
         low=low,
         weather_code=wmo,
-        observed_at=str(data.get('dt', '')))
+        observed_at=str(data.get('dt', '')),
+        is_day=(int(data['sys']['sunrise']) <= int(data['dt']) < int(data['sys']['sunset'])
+                if all(key in data.get('sys', {}) for key in ('sunrise', 'sunset')) and 'dt' in data
+                else True))
