@@ -27,6 +27,9 @@ class ConfiguredNBARenderer:
         self.rotation_seconds = rotation_seconds
         self.started = self.clock()
 
+    def has_games(self):
+        return bool(select_games(self.feed.games(), self.favorite_teams, self.mode))
+
     def game(self):
         games = select_games(self.feed.games(), self.favorite_teams, self.mode)
         if not games:
