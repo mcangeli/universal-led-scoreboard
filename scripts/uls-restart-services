@@ -1,0 +1,8 @@
+#!/bin/sh
+# Root-owned, argument-free restart entrypoint for the dashboard.
+set -eu
+[ "$#" -eq 0 ] || exit 2
+/usr/bin/systemctl restart uls-web.service
+/usr/bin/systemctl restart uls-matrix.service
+/usr/bin/systemctl is-active --quiet uls-web.service
+/usr/bin/systemctl is-active --quiet uls-matrix.service
