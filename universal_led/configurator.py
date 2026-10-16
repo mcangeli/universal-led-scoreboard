@@ -361,6 +361,7 @@ async function refreshUpdateProgress(){
   const data=await response.json();
   document.getElementById('update-log').textContent=(data.status||'not started')+'\n'+(data.log||'');
   if(data.status==='running')document.getElementById('install-update').disabled=true;
+  if(data.status==='completed'||data.status==='failed')document.getElementById('update-status').textContent='Last update: '+data.status+'. Review log below.';
  }catch(error){}
 }
 async function installSoftwareUpdate(){
@@ -374,6 +375,7 @@ async function installSoftwareUpdate(){
   await refreshUpdateProgress();
  }catch(error){out.textContent='Update error: '+error.message}
 }
+setInterval(()=>{const panel=document.querySelector('[data-page="system"]');if(panel&&!panel.hidden)refreshUpdateProgress()},2000);
 async function restartScoreboard(){
  const button=document.getElementById('restart-scoreboard'),status=document.getElementById('restart-status');
  if(!confirm('Restart the web and matrix services now? The startup splash will appear.'))return;
