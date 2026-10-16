@@ -9,7 +9,7 @@ import subprocess
 from . import __version__
 
 PREVIEW = "0.4.0"
-STAGE = 4
+STAGE = 0
 
 
 def installed_commit():
