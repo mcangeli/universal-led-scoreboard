@@ -50,7 +50,7 @@ class NFLScreenTests(unittest.TestCase):
         active = game(possession="ATL", down=2, distance=7)
         frame = NFLScreen(active).render()
         self.assertEqual((frame.width, frame.height), (64, 32))
-        self.assertEqual(frame.get_pixel(20, 11), (245, 175, 60))
+        self.assertEqual(frame.pixels[11][20], (245, 175, 60))
 
     def test_live_without_situation(self):
         frame = NFLScreen(game(possession="", down=None, distance=None)).render()
