@@ -1,5 +1,6 @@
 import unittest
 import time
+import threading
 from universal_led.mlb_opening_feed import MLBOpeningDayFeed
 
 PAYLOAD = {'dates': [{'games': [
@@ -55,6 +56,27 @@ class OpeningFeedTests(unittest.TestCase):
     def test_initial_failure_is_unavailable(self):
         feed = MLBOpeningDayFeed(fetch=lambda year: (_ for _ in ()).throw(OSError('offline')))
         self.assertIsNone(feed.opening(2027))
+
+    def test_slow_network_never_blocks_frame(self):
+        release = threading.Event()
+        entered = threading.Event()
+        def fetch(year):
+            entered.set()
+            release.wait(2)
+            return PAYLOAD
+        feed = MLBOpeningDayFeed(fetch=fetch)
+        try:
+            started = time.monotonic()
+            self.assertIsNone(feed.opening(2027))
+            self.assertLess(time.monotonic() - started, 0.5)
+            self.assertTrue(entered.wait(1))
+            started = time.monotonic()
+            self.assertIsNone(feed.opening(2027))
+            self.assertLess(time.monotonic() - started, 0.5)
+        finally:
+            release.set()
+        self.await_refresh(feed)
+        self.assertIsNotNone(feed.opening(2027))
 
     def test_bad_arguments(self):
         feed = MLBOpeningDayFeed(fetch=lambda year: PAYLOAD)
