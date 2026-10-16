@@ -2,7 +2,7 @@ import copy
 import unittest
 
 from universal_led.automatic_news import AutomaticSportsNews, SUPPORTED_NEWS
-from universal_led.nhl_news import NHLNewsFeed, NHL_NEWS_RSS
+from universal_led.nhl_news import NHLNewsFeed, NHL_NEWS_RSS, NHL_NEWS_RSS
 from universal_led.sport_settings import DEFAULT_SETTINGS
 
 RSS=b'<rss><channel><item><title>NHL Playoff Update</title><link>https://www.nhl.com/news/test</link></item></channel></rss>'
@@ -12,6 +12,9 @@ class NHLNewsIntegrationTests(unittest.TestCase):
     def test_source_points_to_nhl_com_headlines(self):
         self.assertIn('host=www.nhl.com', NHL_NEWS_RSS)
         self.assertNotIn('www.nhl.com/news/rss', NHL_NEWS_RSS)
+
+    def test_nhl_source_is_verified_rss_aggregator(self):
+        self.assertEqual(NHL_NEWS_RSS, 'https://freenewsapi.ai/v1/rss?host=www.nhl.com&size=20')
 
     def test_nhl_feed_parses_and_caches(self):
         calls=[]
