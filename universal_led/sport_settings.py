@@ -37,8 +37,10 @@ def validate_settings(value):
     if value['active_sport'] not in SPORTS:
         raise ValueError('Unknown active sport')
     sports=value['sports']
-    if isinstance(sports,dict) and 'wnba' not in sports:
-        sports=dict(sports,wnba=dict(DEFAULT_SETTINGS['sports']['wnba']))
+    if isinstance(sports,dict):
+        sports=dict(sports)
+        for name in SPORTS:
+            sports.setdefault(name, dict(DEFAULT_SETTINGS['sports'][name]))
     if not isinstance(sports,dict) or set(sports)!=set(SPORTS):
         raise ValueError('Invalid sports list')
     sports={name:dict(entry) if isinstance(entry,dict) else entry for name,entry in sports.items()}
