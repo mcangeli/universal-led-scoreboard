@@ -4,7 +4,6 @@ import os
 import argparse
 import json
 import secrets
-import stat
 import subprocess
 import threading
 import time
@@ -738,7 +737,7 @@ def persistent_form_token(directory):
     try:
         with path.open('x', encoding='ascii') as stream:
             os.chmod(path, 0o600)
-            stream.write(value + '\\n')
+            stream.write(value + '\n')
     except FileExistsError:
         return persistent_form_token(directory)
     return value
