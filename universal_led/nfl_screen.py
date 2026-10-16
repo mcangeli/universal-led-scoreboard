@@ -69,7 +69,7 @@ class NFLScreen:
                 for dx, dy in ((0, 1), (1, 0), (1, 1), (1, 2), (2, 1)):
                     fb.pixel(19 + dx, marker_y + dy, GOLD)
             if self.game.down is not None and self.game.distance is not None:
-                down = f"{self.game.down}&{self.game.distance}"
+                down = f"{self.game.down}D{self.game.distance}"
                 small(fb, down, 62 - 4 * len(down), 27, TEAM)
                 label = label[:max(0, (60 - 4 * len(down)) // 4)]
         small(fb, label[:15], 2, 27,
