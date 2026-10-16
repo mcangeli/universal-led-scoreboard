@@ -16,6 +16,7 @@ class WeatherSnapshot:
     low: float
     weather_code: int
     observed_at: str
+    is_day: bool = True
 
 
 def weather_description(code):
@@ -61,7 +62,7 @@ def fetch_weather(location, unit='fahrenheit', *, get_json=None):
         raise ValueError('Weather location not found')
     place = places[0]
     args = {'latitude': place['latitude'], 'longitude': place['longitude'],
-            'current': 'temperature_2m,weather_code',
+            'current': 'temperature_2m,weather_code,is_day',
             'daily': 'temperature_2m_max,temperature_2m_min',
             'temperature_unit': unit, 'timezone': 'auto', 'forecast_days': 1}
     data = get_json('https://api.open-meteo.com/v1/forecast?' + urlencode(args))
@@ -72,7 +73,8 @@ def fetch_weather(location, unit='fahrenheit', *, get_json=None):
         high=float(daily['temperature_2m_max'][0]),
         low=float(daily['temperature_2m_min'][0]),
         weather_code=int(current['weather_code']),
-        observed_at=str(current.get('time') or datetime.now(timezone.utc).isoformat()))
+        observed_at=str(current.get('time') or datetime.now(timezone.utc).isoformat()),
+        is_day=bool(int(current.get('is_day', 1))))
 
 
 class BackgroundWeather:
