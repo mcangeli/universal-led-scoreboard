@@ -48,6 +48,34 @@ class SoccerProviderTests(unittest.TestCase):
         with self.assertRaises(ProviderUnavailable):
             router.fetch(date.today())
 
+    def test_fallback_failure_clears_stale_source(self):
+        router = SoccerProviderRouter("MLS", primary=lambda d: [match()],
+                                      fallback=lambda d: (_ for _ in ()).throw(OSError("ESPN offline")))
+        router.fetch(date.today())
+        router.primary = lambda d: (_ for _ in ()).throw(OSError("league offline"))
+        with self.assertRaisesRegex(ProviderUnavailable, "ESPN fallback unavailable"):
+            router.fetch(date.today())
+        self.assertIsNone(router.last_source)
+        self.assertIn("league offline", router.last_primary_error)
+        self.assertIn("ESPN offline", router.last_fallback_error)
+
+    def test_invalid_fallback_match_is_reported(self):
+        router = SoccerProviderRouter("NWSL", mode="espn_only",
+                                      fallback=lambda d: [match("MLS")])
+        with self.assertRaisesRegex(ProviderUnavailable, "ESPN fallback unavailable"):
+            router.fetch(date.today())
+        self.assertIsNone(router.last_source)
+
+    def test_successful_fallback_clears_prior_error(self):
+        router = SoccerProviderRouter("MLS", mode="espn_only",
+                                      fallback=lambda d: (_ for _ in ()).throw(OSError("offline")))
+        with self.assertRaises(ProviderUnavailable):
+            router.fetch(date.today())
+        router.fallback = lambda d: [match()]
+        self.assertEqual(router.fetch(date.today()), (match(),))
+        self.assertIsNone(router.last_fallback_error)
+        self.assertEqual(router.last_source, "espn")
+
     def test_cached_feed_uses_provider(self):
         router = SoccerProviderRouter("MLS", primary=lambda d: [match()])
         feed = SoccerFeed("MLS", provider=router,
