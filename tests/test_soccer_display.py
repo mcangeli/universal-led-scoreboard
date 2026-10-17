@@ -74,6 +74,25 @@ class SoccerDisplayTests(unittest.TestCase):
         controller.update(final)
         self.assertEqual(controller.screen(final, 11).kind, "match")
 
+    def test_halftime_late_goal_does_not_celebrate(self):
+        controller = SoccerDisplayController()
+        first = self.match()
+        controller.update(first)
+        halftime = SoccerMatch("m1", "MLS", "ATL", "MIA", 2, 1, "halftime",
+                               (SoccerGoal("late", "ATL"),))
+        controller.update(halftime)
+        self.assertEqual(controller.screen(halftime, 10).footer, "HT")
+
+    def test_halftime_clears_queued_goal_and_keeps_ht(self):
+        controller = SoccerDisplayController()
+        first = self.match()
+        controller.update(first)
+        updated = self.match([SoccerGoal("g1", "ATL")])
+        controller.update(updated)
+        halftime = SoccerMatch("m1", "MLS", "ATL", "MIA", 2, 1, "halftime", updated.goals)
+        controller.update(halftime)
+        self.assertEqual(controller.screen(halftime, 10).footer, "HT")
+
     def test_invalid_duration_rejected(self):
         with self.assertRaises(ValueError):
             SoccerDisplayController(goal_seconds=0)
