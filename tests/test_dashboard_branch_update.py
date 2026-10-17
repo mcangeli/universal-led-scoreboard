@@ -51,6 +51,12 @@ class DashboardBranchUpdateTests(unittest.TestCase):
         self.assertIn('install-dashboard-update-helper.sh', rollback)
         self.assertIn('install-dashboard-restart-helper.sh', rollback)
 
+    def test_cross_branch_downgrade_rejected_before_checkout(self):
+        script = (ROOT / "scripts" / "uls-update").read_text()
+        self.assertLess(script.index('as_owner git merge-base --is-ancestor'), script.index('as_owner git checkout -B "$BRANCH" "$NEW"'))
+        self.assertIn("unsafe branch switch/downgrade refused", script)
+        self.assertIn("Candidate missing required update/matrix component", script)
+
     def test_privileged_selector_limits_input(self):
         script = (ROOT / "scripts" / "uls-update-select").read_text()
         compile(script, "uls-update-select", "exec")
