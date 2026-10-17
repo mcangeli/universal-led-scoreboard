@@ -30,8 +30,8 @@ def parse_scoreboard(payload: Mapping, league: str) -> tuple[SoccerMatch, ...]:
             side = entry.get("homeAway")
             if side in ("home", "away"):
                 team = entry.get("team") or {}
-                teams[side] = (str(team.get("abbreviation") or team.get("id") or ""), _score(entry.get("score")))
-        if "home" not in teams or "away" not in teams:
+                teams[side] = (_team_id(team), _score(entry.get("score")))
+        if "home" not in teams or "away" not in teams or not teams["home"][0] or not teams["away"][0]:
             continue
         status = event.get("status") or {}
         status_type = status.get("type") or {}
@@ -61,7 +61,7 @@ def parse_scoreboard(payload: Mapping, league: str) -> tuple[SoccerMatch, ...]:
             minute = clock.get("displayValue") or detail.get("displayClock")
             goals.append(SoccerGoal(
                 event_id=str(event_id),
-                team_id=str(team.get("abbreviation") or team.get("id") or ""),
+                team_id=_team_id(team),
                 scorer=scorer,
                 minute=str(minute) if minute is not None else None,
                 own_goal=bool(detail.get("ownGoal", False)),
@@ -77,6 +77,13 @@ def parse_scoreboard(payload: Mapping, league: str) -> tuple[SoccerMatch, ...]:
             goals=tuple(goals),
         ))
     return tuple(matches)
+
+
+def _team_id(team) -> str:
+    """Prefer ESPN abbreviations and normalize them for favorite-team matching."""
+    if not isinstance(team, Mapping):
+        return ""
+    return str(team.get("abbreviation") or team.get("id") or "").strip().upper()
 
 
 def _score(value) -> int:
