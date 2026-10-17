@@ -3,7 +3,6 @@
 Team accent colors are approximate LED-friendly palette choices, not licensed art.
 """
 from dataclasses import dataclass
-from .colors import readable_on_black
 from .mlb_refined import MLBRefinedScreen
 from .mlb_classic import BaseballGame, small, GOLD, DIM, RED
 
@@ -25,6 +24,7 @@ class MLBVisualScreen:
     game: BaseballGame = BaseballGame()
     name: str = 'mlb-visual'
     def render(self):
+        from .colors import readable_on_black
         g = self.game
         fb = MLBRefinedScreen(g).render()
         # Replace generic team labels with team-specific color.
