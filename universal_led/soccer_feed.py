@@ -36,6 +36,18 @@ def parse_scoreboard(payload: Mapping, league: str) -> tuple[SoccerMatch, ...]:
         status = event.get("status") or {}
         status_type = status.get("type") or {}
         state = str(status_type.get("state") or status_type.get("name") or "unknown").lower()
+        # ESPN can report state="in" alongside name="STATUS_HALFTIME".
+        phase_fields = (
+            status_type.get("name"), status_type.get("description"),
+            status_type.get("detail"), status_type.get("shortDetail"),
+            status.get("detail"), status.get("shortDetail"),
+        )
+        if state in ("in", "live", "in_progress", "inprogress") and any(
+            isinstance(value, str) and value.strip().lower().replace("_", " ") in
+            ("status halftime", "halftime", "half time", "ht")
+            for value in phase_fields
+        ):
+            state = "halftime"
         # ESPN's status.type.state is normally "pre", "in", or "post".
         # Some provider snapshots only include the long status name.
         state = {
