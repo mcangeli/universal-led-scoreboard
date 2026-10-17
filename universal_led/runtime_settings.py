@@ -126,7 +126,9 @@ class ConfiguredMLBRenderer:
     def frame(self):
         palette=read_config(self.directory)
         game,page=self._selection()
-        if game is None or game.status!='live':
+        # Supplemental pages must not interrupt any eligible live MLB game,
+        # even if the currently selected game is not live.
+        if (game is None or game.status!='live') and not self.has_live_games():
             preferences=load_time_weather(self.directory)
             clock_enabled=preferences['clock_enabled'] and (Path(self.directory)/'time_weather.json').exists()
             snapshot=self.weather.snapshot() if preferences['weather_enabled'] and self.weather is not None else None
