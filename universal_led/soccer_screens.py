@@ -6,6 +6,7 @@ Long names are shortened deterministically; no feed data is invented.
 from dataclasses import dataclass
 
 from .soccer import SoccerGoal, SoccerMatch
+from .soccer_rotation import is_live, FINAL_STATES
 
 
 @dataclass(frozen=True)
@@ -31,7 +32,7 @@ def match_screen(match: SoccerMatch) -> SoccerScreen:
         header=_fit(match.league, 6),
         line1=f"{_fit(match.away_id, 5):<5} {match.away_score:>2}",
         line2=f"{_fit(match.home_id, 5):<5} {match.home_score:>2}",
-        footer=_fit(match.status.upper(), 12),
+        footer=_fit(_match_status(match), 12),
     )
 
 
@@ -48,3 +49,19 @@ def goal_screen(match: SoccerMatch, goal: SoccerGoal) -> SoccerScreen:
         line2=_fit(f"{goal.team_id} {minute}".strip(), 16),
         footer=_fit(f"{score} {match.league}", 16),
     )
+
+
+def _match_status(match: SoccerMatch) -> str:
+    status = match.status.strip().lower()
+    if status in FINAL_STATES:
+        return "FINAL"
+    if status in ("pre", "scheduled"):
+        return "PRE"
+    if is_live(match):
+        clock = (match.clock or "").strip()
+        if clock:
+            if match.period in (1, 2):
+                return f"{match.period}H {clock}"
+            return clock
+        return "LIVE"
+    return match.status.upper()
