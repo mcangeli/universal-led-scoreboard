@@ -29,6 +29,10 @@ def eligible_matches(
     if mode == "all":
         return games
     favorite_ids = {str(team).strip().upper() for team in favorites if str(team).strip()}
+    # Match MLB/NHL/NBA behavior: with no favorites configured, show all games
+    # rather than leaving the display blank in favorites-only mode.
+    if not favorite_ids:
+        return games
     selected = tuple(
         match for match in games
         if match.home_id.upper() in favorite_ids or match.away_id.upper() in favorite_ids
