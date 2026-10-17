@@ -20,6 +20,20 @@ Status: feature branch candidate, not merged or tagged.
 - [ ] Run final full regression suite and record count and skipped tests.
 - [ ] Merge reviewed candidate into main, then tag v0.4.5. Do not tag or merge before acceptance.
 
+## Fresh-card acceptance procedure
+
+Use a **spare microSD card** on a supported Raspberry Pi. Do not overwrite the working scoreboard image.
+
+1. Flash Raspberry Pi OS Lite **Trixie 64-bit** and configure networking/SSH. Boot as a normal sudo-enabled user.
+2. Run the documented v0.4.5 candidate checkout and installer commands in [INSTALLATION.md](INSTALLATION.md), initially with `--mode emulator --branch feature/0.4.5-dashboard-polish`. Record any dependency, permission, or administrator-password error.
+3. Confirm that installation finishes, the dashboard responds on port 8080, administrator login works, and **Open Board View** renders a frame.
+4. In **System → Software Updates**, verify the installed branch/commit and that **Check for Updates** responds. Confirm Wi-Fi scanning without changing the working network.
+5. Reboot the spare-card Pi. Confirm dashboard login and board preview still work. Use `sudo ulsctl health` and `sudo ulsctl status` only for troubleshooting.
+6. For physical validation, use a **separate clean card** installed with `--mode physical` and the same branch, with correct HUB75 wiring and independent matrix power. Confirm matrix service, startup splash, saved brightness/mapping, enabled/disabled state across reboot, and dashboard update availability.
+7. Preserve a copy of test logs with secrets redacted. Record the tested Pi model, OS image, and pass/fail results before marking this gate complete.
+
+A successful upgrade of an existing installation is **not** a substitute for this test. No fresh-card validation has been reported yet.
+
 ## Safe downgrade policy
 
 The dashboard intentionally rejects older or divergent Git histories. Branch discovery does not imply deployability. For disaster recovery, restore a known-good image or perform an explicitly supervised recovery rather than forcing an older checkout through the dashboard.
