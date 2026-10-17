@@ -131,7 +131,7 @@ class MultiSportRenderer:
     def frame(self):
         sport = self._selected()
         renderer = self._renderer(sport)
-        if not self._live_sports() and self.news is not None and self.settings_getter is not None:
+        if self.news is not None and self.settings_getter is not None and not self._live_sports():
             headlines = self.news.items()
             game = renderer.game() if headlines and renderer is not None else None
             if headlines and (game is None or game.status != "live"):
