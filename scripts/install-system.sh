@@ -5,7 +5,7 @@ APP=/opt/uls/app
 VENV=/opt/uls/venv
 CONFIG=/etc/uls
 DATA=/var/lib/uls
-BRANCH=feature/0.1.0-core-foundation
+BRANCH=main
 MODE=emulator
 RESUME=0
 REPO=https://github.com/mcangeli/universal-led-scoreboard.git
@@ -131,7 +131,10 @@ sudo bash "$APP/scripts/install-dashboard-restart-helper.sh"
 sudo bash "$APP/scripts/install-dashboard-update-helper.sh"
 sudo systemctl daemon-reload
 sudo systemctl enable --now uls-web.service
-if [[ "$MODE" == physical ]]; then sudo systemctl enable --now uls-matrix.service; fi
+if [[ "$MODE" == physical ]]; then
+  sudo systemctl enable uls-matrix.service
+  sudo bash "$APP/scripts/uls-matrix-control" apply
+fi
 echo "ULS installation finished. Dashboard: http://$(hostname -I | awk '{print $1}'):8080/"
 echo "Check: sudo systemctl status uls-web.service"
 if [[ "$MODE" == physical ]]; then echo "Check: sudo ulsctl health"; else echo "Emulator mode: no matrix service was installed."; fi
