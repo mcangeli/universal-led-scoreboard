@@ -30,7 +30,7 @@ class SoccerMatch:
     period: Optional[int] = None
 
 
-SUPPORTED_LEAGUES = frozenset(("MLS", "NWSL"))
+SUPPORTED_LEAGUES = frozenset(("MLS", "NWSL", "EPL", "CHAMPIONSHIP", "LEAGUE_ONE", "LEAGUE_TWO"))
 
 
 def new_goals(previous: Optional[SoccerMatch], current: SoccerMatch) -> tuple[SoccerGoal, ...]:
