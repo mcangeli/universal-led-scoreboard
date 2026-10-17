@@ -45,3 +45,27 @@ def new_goals(previous: Optional[SoccerMatch], current: SoccerMatch) -> tuple[So
         return ()
     seen = {goal.event_id for goal in previous.goals}
     return tuple(goal for goal in current.goals if goal.event_id and goal.event_id not in seen)
+
+
+class GoalEventTracker:
+    """Remember observed events across transient feed omissions.
+
+    Track each league/match independently. Call observe on every fetched snapshot;
+    first observation establishes the baseline without triggering old goals.
+    """
+
+    def __init__(self):
+        self._seen: dict[tuple[str, str], set[str]] = {}
+
+    def observe(self, match: SoccerMatch) -> tuple[SoccerGoal, ...]:
+        if match.league not in SUPPORTED_LEAGUES:
+            raise ValueError("Unsupported soccer league")
+        key = (match.league, match.match_id)
+        ids = {goal.event_id for goal in match.goals if goal.event_id}
+        if key not in self._seen:
+            self._seen[key] = ids
+            return ()
+        seen = self._seen[key]
+        added = tuple(goal for goal in match.goals if goal.event_id and goal.event_id not in seen)
+        seen.update(ids)
+        return added
