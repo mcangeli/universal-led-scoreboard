@@ -4,7 +4,8 @@ Status: **release candidate, not tagged or merged**. This checklist separates ve
 
 ## Confirmed
 
-- [x] Raspberry Pi 5 updater candidate validation: 1,018 tests, 15 skipped, no failures (reported October 17, 2026).
+- [x] Raspberry Pi 5 updater candidate validation: 1,043 tests, 15 skipped, no failures (reported October 17, 2026).
+- [x] Raspberry Pi 3 preflight healthy: Trixie, web and matrix services active, fresh frame, clean working tree; /etc/uls, /var/lib/uls and service definitions backed up and archives verified.
 - [x] MLS/NWSL 64×32 emulator layout visually reviewed, including first-half stoppage time.
 - [x] Fixture-based parser coverage for scores, statuses, goal metadata, period/clock and malformed feed fields.
 - [x] Combined MLS/NWSL fixture tests for favorites, live-game priority, halftime, scheduled and final screens.
