@@ -10,12 +10,14 @@ from .display import Framebuffer
 class MultiSportRenderer:
     """Route cached frames without network access; retain legacy single-sport mode."""
 
-    def __init__(self, mlb_renderer, nhl_renderer, active_sport="mlb", clock=time.monotonic, news=None, settings_getter=None, nba_renderer=None, wnba_renderer=None, nfl_renderer=None):
+    def __init__(self, mlb_renderer, nhl_renderer, active_sport="mlb", clock=time.monotonic, news=None, settings_getter=None, nba_renderer=None, wnba_renderer=None, nfl_renderer=None, mls_renderer=None, nwsl_renderer=None):
         self.mlb = mlb_renderer
         self.nhl = nhl_renderer
         self.nba = nba_renderer
         self.wnba = wnba_renderer
         self.nfl = nfl_renderer
+        self.mls = mls_renderer
+        self.nwsl = nwsl_renderer
         self.clock = clock
         self.news = news
         self.settings_getter = settings_getter
@@ -43,7 +45,7 @@ class MultiSportRenderer:
             self._started = self.clock()
 
     def _supported(self):
-        return ("mlb", "nhl") + (("nba",) if self.nba is not None else ()) + (("wnba",) if self.wnba is not None else ()) + (("nfl",) if self.nfl is not None else ())
+        return ("mlb", "nhl") + (("nba",) if self.nba is not None else ()) + (("wnba",) if self.wnba is not None else ()) + (("nfl",) if self.nfl is not None else ()) + (("mls",) if self.mls is not None else ()) + (("nwsl",) if self.nwsl is not None else ())
 
     def configure_rotation(self, enabled_sports, interval=12, preferred="mlb"):
         supported = self._supported()
@@ -61,7 +63,7 @@ class MultiSportRenderer:
 
     def _renderer(self, sport):
         return {"mlb": self.mlb, "nhl": self.nhl, "nba": self.nba,
-                "wnba": self.wnba, "nfl": self.nfl}.get(sport)
+                "wnba": self.wnba, "nfl": self.nfl, "mls": self.mls, "nwsl": self.nwsl}.get(sport)
 
     def _available(self):
         """Skip score pages with no games; cached feeds decide today's games."""
