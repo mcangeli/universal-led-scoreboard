@@ -32,6 +32,14 @@ class SoccerScreenTests(unittest.TestCase):
         game = SoccerMatch("m1", "MLS", "ATL", "MIA", 2, 1, "in", clock="90+3'", period=2)
         self.assertEqual(match_screen(game).footer, "2H 90+3'")
 
+    def test_first_half_stoppage_clock_removes_extra_apostrophe(self):
+        game = SoccerMatch("m1", "MLS", "CLT", "PHI", 0, 1, "in", clock="45'+1'", period=1)
+        self.assertEqual(match_screen(game).footer, "1H 45+1'")
+
+    def test_second_half_stoppage_clock_removes_extra_apostrophe(self):
+        game = SoccerMatch("m1", "NWSL", "ATL", "MIA", 1, 1, "in", clock="90' + 3'", period=2)
+        self.assertEqual(match_screen(game).footer, "2H 90+3'")
+
     def test_halftime_displays_ht_instead_of_stale_clock(self):
         game = SoccerMatch("m1", "NWSL", "ATL", "MIA", 1, 1, "halftime", clock="45'", period=1)
         self.assertEqual(match_screen(game).footer, "HT")
