@@ -41,6 +41,25 @@ class SoccerFeedTests(unittest.TestCase):
             self.assertEqual(game.status, expected)
             self.assertFalse(is_live(game))
 
+    def test_espn_status_clock_and_period(self):
+        payload = fixture()
+        payload["events"][0]["status"].update({"displayClock": "30'", "period": 1})
+        game, = parse_scoreboard(payload, "MLS")
+        self.assertEqual((game.clock, game.period), ("30'", 1))
+
+    def test_nested_clock_and_competition_period(self):
+        payload = fixture()
+        payload["events"][0]["status"]["clock"] = {"displayValue": "90+3'"}
+        payload["events"][0]["competitions"][0]["period"] = 2
+        game, = parse_scoreboard(payload, "NWSL")
+        self.assertEqual((game.clock, game.period), ("90+3'", 2))
+
+    def test_malformed_goal_clock_does_not_break_match(self):
+        detail = {"id": "g1", "scoringPlay": True, "clock": "bad"}
+        game, = parse_scoreboard(fixture([detail]), "MLS")
+        self.assertEqual(len(game.goals), 1)
+        self.assertIsNone(game.goals[0].minute)
+
     def test_nwsl_uses_same_parser(self):
         match, = parse_scoreboard(fixture(), "NWSL")
         self.assertEqual(match.league, "NWSL")
