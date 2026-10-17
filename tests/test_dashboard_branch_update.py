@@ -57,6 +57,18 @@ class DashboardBranchUpdateTests(unittest.TestCase):
         self.assertIn("unsafe branch switch/downgrade refused", script)
         self.assertIn("Candidate missing required update/matrix component", script)
 
+    def test_fresh_install_credentials_can_write_secrets(self):
+        script = (ROOT / "scripts" / "install-system.sh").read_text()
+        self.assertLess(
+            script.index('sudo chown "$USER:$(id -gn)" "$CONFIG/secrets"'),
+            script.index('--set-admin-password'),
+        )
+        self.assertLess(
+            script.index('--set-admin-password'),
+            script.index('sudo chown -R uls:uls "$CONFIG" "$DATA"'),
+        )
+        self.assertIn('"$BRANCH" != *..*', script)
+
     def test_privileged_selector_limits_input(self):
         script = (ROOT / "scripts" / "uls-update-select").read_text()
         compile(script, "uls-update-select", "exec")
