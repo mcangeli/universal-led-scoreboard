@@ -71,6 +71,26 @@ class SoccerFeedTests(unittest.TestCase):
     def test_incomplete_competition_skipped(self):
         self.assertEqual(parse_scoreboard({"events": [{"id": "x", "competitions": []}]}, "MLS"), ())
 
+    def test_malformed_event_does_not_discard_valid_match(self):
+        payload = fixture()
+        payload["events"].insert(0, None)
+        payload["events"].insert(1, {"competitions": [None]})
+        games = parse_scoreboard(payload, "MLS")
+        self.assertEqual(len(games), 1)
+        self.assertEqual(games[0].match_id, "game-123")
+
+    def test_malformed_competitor_is_ignored(self):
+        payload = fixture()
+        payload["events"][0]["competitions"][0]["competitors"].insert(0, None)
+        match, = parse_scoreboard(payload, "NWSL")
+        self.assertEqual((match.home_id, match.away_id), ("ATL", "MIA"))
+
+    def test_malformed_scoring_detail_and_athlete_ignored(self):
+        detail = {"id": "g1", "scoringPlay": True, "athletesInvolved": [None, {"type": None}]}
+        match, = parse_scoreboard(fixture([None, detail]), "MLS")
+        self.assertEqual(len(match.goals), 1)
+        self.assertIsNone(match.goals[0].scorer)
+
     def test_unsupported_league_rejected(self):
         with self.assertRaises(ValueError):
             parse_scoreboard(fixture(), "EFL")
