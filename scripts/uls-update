@@ -16,8 +16,7 @@ cd "$APP"
 BRANCH=$(as_owner git branch --show-current)
 [[ -n "$BRANCH" && "$BRANCH" != HEAD ]] || { echo "A checked-out branch is required for updates." >&2; exit 1; }
 [[ -z "$(as_owner git status --porcelain)" ]] || { echo "Working tree has local changes; update cancelled." >&2; exit 1; }
-echo "Fetching $REMOTE/$BRANCH..."
-as_owner git fetch "$REMOTE" "$BRANCH"
+echo "Checking remote branches..."
 OLD=$(as_owner git rev-parse HEAD)
 OLD_BRANCH="$BRANCH"
 REQUEST=/var/lib/uls/update/target-branch
@@ -28,7 +27,7 @@ if [[ -f "$REQUEST" ]]; then
 fi
 NEW=$(as_owner git ls-remote --exit-code "$REMOTE" "refs/heads/$BRANCH" | awk 'NR==1{print $1}')
 [[ "$NEW" =~ ^[a-f0-9]{40}$ ]] || { echo "Target branch unavailable" >&2; exit 1; }
-if [[ "$OLD" == "$NEW" && "$OLD_BRANCH" == "$BRANCH" ]]; then echo "Already up to date ($OLD)."; exit 0; fi
+if [[ "$OLD" == "$NEW" && "$OLD_BRANCH" == "$BRANCH" ]]; then rm -f "$REQUEST"; echo "Already up to date ($OLD)."; exit 0; fi
 if [[ "$BRANCH" == "$OLD_BRANCH" ]]; then
   as_owner git merge-base --is-ancestor "$OLD" "$NEW" || { echo "Not a fast-forward; update cancelled." >&2; exit 1; }
 fi
@@ -49,6 +48,7 @@ rollback() {
   if ! as_owner git reset --hard "$OLD"; then
     echo "CRITICAL: Could not restore Git checkout automatically." >&2
   fi
+  rm -f "$REQUEST"
   install -m 755 "$APP/scripts/ulsctl" /usr/local/bin/ulsctl || true
   systemctl restart uls-web.service || true
   if systemctl list-unit-files uls-matrix.service --no-legend 2>/dev/null | grep -q uls-matrix.service; then bash "$APP/scripts/uls-matrix-control" apply || true; fi
