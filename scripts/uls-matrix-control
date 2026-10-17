@@ -21,6 +21,20 @@ from universal_led.matrix_settings import load_matrix_settings
 for filename in sys.argv[1:]:
     load_matrix_settings(Path(filename))
 PY
+    # Materialize defaults when the dashboard has never saved a settings file.
+    if [[ ! -f "$CONFIG" ]]; then
+      /opt/uls/venv/bin/python - "$CONFIG" <<'PY'
+import json
+import os
+import sys
+from pathlib import Path
+from universal_led.matrix_settings import DEFAULTS
+path = Path(sys.argv[1])
+with path.open("x", encoding="utf-8") as stream:
+    os.chmod(path, 0o600)
+    json.dump(DEFAULTS, stream)
+PY
+    fi
     # Preserve the original known-good service arguments on the first apply.
     # A successful apply updates the recovery snapshot.
     if [[ ! -f "$GOOD" ]]; then
