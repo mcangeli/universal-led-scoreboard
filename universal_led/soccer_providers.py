@@ -31,6 +31,10 @@ class SoccerProviderRouter:
         self.last_fallback_error = None
 
     def fetch(self, day):
+        # Status describes this attempt, never the previous successful poll.
+        self.last_source = None
+        self.last_primary_error = None
+        self.last_fallback_error = None
         if self.mode != "espn_only":
             try:
                 if self.primary is None:
