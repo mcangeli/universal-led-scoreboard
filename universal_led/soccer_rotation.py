@@ -1,0 +1,43 @@
+"""Soccer screen scheduling helpers for the universal multi-sport rotation.
+
+These pure functions are designed for the existing scheduler to call. They do
+not modify its priorities or access matrix hardware directly.
+"""
+from collections.abc import Iterable
+
+from .soccer import SoccerMatch
+
+
+LIVE_STATES = frozenset(("in", "live", "in_progress", "inprogress"))
+FINAL_STATES = frozenset(("post", "final", "completed", "complete"))
+
+
+def is_live(match: SoccerMatch) -> bool:
+    return match.status.strip().lower() in LIVE_STATES
+
+
+def eligible_matches(
+    matches: Iterable[SoccerMatch],
+    *,
+    favorites: Iterable[str] = (),
+    mode: str = "all",
+) -> tuple[SoccerMatch, ...]:
+    """Filter soccer matches by team favorites, without changing game status."""
+    if mode not in ("all", "favorites", "fallback"):
+        raise ValueError("Unknown soccer selection mode")
+    games = tuple(matches)
+    if mode == "all":
+        return games
+    favorite_ids = {str(team).strip().upper() for team in favorites if str(team).strip()}
+    selected = tuple(
+        match for match in games
+        if match.home_id.upper() in favorite_ids or match.away_id.upper() in favorite_ids
+    )
+    return selected if mode == "favorites" or selected else games
+
+
+def prioritize_live(matches: Iterable[SoccerMatch]) -> tuple[SoccerMatch, ...]:
+    """Keep only live matches when any are live; otherwise retain all."""
+    games = tuple(matches)
+    live = tuple(game for game in games if is_live(game))
+    return live if live else games
