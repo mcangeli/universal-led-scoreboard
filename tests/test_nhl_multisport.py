@@ -61,7 +61,7 @@ class MultiSportTests(unittest.TestCase):
         self.router.configure_rotation(("mlb", "nhl"), interval=12)
         self.nhl.game = lambda: SimpleNamespace(status="live")
         self.mlb.game = lambda: SimpleNamespace(status="scheduled")
-        self.assertEqual(self.router.frame(), "MLB")
+        self.assertEqual(self.router.frame(), "NHL")
 
     def test_no_news_does_not_probe_other_sport_game(self):
         class EmptyNews:
@@ -104,6 +104,27 @@ class MultiSportTests(unittest.TestCase):
         self.assertEqual(self.router.frame(), "MLB")
         now[0] = 12
         self.assertEqual(self.router.frame(), "NHL")
+
+
+
+    def test_all_games_live_contract_overrides_selected_scheduled_game(self):
+        from types import SimpleNamespace
+        self.router.configure_rotation(("mlb", "nhl"), interval=12)
+        self.mlb.game = lambda: SimpleNamespace(status="scheduled")
+        self.nhl.game = lambda: SimpleNamespace(status="scheduled")
+        self.nhl.has_live_games = lambda: True
+        self.assertEqual(self.router.frame(), "NHL")
+
+    def test_all_games_contract_recovers_after_live_games_end(self):
+        from types import SimpleNamespace
+        state = {"live": True}
+        self.router.configure_rotation(("mlb", "nhl"), interval=12)
+        self.mlb.game = lambda: SimpleNamespace(status="scheduled")
+        self.nhl.game = lambda: SimpleNamespace(status="scheduled")
+        self.nhl.has_live_games = lambda: state["live"]
+        self.assertEqual(self.router.frame(), "NHL")
+        state["live"] = False
+        self.assertEqual(self.router.frame(), "MLB")
 
 
 
