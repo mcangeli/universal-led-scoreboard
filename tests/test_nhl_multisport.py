@@ -77,5 +77,35 @@ class MultiSportTests(unittest.TestCase):
 
 
 
+    def test_live_sport_preempts_scheduled_sport(self):
+        from types import SimpleNamespace
+        self.router.configure_rotation(("mlb", "nhl"), interval=12)
+        self.mlb.game = lambda: SimpleNamespace(status="scheduled")
+        self.nhl.game = lambda: SimpleNamespace(status="live")
+        self.assertEqual(self.router.frame(), "NHL")
+
+    def test_rotation_recovers_when_live_game_finishes(self):
+        from types import SimpleNamespace
+        state = {"status": "live"}
+        self.router.configure_rotation(("mlb", "nhl"), interval=12)
+        self.mlb.game = lambda: SimpleNamespace(status="scheduled")
+        self.nhl.game = lambda: SimpleNamespace(status=state["status"])
+        self.assertEqual(self.router.frame(), "NHL")
+        state["status"] = "final"
+        self.assertEqual(self.router.frame(), "MLB")
+
+    def test_multiple_live_sports_remain_eligible(self):
+        from types import SimpleNamespace
+        now = [0]
+        self.router.clock = lambda: now[0]
+        self.router.configure_rotation(("mlb", "nhl"), interval=12)
+        self.mlb.game = lambda: SimpleNamespace(status="live")
+        self.nhl.game = lambda: SimpleNamespace(status="live")
+        self.assertEqual(self.router.frame(), "MLB")
+        now[0] = 12
+        self.assertEqual(self.router.frame(), "NHL")
+
+
+
 if __name__ == "__main__":
     unittest.main()
