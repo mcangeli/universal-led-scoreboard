@@ -33,13 +33,19 @@ if [[ "$OLD" == "$NEW" && "$OLD_BRANCH" == "$BRANCH" ]]; then rm -f "$REQUEST"; 
 echo "Fetching selected branch $BRANCH..."
 as_owner git fetch "$REMOTE" "$BRANCH"
 [[ "$(as_owner git rev-parse FETCH_HEAD)" == "$NEW" ]] || { echo "Remote branch changed during update; retry." >&2; exit 1; }
-if [[ "$BRANCH" == "$OLD_BRANCH" ]]; then
-  as_owner git merge-base --is-ancestor "$OLD" "$NEW" || { echo "Not a fast-forward; update cancelled." >&2; exit 1; }
-fi
+# Prevent switching to a divergent or older tree that may lack the update protocol.
+as_owner git merge-base --is-ancestor "$OLD" "$NEW" || {
+  echo "Target branch is not a descendant of the installed release; unsafe branch switch/downgrade refused." >&2
+  exit 1
+}
 STAGE=$(as_owner mktemp -d /tmp/uls-update.XXXXXXXX)
 cleanup() { as_owner git -C "$APP" worktree remove --force "$STAGE" >/dev/null 2>&1 || true; as_owner rm -rf -- "$STAGE"; }
 trap 'cleanup; rm -f "$REQUEST"' EXIT
 as_owner git worktree add --detach "$STAGE" "$NEW"
+echo "Checking candidate compatibility..."
+for required in scripts/uls-update scripts/uls-update-select scripts/uls-update-status scripts/uls-matrix-control scripts/install-dashboard-update-helper.sh scripts/install-dashboard-restart-helper.sh; do
+  [[ -f "$STAGE/$required" ]] || { echo "Candidate missing required update/matrix component: $required" >&2; exit 1; }
+done
 echo "Checking candidate code before changing the installation..."
 as_owner "$VENV/bin/python" -m compileall -q "$STAGE/universal_led" "$STAGE/tests"
 (cd "$STAGE" && as_owner "$VENV/bin/python" -m unittest discover -s tests -p 'test_*.py')
