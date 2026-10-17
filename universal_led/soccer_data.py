@@ -32,13 +32,14 @@ def fetch_scores(league: str, day: date, *, timeout=5.0):
 
 class SoccerFeed:
     def __init__(self, league: str, *, fetcher=fetch_scores, refresh_seconds=60,
-                 clock=time.monotonic):
+                 clock=time.monotonic, provider=None):
         if league not in LEAGUE_SLUGS:
             raise ValueError("Unsupported soccer league")
         if type(refresh_seconds) not in (int, float) or not 5 <= refresh_seconds <= 3600:
             raise ValueError("Invalid soccer refresh interval")
         self.league = league
         self.fetcher = fetcher
+        self.provider = provider
         self.refresh_seconds = refresh_seconds
         self.clock = clock
         self._lock = threading.Lock()
@@ -60,7 +61,8 @@ class SoccerFeed:
                     return list(self._games)
                 self.last_attempt = now
             try:
-                games = tuple(parse_scoreboard(self.fetcher(self.league, day), self.league))
+                games = (tuple(self.provider.fetch(day)) if self.provider is not None else
+                         tuple(parse_scoreboard(self.fetcher(self.league, day), self.league)))
             except Exception as exc:
                 with self._lock:
                     self.last_error = str(exc)
