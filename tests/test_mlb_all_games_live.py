@@ -49,5 +49,42 @@ class MLBAllGamesLiveTests(unittest.TestCase):
         self.assertFalse(self.live())
 
 
+    def test_frame_skips_supplemental_sources_during_live_game(self):
+        from unittest.mock import patch
+
+        game = SimpleNamespace(status="live")
+        renderer = SimpleNamespace(
+            directory="/unused",
+            _selection=lambda: (game, 0),
+            has_live_games=lambda: True,
+        )
+        with patch("universal_led.runtime_settings.read_config", return_value={
+            "teams": {}, "scoreboard": {},
+        }), patch("universal_led.runtime_settings.load_time_weather",
+                  side_effect=AssertionError("supplemental settings queried")), \
+             patch("universal_led.runtime_settings.MLBPaletteScreen") as screen:
+            screen.return_value.render.return_value = "GAME"
+            self.assertEqual(ConfiguredMLBRenderer.frame(renderer), "GAME")
+            screen.assert_called_once()
+
+    def test_frame_skips_supplemental_sources_when_another_game_is_live(self):
+        from unittest.mock import patch
+
+        game = SimpleNamespace(status="pregame")
+        renderer = SimpleNamespace(
+            directory="/unused",
+            _selection=lambda: (game, 0),
+            has_live_games=lambda: True,
+        )
+        with patch("universal_led.runtime_settings.read_config", return_value={
+            "teams": {}, "scoreboard": {},
+        }), patch("universal_led.runtime_settings.load_time_weather",
+                  side_effect=AssertionError("supplemental settings queried")), \
+             patch("universal_led.runtime_settings.MLBPaletteScreen") as screen:
+            screen.return_value.render.return_value = "GAME"
+            self.assertEqual(ConfiguredMLBRenderer.frame(renderer), "GAME")
+            screen.assert_called_once()
+
+
 if __name__ == "__main__":
     unittest.main()
