@@ -76,6 +76,33 @@ class SoccerProviderTests(unittest.TestCase):
         self.assertIsNone(router.last_fallback_error)
         self.assertEqual(router.last_source, "espn")
 
+    def test_league_only_failure_clears_previous_source(self):
+        router = SoccerProviderRouter("MLS", mode="league_only", primary=lambda d: [match()])
+        router.fetch(date.today())
+        router.primary = lambda d: (_ for _ in ()).throw(OSError("native offline"))
+        with self.assertRaises(ProviderUnavailable):
+            router.fetch(date.today())
+        self.assertIsNone(router.last_source)
+        self.assertIn("native offline", router.last_primary_error)
+
+    def test_missing_fallback_clears_previous_source(self):
+        router = SoccerProviderRouter("MLS", mode="espn_only", fallback=lambda d: [match()])
+        router.fetch(date.today())
+        router.fallback = None
+        with self.assertRaises(ProviderUnavailable):
+            router.fetch(date.today())
+        self.assertIsNone(router.last_source)
+
+    def test_espn_only_clears_old_primary_error(self):
+        router = SoccerProviderRouter("MLS", primary=lambda d: (_ for _ in ()).throw(OSError("native offline")),
+                                      fallback=lambda d: [match()])
+        router.fetch(date.today())
+        self.assertIsNotNone(router.last_primary_error)
+        router.mode = "espn_only"
+        router.fetch(date.today())
+        self.assertIsNone(router.last_primary_error)
+        self.assertEqual(router.last_source, "espn")
+
     def test_cached_feed_uses_provider(self):
         router = SoccerProviderRouter("MLS", primary=lambda d: [match()])
         feed = SoccerFeed("MLS", provider=router,
