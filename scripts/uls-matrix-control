@@ -2,23 +2,60 @@
 # Narrowly scoped privileged physical matrix service controller.
 set -Eeuo pipefail
 [[ "$EUID" -eq 0 && "$#" -eq 1 ]] || { echo "Usage: uls-matrix-control {apply|status}" >&2; exit 2; }
+UNIT=uls-matrix.service
+CONFIG=/etc/uls/matrix.json
+GOOD=/etc/uls/matrix.applied.json
 case "$1" in
   status)
-    systemctl is-active uls-matrix.service || true
+    systemctl is-active "$UNIT" || true
     ;;
   apply)
-    [[ -f /etc/systemd/system/uls-matrix.service ]] || { echo "Physical matrix service not installed" >&2; exit 1; }
-    # Validate configuration before touching the working matrix.
+    [[ -f /etc/systemd/system/$UNIT ]] || { echo "Physical matrix service not installed" >&2; exit 1; }
     cd /opt/uls/app
-    enabled=$(/opt/uls/venv/bin/python -c 'from universal_led.matrix_settings import load_matrix_settings; print("yes" if load_matrix_settings("/etc/uls/matrix.json")["enabled"] else "no")')
-    if [[ "$enabled" == yes ]]; then
-      systemctl restart uls-matrix.service
-      systemctl is-active --quiet uls-matrix.service
-    elif [[ "$enabled" == no ]]; then
-      systemctl stop uls-matrix.service
-    else
-      echo "Invalid matrix enabled state" >&2; exit 1
+    # Validate both files before changing service state. A missing last-good file
+    # means the untouched installation defaults are the recovery baseline.
+    /opt/uls/venv/bin/python - "$CONFIG" "$GOOD" <<'PY'
+import sys
+from pathlib import Path
+from universal_led.matrix_settings import load_matrix_settings
+for filename in sys.argv[1:]:
+    load_matrix_settings(Path(filename))
+PY
+    # Preserve the original known-good service arguments on the first apply.
+    # A successful apply updates the recovery snapshot.
+    if [[ ! -f "$GOOD" ]]; then
+      printf '%s\n' '{"enabled":true,"mapping":"adafruit-hat","brightness":40,"gpio_slowdown":4,"interval":0.2}' > "$GOOD"
+      chmod 0600 "$GOOD"
     fi
+    enabled=$(/opt/uls/venv/bin/python -c 'from universal_led.matrix_settings import load_matrix_settings; print("yes" if load_matrix_settings("/etc/uls/matrix.json")["enabled"] else "no")')
+    failed=0
+    if [[ "$enabled" == yes ]]; then
+      systemctl restart "$UNIT" || failed=1
+      if [[ "$failed" -eq 0 ]]; then
+        sleep 3
+        systemctl is-active --quiet "$UNIT" || failed=1
+      fi
+    else
+      systemctl stop "$UNIT" || failed=1
+      if [[ "$failed" -eq 0 ]]; then
+        systemctl is-active --quiet "$UNIT" && failed=1 || true
+      fi
+    fi
+    if [[ "$failed" -ne 0 ]]; then
+      echo "Matrix apply failed; restoring last known good settings" >&2
+      cp "$GOOD" "$CONFIG"
+      chmod 0600 "$CONFIG"
+      previous=$(/opt/uls/venv/bin/python -c 'from universal_led.matrix_settings import load_matrix_settings; print("yes" if load_matrix_settings("/etc/uls/matrix.json")["enabled"] else "no")')
+      if [[ "$previous" == yes ]]; then
+        systemctl restart "$UNIT" || true
+      else
+        systemctl stop "$UNIT" || true
+      fi
+      exit 1
+    fi
+    # Copy only after a successful apply; preserve last-good across reboots.
+    cp "$CONFIG" "$GOOD"
+    chmod 0600 "$GOOD"
     ;;
   *) echo "Unsupported matrix action" >&2; exit 2 ;;
 esac
