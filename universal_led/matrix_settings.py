@@ -44,3 +44,16 @@ def load_matrix_settings(path):
     if not path.exists():
         return dict(DEFAULTS)
     return validate_matrix_settings(json.loads(path.read_text(encoding="utf-8")))
+
+
+def matrix_service_label(state, enabled):
+    """Describe observed service state separately from saved user intent."""
+    if not enabled and state == "inactive":
+        return "Disabled by configuration"
+    if not enabled and state == "active":
+        return "Running; saved disable not yet applied"
+    if enabled and state == "active":
+        return "Running"
+    if enabled and state in ("inactive", "failed"):
+        return "Not running; check service or apply saved settings"
+    return "Service state: " + state
