@@ -28,6 +28,7 @@ class SoccerProviderRouter:
         self.mode = mode
         self.last_source = None
         self.last_primary_error = None
+        self.last_fallback_error = None
 
     def fetch(self, day):
         if self.mode != "espn_only":
@@ -37,6 +38,7 @@ class SoccerProviderRouter:
                 matches = self.primary(day)
                 self._validate(matches)
                 self.last_primary_error = None
+                self.last_fallback_error = None
                 self.last_source = "league"
                 return tuple(matches)
             except (ValueError, TypeError, OSError, ProviderUnavailable) as exc:
@@ -45,8 +47,14 @@ class SoccerProviderRouter:
                     raise ProviderUnavailable(str(exc)) from exc
         if self.fallback is None:
             raise ProviderUnavailable("ESPN fallback not configured")
-        matches = self.fallback(day)
-        self._validate(matches)
+        try:
+            matches = self.fallback(day)
+            self._validate(matches)
+        except (ValueError, TypeError, OSError, ProviderUnavailable) as exc:
+            self.last_fallback_error = str(exc)
+            self.last_source = None
+            raise ProviderUnavailable(f"ESPN fallback unavailable: {exc}") from exc
+        self.last_fallback_error = None
         self.last_source = "espn"
         return tuple(matches)
 
