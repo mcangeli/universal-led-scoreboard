@@ -3,7 +3,7 @@ import time
 
 from .soccer_display import SoccerDisplayController
 from .soccer_pixels import render_soccer_screen
-from .soccer_rotation import eligible_matches, prioritize_live
+from .soccer_rotation import eligible_matches, prioritize_live, is_live
 
 
 class ConfiguredSoccerRenderer:
@@ -36,7 +36,7 @@ class ConfiguredSoccerRenderer:
         return bool(self._games())
 
     def has_live_games(self):
-        return any(game.status.lower() in ("in", "live", "in_progress", "inprogress") for game in self._games())
+        return any(is_live(game) for game in self._games())
 
     def game(self):
         games = prioritize_live(self._games())
