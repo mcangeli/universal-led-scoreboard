@@ -1260,7 +1260,9 @@ def main():
         for league in COMPETITIONS
     }
     renderer.news = None  # Universal news is owned by the shared board scheduler.
-    board = MultiSportRenderer(renderer, nhl_renderer, news=news, settings_getter=renderer.settings, nba_renderer=nba_renderer, wnba_renderer=wnba_renderer, nfl_renderer=nfl_renderer, mls_renderer=soccer_renderers['mls'], nwsl_renderer=soccer_renderers['nwsl'], english_renderer=english_renderer)
+    board = MultiSportRenderer(renderer, nhl_renderer, news=news, settings_getter=renderer.settings, nba_renderer=nba_renderer, wnba_renderer=wnba_renderer, nfl_renderer=nfl_renderer, mls_renderer=soccer_renderers['mls'], nwsl_renderer=soccer_renderers['nwsl'])
+    # Keep the established shared frame-router constructor intact for existing integrations.
+    board.english = english_renderer
     # Apply persisted sport choice on service startup, not just after web saves.
     def game():
         return board.game()
