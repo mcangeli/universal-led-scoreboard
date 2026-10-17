@@ -46,7 +46,12 @@ def new_goals(previous: Optional[SoccerMatch], current: SoccerMatch) -> tuple[So
     if (previous.match_id, previous.league) != (current.match_id, current.league):
         return ()
     seen = {goal.event_id for goal in previous.goals}
-    return tuple(goal for goal in current.goals if goal.event_id and goal.event_id not in seen)
+    added = []
+    for goal in current.goals:
+        if goal.event_id and goal.event_id not in seen:
+            added.append(goal)
+            seen.add(goal.event_id)
+    return tuple(added)
 
 
 class GoalEventTracker:
@@ -68,6 +73,9 @@ class GoalEventTracker:
             self._seen[key] = ids
             return ()
         seen = self._seen[key]
-        added = tuple(goal for goal in match.goals if goal.event_id and goal.event_id not in seen)
-        seen.update(ids)
-        return added
+        added = []
+        for goal in match.goals:
+            if goal.event_id and goal.event_id not in seen:
+                added.append(goal)
+                seen.add(goal.event_id)
+        return tuple(added)
