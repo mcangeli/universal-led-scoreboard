@@ -25,7 +25,7 @@ class SoccerPixelTests(unittest.TestCase):
     def test_long_name_and_punctuation_do_not_crash_renderer(self):
         screen = goal_screen(self.match(), SoccerGoal("goal-2", "ATL", "D'Angelo-Smith, Jr.", "90+3'"))
         frame = render_soccer_screen(screen)
-        self.assertEqual(len(frame.ppm().split(b"\\n", 3)[-1]), 64 * 32 * 3)
+        self.assertEqual(len(frame.ppm().split(b"\n", 3)[-1]), 64 * 32 * 3)
 
     def test_nwsl_uses_same_pixel_renderer(self):
         frame = render_soccer_screen(match_screen(self.match("NWSL")))
