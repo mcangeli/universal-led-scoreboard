@@ -104,6 +104,22 @@ class ConfiguredMLBRenderer:
     def has_games(self):
         return bool(self.feed.games())
 
+    def has_live_games(self):
+        """Check the cached MLB schedule, not just the current rotation slot.
+
+        Favorite-only mode limits eligibility to configured teams; fallback and
+        all-games modes allow any live matchup to take precedence.
+        """
+        games = self.feed.games()
+        settings = self.settings()['mlb']
+        if settings['mode'] == 'favorite':
+            favorites = set(settings.get('favorite_teams',
+                                         settings.get('favorite_team', ['ATL'])))
+            return any(game.status == 'live' and
+                       (game.away in favorites or game.home in favorites)
+                       for game in games)
+        return any(game.status == 'live' for game in games)
+
     def game(self):
         return self._selection()[0]
 
