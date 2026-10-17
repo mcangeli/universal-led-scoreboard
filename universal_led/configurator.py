@@ -18,7 +18,7 @@ from .mlb_runtime import BackgroundMLBFeed,select_games
 from .web_preview import HTML as BOARD_HTML
 from .auth import Sessions, verify_password, configure_cli
 from .release import display_version
-from .matrix_settings import load_matrix_settings, validate_matrix_settings
+from .matrix_settings import load_matrix_settings, validate_matrix_settings, matrix_service_label
 
 LOGIN_HTML='''<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Scoreboard Login</title><style>body{font:16px system-ui;background:#0c1624;color:#e9eef5;max-width:400px;margin:12vh auto;padding:24px}form{background:#18283b;border:1px solid #34445b;border-radius:12px;padding:24px}input,button{box-sizing:border-box;width:100%;padding:12px;margin:8px 0;border-radius:6px}button{background:#d7b46d;border:0;font-weight:bold;cursor:pointer}
 </style></head><body><form method="post" action="/login"><h2>Universal LED Scoreboard</h2><p>Administrator login</p><label>Password<input name="password" type="password" autocomplete="current-password" required></label><button type="submit">Sign In</button><p>Use HTTPS before accessing outside a trusted LAN.</p></form></body></html>'''
@@ -860,16 +860,7 @@ def make_handler(config_dir,token,frame_provider=None,settings_callback=None,fee
                     state=result.stdout.strip() or 'unknown'
                     saved=load_matrix_settings(Path(config_dir)/'matrix.json')
                     desired=saved['enabled']
-                    if not desired and state=='inactive':
-                        label='Disabled by configuration'
-                    elif not desired and state=='active':
-                        label='Running; saved disable not yet applied'
-                    elif desired and state=='active':
-                        label='Running'
-                    elif desired and state in ('inactive','failed'):
-                        label='Not running; check service or apply saved settings'
-                    else:
-                        label='Service state: '+state
+                    label=matrix_service_label(state,desired)
                     self.send_json(200,{'state':state,'running':state=='active',
                                         'configured_enabled':desired,'label':label})
                 except (OSError,subprocess.TimeoutExpired):
