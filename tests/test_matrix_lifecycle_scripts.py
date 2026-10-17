@@ -17,6 +17,11 @@ class MatrixLifecycleScriptTests(unittest.TestCase):
         self.assertIn("Physical matrix intentionally disabled (healthy)", script)
         self.assertIn("Matrix is running despite disabled configuration", script)
 
+    def test_updater_follows_installed_branch(self):
+        script = (ROOT / "scripts" / "uls-update").read_text()
+        self.assertIn('BRANCH=$(as_owner git branch --show-current)', script)
+        self.assertNotIn("BRANCH=feature/0.1.0-core-foundation", script)
+
     def test_updater_uses_matrix_controller(self):
         script = (ROOT / "scripts" / "uls-update").read_text()
         self.assertIn('bash "$APP/scripts/uls-matrix-control" apply', script)
