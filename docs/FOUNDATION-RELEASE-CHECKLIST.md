@@ -4,7 +4,7 @@ Status: feature branch candidate, not merged or tagged.
 
 ## Verified on Raspberry Pi 3, Trixie, 64×32 matrix
 
-- [x] Full regression suite: 854 tests passed, 15 skipped (October 17, 2026).
+- [x] Full regression suite: 857 tests passed, 15 skipped (October 17, 2026).
 - [x] Dashboard update checks and installations work without shell intervention.
 - [x] Dashboard discovers remote branches and offers current release-family filtering.
 - [x] Selecting an older incompatible branch produces an unsafe-branch rejection without installing it.
@@ -13,11 +13,11 @@ Status: feature branch candidate, not merged or tagged.
 
 ## Remaining release gates
 
-- [ ] Controlled post-checkout failure verifies automatic rollback of code, privileged helpers, dashboard availability, and saved matrix state. Do not inject a failure into the production Pi without a verified recovery image and explicit test procedure.
-- [ ] Fresh-image installation in emulator mode, then physical mode on a spare card or Pi; verify password setup, services, board preview, driver, and dashboard update helpers.
+- [x] Isolated automated rollback test passed using stubbed Git, service, and matrix commands (not a live post-deployment failure test).\n- [ ] End-to-end post-deployment rollback remains unverified; do not inject failures into production without a safe recovery plan.
+- [x] Clean Raspberry Pi 5 installation in emulator mode succeeded; board display continued after reboot (reported October 17, 2026).\n- [ ] Clean physical-mode installation and driver, mapping, splash, and matrix operation verification.
 - [ ] Verify reboot persistence of matrix configuration and normal dashboard operations.
 - [ ] Review redistribution licenses, logos, feeds, and attributions.
-- [ ] Run final full regression suite and record count and skipped tests.
+- [x] Raspberry Pi 3 regression run: 857 passed, 15 skipped, no reported failures.\n- [ ] Repeat final regression after any further code changes.
 - [ ] Merge reviewed candidate into main, then tag v0.4.5. Do not tag or merge before acceptance.
 
 ## Fresh-card acceptance procedure
@@ -32,7 +32,7 @@ Use a **spare microSD card** on a supported Raspberry Pi. Do not overwrite the w
 6. For physical validation, use a **separate clean card** installed with `--mode physical` and the same branch, with correct HUB75 wiring and independent matrix power. Confirm matrix service, startup splash, saved brightness/mapping, enabled/disabled state across reboot, and dashboard update availability.
 7. Preserve a copy of test logs with secrets redacted. Record the tested Pi model, OS image, and pass/fail results before marking this gate complete.
 
-A successful upgrade of an existing installation is **not** a substitute for this test. No fresh-card validation has been reported yet.
+The clean-image Pi 5 emulator installation and reboot have been verified. This does not establish clean physical-driver installation or every Wi-Fi and update acceptance check.
 
 ## Safe downgrade policy
 
