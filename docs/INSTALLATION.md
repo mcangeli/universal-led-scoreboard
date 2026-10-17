@@ -1,6 +1,6 @@
-# Installation and first-run guide (v0.1.0 candidate)
+# Installation and first-run guide (v0.4.5 release candidate)
 
-**Status: fresh Trixie physical installation, matrix output, dashboard, and Wi-Fi scanning have been verified on a Raspberry Pi. Automatic hotspot fallback and dashboard-initiated updates remain unverified on physical hardware.** Do not wipe a working scoreboard or assume `scripts/install.sh` provisions the production layout. That script creates an older **user-level** `universal-led-scoreboard.service`. The current working installation uses **system-level** `uls-web.service` and `uls-matrix.service`.
+**Status: physical matrix operation, dashboard hardware controls, and dashboard-initiated updates have been verified on a Raspberry Pi 3 running Trixie. A fresh-image v0.4.5 installation, cross-branch rollback, and automatic hotspot recovery remain separate acceptance checks.** Do not wipe a working scoreboard or assume `scripts/install.sh` provisions the production layout. That script creates an older **user-level** `universal-led-scoreboard.service`. The current working installation uses **system-level** `uls-web.service` and `uls-matrix.service`.
 
 ## Before a clean-install test
 
@@ -13,7 +13,7 @@
 ```bash
 sudo apt update
 sudo apt install -y git
-git clone -b feature/0.1.0-core-foundation https://github.com/mcangeli/universal-led-scoreboard.git
+git clone -b feature/0.4.5-dashboard-polish https://github.com/mcangeli/universal-led-scoreboard.git
 cd universal-led-scoreboard
 python3 --version
 cat /etc/os-release
@@ -22,16 +22,16 @@ cat /etc/os-release
 Run the new **experimental** system installer from the checkout as a regular sudo-enabled user. For a Pi with a physical 64×32 HUB75 panel and compatible Adafruit HAT mapping:
 
 ```bash
-bash scripts/install-system.sh --mode physical
+bash scripts/install-system.sh --mode physical --branch feature/0.4.5-dashboard-polish
 ```
 
 For browser-only testing without an LED matrix:
 
 ```bash
-bash scripts/install-system.sh --mode emulator
+bash scripts/install-system.sh --mode emulator --branch feature/0.4.5-dashboard-polish
 ```
 
-The installer will prompt for an administrator password (minimum 12 characters), execute the tests, install restricted dashboard restart/update helpers, and enable system services. After installation, the System page provides **Check for Updates** and **Install Update** controls with a persisted update log. These features are pending fresh-image validation. The physical mode compiles the RGB matrix driver and uses default mapping `adafruit-hat`, brightness `40`, GPIO slowdown `4`. These defaults are hardware-specific and must be checked before physical testing. Keep the panel's power supply disconnected while assembling wiring.
+The installer will prompt for an administrator password (minimum 12 characters), execute the tests, install restricted dashboard restart/update helpers, and enable system services. After installation, the System page provides **Check for Updates** and **Install Update** controls with a persisted update log. Dashboard updates have been validated on the existing Pi 3 installation; fresh-image provisioning still needs independent validation. The physical mode compiles the RGB matrix driver and uses default mapping `adafruit-hat`, brightness `40`, GPIO slowdown `4`. These defaults are hardware-specific and must be checked before physical testing. Keep the panel's power supply disconnected while assembling wiring.
 
 **Do not run the legacy `scripts/install.sh`** on this installation. The existing `scripts/stage-system-services.sh` and `scripts/cutover-to-system.sh` are **migration tools**: they require a previously migrated `/opt/uls/app`, `/etc/uls/admin.json`, and, for cutover, a running legacy service. They are not suitable for a fresh image.
 
@@ -49,7 +49,7 @@ The installer will prompt for an administrator password (minimum 12 characters),
 | Management command | `/usr/local/bin/ulsctl` |
 | Browser dashboard | `http://<pi-host>:8080/` |
 
-Existing deployments can safely update and check health:
+**After the initial installation, use System → Software Updates in the dashboard** to check for updates, select a compatible branch, and install updates. The dashboard runs candidate tests and reports progress. Older or divergent branches are deliberately rejected to avoid incompatible downgrades. The following commands are for recovery and diagnosis, not normal administration:
 
 ```bash
 sudo ulsctl update
@@ -58,7 +58,7 @@ sudo ulsctl status
 sudo ulsctl logs
 ```
 
-The updater tests candidate code, fast-forwards the checked-out branch, synchronizes the installed management command, restarts both services, and checks the web endpoint. A failed update attempts rollback.
+The updater fetches and tests candidate code before changing the installed checkout, verifies branch ancestry and required helpers, synchronizes management tools, reconciles the matrix with its saved enabled state, and checks the web endpoint. A failed post-checkout update attempts rollback; early validation failures leave the running installation unchanged.
 
 ## Hardware and acceptance testing
 
