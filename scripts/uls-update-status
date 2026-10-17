@@ -9,7 +9,22 @@ owner=$(stat -c %U "$APP")
 installed=$(runuser -u "$owner" -- git rev-parse HEAD)
 branch=$(runuser -u "$owner" -- git branch --show-current)
 [[ -n "$branch" ]] || { echo '{"error":"Detached checkout"}'; exit 1; }
-# Read-only network check; never modify the installed Git checkout.
-remote=$(runuser -u "$owner" -- git ls-remote --exit-code origin "refs/heads/$branch" | awk 'NR==1{print $1}')
-[[ "$remote" =~ ^[a-f0-9]{40}$ ]] || { echo '{"error":"Remote branch unavailable"}'; exit 1; }
-printf '{"branch":"%s","installed":"%s","remote":"%s","update_available":%s}\n' "$branch" "$installed" "$remote" "$([[ "$installed" == "$remote" ]] && echo false || echo true)"
+# Read-only remote branch discovery, with no checkout modifications.
+refs=$(runuser -u "$owner" -- git ls-remote --heads origin)
+printf '%s\n' "$refs" | /usr/bin/python3 -c '
+import json, re, sys
+branch, installed = sys.argv[1:3]
+heads = {}
+for line in sys.stdin:
+    fields = line.strip().split()
+    if len(fields) != 2 or not fields[1].startswith("refs/heads/"):
+        continue
+    name = fields[1][len("refs/heads/"):]
+    if re.fullmatch(r"[A-Za-z0-9._/-]{1,160}", name) and re.fullmatch(r"[0-9a-f]{40}", fields[0]):
+        heads[name] = fields[0]
+if branch not in heads:
+    raise SystemExit("Installed branch missing from remote")
+print(json.dumps({"branch": branch, "installed": installed, "remote": heads[branch],
+                  "update_available": installed != heads[branch],
+                  "branches": sorted(heads)}))
+' "$branch" "$installed"
