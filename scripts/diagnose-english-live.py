@@ -31,6 +31,9 @@ def inspect(payload, league):
         "live_goal_ids": sum(bool(goal.event_id) for game in live for goal in game.goals),
         "halftime": sum(game.status == "halftime" for game in live),
         "final": sum(game.status in ("post", "final") for game in games),
+        "final_goal_events": sum(len(game.goals) for game in games if game.status in ("post", "final")),
+        "final_goal_ids": sum(bool(goal.event_id) for game in games if game.status in ("post", "final") for goal in game.goals),
+        "final_with_goals": sum(bool(game.goals) for game in games if game.status in ("post", "final")),
     }
 
 
@@ -63,7 +66,8 @@ def main(argv=None):
         else:
             print(f"{league}: " + " ".join(f"{k}={v}" for k, v in result["coverage"].items()))
     if not any(result.get("coverage", {}).get("live") for result in results.values()):
-        print("No live fixtures observed. Live clock and goal-event support remain unverified.")
+        print("No live fixtures observed. Live clock and live goal-event support remain unverified.")
+        print("Final-match goal fields indicate historical event coverage only, not live delivery.")
     else:
         print("Goal events are counted only when explicitly provided by the scoreboard feed.")
     return int(any("error" in result for result in results.values()))
