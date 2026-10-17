@@ -39,7 +39,7 @@ rollback() {
   fi
   install -m 755 "$APP/scripts/ulsctl" /usr/local/bin/ulsctl || true
   systemctl restart uls-web.service || true
-  if systemctl list-unit-files uls-matrix.service --no-legend 2>/dev/null | grep -q uls-matrix.service; then systemctl restart uls-matrix.service || true; fi
+  if systemctl list-unit-files uls-matrix.service --no-legend 2>/dev/null | grep -q uls-matrix.service; then bash "$APP/scripts/uls-matrix-control" apply || true; fi
   echo "Rollback attempted; check: sudo ulsctl status" >&2
   exit "$failed_status"
 }
@@ -49,6 +49,7 @@ as_owner git merge --ff-only "$NEW"
 # The operator invokes /usr/local/bin/ulsctl, not the Git checkout copy.
 install -m 755 "$APP/scripts/ulsctl" /usr/local/bin/ulsctl
 bash "$APP/scripts/install-dashboard-update-helper.sh"
+bash "$APP/scripts/install-dashboard-restart-helper.sh"
 bash "$APP/scripts/install-wifi-scan-helper.sh"
 bash "$APP/scripts/install-wifi-control-helper.sh"
 bash "$APP/scripts/provision-hotspot.sh"
@@ -56,8 +57,7 @@ systemctl restart uls-web.service
 # Always restart the physical worker: its 30-second startup splash provides
 # visible confirmation that the updated scoreboard has restarted.
 if systemctl list-unit-files uls-matrix.service --no-legend 2>/dev/null | grep -q uls-matrix.service; then
-  systemctl restart uls-matrix.service
-  systemctl is-active --quiet uls-matrix.service
+  bash "$APP/scripts/uls-matrix-control" apply
 fi
 systemctl is-active --quiet uls-web.service
 # is-active alone can succeed during a crash loop; confirm the HTTP endpoint.
