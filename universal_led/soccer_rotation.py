@@ -8,7 +8,7 @@ from collections.abc import Iterable
 from .soccer import SoccerMatch
 
 
-LIVE_STATES = frozenset(("in", "live", "in_progress", "inprogress"))
+LIVE_STATES = frozenset(("in", "live", "in_progress", "inprogress", "halftime"))
 FINAL_STATES = frozenset(("post", "final", "completed", "complete"))
 
 
