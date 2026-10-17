@@ -20,6 +20,8 @@ echo "Checking remote branches..."
 OLD=$(as_owner git rev-parse HEAD)
 OLD_BRANCH="$BRANCH"
 REQUEST=/var/lib/uls/update/target-branch
+# Consume each selection exactly once, including when validation or tests fail.
+trap 'rm -f "$REQUEST"' EXIT
 if [[ -f "$REQUEST" ]]; then
   TARGET=$(cat "$REQUEST")
   [[ "$TARGET" =~ ^[a-zA-Z0-9._/-]{1,160}$ && "$TARGET" != *..* && "$TARGET" != /* && "$TARGET" != */ ]] || { echo "Invalid requested branch" >&2; exit 1; }
@@ -36,7 +38,7 @@ if [[ "$BRANCH" == "$OLD_BRANCH" ]]; then
 fi
 STAGE=$(as_owner mktemp -d /tmp/uls-update.XXXXXXXX)
 cleanup() { as_owner git -C "$APP" worktree remove --force "$STAGE" >/dev/null 2>&1 || true; as_owner rm -rf -- "$STAGE"; }
-trap cleanup EXIT
+trap 'cleanup; rm -f "$REQUEST"' EXIT
 as_owner git worktree add --detach "$STAGE" "$NEW"
 echo "Checking candidate code before changing the installation..."
 as_owner "$VENV/bin/python" -m compileall -q "$STAGE/universal_led" "$STAGE/tests"
