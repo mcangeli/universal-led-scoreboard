@@ -40,7 +40,7 @@ def parse_scoreboard(payload: Mapping, league: str) -> tuple[SoccerMatch, ...]:
         # Some provider snapshots only include the long status name.
         state = {
             "status_in_progress": "in",
-            "status_halftime": "in",
+            "status_halftime": "halftime",
             "status_end_period": "in",
             "status_scheduled": "pre",
             "status_final": "post",
