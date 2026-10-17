@@ -30,9 +30,21 @@ class SoccerDisplayController:
         self._latest: dict[tuple[str, str], SoccerMatch] = {}
 
     def update(self, match: SoccerMatch) -> None:
-        self._latest[(match.league, match.match_id)] = match
-        for goal in self.tracker.observe(match):
-            self._pending.append(PendingGoal(match, goal))
+        key = (match.league, match.match_id)
+        self._latest[key] = match
+        # Goals only merit a celebration while play is underway. Late feed
+        # corrections after full time must not interrupt final scores.
+        from .soccer_rotation import is_live
+        new_events = self.tracker.observe(match)
+        if is_live(match):
+            for goal in new_events:
+                self._pending.append(PendingGoal(match, goal))
+        else:
+            self._pending = deque(item for item in self._pending
+                                  if (item.match.league, item.match.match_id) != key)
+            if self._active is not None and (self._active.match.league, self._active.match.match_id) == key:
+                self._active = None
+                self._expires = None
 
     def screen(self, match: SoccerMatch, now: float) -> SoccerScreen:
         """Return a goal screen while active, otherwise the latest match screen."""
