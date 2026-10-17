@@ -40,6 +40,21 @@ class EnglishLiveDiagnosticTests(unittest.TestCase):
         result = module.inspect(fixture(clock="78:00", details=[goal]), "CHAMPIONSHIP")
         self.assertEqual(result["live_goal_ids"], 1)
 
+    def test_completed_match_reports_historical_goals_without_claiming_live_delivery(self):
+        goal = {"id": "goal-1", "scoringPlay": True, "team": {"abbreviation": "H"}}
+        result = module.inspect(fixture(state="post", details=[goal]), "EPL")
+        self.assertEqual(result["live"], 0)
+        self.assertEqual(result["live_goal_events"], 0)
+        self.assertEqual(result["final"], 1)
+        self.assertEqual(result["final_goal_events"], 1)
+        self.assertEqual(result["final_goal_ids"], 1)
+        self.assertEqual(result["final_with_goals"], 1)
+
+    def test_completed_match_without_details_does_not_invent_goals(self):
+        result = module.inspect(fixture(state="post"), "LEAGUE_TWO")
+        self.assertEqual(result["final"], 1)
+        self.assertEqual(result["final_goal_events"], 0)
+
     def test_probe_uses_all_four_divisions(self):
         urls = []
         def opener(request, timeout):
