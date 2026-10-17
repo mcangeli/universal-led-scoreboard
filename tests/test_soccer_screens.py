@@ -16,6 +16,22 @@ class SoccerScreenTests(unittest.TestCase):
         self.assertIn("ATL", screen.line2)
         self.assertIn("2", screen.line2)
 
+    def test_live_match_shows_half_and_clock(self):
+        game = SoccerMatch("m1", "MLS", "ATL", "MIA", 2, 1, "in", clock="67'", period=2)
+        self.assertEqual(match_screen(game).footer, "2H 67'")
+
+    def test_live_without_clock_shows_live(self):
+        game = SoccerMatch("m1", "MLS", "ATL", "MIA", 2, 1, "in")
+        self.assertEqual(match_screen(game).footer, "LIVE")
+
+    def test_final_shows_final(self):
+        game = SoccerMatch("m1", "NWSL", "ATL", "MIA", 2, 1, "post")
+        self.assertEqual(match_screen(game).footer, "FINAL")
+
+    def test_stoppage_time_preserved(self):
+        game = SoccerMatch("m1", "MLS", "ATL", "MIA", 2, 1, "in", clock="90+3'", period=2)
+        self.assertEqual(match_screen(game).footer, "2H 90+3'")
+
     def test_nwsl_match_uses_shared_layout(self):
         self.assertEqual(match_screen(self.match("NWSL")).header, "NWSL")
 
