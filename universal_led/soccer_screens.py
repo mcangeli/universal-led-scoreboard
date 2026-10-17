@@ -63,7 +63,7 @@ def _match_status(match: SoccerMatch) -> str:
     if is_live(match):
         clock = (match.clock or "").strip()
         # ESPN may supply 45\u0027+1\u0027; use conventional 45+1\u0027 on the matrix.
-        clock = re.sub(r"^(\d+)\u0027\s*\+\s*(\d+)\u0027?$", r"\1+\2\u0027", clock)
+        clock = re.sub(r"^(\d+)'\s*\+\s*(\d+)'?$", lambda m: m.group(1) + "+" + m.group(2) + "'", clock)
         if clock:
             if match.period in (1, 2):
                 return f"{match.period}H {clock}"
