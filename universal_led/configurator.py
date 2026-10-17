@@ -18,8 +18,10 @@ from .mlb_runtime import BackgroundMLBFeed,select_games
 from .web_preview import HTML as BOARD_HTML
 from .auth import Sessions, verify_password, configure_cli
 from .release import display_version
+from .matrix_settings import load_matrix_settings, validate_matrix_settings, matrix_service_label
 
-LOGIN_HTML='''<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Scoreboard Login</title><style>body{font:16px system-ui;background:#0c1624;color:#e9eef5;max-width:400px;margin:12vh auto;padding:24px}form{background:#18283b;border:1px solid #34445b;border-radius:12px;padding:24px}input,button{box-sizing:border-box;width:100%;padding:12px;margin:8px 0;border-radius:6px}button{background:#d7b46d;border:0;font-weight:bold;cursor:pointer}</style></head><body><form method="post" action="/login"><h2>Universal LED Scoreboard</h2><p>Administrator login</p><label>Password<input name="password" type="password" autocomplete="current-password" required></label><button type="submit">Sign In</button><p>Use HTTPS before accessing outside a trusted LAN.</p></form></body></html>'''
+LOGIN_HTML='''<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Scoreboard Login</title><style>body{font:16px system-ui;background:#0c1624;color:#e9eef5;max-width:400px;margin:12vh auto;padding:24px}form{background:#18283b;border:1px solid #34445b;border-radius:12px;padding:24px}input,button{box-sizing:border-box;width:100%;padding:12px;margin:8px 0;border-radius:6px}button{background:#d7b46d;border:0;font-weight:bold;cursor:pointer}
+</style></head><body><form method="post" action="/login"><h2>Universal LED Scoreboard</h2><p>Administrator login</p><label>Password<input name="password" type="password" autocomplete="current-password" required></label><button type="submit">Sign In</button><p>Use HTTPS before accessing outside a trusted LAN.</p></form></body></html>'''
 
 HTML='''<!doctype html><html lang="en"><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
@@ -58,9 +60,34 @@ button{border:1px solid #354968}button:focus-visible,aside a:focus-visible{outli
 .item{background:#182234;border:1px solid #263650}
 .muted{color:#91a0b7}
 @media(max-width:800px){.shell{grid-template-columns:1fr}aside{border-right:0;border-bottom:1px solid #243047}aside nav{flex-direction:row;flex-wrap:wrap}aside .nav-item{width:auto}.sidebar-footer{display:flex;flex-wrap:wrap}main{padding:16px}header{padding:16px}.header-note{display:none}}
-.dashboard-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:14px;margin:14px 0 22px}.dashboard-tile{background:#0e1623;border:1px solid #263650;border-radius:9px;padding:15px;min-width:0}.dashboard-tile h3{font-size:13px;text-transform:uppercase;letter-spacing:.05em;color:#aebed1;margin:0 0 9px}.dashboard-tile p{margin:0;overflow-wrap:anywhere;line-height:1.5}.status-dot{display:inline-block;width:9px;height:9px;border-radius:50%;background:#91a0b7;margin-left:5px}.status-dot[data-state="healthy"]{background:#4cc98a}.status-dot[data-state="error"]{background:#f07b72}.sidebar-footer .board-button{display:block;text-align:center;background:#1769d2;color:white;border-radius:7px;padding:11px 12px;text-decoration:none;font-weight:700}.sidebar-footer .board-button:hover{background:#287be0}.favorite-fieldset{border:1px solid #34445b;border-radius:9px;padding:14px;margin:12px 0}.favorite-team-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:9px;max-height:310px;overflow:auto;padding:8px}.favorite-team-grid label{display:flex;align-items:center;gap:9px;padding:7px;border-radius:5px;background:#101d2c;cursor:pointer}.favorite-team-grid input{accent-color:#d7b46d}.favorite-fieldset legend{font-weight:700}.color-editor{display:grid;grid-template-columns:1fr auto auto;gap:8px 12px;align-items:center}.color-editor .color-name{font-weight:700;min-width:0;overflow-wrap:anywhere}.color-editor .color-hex{font:12px ui-monospace,monospace;color:#d7b46d}.color-channels{grid-column:1/-1;display:grid;gap:6px;width:100%}.color-channel{display:grid;grid-template-columns:44px minmax(0,1fr) 32px;align-items:center;gap:7px;font-size:12px}.color-channel input[type=range]{width:100%;min-width:0;accent-color:#d7b46d}.color-channel output{text-align:right;font-variant-numeric:tabular-nums}.color-editor input[type=color]{width:42px;height:32px}</style></head><body>
+.dashboard-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:14px;margin:14px 0 22px}.dashboard-tile{background:#0e1623;border:1px solid #263650;border-radius:9px;padding:15px;min-width:0}.dashboard-tile h3{font-size:13px;text-transform:uppercase;letter-spacing:.05em;color:#aebed1;margin:0 0 9px}.dashboard-tile p{margin:0;overflow-wrap:anywhere;line-height:1.5}.status-dot{display:inline-block;width:9px;height:9px;border-radius:50%;background:#91a0b7;margin-left:5px}.status-dot[data-state="healthy"]{background:#4cc98a}.status-dot[data-state="error"]{background:#f07b72}.sidebar-footer .board-button{display:block;text-align:center;background:#1769d2;color:white;border-radius:7px;padding:11px 12px;text-decoration:none;font-weight:700}.sidebar-footer .board-button:hover{background:#287be0}.favorite-fieldset{border:1px solid #34445b;border-radius:9px;padding:14px;margin:12px 0}.favorite-team-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:9px;max-height:310px;overflow:auto;padding:8px}.favorite-team-grid label{display:flex;align-items:center;gap:9px;padding:7px;border-radius:5px;background:#101d2c;cursor:pointer}.favorite-team-grid input{accent-color:#d7b46d}.favorite-fieldset legend{font-weight:700}.color-editor{display:grid;grid-template-columns:1fr auto auto;gap:8px 12px;align-items:center}.color-editor .color-name{font-weight:700;min-width:0;overflow-wrap:anywhere}.color-editor .color-hex{font:12px ui-monospace,monospace;color:#d7b46d}.color-channels{grid-column:1/-1;display:grid;gap:6px;width:100%}.color-channel{display:grid;grid-template-columns:44px minmax(0,1fr) 32px;align-items:center;gap:7px;font-size:12px}.color-channel input[type=range]{width:100%;min-width:0;accent-color:#d7b46d}.color-channel output{text-align:right;font-variant-numeric:tabular-nums}.color-editor input[type=color]{width:42px;height:32px}/* v0.4.5 Preview 1: dashboard hierarchy and shared shell rhythm. */
+:root{--space-1:6px;--space-2:12px;--space-3:18px;--space-4:24px;--radius-card:12px;--gold:#d7b46d}
+main{padding:clamp(16px,2.2vw,32px)}section{padding:clamp(18px,2vw,28px)}
+section h2{font-size:clamp(21px,1.6vw,26px);line-height:1.25;margin:0 0 18px}
+.page-heading{display:flex;align-items:center;justify-content:space-between;gap:20px;flex-wrap:wrap;margin-bottom:24px}
+.page-heading h2{margin:2px 0 8px}.page-heading p{margin:0}.page-kicker{font-size:11px;text-transform:uppercase;letter-spacing:.13em;color:#9db5d4;font-weight:700}
+.dashboard-board-link{display:inline-flex;align-items:center;justify-content:center;padding:11px 16px;background:#1c304a;border:1px solid #385373;border-radius:8px;color:#e9f1ff;text-decoration:none;font-weight:700;white-space:nowrap}
+.dashboard-board-link:hover{background:#263e5e}.dashboard-board-link:focus-visible{outline:2px solid #5aa2ff;outline-offset:3px}
+.dashboard-grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:14px;margin:0 0 22px}
+.dashboard-tile{padding:18px;min-height:116px;display:flex;flex-direction:column;gap:8px}.dashboard-tile h3{margin:0;color:#aebed1}.dashboard-tile p{font-size:14px;line-height:1.65}
+.dashboard-tile-primary{background:#142035;border-color:#344b6c;min-height:142px}.dashboard-tile-primary p{font-size:15px;color:#e8edf5}
+.dashboard-actions{display:flex;justify-content:space-between;align-items:center;gap:22px;border-top:1px solid var(--edge);padding-top:22px}
+.dashboard-actions h3{margin:0 0 6px;font-size:15px}.dashboard-actions p{margin:0;line-height:1.55;max-width:690px}
+.dashboard-actions button{flex-shrink:0}.dashboard-page #restart-status:empty{display:none}
+@media(max-width:680px){.dashboard-grid{grid-template-columns:1fr}.dashboard-tile,.dashboard-tile-primary{min-height:0}.dashboard-actions{align-items:stretch;flex-direction:column}.dashboard-actions button{width:100%}.dashboard-board-link{width:100%}}
+
+/* v0.4.5 Preview 2: task-oriented sport settings navigation. */
+.sports-subnav{display:flex;flex-wrap:wrap;gap:8px;margin:20px 0;border-bottom:1px solid #31415e;padding-bottom:12px}
+.sports-subnav button{background:#19263a;color:#c9d6e7;border:1px solid #354968}.sports-subnav button.active{background:#d7b46d;color:#142033;border-color:#d7b46d}
+.sports-overview-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(155px,1fr));gap:12px;margin:16px 0}
+.sport-choice{display:flex;flex-direction:column;align-items:flex-start;gap:10px;text-align:left;background:#152237;color:#edf3fc;border:1px solid #344b6c;border-radius:10px;padding:18px}
+.sport-choice:hover{background:#1d3049}.sport-choice span{font-size:12px;color:#b5c5d8}
+.sports-view[hidden],.sport-config-panel[hidden]{display:none!important}.sports-view>h3{margin-top:0}
+#sport-picker{margin:10px 0 20px;min-width:170px}.sports-savebar{display:flex;align-items:center;gap:14px;flex-wrap:wrap;margin-top:20px;padding-top:20px;border-top:1px solid #31415e}
+.rotation-summary{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:12px}.rotation-summary .item{display:block;line-height:1.65}
+</style></head><body>
 <header><div><div class="eyebrow">UNIVERSAL LED SCOREBOARD</div><h1>Scoreboard Configurator</h1><span class="muted">__PREVIEW_VERSION__</span></div><span class="header-note">64 × 32 Display Manager</span></header>
-<div class="shell"><aside><div class="side-title">DISPLAY</div><nav aria-label="Configurator navigation"><button class="nav-item" type="button" onclick="showPage('dashboard')">◫ Dashboard</button> <button class="nav-item" type="button" onclick="showPage('sports')">⚾ Sports</button> <button class="nav-item" type="button" onclick="showPage('display')">▦ Display</button> <button class="nav-item" type="button" onclick="showPage('colors')">◉ Colors</button> <button class="nav-item" type="button" onclick="showPage('news')">▤ Content &amp; News</button> <button class="nav-item" type="button" onclick="showPage('wifi')">◈ Wi-Fi</button> <button class="nav-item" type="button" onclick="showPage('system')">⚙ System</button></nav><div class="sidebar-footer"><a class="board-button" href="/board" target="_blank" rel="noopener">Open Board View ↗</a><button type="button" class="signout" onclick="logout()">Sign Out</button></div></aside><main><section data-page="dashboard"><h2>Dashboard</h2><div class="dashboard-grid"><div class="dashboard-tile"><h3>Active Configuration</h3><p id="summary">Loading settings…</p></div><div class="dashboard-tile"><h3>MLB Feed <span id="feed-indicator" class="status-dot" aria-hidden="true"></span></h3><p id="feed-status" class="muted" role="status">MLB feed loading…</p></div><div class="dashboard-tile"><h3>Current Game</h3><p id="current-game" class="muted">Waiting for game information…</p></div><div class="dashboard-tile"><h3>Feed Refresh</h3><p id="last-refresh" class="muted">Last feed update: pending</p></div></div><p class="muted">The board view refreshes independently every second.</p><button type="button" id="restart-scoreboard" onclick="restartScoreboard()">Restart Scoreboard</button><p id="restart-status" class="muted" role="status" aria-live="polite">Restart both scoreboard services and show the startup splash. This does not reboot the Pi.</p></section><section data-page="sports" hidden><h2>Sports & Rotation</h2><p>MLB is available. Other sports will be enabled as their renderers are completed.</p><fieldset class="favorite-fieldset"><legend>MLB configuration</legend><p><label><input type="checkbox" id="mlb-enabled"> Enable MLB</label></p><h3>Favorite MLB teams</h3><p class="muted">Select one or more teams. Games featuring any favorite will be included.</p><div id="favorite-teams" class="favorite-team-grid"><label><input type="checkbox" value="ARI"> Arizona Diamondbacks</label><label><input type="checkbox" value="ATL"> Atlanta Braves</label><label><input type="checkbox" value="BAL"> Baltimore Orioles</label><label><input type="checkbox" value="BOS"> Boston Red Sox</label><label><input type="checkbox" value="CHC"> Chicago Cubs</label><label><input type="checkbox" value="CWS"> Chicago White Sox</label><label><input type="checkbox" value="CIN"> Cincinnati Reds</label><label><input type="checkbox" value="CLE"> Cleveland Guardians</label><label><input type="checkbox" value="COL"> Colorado Rockies</label><label><input type="checkbox" value="DET"> Detroit Tigers</label><label><input type="checkbox" value="HOU"> Houston Astros</label><label><input type="checkbox" value="KCR"> Kansas City Royals</label><label><input type="checkbox" value="LAA"> Los Angeles Angels</label><label><input type="checkbox" value="LAD"> Los Angeles Dodgers</label><label><input type="checkbox" value="MIA"> Miami Marlins</label><label><input type="checkbox" value="MIL"> Milwaukee Brewers</label><label><input type="checkbox" value="MIN"> Minnesota Twins</label><label><input type="checkbox" value="NYM"> New York Mets</label><label><input type="checkbox" value="NYY"> New York Yankees</label><label><input type="checkbox" value="OAK"> Athletics</label><label><input type="checkbox" value="PHI"> Philadelphia Phillies</label><label><input type="checkbox" value="PIT"> Pittsburgh Pirates</label><label><input type="checkbox" value="SDP"> San Diego Padres</label><label><input type="checkbox" value="SFG"> San Francisco Giants</label><label><input type="checkbox" value="SEA"> Seattle Mariners</label><label><input type="checkbox" value="STL"> St. Louis Cardinals</label><label><input type="checkbox" value="TBR"> Tampa Bay Rays</label><label><input type="checkbox" value="TEX"> Texas Rangers</label><label><input type="checkbox" value="TOR"> Toronto Blue Jays</label><label><input type="checkbox" value="WSN"> Washington Nationals</label></div><p id="favorite-summary" class="muted" aria-live="polite"></p><p><label>MLB game selection <select id="mode"><option value="favorite">Favorites only</option><option value="fallback">Favorites, otherwise all</option><option value="all">All games</option></select></label></p><p><label>MLB rotation seconds <input id="rotation" type="number" min="1" max="3600" value="12"></label> <label>MLB feed refresh seconds <input id="refresh" type="number" min="1" max="3600" value="60"></label></p><h3>MLB live screen rotation</h3><p class="muted">Percent of each live game interval. Last Play uses the remaining time. Classic must be at least 1%.</p><p><label>Classic % <input id="live-classic" type="number" min="1" max="100" step="1" value="50"></label> <label>Matchup % <input id="live-matchup" type="number" min="0" max="99" step="1" value="25"></label></p><p id="live-play-share" class="muted" aria-live="polite">Last Play: 25%</p></fieldset><fieldset class="favorite-fieldset"><legend>NHL configuration</legend>
+<div class="shell"><aside><div class="side-title">DISPLAY</div><nav aria-label="Configurator navigation"><button class="nav-item" type="button" onclick="showPage('dashboard')">◫ Dashboard</button> <button class="nav-item" type="button" onclick="showPage('sports')">⚾ Sports</button> <button class="nav-item" type="button" onclick="showPage('display')">▦ Display</button> <button class="nav-item" type="button" onclick="showPage('colors')">◉ Colors</button> <button class="nav-item" type="button" onclick="showPage('news')">▤ Content &amp; News</button> <button class="nav-item" type="button" onclick="showPage('wifi')">◈ Wi-Fi</button> <button class="nav-item" type="button" onclick="showPage('matrix-settings')">▦ Matrix Hardware</button> <button class="nav-item" type="button" onclick="showPage('system')">⚙ System</button></nav><div class="sidebar-footer"><a class="board-button" href="/board" target="_blank" rel="noopener">Open Board View ↗</a><button type="button" class="signout" onclick="logout()">Sign Out</button></div></aside><main><section data-page="dashboard" class="dashboard-page"><div class="page-heading"><div><p class="page-kicker">Board overview</p><h2>Dashboard</h2><p class="muted">Your current display configuration and feed health at a glance.</p></div></div><div class="dashboard-grid"><div class="dashboard-tile dashboard-tile-primary"><h3>Active Configuration</h3><p id="summary">Loading settings…</p></div><div class="dashboard-tile dashboard-tile-primary"><h3>Current Game</h3><p id="current-game" class="muted">Waiting for game information…</p></div><div class="dashboard-tile"><h3>MLB Feed <span id="feed-indicator" class="status-dot" aria-hidden="true"></span></h3><p id="feed-status" class="muted" role="status">MLB feed loading…</p></div><div class="dashboard-tile"><h3>Feed Refresh</h3><p id="last-refresh" class="muted">Last feed update: pending</p></div></div><div class="dashboard-actions"><div><h3>Scoreboard controls</h3><p class="muted">Board view updates independently every second. Restarting shows the startup splash without rebooting the Pi.</p></div><button type="button" id="restart-scoreboard" onclick="restartScoreboard()">Restart Scoreboard</button></div><p id="restart-status" class="muted" role="status" aria-live="polite"></p></section><section data-page="sports" hidden><h2>Sports &amp; Rotation</h2><p class="muted">Manage active leagues, configure favorites, and review per-sport timing without scrolling through every team.</p><div class="sports-subnav" role="group" aria-label="Sports configuration views"><button type="button" data-sports-view="overview" onclick="showSportsView('overview')">Overview</button><button type="button" data-sports-view="configure" onclick="showSportsView('configure')">Configure Sport</button><button type="button" data-sports-view="rotation" onclick="showSportsView('rotation')">Rotation</button></div><div id="sports-overview" class="sports-view"><h3>Available sports</h3><div class="sports-overview-grid"><button type="button" class="sport-choice" onclick="selectSport('mlb')"><strong>MLB</strong><span id="sport-state-mlb">Configure →</span></button><button type="button" class="sport-choice" onclick="selectSport('nhl')"><strong>NHL</strong><span id="sport-state-nhl">Configure →</span></button><button type="button" class="sport-choice" onclick="selectSport('nba')"><strong>NBA</strong><span id="sport-state-nba">Configure →</span></button><button type="button" class="sport-choice" onclick="selectSport('wnba')"><strong>WNBA</strong><span id="sport-state-wnba">Configure →</span></button><button type="button" class="sport-choice" onclick="selectSport('nfl')"><strong>NFL</strong><span id="sport-state-nfl">Configure →</span></button></div><p class="muted">Choose a sport to edit its settings. Enable and disable sports within Configure Sport.</p></div><div id="sports-configure" class="sports-view" hidden><label for="sport-picker">Sport to configure</label> <select id="sport-picker" onchange="selectSport(this.value)"><option value="mlb">MLB</option><option value="nhl">NHL</option><option value="nba">NBA</option><option value="wnba">WNBA</option><option value="nfl">NFL</option></select><div class="sport-config-panel" data-sport-panel="mlb" hidden><div class="sport-config-panel" data-sport-panel="nhl" hidden><div class="sport-config-panel" data-sport-panel="nba" hidden><div class="sport-config-panel" data-sport-panel="wnba" hidden><div class="sport-config-panel" data-sport-panel="nfl" hidden><fieldset class="favorite-fieldset"><legend>MLB configuration</legend><p><label><input type="checkbox" id="mlb-enabled"> Enable MLB</label></p><h3>Favorite MLB teams</h3><p class="muted">Select one or more teams. Games featuring any favorite will be included.</p><div id="favorite-teams" class="favorite-team-grid"><label><input type="checkbox" value="ARI"> Arizona Diamondbacks</label><label><input type="checkbox" value="ATL"> Atlanta Braves</label><label><input type="checkbox" value="BAL"> Baltimore Orioles</label><label><input type="checkbox" value="BOS"> Boston Red Sox</label><label><input type="checkbox" value="CHC"> Chicago Cubs</label><label><input type="checkbox" value="CWS"> Chicago White Sox</label><label><input type="checkbox" value="CIN"> Cincinnati Reds</label><label><input type="checkbox" value="CLE"> Cleveland Guardians</label><label><input type="checkbox" value="COL"> Colorado Rockies</label><label><input type="checkbox" value="DET"> Detroit Tigers</label><label><input type="checkbox" value="HOU"> Houston Astros</label><label><input type="checkbox" value="KCR"> Kansas City Royals</label><label><input type="checkbox" value="LAA"> Los Angeles Angels</label><label><input type="checkbox" value="LAD"> Los Angeles Dodgers</label><label><input type="checkbox" value="MIA"> Miami Marlins</label><label><input type="checkbox" value="MIL"> Milwaukee Brewers</label><label><input type="checkbox" value="MIN"> Minnesota Twins</label><label><input type="checkbox" value="NYM"> New York Mets</label><label><input type="checkbox" value="NYY"> New York Yankees</label><label><input type="checkbox" value="OAK"> Athletics</label><label><input type="checkbox" value="PHI"> Philadelphia Phillies</label><label><input type="checkbox" value="PIT"> Pittsburgh Pirates</label><label><input type="checkbox" value="SDP"> San Diego Padres</label><label><input type="checkbox" value="SFG"> San Francisco Giants</label><label><input type="checkbox" value="SEA"> Seattle Mariners</label><label><input type="checkbox" value="STL"> St. Louis Cardinals</label><label><input type="checkbox" value="TBR"> Tampa Bay Rays</label><label><input type="checkbox" value="TEX"> Texas Rangers</label><label><input type="checkbox" value="TOR"> Toronto Blue Jays</label><label><input type="checkbox" value="WSN"> Washington Nationals</label></div><p id="favorite-summary" class="muted" aria-live="polite"></p><p><label>MLB game selection <select id="mode"><option value="favorite">Favorites only</option><option value="fallback">Favorites, otherwise all</option><option value="all">All games</option></select></label></p><p><label>MLB rotation seconds <input id="rotation" type="number" min="1" max="3600" value="12"></label> <label>MLB feed refresh seconds <input id="refresh" type="number" min="1" max="3600" value="60"></label></p><h3>MLB live screen rotation</h3><p class="muted">Percent of each live game interval. Last Play uses the remaining time. Classic must be at least 1%.</p><p><label>Classic % <input id="live-classic" type="number" min="1" max="100" step="1" value="50"></label> <label>Matchup % <input id="live-matchup" type="number" min="0" max="99" step="1" value="25"></label></p><p id="live-play-share" class="muted" aria-live="polite">Last Play: 25%</p></fieldset></div></div></div></div></div><fieldset class="favorite-fieldset"><legend>NHL configuration</legend>
 <p><label><input type="checkbox" id="nhl-enabled"> Enable NHL</label></p>
 <h3>Favorite NHL teams</h3><p class="muted">Select one or more teams, just like MLB.</p><p><button type="button" onclick="setNHLFavorites(NHL_TEAMS.map(team=>team[0]))">Select all</button> <button type="button" onclick="setNHLFavorites([])">Clear all</button></p><div id="nhl-teams" class="favorite-team-grid"><label><input type="checkbox" value="ANA"> Anaheim Ducks</label><label><input type="checkbox" value="BOS"> Boston Bruins</label><label><input type="checkbox" value="BUF"> Buffalo Sabres</label><label><input type="checkbox" value="CGY"> Calgary Flames</label><label><input type="checkbox" value="CAR"> Carolina Hurricanes</label><label><input type="checkbox" value="CHI"> Chicago Blackhawks</label><label><input type="checkbox" value="COL"> Colorado Avalanche</label><label><input type="checkbox" value="CBJ"> Columbus Blue Jackets</label><label><input type="checkbox" value="DAL"> Dallas Stars</label><label><input type="checkbox" value="DET"> Detroit Red Wings</label><label><input type="checkbox" value="EDM"> Edmonton Oilers</label><label><input type="checkbox" value="FLA"> Florida Panthers</label><label><input type="checkbox" value="LAK"> Los Angeles Kings</label><label><input type="checkbox" value="MIN"> Minnesota Wild</label><label><input type="checkbox" value="MTL"> Montréal Canadiens</label><label><input type="checkbox" value="NSH"> Nashville Predators</label><label><input type="checkbox" value="NJD"> New Jersey Devils</label><label><input type="checkbox" value="NYI"> New York Islanders</label><label><input type="checkbox" value="NYR"> New York Rangers</label><label><input type="checkbox" value="OTT"> Ottawa Senators</label><label><input type="checkbox" value="PHI"> Philadelphia Flyers</label><label><input type="checkbox" value="PIT"> Pittsburgh Penguins</label><label><input type="checkbox" value="SJS"> San Jose Sharks</label><label><input type="checkbox" value="SEA"> Seattle Kraken</label><label><input type="checkbox" value="STL"> St. Louis Blues</label><label><input type="checkbox" value="TBL"> Tampa Bay Lightning</label><label><input type="checkbox" value="TOR"> Toronto Maple Leafs</label><label><input type="checkbox" value="UTA"> Utah Mammoth</label><label><input type="checkbox" value="VAN"> Vancouver Canucks</label><label><input type="checkbox" value="VGK"> Vegas Golden Knights</label><label><input type="checkbox" value="WSH"> Washington Capitals</label><label><input type="checkbox" value="WPG"> Winnipeg Jets</label></div><p id="nhl-favorite-summary" class="muted" aria-live="polite"></p>
 <p><label>NHL game selection <select id="nhl-mode"><option value="favorite">Favorites only</option><option value="fallback">Favorites, otherwise all</option><option value="all">All games</option></select></label></p>
@@ -72,11 +99,10 @@ button{border:1px solid #354968}button:focus-visible,aside a:focus-visible{outli
 <div id="nfl-teams" class="favorite-team-grid"></div>
 <p><label>NFL game selection <select id="nfl-mode"><option value="favorite">Favorites only</option><option value="fallback">Favorites, otherwise all</option><option value="all">All games</option></select></label></p>
 <p><label>NFL rotation seconds <input id="nfl-rotation" type="number" min="5" max="3600" value="12"></label>
-<label>NFL feed refresh seconds <input id="nfl-refresh" type="number" min="5" max="3600" value="60"></label></p></fieldset><p class="muted">Enable one or more sports to rotate MLB, NHL, NBA, WNBA and NFL.</p>
-<p class="muted">Shared clock, weather and countdown settings are on the Display page.</p><button id="save-settings">Save Sport Settings</button><span id="settings-status" role="status"></span></section><section data-page="display" hidden><h2>Shared Display Settings</h2><fieldset class="favorite-fieldset"><legend>Time &amp; Weather</legend><label><input id="clock-enabled" type="checkbox"> Enable clock rotation</label><label>Time zone <select id="clock-timezone"><option value="America/New_York">Eastern (ET)</option><option value="America/Chicago">Central (CT)</option><option value="America/Denver">Mountain (MT)</option><option value="America/Phoenix">Arizona (MST, no DST)</option><option value="America/Los_Angeles">Pacific (PT)</option><option value="America/Anchorage">Alaska (AKT)</option><option value="Pacific/Honolulu">Hawaii (HST)</option><option value="UTC">UTC</option><option value="Europe/London">London (UK)</option><option value="Europe/Paris">Central Europe</option><option value="Asia/Tokyo">Japan</option><option value="Australia/Sydney">Sydney</option></select></label><label>Time format <select id="clock-format"><option value="12h">12-hour</option><option value="24h">24-hour</option></select></label><label>Clock every N non-live slots <input id="clock-interval" type="number" min="1" max="20" value="5"></label><label><input id="weather-enabled" type="checkbox"> Enable weather display</label><label>Weather location <input id="weather-location" type="text" placeholder="City or ZIP"></label><label>Temperature unit <select id="weather-unit"><option value="fahrenheit">Fahrenheit</option><option value="celsius">Celsius</option></select></label><label>Weather provider <select id="weather-provider"><option value="open-meteo">Open-Meteo (no key)</option><option value="openweathermap">OpenWeatherMap (API key)</option></select></label><label>OpenWeatherMap API key <input id="weather-key" type="password" autocomplete="new-password" placeholder="Leave blank to keep saved key"></label><button type="button" onclick="saveClockSettings()">Save Time &amp; Weather</button><p id="clock-status" role="status"></p></fieldset><fieldset class="favorite-fieldset"><legend>Season Opening Countdown</legend><p class="muted">Optional shared countdown. Enter an opening date with its timezone offset, such as 2027-03-25T13:00:00-04:00. Disabled until configured.</p><p><label><input id="countdown-enabled" type="checkbox"> Enable countdown</label></p><p><label>Sport <select id="countdown-sport"><option value="mlb">MLB</option><option value="nba">NBA</option><option value="nfl">NFL</option><option value="nhl">NHL</option><option value="mls">MLS</option><option value="efl">EFL</option></select></label> <label>Season <input id="countdown-season" type="text" placeholder="2027"></label></p><p><label>Date source <select id="countdown-source"><option value="manual">Manual date</option><option value="automatic">Automatic MLB schedule</option></select></label></p><p><label>Opening date/time (ISO with timezone) <input id="countdown-opening" type="text" placeholder="2027-03-25T13:00:00-04:00"></label></p><p><label>Target <select id="countdown-target"><option value="league">League opening</option><option value="favorite">Favorite team opening</option></select></label> <label>Team code <input id="countdown-team" type="text" placeholder="ATL"></label></p><p><label>Display <select id="countdown-window"><option value="offseason">Offseason only</option><option value="within_days">Within N days</option><option value="always">Always when no live game</option></select></label> <label>Days <input id="countdown-days" type="number" min="1" max="366" value="30"></label></p><button type="button" onclick="saveCountdown()">Save Countdown</button><p id="countdown-status" role="status" aria-live="polite"></p><p id="countdown-feed-status" class="muted" role="status" aria-live="polite">Schedule status not checked.</p><button type="button" onclick="refreshCountdownStatus()">Check Schedule Status</button></fieldset></section><section data-page="wifi" hidden><h2>Wi-Fi & Hotspot</h2><p id="wifi-recovery-readiness" class="muted" role="status">Checking recovery protection…</p><p id="wifi-info">Loading…</p><h4>Saved Wi-Fi connections</h4><div id="wifi-profiles" class="grid"><p class="muted">Loading saved profiles…</p></div><button type="button" onclick="refreshWifi()">Refresh Wi-Fi</button> <button type="button" onclick="scanWifi()">Scan Networks</button><p id="wifi-scan-status" class="muted" role="status" aria-live="polite">Click Scan Networks to list nearby access points.</p><div id="wifi-networks" class="grid"></div><div id="wifi-selection" hidden><h4>Selected network: <span id="wifi-selected-name"></span></h4><p id="wifi-selected-security"></p><label>Network password <input id="wifi-password" type="password" autocomplete="off" minlength="8" maxlength="63"></label><p id="wifi-connect-note" class="muted">Network switching requires the privileged helper and recovery worker. Keep Ethernet connected during initial testing.</p><button type="button" onclick="connectWifi()">Connect Wi-Fi</button><p id="wifi-connect-result" role="status"></p></div><h4>Hotspot Settings</h4><p class="muted">Change the password for Universal-LED-Setup. Changes take effect the next time the hotspot starts.</p><label>New hotspot password <input id="hotspot-password" type="password" minlength="8" maxlength="63" autocomplete="new-password"></label> <label>Confirm password <input id="hotspot-confirm" type="password" minlength="8" maxlength="63" autocomplete="new-password"></label> <button type="button" onclick="saveHotspotPassword()">Save Hotspot Password</button><p id="hotspot-result" role="status"></p></section><section data-page="system" hidden><h2>System</h2><h3>Software Updates</h3><p id="update-status" class="muted" role="status">Update status not checked.</p><button type="button" onclick="checkSoftwareUpdate()">Check for Updates</button> <button type="button" id="install-update" onclick="installSoftwareUpdate()" disabled>Install Update</button><pre id="update-log" style="white-space:pre-wrap;overflow-wrap:anywhere;max-height:220px;overflow:auto"></pre><p id="system-info">Checking server information…</p><div id="pi-info" class="grid"><p class="muted">Loading Raspberry Pi diagnostics…</p></div><p class="muted">Service status is read-only. Hardware output and remote service controls are not enabled.</p></section><div data-page="colors" hidden><section><h2>64 × 32 Live Preview</h2><canvas id="matrix" width="64" height="32"></canvas>
+<label>NFL feed refresh seconds <input id="nfl-refresh" type="number" min="5" max="3600" value="60"></label></p></fieldset></div><div id="sports-rotation" class="sports-view" hidden><h3>Rotation behavior</h3><p>Each sport currently has its own game rotation and feed refresh timing. Use Configure Sport to adjust those values for the selected league.</p><div class="rotation-summary" id="sports-rotation-summary"></div><p class="muted">Shared clock, weather, and countdown rotation settings remain under Display. A separate global rotation priority control is not supported by the current configuration schema.</p></div><div class="sports-savebar"><button id="save-settings">Save Sport Settings</button><span id="settings-status" role="status" aria-live="polite"></span></div></section><section data-page="display" hidden><h2>Shared Display Settings</h2><fieldset class="favorite-fieldset"><legend>Time &amp; Weather</legend><label><input id="clock-enabled" type="checkbox"> Enable clock rotation</label><label>Time zone <select id="clock-timezone"><option value="America/New_York">Eastern (ET)</option><option value="America/Chicago">Central (CT)</option><option value="America/Denver">Mountain (MT)</option><option value="America/Phoenix">Arizona (MST, no DST)</option><option value="America/Los_Angeles">Pacific (PT)</option><option value="America/Anchorage">Alaska (AKT)</option><option value="Pacific/Honolulu">Hawaii (HST)</option><option value="UTC">UTC</option><option value="Europe/London">London (UK)</option><option value="Europe/Paris">Central Europe</option><option value="Asia/Tokyo">Japan</option><option value="Australia/Sydney">Sydney</option></select></label><label>Time format <select id="clock-format"><option value="12h">12-hour</option><option value="24h">24-hour</option></select></label><label>Clock every N non-live slots <input id="clock-interval" type="number" min="1" max="20" value="5"></label><label><input id="weather-enabled" type="checkbox"> Enable weather display</label><label>Weather location <input id="weather-location" type="text" placeholder="City or ZIP"></label><label>Temperature unit <select id="weather-unit"><option value="fahrenheit">Fahrenheit</option><option value="celsius">Celsius</option></select></label><label>Weather provider <select id="weather-provider"><option value="open-meteo">Open-Meteo (no key)</option><option value="openweathermap">OpenWeatherMap (API key)</option></select></label><label>OpenWeatherMap API key <input id="weather-key" type="password" autocomplete="new-password" placeholder="Leave blank to keep saved key"></label><button type="button" onclick="saveClockSettings()">Save Time &amp; Weather</button><p id="clock-status" role="status"></p></fieldset><fieldset class="favorite-fieldset"><legend>Season Opening Countdown</legend><p class="muted">Optional shared countdown. Enter an opening date with its timezone offset, such as 2027-03-25T13:00:00-04:00. Disabled until configured.</p><p><label><input id="countdown-enabled" type="checkbox"> Enable countdown</label></p><p><label>Sport <select id="countdown-sport"><option value="mlb">MLB</option><option value="nba">NBA</option><option value="nfl">NFL</option><option value="nhl">NHL</option><option value="mls">MLS</option><option value="efl">EFL</option></select></label> <label>Season <input id="countdown-season" type="text" placeholder="2027"></label></p><p><label>Date source <select id="countdown-source"><option value="manual">Manual date</option><option value="automatic">Automatic MLB schedule</option></select></label></p><p><label>Opening date/time (ISO with timezone) <input id="countdown-opening" type="text" placeholder="2027-03-25T13:00:00-04:00"></label></p><p><label>Target <select id="countdown-target"><option value="league">League opening</option><option value="favorite">Favorite team opening</option></select></label> <label>Team code <input id="countdown-team" type="text" placeholder="ATL"></label></p><p><label>Display <select id="countdown-window"><option value="offseason">Offseason only</option><option value="within_days">Within N days</option><option value="always">Always when no live game</option></select></label> <label>Days <input id="countdown-days" type="number" min="1" max="366" value="30"></label></p><button type="button" onclick="saveCountdown()">Save Countdown</button><p id="countdown-status" role="status" aria-live="polite"></p><p id="countdown-feed-status" class="muted" role="status" aria-live="polite">Schedule status not checked.</p><button type="button" onclick="refreshCountdownStatus()">Check Schedule Status</button></fieldset></section><section data-page="wifi" hidden><h2>Wi-Fi & Hotspot</h2><p id="wifi-recovery-readiness" class="muted" role="status">Checking recovery protection…</p><p id="wifi-info">Loading…</p><h4>Saved Wi-Fi connections</h4><div id="wifi-profiles" class="grid"><p class="muted">Loading saved profiles…</p></div><button type="button" onclick="refreshWifi()">Refresh Wi-Fi</button> <button type="button" onclick="scanWifi()">Scan Networks</button><p id="wifi-scan-status" class="muted" role="status" aria-live="polite">Click Scan Networks to list nearby access points.</p><div id="wifi-networks" class="grid"></div><div id="wifi-selection" hidden><h4>Selected network: <span id="wifi-selected-name"></span></h4><p id="wifi-selected-security"></p><label>Network password <input id="wifi-password" type="password" autocomplete="off" minlength="8" maxlength="63"></label><p id="wifi-connect-note" class="muted">Network switching requires the privileged helper and recovery worker. Keep Ethernet connected during initial testing.</p><button type="button" onclick="connectWifi()">Connect Wi-Fi</button><p id="wifi-connect-result" role="status"></p></div><h4>Hotspot Settings</h4><p class="muted">Change the password for Universal-LED-Setup. Changes take effect the next time the hotspot starts.</p><label>New hotspot password <input id="hotspot-password" type="password" minlength="8" maxlength="63" autocomplete="new-password"></label> <label>Confirm password <input id="hotspot-confirm" type="password" minlength="8" maxlength="63" autocomplete="new-password"></label> <button type="button" onclick="saveHotspotPassword()">Save Hotspot Password</button><p id="hotspot-result" role="status"></p></section><section data-page="matrix-settings" hidden><h2>Physical Matrix Settings</h2><p class="muted">Hardware changes require restarting only uls-matrix.service. Saving does not restart the hardware automatically.</p><div class="grid"><label class="item"><input type="checkbox" id="matrix-enabled"> Enable physical matrix output</label><label class="item">Brightness (1–100%) <input type="number" id="matrix-brightness" min="1" max="100" value="40"></label><label class="item">GPIO slowdown (0–10) <input type="number" id="matrix-slowdown" min="0" max="10" value="4"></label><label class="item">Hardware mapping <select id="matrix-mapping"><option value="adafruit-hat">Adafruit HAT</option><option value="adafruit-hat-pwm">Adafruit HAT PWM</option><option value="regular">Regular</option><option value="compute-module">Compute Module</option></select></label><label class="item">Frame poll interval (seconds) <input type="number" id="matrix-interval" min="0.05" max="10" step="0.05" value="0.2"></label></div><p><button type="button" onclick="saveMatrixSettings()">Save Matrix Settings</button> <button type="button" onclick="applyMatrixSettings()">Apply Saved Settings</button></p><p id="matrix-service-state" class="muted" role="status">Checking matrix service…</p><p id="matrix-settings-status" role="status" aria-live="polite"></p></section><section data-page="system" hidden><h2>System</h2><h3>Software Updates</h3><p id="update-status" class="muted" role="status">Update status not checked.</p><label for="update-branch">Release branch</label> <select id="update-branch" onchange="updateBranchChanged()"><option value="">Check for branches…</option></select><label><input type="checkbox" id="update-show-all" onchange="renderUpdateBranches()"> Show all branches (including older releases)</label> <button type="button" onclick="checkSoftwareUpdate()">Check for Updates</button> <button type="button" id="install-update" onclick="installSoftwareUpdate()" disabled>Install Update</button><pre id="update-log" style="white-space:pre-wrap;overflow-wrap:anywhere;max-height:220px;overflow:auto"></pre><p id="system-info">Checking server information…</p><div id="pi-info" class="grid"><p class="muted">Loading Raspberry Pi diagnostics…</p></div><p class="muted">Service status is read-only. Hardware output and remote service controls are not enabled.</p></section><div data-page="colors" hidden><section><h2>64 × 32 Live Preview</h2><canvas id="matrix" width="64" height="32"></canvas>
 <p class="muted">Changes preview immediately. Saving is optional.</p><label for="preview-team">Preview favorite team: </label><select id="preview-team"></select><span id="dirty" role="status">All changes saved</span></section>
 <section><h2>Scoreboard Colors</h2><p class="muted">General display text, accents, separators and status colors.</p><div id="scoreboard" class="grid"></div></section>
-<section><h2>NHL Team Colors</h2><p class="muted">NHL colors are stored separately from MLB. Changes to the matrix display will follow in the renderer update.</p><label for="nhl-edit-team">NHL team to edit</label> <select id="nhl-edit-team"></select><div id="nhl-color-editor" class="grid"></div><button type="button" id="nhl-save-color">Save NHL Color</button> <button type="button" id="nhl-reset-color">Reset NHL Color</button> <span id="nhl-color-status" role="status"></span></section>
+<section><h2>NHL Team Colors</h2><p class="muted">NHL colors are stored separately from MLB. Use the same RGB editor for both sports.</p><label for="nhl-edit-team">NHL team to edit</label> <select id="nhl-edit-team"></select><div id="nhl-color-editor" class="grid"></div><button type="button" id="nhl-save-color">Save NHL Color</button> <button type="button" id="nhl-reset-color">Reset NHL Color</button> <span id="nhl-color-status" role="status"></span></section>
 <section><h2>MLB Team Colors</h2><p class="muted">Edit one team at a time, using the same compact controls as NHL. All other team colors remain unchanged.</p><label for="edit-team">MLB team to edit</label> <select id="edit-team"></select><div id="teams" class="grid"></div><button id="mlb-save-color" type="button">Save MLB Color</button> <button id="mlb-reset-color" type="button">Reset MLB Color</button> <span id="mlb-color-status" role="status"></span></section>
 <section><button id="save">Save Color Settings</button> <button id="cancel" type="button">Cancel Changes</button> <button id="reset" type="button">Reset Selected Color</button> <span id="status" role="status"></span>
 <p class="muted">Available on your trusted LAN. Backups are created before overwriting existing files.</p></section></div><div data-page="news" hidden><section><h2>Content &amp; News Sources</h2><p class="muted">Configure RSS or Atom feeds for future ticker use. Automatic and custom feeds display during available news rotation slots.</p><fieldset class="favorite-fieldset"><legend>Automatic Sports News</legend><p class="muted">Enable headlines separately for each sport. News appears during non-live rotation slots when that sport is enabled.</p><label><input type="checkbox" id="mlb-news-enabled"> MLB official headlines</label> <label><input type="checkbox" id="nhl-news-enabled"> NHL headlines</label> <label><input type="checkbox" id="nba-news-enabled"> NBA headlines</label> <label><input type="checkbox" id="wnba-news-enabled"> WNBA headlines</label> <label><input type="checkbox" id="nfl-news-enabled"> NFL headlines</label> <button type="button" onclick="saveAutomaticNews()">Save Automatic News</button><p id="auto-news-status" role="status"></p></fieldset><fieldset class="favorite-fieldset"><legend>News Display Timing</legend><label>Show news every N non-live slots <input id="news-interval" type="number" min="1" max="20"></label> <label>Headline duration (seconds) <input id="news-duration" type="number" min="3" max="120"></label> <label>Scroll speed (characters/second) <input id="news-speed" type="number" min="1" max="15"></label> <button type="button" onclick="saveNewsTiming()">Save News Timing</button><p id="news-timing-status" role="status"></p></fieldset><h3>Additional Custom Feeds</h3><div id="news-sources"></div><button type="button" id="news-add" onclick="addNewsSource()">Add Source</button> <button type="button" onclick="saveNewsSources()">Save News Sources</button> <p id="news-status" role="status"></p></section></div></main></div>
@@ -84,7 +110,47 @@ button{border:1px solid #354968}button:focus-visible,aside a:focus-visible{outli
 const token=__TOKEN__;
 async function logout(){await fetch('/logout',{method:'POST',headers:{'X-Configurator-Token':token}});location.href='/login'}
 let state=null,saved=null,dirty=false,selectedTeam='ATL',selected=null,settings=null;
-function showPage(name){document.querySelectorAll('.nav-item').forEach(button=>button.classList.toggle('active',button.getAttribute('onclick')==="showPage('"+name+"')"));document.querySelectorAll('[data-page]').forEach(el=>el.hidden=el.dataset.page!==name);if(name==='news'){loadNewsSources();loadAutomaticNews();loadNewsTiming()}if(name==='display'){loadClockSettings();loadCountdown();}if(name==='dashboard'||name==='system')refreshStatus();if(name==='system'){refreshSystem();refreshUpdateProgress();}if(name==='wifi'){refreshWifi();refreshWifiProfiles();refreshRecoveryReadiness();scanWifi()}}
+function showPage(name){document.querySelectorAll('.nav-item').forEach(button=>button.classList.toggle('active',button.getAttribute('onclick')==="showPage('"+name+"')"));document.querySelectorAll('[data-page]').forEach(el=>el.hidden=el.dataset.page!==name);if(name==='news'){loadNewsSources();loadAutomaticNews();loadNewsTiming()}if(name==='display'){loadClockSettings();loadCountdown();}if(name==='dashboard'||name==='system')refreshStatus();if(name==='system'){refreshSystem();refreshUpdateProgress();}if(name==='matrix-settings'){loadMatrixSettings();refreshMatrixStatus();}if(name==='wifi'){refreshWifi();refreshWifiProfiles();refreshRecoveryReadiness();scanWifi()}}
+async function refreshMatrixStatus(){
+ const el=document.getElementById('matrix-service-state');
+ try{const response=await fetch('/api/matrix-status',{cache:'no-store'});const result=await response.json();
+ if(!response.ok)throw Error(result.error||'Status unavailable');
+ el.textContent='Physical matrix: '+result.label;
+ }catch(error){el.textContent=error.message}
+}
+async function applyMatrixSettings(){
+ const status=document.getElementById('matrix-settings-status');
+ if(!confirm('Apply saved matrix settings? The physical matrix may briefly go dark.'))return;
+ status.textContent='Applying saved matrix settings…';
+ try{const response=await fetch('/api/matrix/apply',{method:'POST',headers:{'Content-Type':'application/json','X-Configurator-Token':token},body:JSON.stringify({confirm:true})});
+ const result=await response.json();if(!response.ok)throw Error(result.error||'Apply failed');
+ status.textContent='Matrix settings applied. The startup splash may appear before the live display.';
+ }catch(error){status.textContent=error.message}
+ await refreshMatrixStatus();
+}
+async function loadMatrixSettings(){
+ const status=document.getElementById('matrix-settings-status');status.textContent='Loading…';
+ try{const response=await fetch('/api/matrix-settings',{cache:'no-store'});const data=await response.json();if(!response.ok)throw Error(data.error||'Load failed');
+ document.getElementById('matrix-enabled').checked=data.enabled;
+ document.getElementById('matrix-brightness').value=data.brightness;
+ document.getElementById('matrix-slowdown').value=data.gpio_slowdown;
+ document.getElementById('matrix-mapping').value=data.mapping;
+ document.getElementById('matrix-interval').value=data.interval;
+ status.textContent='Settings loaded. Saving requires a matrix-service restart to apply.';
+ }catch(error){status.textContent=error.message}
+}
+async function saveMatrixSettings(){
+ const status=document.getElementById('matrix-settings-status');status.textContent='Saving…';
+ const data={enabled:document.getElementById('matrix-enabled').checked,
+ brightness:Number(document.getElementById('matrix-brightness').value),
+ gpio_slowdown:Number(document.getElementById('matrix-slowdown').value),
+ mapping:document.getElementById('matrix-mapping').value,
+ interval:Number(document.getElementById('matrix-interval').value)};
+ try{const response=await fetch('/api/matrix-settings',{method:'POST',headers:{'Content-Type':'application/json','X-Configurator-Token':token},body:JSON.stringify(data)});
+ const result=await response.json();if(!response.ok)throw Error(result.error||'Save failed');
+ status.textContent='Saved. Choose Apply Saved Settings to update the physical matrix.';
+ }catch(error){status.textContent=error.message}
+}
 async function loadAutomaticNews(){
  const status=document.getElementById('auto-news-status');
  try{const response=await fetch('/api/settings',{cache:'no-store'});if(!response.ok)throw Error('Unable to load sports settings');const data=await response.json();document.getElementById('mlb-news-enabled').checked=data.sports.mlb.news_enabled;document.getElementById('nhl-news-enabled').checked=data.sports.nhl.news_enabled;document.getElementById('nba-news-enabled').checked=data.sports.nba.news_enabled;document.getElementById('wnba-news-enabled').checked=data.sports.wnba.news_enabled;document.getElementById('nfl-news-enabled').checked=data.sports.nfl.news_enabled;status.textContent=''}
@@ -234,22 +300,33 @@ document.getElementById('save').onclick=async()=>{
 };
 let nhlColors=null,nhlColorDefaults=null;
 function showNHLColorEditor(){
- const code=document.getElementById('nhl-edit-team').value, target=document.getElementById('nhl-color-editor');
- target.replaceChildren();
+ const code=document.getElementById('nhl-edit-team').value;
+ const target=document.getElementById('nhl-color-editor');target.replaceChildren();
  if(!nhlColors||!nhlColors[code])return;
- const picker=document.createElement('input');picker.type='color';picker.id='nhl-color-picker';picker.value=hex(nhlColors[code]);
- const output=document.createElement('output');output.textContent=picker.value.toUpperCase();
+ const value=nhlColors[code];
+ const wrapper=document.createElement('div');wrapper.className='item color-editor';
+ const heading=document.createElement('label');heading.className='color-name';heading.textContent=code+' primary';
+ const picker=document.createElement('input');picker.type='color';picker.id='nhl-color-picker';picker.value=hex(value);
+ picker.setAttribute('aria-label',code+' primary color picker');
+ const hexValue=document.createElement('output');hexValue.className='color-hex';hexValue.textContent=hex(value).toUpperCase();
+ const channels=document.createElement('div');channels.className='color-channels';
  const sliders=[];
- const sync=value=>{nhlColors[code]=value;picker.value=hex(value);output.textContent=picker.value.toUpperCase();sliders.forEach((entry,i)=>{entry.input.value=value[i];entry.output.textContent=value[i]})};
+ const update=next=>{
+  nhlColors[code]=next;picker.value=hex(next);hexValue.textContent=hex(next).toUpperCase();
+  sliders.forEach((entry,i)=>{entry.input.value=next[i];entry.output.textContent=next[i]});
+  document.getElementById('nhl-color-status').textContent='Unsaved NHL color changes.';
+ };
  ['Red','Green','Blue'].forEach((channel,i)=>{
-  const label=document.createElement('label');label.textContent=channel+' ';
-  const input=document.createElement('input');input.type='range';input.min='0';input.max='255';input.value=nhlColors[code][i];
-  const out=document.createElement('output');out.textContent=input.value;
-  input.oninput=()=>{const next=[...nhlColors[code]];next[i]=Number(input.value);sync(next)};
-  label.append(input,out);target.append(label);sliders.push({input,output:out});
+  const row=document.createElement('label');row.className='color-channel';
+  const title=document.createElement('span');title.textContent=channel;
+  const input=document.createElement('input');input.type='range';input.min='0';input.max='255';input.step='1';input.value=value[i];
+  input.setAttribute('aria-label',code+' '+channel+' channel');
+  const output=document.createElement('output');output.textContent=value[i];
+  input.oninput=()=>{const next=[...nhlColors[code]];next[i]=Number(input.value);update(next)};
+  row.append(title,input,output);channels.append(row);sliders.push({input,output});
  });
- picker.oninput=()=>sync(rgb(picker.value));
- const label=document.createElement('label');label.textContent=code+' primary color ';label.append(picker,output);target.prepend(label);
+ picker.oninput=()=>update(rgb(picker.value));
+ wrapper.append(heading,picker,hexValue,channels);target.append(wrapper);
 }
 async function loadNHLColors(){
  const response=await fetch('/api/nhl-colors',{cache:'no-store'});if(!response.ok)throw Error('Cannot load NHL colors');
@@ -379,6 +456,35 @@ async function saveClockSettings(){
   status.textContent='Time & weather settings saved. Rotation updates automatically.';
  }catch(err){status.textContent=err.message}
 }
+
+function showSportsView(view){
+ document.querySelectorAll('.sports-subnav button').forEach(button=>{const active=button.dataset.sportsView===view;button.classList.toggle('active',active);button.setAttribute('aria-pressed',String(active))});
+ ['overview','configure','rotation'].forEach(name=>document.getElementById('sports-'+name).hidden=name!==view);
+ if(view==='rotation')refreshSportsRotationSummary();
+}
+function selectSport(name){
+ const picker=document.getElementById('sport-picker');picker.value=name;
+ document.querySelectorAll('[data-sport-panel]').forEach(panel=>panel.hidden=panel.dataset.sportPanel!==name);
+ showSportsView('configure');
+}
+function refreshSportsRotationSummary(){
+ const target=document.getElementById('sports-rotation-summary');target.replaceChildren();
+ if(!settings)return;
+ ['mlb','nhl','nba','wnba','nfl'].forEach(name=>{
+  const node=document.createElement('div');node.className='item';
+  const sport=settings[name],enabled=settings.sports[name].enabled;
+  node.textContent=name.toUpperCase()+' · '+(enabled?'Enabled':'Disabled')+' · '+sport.rotation_seconds+'s per game · '+sport.refresh_seconds+'s feed refresh';
+  target.append(node);
+ });
+}
+function refreshSportsOverview(){
+ if(!settings)return;
+ ['mlb','nhl','nba','wnba','nfl'].forEach(name=>{
+  document.getElementById('sport-state-'+name).textContent=(settings.sports[name].enabled?'Enabled':'Disabled')+' · Configure →';
+ });
+}
+showSportsView('overview');selectSport('mlb');showSportsView('overview');
+
 async function loadSettings(){
  const response=await fetch('/api/settings',{cache:'no-store'});
  if(!response.ok)throw Error('Could not load sport settings');
@@ -416,6 +522,7 @@ async function loadSettings(){
  document.getElementById('live-classic').value=mlb.live_classic_percent;
  document.getElementById('live-matchup').value=mlb.live_matchup_percent;
  updateLiveShare();
+ refreshSportsOverview();refreshSportsRotationSummary();
  document.getElementById('summary').textContent='Enabled sports: '+['mlb','nhl','nba','wnba','nfl'].filter(s=>settings.sports[s].enabled).join(', ').toUpperCase()+' | MLB favorites: '+mlb.favorite_teams.join(', ')+' | Rotation: '+mlb.mode;
 }
 function updateLiveShare(){
@@ -472,17 +579,37 @@ async function saveSportSettings(source){
 }
 document.getElementById('save-settings').onclick=()=>saveSportSettings('sports');
 let updateAvailable=false;
+let updateBranchData=null;
+function renderUpdateBranches(){
+ if(!updateBranchData)return;
+ const data=updateBranchData,picker=document.getElementById('update-branch');
+ const selected=picker.value||data.branch,showAll=document.getElementById('update-show-all').checked;
+ const branches=data.branches||[data.branch];
+ const releaseMatch=/^(feature|release)\\/(\\d+\\.\\d+)/.exec(data.branch);
+ const relevant=branches.filter(name=>name===data.branch||name==='main'||name==='master'||(releaseMatch&&name.startsWith(releaseMatch[1]+'/'+releaseMatch[2]+'.')));
+ const visible=showAll?branches:relevant;
+ picker.replaceChildren();
+ for(const name of visible){const option=document.createElement('option');option.value=name;option.textContent=name;picker.appendChild(option)}
+ picker.value=visible.includes(selected)?selected:data.branch;
+ updateAvailable=!!data.update_available||picker.value!==data.branch;
+ document.getElementById('install-update').disabled=!updateAvailable;
+}
 async function checkSoftwareUpdate(){
  const out=document.getElementById('update-status'),button=document.getElementById('install-update');
  out.textContent='Checking Git remote…';button.disabled=true;updateAvailable=false;
  try{
   const response=await fetch('/api/update/check',{cache:'no-store'});
   const raw=await response.text();let data;try{data=JSON.parse(raw)}catch(_){throw Error('Update service returned a non-JSON response (HTTP '+response.status+'). Check web service logs.')}if(!response.ok)throw Error(data.error||'Check failed');
-  updateAvailable=!!data.update_available;
+  updateBranchData=data;renderUpdateBranches();
   out.textContent='Branch: '+data.branch+' · Installed: '+data.installed.slice(0,8)+' · Remote: '+data.remote.slice(0,8)+(updateAvailable?' · Update available':' · Up to date');
   button.disabled=!updateAvailable;
  }catch(error){out.textContent='Update check failed: '+error.message}
  await refreshUpdateProgress();
+}
+function updateBranchChanged(){
+ updateAvailable=!!updateBranchData&&(document.getElementById('update-branch').value!==updateBranchData.branch||updateBranchData.update_available);
+ document.getElementById('install-update').disabled=!updateAvailable;
+ document.getElementById('update-status').textContent='Selected branch: '+document.getElementById('update-branch').value+'. Review before installing.';
 }
 async function refreshUpdateProgress(){
  try{
@@ -495,11 +622,11 @@ async function refreshUpdateProgress(){
  }catch(error){}
 }
 async function installSoftwareUpdate(){
- if(!updateAvailable||!confirm('Install the available update? Tests will run, then both services will restart.'))return;
+ if(!updateAvailable||!confirm('Install the selected branch/update? Candidate tests will run before services restart.'))return;
  const out=document.getElementById('update-status');
  document.getElementById('install-update').disabled=true;
  try{
-  const response=await fetch('/api/update/install',{method:'POST',headers:{'Content-Type':'application/json','X-Configurator-Token':token},body:JSON.stringify({confirm:true})});
+  const response=await fetch('/api/update/install',{method:'POST',headers:{'Content-Type':'application/json','X-Configurator-Token':token},body:JSON.stringify({confirm:true,branch:document.getElementById('update-branch').value})});
   const raw=await response.text();let data;try{data=JSON.parse(raw)}catch(_){throw Error('Update endpoint returned a non-JSON response (HTTP '+response.status+'). Check web service logs before retrying.')}if(!response.ok)throw Error(data.error||'Update could not start');
   out.textContent='Update scheduled. The dashboard may briefly disconnect during restart.';
   await refreshUpdateProgress();
@@ -747,6 +874,20 @@ def make_handler(config_dir,token,frame_provider=None,settings_callback=None,fee
             elif path=='/api/config':
                 try:self.send_json(200,read_config(config_dir))
                 except (OSError,ValueError) as exc:self.send_json(500,{'error':str(exc)})
+            elif path=='/api/matrix-status':
+                try:
+                    result=subprocess.run(['systemctl','is-active','uls-matrix.service'],capture_output=True,text=True,timeout=4)
+                    state=result.stdout.strip() or 'unknown'
+                    saved=load_matrix_settings(Path(config_dir)/'matrix.json')
+                    desired=saved['enabled']
+                    label=matrix_service_label(state,desired)
+                    self.send_json(200,{'state':state,'running':state=='active',
+                                        'configured_enabled':desired,'label':label})
+                except (OSError,subprocess.TimeoutExpired):
+                    self.send_json(503,{'error':'Matrix service status unavailable'})
+            elif path=='/api/matrix-settings':
+                try:self.send_json(200,load_matrix_settings(Path(config_dir)/'matrix.json'))
+                except (OSError,ValueError) as exc:self.send_json(500,{'error':str(exc)})
             elif path=='/api/nhl-colors':
                 from .config_store import read_nhl_colors
                 try:self.send_json(200,read_nhl_colors(config_dir))
@@ -844,7 +985,7 @@ def make_handler(config_dir,token,frame_provider=None,settings_callback=None,fee
                 self.send_response(204)
                 self.send_header('Set-Cookie','uls_session=; HttpOnly; SameSite=Strict; Path=/; Max-Age=0')
                 self.end_headers();return
-            if path not in ('/api/mlb-colors','/api/nhl-colors','/api/config','/api/frame','/api/settings','/api/wifi/control','/api/service/restart','/api/news-sources','/api/time-weather','/api/weather-key','/api/season-countdown','/api/update/install'):
+            if path not in ('/api/mlb-colors','/api/nhl-colors','/api/config','/api/frame','/api/settings','/api/wifi/control','/api/service/restart','/api/news-sources','/api/time-weather','/api/weather-key','/api/season-countdown','/api/update/install','/api/matrix-settings','/api/matrix/apply'):
                 self.send_error(404);return
             if not secrets.compare_digest(self.headers.get('X-Configurator-Token',''),token):
                 self.send_json(403,{'error':'Invalid session token'});return
@@ -855,6 +996,35 @@ def make_handler(config_dir,token,frame_provider=None,settings_callback=None,fee
                 if self.headers.get('Content-Type','').split(';')[0].strip()!='application/json':
                     self.send_json(415,{'error':'JSON required'});return
                 data=json.loads(self.rfile.read(size))
+                if path=='/api/matrix/apply':
+                    if data != {'confirm':True}:
+                        raise ValueError('Explicit matrix apply confirmation required')
+                    try:
+                        result=subprocess.run(['sudo','-n','/usr/local/libexec/uls-matrix-control','apply'],
+                                              capture_output=True,text=True,timeout=20)
+                    except (OSError,subprocess.TimeoutExpired):
+                        self.send_json(503,{'error':'Matrix helper unavailable or timed out'});return
+                    if result.returncode:
+                        self.send_json(503,{'error':'Matrix service apply failed. Check matrix service logs.'});return
+                    self.send_json(200,{'applied':True});return
+                if path=='/api/matrix-settings':
+                    import tempfile
+                    settings=validate_matrix_settings(data)
+                    target=Path(config_dir)/'matrix.json'
+                    temporary=None
+                    try:
+                        with tempfile.NamedTemporaryFile(mode='w',encoding='utf-8',dir=target.parent,
+                                                         prefix='.matrix-',suffix='.tmp',delete=False) as out:
+                            temporary=Path(out.name)
+                            os.chmod(out.name,0o600)
+                            json.dump(settings,out)
+                            out.flush()
+                            os.fsync(out.fileno())
+                        os.replace(temporary,target)
+                    finally:
+                        if temporary is not None:
+                            temporary.unlink(missing_ok=True)
+                    self.send_json(200,{'saved':True,'restart_required':True,'settings':settings});return
                 if path=='/api/mlb-colors':
                     from .colors import normalize_team_colors, TEAM_COLORS
                     updates=normalize_team_colors(data)
@@ -874,8 +1044,15 @@ def make_handler(config_dir,token,frame_provider=None,settings_callback=None,fee
                     save_config(config_dir,'nhl_teams',merged)
                     self.send_json(200,{'saved':True});return
                 if path=='/api/update/install':
-                    if data != {'confirm':True}:
-                        raise ValueError('Explicit update confirmation required')
+                    import re
+                    branch=data.get('branch') if isinstance(data,dict) else None
+                    if data.get('confirm') is not True or not isinstance(branch,str) or not re.fullmatch(r'[A-Za-z0-9._/-]{1,160}',branch) or '..' in branch or branch.startswith('/') or branch.endswith('/'):
+                        raise ValueError('Explicit confirmation and valid branch required')
+                    try:
+                        subprocess.run(['sudo','-n','/usr/local/libexec/uls-update-select'],
+                                       input=branch,text=True,capture_output=True,timeout=5,check=True)
+                    except (OSError,subprocess.TimeoutExpired,subprocess.CalledProcessError):
+                        self.send_json(503,{'error':'Unable to select update branch'});return
                     try:
                         subprocess.run(['sudo','-n','/usr/local/libexec/uls-update-launch'],capture_output=True,text=True,timeout=10,check=True)
                     except (OSError,subprocess.TimeoutExpired,subprocess.CalledProcessError):

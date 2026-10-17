@@ -86,19 +86,29 @@ class MultiSportRenderer:
                 available.append(sport)
         return tuple(available)
 
-    def _live_sports(self, available):
-        """Return sports with live cached games, without fetching network data."""
+    def _live_sports(self):
+        """Return enabled sports with a currently live cached game.
+
+        A renderer may expose has_live_games() for multi-game feeds. Otherwise
+        game().status is used. Unknown or failed feed checks are not treated
+        as proof of a live game.
+        """
+        with self._lock:
+            enabled = self._enabled
         live = []
-        for sport in available:
+        for sport in enabled:
             renderer = self._renderer(sport)
+            if renderer is None:
+                continue
+            checker = getattr(renderer, "has_live_games", None)
             try:
-                checker = getattr(renderer, "has_live_games", None)
                 if callable(checker):
-                    is_live = bool(checker())
+                    active = bool(checker())
                 else:
-                    game = renderer.game()
-                    is_live = game is not None and getattr(game, "status", None) == "live"
-                if is_live:
+                    getter = getattr(renderer, "game", None)
+                    game = getter() if callable(getter) else None
+                    active = getattr(game, "status", None) == "live"
+                if active:
                     live.append(sport)
             except Exception:
                 continue
@@ -108,12 +118,10 @@ class MultiSportRenderer:
         with self._lock:
             if not self._auto_rotation:
                 return self._active
-        available = self._available()
+        live = self._live_sports()
+        available = live or self._available()
         if not available:
             return None
-        live = self._live_sports(available)
-        if live:
-            available = live
         with self._lock:
             interval = self._interval
             started = self._started
@@ -125,10 +133,10 @@ class MultiSportRenderer:
         renderer = self._renderer(sport)
         if self.news is not None and self.settings_getter is not None:
             headlines = self.news.items()
-            with self._lock:
-                enabled = self._enabled
-            live_game = bool(self._live_sports(enabled)) if headlines else False
-            if headlines and not live_game:
+            if headlines and self._live_sports():
+                headlines = []
+            game = renderer.game() if headlines and renderer is not None else None
+            if headlines and (game is None or game.status != "live"):
                 grouped = {}
                 for item in headlines:
                     grouped.setdefault(item.source, []).append(item)

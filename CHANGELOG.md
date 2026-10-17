@@ -1,5 +1,27 @@
 # Changelog
 
+## v0.4.5 (release candidate, 2026-10-17)
+
+### Added and improved
+- Web dashboard matrix hardware controls for enable/disable, brightness, mapping, and GPIO slowdown, with persisted settings.
+- Browser-based software updates with branch selection, current release-family filtering, and optional full branch list.
+- Live games take precedence over scheduled games and supplemental clock, weather, and news screens across enabled sports.
+- Dashboard update progress, privileged helper installation, and saved matrix-state reconciliation.
+
+### Safety and reliability
+- Candidate code is fetched and tested before deployment; remote ancestry is checked after fetch.
+- Older or divergent branch switches are rejected; required updater and matrix helpers are checked.
+- Failed update branch requests are discarded; post-deployment rollback restores the dashboard helper installations.
+- Fresh installer defaults to main and respects saved physical-matrix state.
+
+### Validation and outstanding acceptance
+- Raspberry Pi 3: **857 tests passed, 15 skipped** on October 17, 2026.
+- Physical matrix controls, dashboard software updates, and rejection of an older unsafe branch verified on Pi 3.
+- Isolated rollback test executes the recovery function with Git/service side effects stubbed; real post-deployment rollback remains unverified.
+- Raspberry Pi 5: clean Raspberry Pi OS Trixie installation in emulator mode succeeded; dashboard/board display remained operational after reboot.
+- Installer now explicitly installs NetworkManager and permits first-run credential creation.
+- Outstanding: clean physical-driver installation, license/attribution review, and release tagging. No merge to main yet.
+
 ## v0.4.0 (2026-10-16)
 
 ### Added

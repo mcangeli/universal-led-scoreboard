@@ -5,7 +5,7 @@ APP=/opt/uls/app
 VENV=/opt/uls/venv
 CONFIG=/etc/uls
 DATA=/var/lib/uls
-BRANCH=feature/0.1.0-core-foundation
+BRANCH=main
 MODE=emulator
 RESUME=0
 REPO=https://github.com/mcangeli/universal-led-scoreboard.git
@@ -20,7 +20,7 @@ while (($#)); do
   esac
 done
 [[ "$MODE" == emulator || "$MODE" == physical ]] || { usage >&2; exit 2; }
-[[ "$BRANCH" =~ ^[a-zA-Z0-9._/-]+$ ]] || { echo "Invalid branch" >&2; exit 2; }
+[[ "$BRANCH" =~ ^[a-zA-Z0-9._/-]{1,160}$ && "$BRANCH" != *..* && "$BRANCH" != /* && "$BRANCH" != */ ]] || { echo "Invalid branch" >&2; exit 2; }
 (( EUID != 0 )) || { echo "Run as a regular sudo-enabled user, not root." >&2; exit 1; }
 [[ "$(uname -m)" == aarch64 ]] || { echo "Raspberry Pi OS 64-bit (aarch64) is required." >&2; exit 1; }
 [[ -r /etc/os-release ]] || { echo "Cannot identify operating system" >&2; exit 1; }
@@ -39,7 +39,7 @@ else
 fi
 echo "Installing prerequisites..."
 sudo apt-get update
-sudo apt-get install -y git curl python3 python3-venv python3-dev python3-pip build-essential sudo
+sudo apt-get install -y git curl python3 python3-venv python3-dev python3-pip build-essential sudo network-manager
 echo "Creating system account and directories..."
 id uls >/dev/null 2>&1 || sudo useradd --system --home-dir "$DATA" --shell /usr/sbin/nologin uls
 sudo install -d -o "$USER" -g "$(id -gn)" -m 0755 /opt/uls
@@ -62,6 +62,8 @@ if (( RESUME )); then
 else
   echo "Set administrator password (12 or more characters)."
   sudo chown "$USER:$(id -gn)" "$CONFIG"
+  # Secrets directory must be writable during first-time credential setup.
+  sudo chown "$USER:$(id -gn)" "$CONFIG/secrets"
   (cd "$APP" && "$VENV/bin/python" -m universal_led.configurator --config-dir "$CONFIG" --set-admin-password)
 fi
 sudo chown -R uls:uls "$CONFIG" "$DATA"
@@ -131,7 +133,10 @@ sudo bash "$APP/scripts/install-dashboard-restart-helper.sh"
 sudo bash "$APP/scripts/install-dashboard-update-helper.sh"
 sudo systemctl daemon-reload
 sudo systemctl enable --now uls-web.service
-if [[ "$MODE" == physical ]]; then sudo systemctl enable --now uls-matrix.service; fi
+if [[ "$MODE" == physical ]]; then
+  sudo systemctl enable uls-matrix.service
+  sudo bash "$APP/scripts/uls-matrix-control" apply
+fi
 echo "ULS installation finished. Dashboard: http://$(hostname -I | awk '{print $1}'):8080/"
 echo "Check: sudo systemctl status uls-web.service"
 if [[ "$MODE" == physical ]]; then echo "Check: sudo ulsctl health"; else echo "Emulator mode: no matrix service was installed."; fi

@@ -18,14 +18,34 @@ case "$action" in
   start|stop|restart) sudo systemctl "$action" "${units[@]}" ;;
   logs) args=(); for unit in "${units[@]}"; do args+=(-u "$unit"); done; sudo journalctl "${args[@]}" -n 80 --no-pager ;;
   health)
-    sudo systemctl is-active "${units[@]}"
-    if [[ "$target" != matrix ]]; then curl --fail --silent --output /dev/null --max-time 3 http://127.0.0.1:8080/health && echo "Web endpoint OK"; fi
-    if [[ "$target" != web ]] && systemctl list-unit-files uls-matrix.service --no-legend 2>/dev/null | grep -q uls-matrix.service; then
-      frame=/run/uls/live-frame.ppm
-      test -s "$frame" || { echo "Frame missing or empty" >&2; exit 1; }
-      age=$(( $(date +%s) - $(stat -c %Y "$frame") ))
-      if (( age < 0 || age > 15 )); then echo "Frame stale ($age seconds old)" >&2; exit 1; fi
-      echo "Frame available and fresh ($age seconds old)"
+    matrix_installed=0
+    if systemctl list-unit-files uls-matrix.service --no-legend 2>/dev/null | grep -q uls-matrix.service; then matrix_installed=1; fi
+    matrix_enabled=yes
+    if (( matrix_installed )) && [[ -f /etc/uls/matrix.json ]]; then
+      matrix_enabled=$(cd /opt/uls/app && /opt/uls/venv/bin/python -c 'from universal_led.matrix_settings import load_matrix_settings; print("yes" if load_matrix_settings("/etc/uls/matrix.json")["enabled"] else "no")')
+    fi
+    if [[ "$target" != matrix ]]; then
+      sudo systemctl is-active --quiet uls-web.service || { echo "Web service inactive" >&2; exit 1; }
+      echo "Web service active"
+      curl --fail --silent --output /dev/null --max-time 3 http://127.0.0.1:8080/health || { echo "Web endpoint unavailable" >&2; exit 1; }
+      echo "Web endpoint OK"
+    fi
+    if [[ "$target" != web ]] && (( matrix_installed )); then
+      if [[ "$matrix_enabled" == no ]]; then
+        if systemctl is-active --quiet uls-matrix.service; then
+          echo "Matrix is running despite disabled configuration; apply saved settings" >&2
+          exit 1
+        fi
+        echo "Physical matrix intentionally disabled (healthy)"
+      else
+        sudo systemctl is-active --quiet uls-matrix.service || { echo "Matrix service inactive" >&2; exit 1; }
+        echo "Matrix service active"
+        frame=/run/uls/live-frame.ppm
+        test -s "$frame" || { echo "Frame missing or empty" >&2; exit 1; }
+        age=$(( $(date +%s) - $(stat -c %Y "$frame") ))
+        if (( age < 0 || age > 15 )); then echo "Frame stale ($age seconds old)" >&2; exit 1; fi
+        echo "Frame available and fresh ($age seconds old)"
+      fi
     fi
     ;;
   *) usage >&2; exit 2 ;;

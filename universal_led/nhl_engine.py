@@ -38,6 +38,11 @@ class ConfiguredNHLRenderer:
     def has_games(self):
         return bool(select_games(self.feed.games(), self.favorite_teams, self.mode))
 
+    def has_live_games(self):
+        """Check every eligible cached game, not just the currently selected one."""
+        return any(game.status == "live" for game in
+                   select_games(self.feed.games(), self.favorite_teams, self.mode))
+
     def game(self):
         games = select_games(self.feed.games(), self.favorite_teams, self.mode)
         if not games:
