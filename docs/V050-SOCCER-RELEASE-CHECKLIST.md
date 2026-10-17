@@ -1,0 +1,40 @@
+# v0.5.0 MLS/NWSL release acceptance
+
+Status: **release candidate, not tagged or merged**. This checklist separates verified automated behavior from observations that still need to happen on a real device or live feed.
+
+## Confirmed
+
+- [x] Raspberry Pi 5 updater candidate validation: 1,018 tests, 15 skipped, no failures (reported October 17, 2026).
+- [x] MLS/NWSL 64×32 emulator layout visually reviewed, including first-half stoppage time.
+- [x] Fixture-based parser coverage for scores, statuses, goal metadata, period/clock and malformed feed fields.
+- [x] Combined MLS/NWSL fixture tests for favorites, live-game priority, halftime, scheduled and final screens.
+- [x] Regression coverage for duplicate goal IDs and halftime goal suppression.
+- [x] News controls for MLS and NWSL covered by automated tests.
+
+## Outstanding before v0.5.0 tag
+
+- [ ] Confirm current ESPN MLS and NWSL endpoint responses on a day with actual games; verify team IDs, status values, match clock, halftime and final transitions. No claim of live-feed verification until observed.
+- [ ] Observe an actual scoring event and credited scorer (including whether provider supplies `details` and stable goal IDs). Verify goal announcement timing on the board.
+- [ ] With MLS and NWSL both enabled, check favorite-team persistence after dashboard save/reload and simultaneous live-match rotation.
+- [ ] Confirm live games suppress news, weather and time; verify supplemental screens resume when all eligible live games end.
+- [ ] Check board preview and physical 64×32 matrix if available, including long names and two-digit scores.
+- [ ] Run `sudo ulsctl health`, `sudo ulsctl status` and verify both services after a restart.
+- [ ] Review release diff, license/attribution and changelog; merge into `main` and tag `v0.5.0` only after acceptance.
+
+## Device checks
+
+Use **System → Software Updates** to install the branch; candidate tests must pass before the updater changes the installation. Check **Open Board View** and sport/news settings. For diagnostics:
+
+```bash
+sudo ulsctl health
+sudo ulsctl status
+sudo ulsctl logs
+```
+
+For local regression tests from the installed app directory:
+
+```bash
+python3 -m unittest discover -s tests -p 'test_*.py'
+```
+
+If no MLS or NWSL game is live, do not mark live transitions as verified merely because a fixture test passes. Wait for a game or use a clearly labeled simulated test.
