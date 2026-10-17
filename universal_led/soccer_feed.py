@@ -128,8 +128,10 @@ def _match_period(status, competition):
         if not isinstance(source, Mapping):
             continue
         value = source.get("period")
+        if value is None:
+            continue
         try:
-            return int(value) if value is not None else None
+            return int(value)
         except (TypeError, ValueError):
             continue
     return None
