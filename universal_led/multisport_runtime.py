@@ -104,8 +104,23 @@ class MultiSportRenderer:
         renderer = self._renderer(sport)
         if self.news is not None and self.settings_getter is not None:
             headlines = self.news.items()
-            game = renderer.game() if headlines and renderer is not None else None
-            if headlines and (game is None or game.status != "live"):
+            # News must not interrupt a live game in another enabled sport.
+            live_game = False
+            if headlines:
+                with self._lock:
+                    enabled = self._enabled
+                for candidate in enabled:
+                    candidate_renderer = self._renderer(candidate)
+                    if candidate_renderer is None:
+                        continue
+                    try:
+                        game = candidate_renderer.game()
+                        if game is not None and getattr(game, "status", None) == "live":
+                            live_game = True
+                            break
+                    except Exception:
+                        continue
+            if headlines and not live_game:
                 grouped = {}
                 for item in headlines:
                     grouped.setdefault(item.source, []).append(item)
