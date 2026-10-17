@@ -1,2 +1,2 @@
 """Universal LED Scoreboard foundation."""
-__version__ = '0.4.5'
+__version__ = '0.6.0.dev0'
