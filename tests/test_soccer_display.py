@@ -44,6 +44,36 @@ class SoccerDisplayTests(unittest.TestCase):
         self.assertEqual(controller.screen(updated, 10).kind, "goal")
         self.assertEqual(controller.screen(updated, 13).kind, "match")
 
+    def test_late_goal_correction_after_final_does_not_celebrate(self):
+        controller = SoccerDisplayController()
+        first = self.match()
+        controller.update(first)
+        final = SoccerMatch("m1", "MLS", "ATL", "MIA", 2, 1, "post",
+                            (SoccerGoal("late", "ATL"),))
+        controller.update(final)
+        self.assertEqual(controller.screen(final, 10).kind, "match")
+
+    def test_final_status_clears_queued_goal(self):
+        controller = SoccerDisplayController()
+        first = self.match()
+        controller.update(first)
+        updated = self.match([SoccerGoal("g1", "ATL")])
+        controller.update(updated)
+        final = SoccerMatch("m1", "MLS", "ATL", "MIA", 2, 1, "post", updated.goals)
+        controller.update(final)
+        self.assertEqual(controller.screen(final, 10).kind, "match")
+
+    def test_final_status_stops_active_goal_screen(self):
+        controller = SoccerDisplayController()
+        first = self.match()
+        controller.update(first)
+        updated = self.match([SoccerGoal("g1", "ATL")])
+        controller.update(updated)
+        self.assertEqual(controller.screen(updated, 10).kind, "goal")
+        final = SoccerMatch("m1", "MLS", "ATL", "MIA", 2, 1, "post", updated.goals)
+        controller.update(final)
+        self.assertEqual(controller.screen(final, 11).kind, "match")
+
     def test_invalid_duration_rejected(self):
         with self.assertRaises(ValueError):
             SoccerDisplayController(goal_seconds=0)
