@@ -608,7 +608,7 @@ async function checkSoftwareUpdate(){
 }
 function updateBranchChanged(){
  updateAvailable=!!updateBranchData&&(document.getElementById('update-branch').value!==updateBranchData.branch||updateBranchData.update_available);
- document.getElementById('install-update').disabled=false;
+ document.getElementById('install-update').disabled=!updateAvailable;
  document.getElementById('update-status').textContent='Selected branch: '+document.getElementById('update-branch').value+'. Review before installing.';
 }
 async function refreshUpdateProgress(){
