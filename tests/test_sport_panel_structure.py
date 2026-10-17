@@ -4,6 +4,10 @@ import unittest
 from html.parser import HTMLParser
 
 from universal_led.configurator import HTML
+from universal_led.sport_settings import SPORTS
+
+# EFL is a reserved legacy setting, not a selectable dashboard sport.
+DASHBOARD_SPORTS = tuple(sport for sport in SPORTS if sport != 'efl')
 
 
 class PanelTree(HTMLParser):
@@ -67,13 +71,13 @@ class SportPanelStructureTests(unittest.TestCase):
     def test_all_sport_panels_are_independent(self):
         parser = DivPanelParser()
         parser.feed(HTML)
-        self.assertEqual(parser.panels, ['mlb', 'nhl', 'nba', 'wnba', 'nfl', 'mls', 'nwsl', 'english'])
+        self.assertEqual(parser.panels, list(DASHBOARD_SPORTS))
         self.assertEqual(parser.nested, [])
         self.assertEqual(parser.open_panels, [])
 
     def test_dropdown_selects_only_requested_panel(self):
         self.assertIn("panel.hidden=panel.dataset.sportPanel!==name", HTML)
-        for sport in ['mlb', 'nhl', 'nba', 'wnba', 'nfl', 'mls', 'nwsl', 'english']:
+        for sport in DASHBOARD_SPORTS:
             self.assertIn('<option value="'+sport+'">', HTML)
             self.assertIn('data-sport-panel="'+sport+'" hidden', HTML)
 
