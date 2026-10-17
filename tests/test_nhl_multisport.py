@@ -128,5 +128,41 @@ class MultiSportTests(unittest.TestCase):
 
 
 
+    def test_live_game_suppresses_news_until_final(self):
+        from types import SimpleNamespace
+
+        class FakeNews:
+            def items(self):
+                return [SimpleNamespace(source="Test", text="Headline")]
+
+        state = {"live": True}
+        now = [0]
+        self.router.clock = lambda: now[0]
+        self.router.configure_rotation(("mlb", "nhl"), interval=12)
+        self.router.news = FakeNews()
+        self.router.settings_getter = lambda: {"news": {
+            "rotation_interval": 1, "scroll_chars_per_second": 1}}
+        self.mlb.has_live_games = lambda: False
+        self.nhl.has_live_games = lambda: state["live"]
+        self.mlb.game = lambda: SimpleNamespace(status="scheduled")
+        self.nhl.game = lambda: SimpleNamespace(status="live" if state["live"] else "final")
+        self.assertEqual(self.router.frame(), "NHL")
+        state["live"] = False
+        self.assertNotEqual(self.router.frame(), "NHL")
+
+    def test_no_news_avoids_live_probe_in_single_sport_mode(self):
+        class EmptyNews:
+            def items(self):
+                return []
+
+        self.router.news = EmptyNews()
+        self.router.settings_getter = lambda: {"news": {}}
+        self.router.set_active_sport("mlb")
+        def unexpected_probe():
+            raise AssertionError("No live status probe needed without headlines")
+        self.mlb.has_live_games = unexpected_probe
+        self.assertEqual(self.router.frame(), "MLB")
+
+
 if __name__ == "__main__":
     unittest.main()
