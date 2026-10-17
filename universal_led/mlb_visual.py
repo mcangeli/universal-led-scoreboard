@@ -3,6 +3,7 @@
 Team accent colors are approximate LED-friendly palette choices, not licensed art.
 """
 from dataclasses import dataclass
+from .colors import readable_on_black
 from .mlb_refined import MLBRefinedScreen
 from .mlb_classic import BaseballGame, small, GOLD, DIM, RED
 
@@ -30,8 +31,8 @@ class MLBVisualScreen:
         for y in list(range(7,14)) + list(range(17,24)):
             for x in range(1,19):
                 fb.pixel(x,y,(0,0,0))
-        fb.text(g.away,1,7,TEAM_COLORS.get(g.away,(225,225,225)))
-        fb.text(g.home,1,17,TEAM_COLORS.get(g.home,(225,225,225)))
+        fb.text(g.away,1,7,readable_on_black(TEAM_COLORS.get(g.away,(225,225,225))))
+        fb.text(g.home,1,17,readable_on_black(TEAM_COLORS.get(g.home,(225,225,225))))
         if g.status == 'delayed':
             small(fb,'DELAY',2,27,GOLD)
         elif g.status == 'postponed':
