@@ -4,7 +4,7 @@ import json
 from pathlib import Path
 from .config_store import save_config
 
-SPORTS=('mlb','nba','wnba','nfl','nhl','mls','nwsl','efl')
+SPORTS=('mlb','nba','wnba','nfl','nhl','mls','nwsl','efl','english')
 DEFAULT_SETTINGS={
     'version':1,
     'active_sport':'mlb',
@@ -17,11 +17,13 @@ DEFAULT_SETTINGS={
     'nfl':{'favorite_teams':[],'mode':'fallback','refresh_seconds':60,'rotation_seconds':12},
     'mls':{'favorite_teams':[],'mode':'fallback','refresh_seconds':60,'rotation_seconds':12,'provider':'league_first'},
     'nwsl':{'favorite_teams':[],'mode':'fallback','refresh_seconds':60,'rotation_seconds':12,'provider':'league_first'},
+    'english':{'favorite_teams':[],'mode':'fallback','refresh_seconds':60,'rotation_seconds':12,
+               'enabled_leagues':['EPL','CHAMPIONSHIP','LEAGUE_ONE','LEAGUE_TWO']},
     'news':{'rotation_interval':5,'headline_seconds':12,'scroll_chars_per_second':3}
 }
 
 def validate_settings(value):
-    if not isinstance(value,dict) or not (set(DEFAULT_SETTINGS)-{'news','nhl','nba','wnba','nfl','mls','nwsl'} <= set(value) <= set(DEFAULT_SETTINGS)):
+    if not isinstance(value,dict) or not (set(DEFAULT_SETTINGS)-{'news','nhl','nba','wnba','nfl','mls','nwsl','english'} <= set(value) <= set(DEFAULT_SETTINGS)):
         raise ValueError('Settings require version, active_sport, sports and mlb')
     value=dict(value,news=dict(DEFAULT_SETTINGS['news']) | value.get('news',{}),
                nhl=dict(DEFAULT_SETTINGS['nhl']) | value.get('nhl',{}),
@@ -29,7 +31,8 @@ def validate_settings(value):
                wnba=dict(DEFAULT_SETTINGS['wnba']) | value.get('wnba',{}),
                nfl=dict(DEFAULT_SETTINGS['nfl']) | value.get('nfl',{}),
                mls=dict(DEFAULT_SETTINGS['mls']) | value.get('mls',{}),
-               nwsl=dict(DEFAULT_SETTINGS['nwsl']) | value.get('nwsl',{}))
+               nwsl=dict(DEFAULT_SETTINGS['nwsl']) | value.get('nwsl',{}),
+               english=dict(DEFAULT_SETTINGS['english']) | value.get('english',{}))
     if set(value['news'])!=set(DEFAULT_SETTINGS['news']):
         raise ValueError('Invalid news rotation settings')
     for key,minimum,maximum in (('rotation_interval',1,20),('headline_seconds',3,120),('scroll_chars_per_second',1,15)):
@@ -57,7 +60,7 @@ def validate_settings(value):
     value=dict(value,sports=sports)
     if not sports[value['active_sport']]['enabled']:
         raise ValueError('Active sport must be enabled')
-    if value['active_sport'] not in ('mlb','nhl','nba','wnba','nfl','mls','nwsl'):
+    if value['active_sport'] not in ('mlb','nhl','nba','wnba','nfl','mls','nwsl','english'):
         raise ValueError('This sport is not supported by the current rendering engine')
     nhl=value['nhl']
     if not isinstance(nhl,dict) or set(nhl)!=set(DEFAULT_SETTINGS['nhl']):
@@ -137,6 +140,26 @@ def validate_settings(value):
             number=soccer[key]
             if type(number) not in (int,float) or not 5<=number<=3600:
                 raise ValueError('Invalid '+league.upper()+' '+key)
+
+    english=value['english']
+    if not isinstance(english,dict) or set(english)!=set(DEFAULT_SETTINGS['english']):
+        raise ValueError('Invalid English football settings')
+    if english['mode'] not in ('favorite','fallback','all'):
+        raise ValueError('Invalid English football rotation mode')
+    from .english_football import COMPETITIONS
+    leagues=english['enabled_leagues']
+    if not isinstance(leagues,list) or len(leagues)!=len(set(leagues)) or any(
+            not isinstance(league,str) or league not in COMPETITIONS for league in leagues):
+        raise ValueError('Invalid English football divisions')
+    teams=english['favorite_teams']
+    if not isinstance(teams,list) or len(teams)!=len(set(teams)) or any(
+            not isinstance(team,str) or not team.startswith('espn:') or
+            not team[5:].isdigit() for team in teams):
+        raise ValueError('Invalid English football favorite clubs')
+    for key in ('refresh_seconds','rotation_seconds'):
+        number=english[key]
+        if type(number) not in (int,float) or not 5<=number<=3600:
+            raise ValueError('Invalid English football '+key)
 
     mlb=value['mlb']
     if not isinstance(mlb,dict):
