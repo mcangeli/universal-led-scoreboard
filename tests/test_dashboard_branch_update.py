@@ -69,6 +69,11 @@ class DashboardBranchUpdateTests(unittest.TestCase):
         )
         self.assertIn('"$BRANCH" != *..*', script)
 
+    def test_fresh_install_has_network_manager_dependency(self):
+        script = (ROOT / "scripts" / "install-system.sh").read_text()
+        self.assertIn("build-essential sudo network-manager", script)
+        self.assertLess(script.index("sudo apt-get install -y git"), script.index('sudo bash "$APP/scripts/provision-hotspot.sh"'))
+
     def test_privileged_selector_limits_input(self):
         script = (ROOT / "scripts" / "uls-update-select").read_text()
         compile(script, "uls-update-select", "exec")
