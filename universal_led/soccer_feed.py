@@ -15,12 +15,18 @@ def parse_scoreboard(payload: Mapping, league: str) -> tuple[SoccerMatch, ...]:
         raise ValueError("Unsupported soccer league")
     matches = []
     for event in payload.get("events", []) or []:
+        if not isinstance(event, Mapping):
+            continue
         competitions = event.get("competitions") or []
         if not competitions:
             continue
         competition = competitions[0]
+        if not isinstance(competition, Mapping):
+            continue
         teams = {}
         for entry in competition.get("competitors", []) or []:
+            if not isinstance(entry, Mapping):
+                continue
             side = entry.get("homeAway")
             if side in ("home", "away"):
                 team = entry.get("team") or {}
@@ -44,7 +50,7 @@ def parse_scoreboard(payload: Mapping, league: str) -> tuple[SoccerMatch, ...]:
         }.get(state, state)
         goals = []
         for detail in competition.get("details", []) or []:
-            if not detail.get("scoringPlay"):
+            if not isinstance(detail, Mapping) or not detail.get("scoringPlay"):
                 continue
             event_id = detail.get("id")
             if event_id is None:
@@ -83,7 +89,9 @@ def _score(value) -> int:
 def _credited_scorer(detail: Mapping) -> str | None:
     # Do not treat an assist provider or arbitrary participant as the scorer.
     for athlete in detail.get("athletesInvolved") or []:
-        if athlete.get("type", "").lower() in ("scorer", "goal", "goal scorer"):
+        if not isinstance(athlete, Mapping):
+            continue
+        if str(athlete.get("type") or "").lower() in ("scorer", "goal", "goal scorer"):
             person = athlete.get("athlete") or {}
             return person.get("displayName") or person.get("fullName")
     # Some feeds place the credited player directly on the scoring event.
