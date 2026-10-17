@@ -9,6 +9,7 @@ case "$1" in
   apply)
     [[ -f /etc/systemd/system/uls-matrix.service ]] || { echo "Physical matrix service not installed" >&2; exit 1; }
     # Validate configuration before touching the working matrix.
+    cd /opt/uls/app
     enabled=$(/opt/uls/venv/bin/python -c 'from universal_led.matrix_settings import load_matrix_settings; print("yes" if load_matrix_settings("/etc/uls/matrix.json")["enabled"] else "no")')
     if [[ "$enabled" == yes ]]; then
       systemctl restart uls-matrix.service
