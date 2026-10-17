@@ -58,3 +58,34 @@ def load_palette(team_file: str | Path | None = None,
     if scoreboard_file is not None:
         scoreboard.update(normalize_scoreboard_colors(json.loads(Path(scoreboard_file).read_text(encoding='utf-8'))))
     return teams,scoreboard
+
+def readable_on_black(color: RGB, minimum_luminance: float = 0.30) -> RGB:
+    """Brighten dark team colors for black LED backgrounds, preserving hue.
+
+    Uses sRGB relative luminance. Already-readable colors are unchanged.
+    This is a display transform; stored team palettes remain untouched.
+    """
+    red, green, blue = parse_rgb(color)
+    if not 0 < minimum_luminance <= 1:
+        raise ValueError("Minimum luminance must be between 0 and 1")
+
+    def luminance(rgb):
+        channels = [v / 255 for v in rgb]
+        linear = [v / 12.92 if v <= 0.04045 else ((v + 0.055) / 1.055) ** 2.4
+                  for v in channels]
+        return 0.2126 * linear[0] + 0.7152 * linear[1] + 0.0722 * linear[2]
+
+    if luminance((red, green, blue)) >= minimum_luminance:
+        return (red, green, blue)
+    # Mix toward white rather than multiplying channels: pure navy and
+    # maroon must remain visible even when two channels start at zero.
+    original = (red, green, blue)
+    low, high = 0.0, 1.0
+    for _ in range(16):
+        factor = (low + high) / 2
+        candidate = tuple(round(v + (255 - v) * factor) for v in original)
+        if luminance(candidate) < minimum_luminance:
+            low = factor
+        else:
+            high = factor
+    return tuple(round(v + (255 - v) * high) for v in original)
