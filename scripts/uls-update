@@ -3,7 +3,6 @@
 set -Eeuo pipefail
 APP=/opt/uls/app
 VENV=/opt/uls/venv
-BRANCH=feature/0.1.0-core-foundation
 REMOTE=origin
 if (( EUID != 0 )); then
   echo "Run: sudo ulsctl update" >&2
@@ -14,7 +13,8 @@ OWNER=$(stat -c %U "$APP")
 [[ "$OWNER" != root ]] || { echo "Refusing to run git as root: /opt/uls/app must belong to an installer user" >&2; exit 1; }
 as_owner() { runuser -u "$OWNER" -- "$@"; }
 cd "$APP"
-[[ "$(as_owner git branch --show-current)" == "$BRANCH" ]] || { echo "Wrong branch. Expected $BRANCH" >&2; exit 1; }
+BRANCH=$(as_owner git branch --show-current)
+[[ -n "$BRANCH" && "$BRANCH" != HEAD ]] || { echo "A checked-out branch is required for updates." >&2; exit 1; }
 [[ -z "$(as_owner git status --porcelain)" ]] || { echo "Working tree has local changes; update cancelled." >&2; exit 1; }
 echo "Fetching $REMOTE/$BRANCH..."
 as_owner git fetch "$REMOTE" "$BRANCH"
@@ -54,8 +54,7 @@ bash "$APP/scripts/install-wifi-scan-helper.sh"
 bash "$APP/scripts/install-wifi-control-helper.sh"
 bash "$APP/scripts/provision-hotspot.sh"
 systemctl restart uls-web.service
-# Always restart the physical worker: its 30-second startup splash provides
-# visible confirmation that the updated scoreboard has restarted.
+# Reconcile physical output with saved enabled state. A disabled matrix stays off.
 if systemctl list-unit-files uls-matrix.service --no-legend 2>/dev/null | grep -q uls-matrix.service; then
   bash "$APP/scripts/uls-matrix-control" apply
 fi
