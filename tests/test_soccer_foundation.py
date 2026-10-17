@@ -1,6 +1,6 @@
 import unittest
 
-from universal_led.soccer import SoccerGoal, SoccerMatch, new_goals
+from universal_led.soccer import GoalEventTracker, SoccerGoal, SoccerMatch, new_goals
 
 
 class SoccerFoundationTests(unittest.TestCase):
@@ -35,6 +35,27 @@ class SoccerFoundationTests(unittest.TestCase):
     def test_unknown_league_rejected(self):
         with self.assertRaises(ValueError):
             new_goals(None, self.match(league="UNKNOWN"))
+
+    def test_tracker_ignores_initial_feed_goals(self):
+        tracker = GoalEventTracker()
+        self.assertEqual(tracker.observe(self.match([SoccerGoal("old", "ATL")])), ())
+
+    def test_tracker_does_not_repeat_goal_after_feed_omission(self):
+        tracker = GoalEventTracker()
+        old = SoccerGoal("old", "ATL")
+        new = SoccerGoal("new", "MIA", "Scorer", "72")
+        tracker.observe(self.match([old]))
+        self.assertEqual(tracker.observe(self.match([old, new])), (new,))
+        tracker.observe(self.match([old]))
+        self.assertEqual(tracker.observe(self.match([old, new])), ())
+
+    def test_tracker_keeps_leagues_separate(self):
+        tracker = GoalEventTracker()
+        goal = SoccerGoal("same-id", "ATL")
+        tracker.observe(self.match(league="MLS"))
+        tracker.observe(self.match(league="NWSL"))
+        self.assertEqual(tracker.observe(self.match([goal], league="MLS")), (goal,))
+        self.assertEqual(tracker.observe(self.match([goal], league="NWSL")), (goal,))
 
 
 if __name__ == "__main__":
