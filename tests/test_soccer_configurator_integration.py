@@ -14,6 +14,13 @@ class SoccerConfiguratorIntegrationTests(unittest.TestCase):
                 self.assertIn('id="'+league+'-enabled"', html)
                 self.assertIn('id="'+league+'-provider"', html)
 
+    def test_soccer_team_grid_matches_existing_sports(self):
+        html = configurator.HTML
+        for league in ("mls", "nwsl"):
+            self.assertIn('id="' + league + '-teams" class="favorite-team-grid"', html)
+        self.assertIn("SOCCER_TEAMS[league].map", html)
+        self.assertIn("input:checked", html)
+
     def test_source_options_are_exposed(self):
         html = configurator.HTML
         for value in ("league_first", "league_only", "espn_only"):
@@ -23,7 +30,7 @@ class SoccerConfiguratorIntegrationTests(unittest.TestCase):
         html = configurator.HTML
         self.assertIn("next.sports[league].enabled=", html)
         self.assertIn("next[league].favorite_teams=", html)
-        self.assertIn("options.favorite_teams.join(', ')", html)
+        self.assertIn("options.favorite_teams.includes(el.value)", html)
 
     def test_soccer_workers_started_and_stopped(self):
         source = inspect.getsource(configurator.main)
