@@ -4,6 +4,7 @@ The existing matrix renderer can consume these lines with its configured fonts.
 Long names are shortened deterministically; no feed data is invented.
 """
 from dataclasses import dataclass
+import re
 
 from .soccer import SoccerGoal, SoccerMatch
 from .soccer_rotation import is_live, FINAL_STATES
@@ -61,6 +62,8 @@ def _match_status(match: SoccerMatch) -> str:
         return "HT"
     if is_live(match):
         clock = (match.clock or "").strip()
+        # ESPN may supply 45\u0027+1\u0027; use conventional 45+1\u0027 on the matrix.
+        clock = re.sub(r"^(\d+)\u0027\s*\+\s*(\d+)\u0027?$", r"\1+\2\u0027", clock)
         if clock:
             if match.period in (1, 2):
                 return f"{match.period}H {clock}"
