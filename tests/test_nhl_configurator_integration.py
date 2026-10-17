@@ -7,9 +7,18 @@ from universal_led import configurator
 class NHLConfiguratorIntegrationTests(unittest.TestCase):
     def test_shared_frame_router_used_by_publisher_and_preview(self):
         source = inspect.getsource(configurator.main)
-        self.assertIn("MultiSportRenderer(renderer, nhl_renderer, news=news, settings_getter=renderer.settings, nba_renderer=nba_renderer, wnba_renderer=wnba_renderer, nfl_renderer=nfl_renderer, mls_renderer=soccer_renderers['mls'], nwsl_renderer=soccer_renderers['nwsl'])", source)
+        self.assertIn("board = MultiSportRenderer(renderer, nhl_renderer,", source)
+        for argument in ("news=news", "settings_getter=renderer.settings",
+                         "nba_renderer=nba_renderer", "wnba_renderer=wnba_renderer",
+                         "nfl_renderer=nfl_renderer",
+                         "mls_renderer=soccer_renderers['mls']",
+                         "nwsl_renderer=soccer_renderers['nwsl']",
+                         "english_renderer=english_renderer"):
+            with self.subTest(argument=argument):
+                self.assertIn(argument, source)
         self.assertIn("nba_renderer = ConfiguredNBARenderer(nba_feed)", source)
-        self.assertIn("enabled = [sport for sport in ('mlb', 'nhl', 'nba', 'wnba', 'nfl', 'mls', 'nwsl')", source)
+        self.assertIn("enabled = [sport for sport in (", source)
+        self.assertIn("'mls', 'nwsl', 'english') if settings['sports'][sport]['enabled']", source)
         self.assertIn("nfl_renderer = ConfiguredNFLRenderer(nfl_feed)", source)
         self.assertIn("nfl_feed.stop()", source)
         self.assertIn("write_frame(frame_path, board.frame())", source)
