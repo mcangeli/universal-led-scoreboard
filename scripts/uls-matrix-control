@@ -46,8 +46,14 @@ PY
     if [[ "$enabled" == yes ]]; then
       systemctl restart "$UNIT" || failed=1
       if [[ "$failed" -eq 0 ]]; then
+        # A successful systemctl restart can precede a driver initialization crash.
+        # Require the service to survive two independent checks.
         sleep 3
         systemctl is-active --quiet "$UNIT" || failed=1
+        if [[ "$failed" -eq 0 ]]; then
+          sleep 3
+          systemctl is-active --quiet "$UNIT" || failed=1
+        fi
       fi
     else
       systemctl stop "$UNIT" || failed=1
@@ -61,9 +67,13 @@ PY
       chmod 0600 "$CONFIG"
       previous=$(/opt/uls/venv/bin/python -c 'from universal_led.matrix_settings import load_matrix_settings; print("yes" if load_matrix_settings("/etc/uls/matrix.json")["enabled"] else "no")')
       if [[ "$previous" == yes ]]; then
-        systemctl restart "$UNIT" || true
+        if ! systemctl restart "$UNIT"; then
+          echo "WARNING: rollback restart also failed; inspect journalctl -u $UNIT" >&2
+        fi
       else
-        systemctl stop "$UNIT" || true
+        if ! systemctl stop "$UNIT"; then
+          echo "WARNING: rollback stop also failed; inspect journalctl -u $UNIT" >&2
+        fi
       fi
       exit 1
     fi
