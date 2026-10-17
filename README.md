@@ -10,7 +10,7 @@ The project is being built as a multi-sport platform. **MLB, NHL, NBA, WNBA and 
 - Displays NHL games on 64×32 classic and visual layouts, including scheduled, live, intermission, overtime, shootout, final and postponed status indicators. Scheduled-game screens show team records when available.
 - Displays NBA and WNBA scheduled, live and final games with pregame tipoff times and team records when supplied by the feed.
 - Lets you select favorite MLB, NHL, NBA, WNBA and NFL teams, configure basketball, hockey and football game selection modes, and rotate enabled sports.
-- Gives **live games involving favorite teams** priority over the normal screen rotation. Other games, clock, weather and news share the remaining rotation.
+- Gives **live games in enabled sports** priority over scheduled games, final scores, clock, weather and news. Favorite-only mode limits eligible games to configured teams; fallback/all modes include other live games. Supplemental screens return when the last eligible live game ends.
 - Shows an optional clock with a timezone dropdown and 12/24-hour formats.
 - Shows optional weather with colored pixel-art icons, temperature and forecast high/low. Choose Open-Meteo or OpenWeatherMap; OpenWeatherMap requires your own API key.
 - Uses a shared universal news renderer for automatic MLB, NHL, NBA, WNBA and NFL headlines plus administrator-configured RSS/Atom sources; sources are interleaved rather than separated by sport.
@@ -45,7 +45,7 @@ The updater validates the candidate test suite before installation, synchronizes
 
 ## Configure and use
 
-After signing in, start with the MLB/NHL/NBA/WNBA/NFL team and sport rotation settings. Add your favorite team abbreviations (for example `ATL`), choose which games to display, and adjust rotation timing. When a favorite team's game is live, it takes display priority; otherwise eligible screens rotate.
+After signing in, start with the MLB/NHL/NBA/WNBA/NFL team and sport rotation settings. Add your favorite team abbreviations (for example `ATL`), choose which games to display, and adjust rotation timing. When an eligible game is live, the board prioritizes live-game screens across enabled sports and suppresses supplemental pages. In favorite-only mode, only configured teams qualify; fallback/all modes allow other live matchups. Normal rotation resumes after the final eligible live game ends.
 
 Under **Display Settings → Time & Weather**, enable the clock, choose a timezone and time format, and optionally enable weather. Enter a city or US ZIP code and choose Fahrenheit or Celsius. Open-Meteo is the default provider; for OpenWeatherMap, select it and enter your API key in the dedicated field. The key is stored separately from ordinary settings. Weather requests run in the background and use a cache, so brief network interruptions need not blank the board.
 
@@ -76,11 +76,11 @@ python3 -m universal_led --output splash.ppm
 - **Cannot sign in:** Check credentials and permissions in the deployed configuration directory (`/etc/uls` for the system installation).
 - **Cannot open the configurator:** Check that the process or service is running, verify the Pi's IP address and confirm port 8080 is reachable from your LAN.
 - **Weather does not appear:** Check that weather is enabled, the location is valid and the selected provider is configured. OpenWeatherMap requires a working API key. Background data may take a moment to load.
-- **A screen is not appearing:** A live favorite-team game intentionally takes priority. Otherwise, check which screens are enabled and allow the rotation to advance.
+- **A screen is not appearing:** An eligible live game intentionally suppresses supplemental pages and non-live games. Check the sport's favorite/fallback/all selection mode and enabled sports. Normal rotation resumes when the last eligible live game ends.
 - **Service does not start:** Run `sudo ulsctl logs` and `sudo ulsctl status` for the system installation.
 - **Changes are not visible in the browser:** Refresh the page after restarting the service.
 
-## v0.4.0 NFL verification
+## v0.4.5 development verification\n\n- Feature branch: `feature/0.4.5-dashboard-polish` (not yet tagged or merged as a production release).\n- Raspberry Pi regression suite: **816 tests passed, 15 skipped** (October 16, 2026).\n- Physical matrix observation: a live game took precedence and supplemental pages did not interrupt it.\n- Automated coverage checks cross-sport live priority, MLB cached multi-game detection, favorite/fallback/all modes, suppression of supplemental screens, and return to rotation after live games end.\n- Still to verify on the physical matrix: return to normal rotation after the last live game finishes, and dashboard update/install workflow.\n- For the installed system use `sudo ulsctl status`, `sudo ulsctl health`, and `sudo ulsctl restart`; the actual systemd units are `uls-matrix.service` and `uls-web.service`.\n\n## v0.4.0 NFL verification
 
 Configure NFL under Sports & Rotation. Enable NFL headlines separately under Content & News. The NFL feed currently targets the local game day, so Sunday's matchups may not appear on Friday. NFL RSS parsing, configuration, and game rendering are covered by regression tests. Live NFL headlines and game transitions still require physical-matrix observation.
 
