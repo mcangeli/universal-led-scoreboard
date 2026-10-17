@@ -1201,8 +1201,30 @@ def main():
     from .nfl_engine import ConfiguredNFLRenderer
     nfl_feed = BackgroundNFLFeed(NFLFeed())
     nfl_renderer = ConfiguredNFLRenderer(nfl_feed)
+    from .soccer_data import SoccerFeed, fetch_scores
+    from .soccer_runtime import BackgroundSoccerFeed
+    from .soccer_engine import ConfiguredSoccerRenderer
+    from .soccer_feed import parse_scoreboard
+    from .soccer_providers import SoccerProviderRouter
+    from .soccer_native_http import NativeLeagueProvider
+    # Native URLs are opt-in until the league-specific API contract is verified.
+    # ESPN remains a safe fallback without requiring credentials.
+    soccer_workers = {}
+    soccer_renderers = {}
+    for league in ('MLS', 'NWSL'):
+        key = league.lower()
+        native_url = os.environ.get('ULS_' + league + '_API_URL', '').strip()
+        primary = (NativeLeagueProvider(league, url_template=native_url)
+                   if native_url else None)
+        fallback = lambda day, name=league: parse_scoreboard(fetch_scores(name, day), name)
+        router = SoccerProviderRouter(league, primary=primary, fallback=fallback)
+        soccer_feed = SoccerFeed(league, provider=router)
+        soccer_renderer = ConfiguredSoccerRenderer(soccer_feed, league=league)
+        soccer_worker = BackgroundSoccerFeed(soccer_feed, on_match=soccer_renderer.update)
+        soccer_workers[key] = soccer_worker
+        soccer_renderers[key] = soccer_renderer
     renderer.news = None  # Universal news is owned by the shared board scheduler.
-    board = MultiSportRenderer(renderer, nhl_renderer, news=news, settings_getter=renderer.settings, nba_renderer=nba_renderer, wnba_renderer=wnba_renderer, nfl_renderer=nfl_renderer)
+    board = MultiSportRenderer(renderer, nhl_renderer, news=news, settings_getter=renderer.settings, nba_renderer=nba_renderer, wnba_renderer=wnba_renderer, nfl_renderer=nfl_renderer, mls_renderer=soccer_renderers['mls'], nwsl_renderer=soccer_renderers['nwsl'])
     # Apply persisted sport choice on service startup, not just after web saves.
     def game():
         return board.game()
@@ -1246,7 +1268,17 @@ def main():
         nfl_feed.feed.refresh_seconds = nfl['refresh_seconds']
         if settings['sports']['nfl']['enabled']:
             nfl_feed.start()
-        enabled = [sport for sport in ('mlb', 'nhl', 'nba', 'wnba', 'nfl') if settings['sports'][sport]['enabled']]
+        for league in ('mls', 'nwsl'):
+            options = settings[league]
+            soccer_renderers[league].configure(
+                favorite_teams=options['favorite_teams'], mode=options['mode'],
+                rotation_seconds=options['rotation_seconds'])
+            soccer_workers[league].feed.refresh_seconds = options['refresh_seconds']
+            soccer_workers[league].feed.provider.mode = options['provider']
+            soccer_workers[league].set_timezone(time_preferences['timezone'])
+            if settings['sports'][league]['enabled']:
+                soccer_workers[league].start()
+        enabled = [sport for sport in ('mlb', 'nhl', 'nba', 'wnba', 'nfl', 'mls', 'nwsl') if settings['sports'][sport]['enabled']]
         renderer.set_supplemental_stride(len(enabled))
         board.configure_rotation(enabled, interval=settings['mlb']['rotation_seconds'],
                                  preferred=settings['active_sport'])
@@ -1295,5 +1327,7 @@ def main():
         nba_feed.stop()
         wnba_feed.stop()
         nfl_feed.stop()
+        for worker in soccer_workers.values():
+            worker.stop()
 if __name__=='__main__':
     main()
