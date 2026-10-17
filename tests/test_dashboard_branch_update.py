@@ -35,6 +35,11 @@ class DashboardBranchUpdateTests(unittest.TestCase):
         self.assertLess(script.index('as_owner git fetch "$REMOTE" "$BRANCH"'), script.index('as_owner git merge-base --is-ancestor'))
         self.assertIn('as_owner git rev-parse FETCH_HEAD', script)
 
+    def test_branch_request_cleared_on_early_failure(self):
+        script = (ROOT / "scripts" / "uls-update").read_text()
+        self.assertLess(script.index("trap 'rm -f"), script.index("as_owner git ls-remote"))
+        self.assertIn('cleanup; rm -f "$REQUEST"', script)
+
     def test_privileged_selector_limits_input(self):
         script = (ROOT / "scripts" / "uls-update-select").read_text()
         compile(script, "uls-update-select", "exec")
