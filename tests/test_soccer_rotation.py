@@ -31,6 +31,14 @@ class SoccerRotationTests(unittest.TestCase):
         games = [match(), match(home="NY", away="SEA")]
         self.assertEqual(eligible_matches(games, favorites=["sea"], mode="favorites"), (games[1],))
 
+    def test_favorites_mode_without_selected_teams_shows_all(self):
+        games = [match(), match(home="NY")]
+        self.assertEqual(eligible_matches(games, favorites=[], mode="favorites"), tuple(games))
+
+    def test_fallback_mode_without_selected_teams_shows_all(self):
+        games = [match(), match(home="NY")]
+        self.assertEqual(eligible_matches(games, favorites=[], mode="fallback"), tuple(games))
+
     def test_favorites_only_no_match_returns_empty(self):
         self.assertEqual(eligible_matches([match()], favorites=["NY"], mode="favorites"), ())
 
