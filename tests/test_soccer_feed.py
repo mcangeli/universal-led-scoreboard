@@ -68,6 +68,33 @@ class SoccerFeedTests(unittest.TestCase):
         self.assertEqual(game.status, "halftime")
         self.assertTrue(is_live(game))
 
+    def test_espn_in_state_with_halftime_name_shows_ht(self):
+        from universal_led.soccer_screens import match_screen
+        payload = fixture()
+        payload["events"][0]["status"]["type"] = {
+            "state": "in", "name": "STATUS_HALFTIME", "shortDetail": "HT"
+        }
+        game, = parse_scoreboard(payload, "MLS")
+        self.assertEqual(game.status, "halftime")
+        self.assertEqual(match_screen(game).footer, "HT")
+
+    def test_espn_in_state_with_halftime_description_shows_ht(self):
+        from universal_led.soccer_screens import match_screen
+        payload = fixture()
+        payload["events"][0]["status"]["type"] = {
+            "state": "in", "name": "STATUS_IN_PROGRESS", "description": "Halftime"
+        }
+        game, = parse_scoreboard(payload, "NWSL")
+        self.assertEqual(match_screen(game).footer, "HT")
+
+    def test_in_progress_not_mistaken_for_halftime(self):
+        payload = fixture()
+        payload["events"][0]["status"]["type"] = {
+            "state": "in", "name": "STATUS_IN_PROGRESS", "shortDetail": "45'"
+        }
+        game, = parse_scoreboard(payload, "MLS")
+        self.assertEqual(game.status, "in")
+
     def test_nwsl_uses_same_parser(self):
         match, = parse_scoreboard(fixture(), "NWSL")
         self.assertEqual(match.league, "NWSL")
