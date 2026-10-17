@@ -27,6 +27,18 @@ class SoccerPixelTests(unittest.TestCase):
         frame = render_soccer_screen(screen)
         self.assertEqual(len(frame.ppm().split(b"\n", 3)[-1]), 64 * 32 * 3)
 
+    def test_minute_mark_draws_pixels(self):
+        from universal_led.soccer_screens import SoccerScreen
+        plain = SoccerScreen("match", "", "", "", "1H 30")
+        marked = SoccerScreen("match", "", "", "", "1H 30'")
+        self.assertNotEqual(render_soccer_screen(plain).pixels, render_soccer_screen(marked).pixels)
+
+    def test_stoppage_plus_draws_pixels(self):
+        from universal_led.soccer_screens import SoccerScreen
+        plain = SoccerScreen("match", "", "", "", "90 3'")
+        marked = SoccerScreen("match", "", "", "", "90+3'")
+        self.assertNotEqual(render_soccer_screen(plain).pixels, render_soccer_screen(marked).pixels)
+
     def test_nwsl_uses_same_pixel_renderer(self):
         frame = render_soccer_screen(match_screen(self.match("NWSL")))
         self.assertEqual(frame.width, 64)
