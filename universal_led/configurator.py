@@ -115,7 +115,7 @@ async function refreshMatrixStatus(){
  const el=document.getElementById('matrix-service-state');
  try{const response=await fetch('/api/matrix-status',{cache:'no-store'});const result=await response.json();
  if(!response.ok)throw Error(result.error||'Status unavailable');
- el.textContent='Physical matrix service: '+result.state;
+ el.textContent='Physical matrix: '+result.label;
  }catch(error){el.textContent=error.message}
 }
 async function applyMatrixSettings(){
@@ -858,7 +858,20 @@ def make_handler(config_dir,token,frame_provider=None,settings_callback=None,fee
                 try:
                     result=subprocess.run(['systemctl','is-active','uls-matrix.service'],capture_output=True,text=True,timeout=4)
                     state=result.stdout.strip() or 'unknown'
-                    self.send_json(200,{'state':state,'running':state=='active'})
+                    saved=load_matrix_settings(Path(config_dir)/'matrix.json')
+                    desired=saved['enabled']
+                    if not desired and state=='inactive':
+                        label='Disabled by configuration'
+                    elif not desired and state=='active':
+                        label='Running; saved disable not yet applied'
+                    elif desired and state=='active':
+                        label='Running'
+                    elif desired and state in ('inactive','failed'):
+                        label='Not running; check service or apply saved settings'
+                    else:
+                        label='Service state: '+state
+                    self.send_json(200,{'state':state,'running':state=='active',
+                                        'configured_enabled':desired,'label':label})
                 except (OSError,subprocess.TimeoutExpired):
                     self.send_json(503,{'error':'Matrix service status unavailable'})
             elif path=='/api/matrix-settings':
