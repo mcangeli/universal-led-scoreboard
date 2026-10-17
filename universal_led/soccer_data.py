@@ -10,7 +10,9 @@ from urllib.request import Request, urlopen
 
 from .soccer_feed import parse_scoreboard
 
-LEAGUE_SLUGS = {"MLS": "usa.1", "NWSL": "usa.nwsl"}
+LEAGUE_SLUGS = {"MLS": "usa.1", "NWSL": "usa.nwsl",
+                "EPL": "eng.1", "CHAMPIONSHIP": "eng.2",
+                "LEAGUE_ONE": "eng.3", "LEAGUE_TWO": "eng.4"}
 API_BASE = "https://site.api.espn.com/apis/site/v2/sports/soccer"
 
 
