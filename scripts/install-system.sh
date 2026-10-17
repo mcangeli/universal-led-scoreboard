@@ -20,7 +20,7 @@ while (($#)); do
   esac
 done
 [[ "$MODE" == emulator || "$MODE" == physical ]] || { usage >&2; exit 2; }
-[[ "$BRANCH" =~ ^[a-zA-Z0-9._/-]+$ ]] || { echo "Invalid branch" >&2; exit 2; }
+[[ "$BRANCH" =~ ^[a-zA-Z0-9._/-]{1,160}$ && "$BRANCH" != *..* && "$BRANCH" != /* && "$BRANCH" != */ ]] || { echo "Invalid branch" >&2; exit 2; }
 (( EUID != 0 )) || { echo "Run as a regular sudo-enabled user, not root." >&2; exit 1; }
 [[ "$(uname -m)" == aarch64 ]] || { echo "Raspberry Pi OS 64-bit (aarch64) is required." >&2; exit 1; }
 [[ -r /etc/os-release ]] || { echo "Cannot identify operating system" >&2; exit 1; }
@@ -62,6 +62,8 @@ if (( RESUME )); then
 else
   echo "Set administrator password (12 or more characters)."
   sudo chown "$USER:$(id -gn)" "$CONFIG"
+  # Secrets directory must be writable during first-time credential setup.
+  sudo chown "$USER:$(id -gn)" "$CONFIG/secrets"
   (cd "$APP" && "$VENV/bin/python" -m universal_led.configurator --config-dir "$CONFIG" --set-admin-password)
 fi
 sudo chown -R uls:uls "$CONFIG" "$DATA"
