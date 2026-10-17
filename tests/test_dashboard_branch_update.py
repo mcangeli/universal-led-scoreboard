@@ -40,6 +40,17 @@ class DashboardBranchUpdateTests(unittest.TestCase):
         self.assertLess(script.index("trap 'rm -f"), script.index("as_owner git ls-remote"))
         self.assertIn('cleanup; rm -f "$REQUEST"', script)
 
+    def test_installer_defaults_to_main_and_applies_matrix_config(self):
+        script = (ROOT / "scripts" / "install-system.sh").read_text()
+        self.assertIn("BRANCH=main", script)
+        self.assertIn('sudo bash "$APP/scripts/uls-matrix-control" apply', script)
+
+    def test_rollback_restores_privileged_helpers(self):
+        script = (ROOT / "scripts" / "uls-update").read_text()
+        rollback = script.split("rollback() {", 1)[1].split("trap rollback ERR", 1)[0]
+        self.assertIn('install-dashboard-update-helper.sh', rollback)
+        self.assertIn('install-dashboard-restart-helper.sh', rollback)
+
     def test_privileged_selector_limits_input(self):
         script = (ROOT / "scripts" / "uls-update-select").read_text()
         compile(script, "uls-update-select", "exec")
