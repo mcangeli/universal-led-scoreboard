@@ -7,7 +7,11 @@ scoring-event IDs are actually present. Never writes configuration.
 import json
 import sys
 from datetime import date
+from pathlib import Path
 from urllib.request import Request, urlopen
+
+# Support direct execution from a source checkout without package installation.
+sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
 from universal_led.english_football import COMPETITIONS
 from universal_led.soccer_feed import parse_scoreboard
