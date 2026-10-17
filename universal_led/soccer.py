@@ -28,6 +28,8 @@ class SoccerMatch:
     goals: tuple[SoccerGoal, ...] = ()
     clock: Optional[str] = None
     period: Optional[int] = None
+    home_club_key: Optional[str] = None
+    away_club_key: Optional[str] = None
 
 
 SUPPORTED_LEAGUES = frozenset(("MLS", "NWSL", "EPL", "CHAMPIONSHIP", "LEAGUE_ONE", "LEAGUE_TWO"))
