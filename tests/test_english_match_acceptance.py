@@ -50,7 +50,11 @@ class EnglishMatchAcceptanceTests(unittest.TestCase):
                 "athletesInvolved": [{"type": "scorer", "athlete": {"displayName": "Example Scorer"}}]}
         game, = parse_scoreboard(payload("in", "STATUS_IN_PROGRESS", clock="56:00",
                                           period=2, score="2", details=[goal]), "EPL")
+        baseline, = parse_scoreboard(payload("in", "STATUS_IN_PROGRESS", clock="55:00",
+                                             period=2, score="1"), "EPL")
         display = SoccerDisplayController(goal_seconds=3)
+        display.update(baseline)
+        self.assertEqual(display.screen(baseline, 9).kind, "match")
         display.update(game)
         self.assertEqual(display.screen(game, 10).kind, "goal")
         self.assertEqual(display.screen(game, 14).kind, "match")
