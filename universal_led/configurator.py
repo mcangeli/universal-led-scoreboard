@@ -110,7 +110,7 @@ section h2{font-size:clamp(21px,1.6vw,26px);line-height:1.25;margin:0 0 18px}
 const token=__TOKEN__;
 async function logout(){await fetch('/logout',{method:'POST',headers:{'X-Configurator-Token':token}});location.href='/login'}
 let state=null,saved=null,dirty=false,selectedTeam='ATL',selected=null,settings=null;
-function showPage(name){document.querySelectorAll('.nav-item').forEach(button=>button.classList.toggle('active',button.getAttribute('onclick')==="showPage('"+name+"')"));document.querySelectorAll('[data-page]').forEach(el=>el.hidden=el.dataset.page!==name);if(name==='news'){loadNewsSources();loadAutomaticNews();loadNewsTiming()}if(name==='display'){loadClockSettings();loadCountdown();}if(name==='dashboard'||name==='system')refreshStatus();if(name==='system'){refreshSystem();refreshUpdateProgress();}if(name==='matrix-settings'){loadMatrixSettings();refreshMatrixStatus();}if(name==='wifi'){refreshWifi();refreshWifiProfiles();refreshRecoveryReadiness();scanWifi()}}
+function showPage(name){document.querySelectorAll('.nav-item').forEach(button=>button.classList.toggle('active',button.getAttribute('onclick')==="showPage('"+name+"')"));document.querySelectorAll('[data-page]').forEach(el=>el.hidden=el.dataset.page!==name);if(name==='news'){loadNewsSources();loadAutomaticNews();loadNewsTiming()}if(name==='display'){loadClockSettings();loadCountdown();}if(name==='dashboard'||name==='system')refreshStatus();if(name==='system'){refreshSystem();checkSoftwareUpdate();}if(name==='matrix-settings'){loadMatrixSettings();refreshMatrixStatus();}if(name==='wifi'){refreshWifi();refreshWifiProfiles();refreshRecoveryReadiness();scanWifi()}}
 async function refreshMatrixStatus(){
  const el=document.getElementById('matrix-service-state');
  try{const response=await fetch('/api/matrix-status',{cache:'no-store'});const result=await response.json();
@@ -603,17 +603,21 @@ async function saveSportSettings(source){
 document.getElementById('save-settings').onclick=()=>saveSportSettings('sports');
 let updateAvailable=false;
 let updateBranchData=null;
+let updateBranchUserSelected=false;
 function renderUpdateBranches(){
  if(!updateBranchData)return;
  const data=updateBranchData,picker=document.getElementById('update-branch');
- const selected=picker.value||data.branch,showAll=document.getElementById('update-show-all').checked;
+ // The installed Git branch is authoritative on every page load. Preserve an
+ // explicit in-page selection only when the user changes the dropdown.
+ const selected=updateBranchUserSelected?picker.value:data.branch;
+ const showAll=document.getElementById('update-show-all').checked;
  const branches=data.branches||[data.branch];
  const releaseMatch=/^(feature|release)\\/(\\d+\\.\\d+)/.exec(data.branch);
  const relevant=branches.filter(name=>name===data.branch||name==='main'||name==='master'||(releaseMatch&&name.startsWith(releaseMatch[1]+'/'+releaseMatch[2]+'.')));
  const visible=showAll?branches:relevant;
  picker.replaceChildren();
  for(const name of visible){const option=document.createElement('option');option.value=name;option.textContent=name;picker.appendChild(option)}
- picker.value=visible.includes(selected)?selected:data.branch;
+ picker.value=visible.includes(selected)?selected:(visible.includes(data.branch)?data.branch:visible[0]||'');
  updateAvailable=!!data.update_available||picker.value!==data.branch;
  document.getElementById('install-update').disabled=!updateAvailable;
 }
@@ -630,6 +634,7 @@ async function checkSoftwareUpdate(){
  await refreshUpdateProgress();
 }
 function updateBranchChanged(){
+ updateBranchUserSelected=true;
  updateAvailable=!!updateBranchData&&(document.getElementById('update-branch').value!==updateBranchData.branch||updateBranchData.update_available);
  document.getElementById('install-update').disabled=!updateAvailable;
  document.getElementById('update-status').textContent='Selected branch: '+document.getElementById('update-branch').value+'. Review before installing.';
