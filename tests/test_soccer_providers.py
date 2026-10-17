@@ -2,6 +2,7 @@ import unittest
 from datetime import date
 
 from universal_led.soccer import SoccerMatch
+from universal_led.soccer_data import SoccerFeed
 from universal_led.soccer_native import parse_mls_matches, parse_nwsl_matches
 from universal_led.soccer_providers import SoccerProviderRouter, ProviderUnavailable
 
@@ -46,6 +47,12 @@ class SoccerProviderTests(unittest.TestCase):
                                       primary=lambda d: [match("NWSL")])
         with self.assertRaises(ProviderUnavailable):
             router.fetch(date.today())
+
+    def test_cached_feed_uses_provider(self):
+        router = SoccerProviderRouter("MLS", primary=lambda d: [match()])
+        feed = SoccerFeed("MLS", provider=router,
+                          fetcher=lambda *args: self.fail("ESPN fetch called"))
+        self.assertEqual(feed.refresh(date.today()), [match()])
 
     def test_invalid_mode(self):
         with self.assertRaises(ValueError):
