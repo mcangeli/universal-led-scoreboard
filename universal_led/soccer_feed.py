@@ -75,6 +75,8 @@ def parse_scoreboard(payload: Mapping, league: str) -> tuple[SoccerMatch, ...]:
             away_score=teams["away"][1],
             status=state,
             goals=tuple(goals),
+            clock=_match_clock(status, competition),
+            period=_match_period(status, competition),
         ))
     return tuple(matches)
 
@@ -105,4 +107,26 @@ def _credited_scorer(detail: Mapping) -> str | None:
     athlete = detail.get("scorer") or {}
     if isinstance(athlete, Mapping):
         return athlete.get("displayName") or athlete.get("fullName")
+    return None
+
+
+def _match_clock(status, competition):
+    for source in (status, competition.get("status") or {}):
+        if not isinstance(source, Mapping):
+            continue
+        value = source.get("displayClock") or (source.get("clock") or {}).get("displayValue") if isinstance(source.get("clock"), Mapping) else source.get("displayClock")
+        if value is not None and str(value).strip():
+            return str(value).strip()
+    return None
+
+
+def _match_period(status, competition):
+    for source in (status, competition.get("status") or {}, competition):
+        if not isinstance(source, Mapping):
+            continue
+        value = source.get("period")
+        try:
+            return int(value) if value is not None else None
+        except (TypeError, ValueError):
+            continue
     return None
