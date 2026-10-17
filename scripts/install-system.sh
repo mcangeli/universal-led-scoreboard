@@ -39,7 +39,7 @@ else
 fi
 echo "Installing prerequisites..."
 sudo apt-get update
-sudo apt-get install -y git curl python3 python3-venv python3-dev python3-pip build-essential sudo
+sudo apt-get install -y git curl python3 python3-venv python3-dev python3-pip build-essential sudo network-manager
 echo "Creating system account and directories..."
 id uls >/dev/null 2>&1 || sudo useradd --system --home-dir "$DATA" --shell /usr/sbin/nologin uls
 sudo install -d -o "$USER" -g "$(id -gn)" -m 0755 /opt/uls
