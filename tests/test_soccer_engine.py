@@ -26,6 +26,14 @@ class SoccerEngineTests(unittest.TestCase):
         renderer = ConfiguredSoccerRenderer(Feed([match()]), league="MLS")
         self.assertTrue(renderer.has_live_games())
 
+    def test_live_detection_accepts_whitespace_and_case(self):
+        renderer = ConfiguredSoccerRenderer(Feed([match(status=" LIVE ")]), league="MLS")
+        self.assertTrue(renderer.has_live_games())
+
+    def test_live_detection_accepts_in_progress(self):
+        renderer = ConfiguredSoccerRenderer(Feed([match(status="IN_PROGRESS")]), league="MLS")
+        self.assertTrue(renderer.has_live_games())
+
     def test_scheduled_match_is_not_live(self):
         renderer = ConfiguredSoccerRenderer(Feed([match(status="pre")]), league="MLS")
         self.assertFalse(renderer.has_live_games())
