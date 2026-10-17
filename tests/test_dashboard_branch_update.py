@@ -18,6 +18,12 @@ class DashboardBranchUpdateTests(unittest.TestCase):
         self.assertIn('branch:document.getElementById', HTML)
         self.assertIn('Candidate tests will run', HTML)
 
+    def test_branch_filter_keeps_full_list_available(self):
+        self.assertIn('id="update-show-all"', HTML)
+        self.assertIn('function renderUpdateBranches()', HTML)
+        self.assertIn('showAll?branches:relevant', HTML)
+        self.assertIn("name===data.branch||name==='main'", HTML)
+
     def test_update_checks_candidate_before_switch(self):
         script = (ROOT / "scripts" / "uls-update").read_text()
         self.assertLess(script.index("Checking candidate code"), script.index('as_owner git checkout -B "$BRANCH" "$NEW"'))
