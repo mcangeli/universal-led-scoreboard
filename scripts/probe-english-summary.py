@@ -1,0 +1,74 @@
+#!/usr/bin/env python3
+"""Read-only ESPN match-summary structure probe; prints counts, not player data."""
+import json
+import sys
+from datetime import date
+from pathlib import Path
+from urllib.request import Request, urlopen
+
+sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
+from universal_led.english_football import COMPETITIONS
+
+BASE = "https://site.api.espn.com/apis/site/v2/sports/soccer"
+
+
+def fetch(url, opener=urlopen):
+    req = Request(url, headers={"Accept": "application/json",
+                                "User-Agent": "UniversalLEDScoreboard/0.6-diagnostics"})
+    with opener(req, timeout=8) as response:
+        return json.load(response)
+
+
+def summary_coverage(payload):
+    if not isinstance(payload, dict):
+        raise ValueError("Summary response must be an object")
+    keys = tuple(sorted(payload.keys()))
+    scoring = payload.get("scoringPlays") or []
+    plays = payload.get("plays") or []
+    if isinstance(plays, dict):
+        plays = plays.get("allPlays") or []
+    if not isinstance(scoring, list):
+        scoring = []
+    if not isinstance(plays, list):
+        plays = []
+    return {"keys": ",".join(keys), "scoring_plays": len(scoring),
+            "plays": len(plays),
+            "play_scoring_flags": sum(bool(p.get("scoringPlay")) for p in plays if isinstance(p, dict))}
+
+
+def probe(day, opener=urlopen):
+    results = {}
+    for league, slug in COMPETITIONS.items():
+        try:
+            board = fetch(f"{BASE}/{slug}/scoreboard?dates={day:%Y%m%d}", opener)
+            events = board.get("events") or []
+            if not events:
+                results[league] = {"status": "no fixtures"}
+                continue
+            event_id = str(events[0].get("id", ""))
+            if not event_id.isdigit():
+                raise ValueError("Missing numeric match ID")
+            summary = fetch(f"{BASE}/{slug}/summary?event={event_id}", opener)
+            results[league] = {"event_id": event_id, **summary_coverage(summary)}
+        except (OSError, ValueError, TypeError, KeyError) as exc:
+            results[league] = {"error": str(exc)}
+    return results
+
+
+def main(argv=None):
+    args = sys.argv[1:] if argv is None else argv
+    try:
+        day = date.fromisoformat(args[0]) if args else date.today()
+    except ValueError:
+        print("Usage: python3 scripts/probe-english-summary.py [YYYY-MM-DD]", file=sys.stderr)
+        return 2
+    print(f"ESPN English football summary coverage: {day}")
+    results = probe(day)
+    for league, data in results.items():
+        print(f"{league}: " + " ".join(f"{k}={v}" for k, v in data.items()))
+    print("One fixture sampled per division; summary fields are observational, not guaranteed.")
+    return int(any("error" in result for result in results.values()))
+
+
+if __name__ == "__main__":
+    sys.exit(main())
