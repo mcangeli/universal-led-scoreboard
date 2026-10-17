@@ -36,7 +36,9 @@ class SoccerDisplayController:
         # corrections after full time must not interrupt final scores.
         from .soccer_rotation import is_live
         new_events = self.tracker.observe(match)
-        if is_live(match):
+        # Halftime keeps the match in the live rotation, but feed corrections
+        # during the break must not trigger a new goal celebration.
+        if is_live(match) and match.status.strip().lower() != "halftime":
             for goal in new_events:
                 self._pending.append(PendingGoal(match, goal))
         else:
