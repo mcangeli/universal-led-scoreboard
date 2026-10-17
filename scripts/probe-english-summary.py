@@ -19,6 +19,29 @@ def fetch(url, opener=urlopen):
         return json.load(response)
 
 
+def event_section(value):
+    """Summarize the shape of a section without printing player or commentary text."""
+    if isinstance(value, list):
+        rows = value
+        shape = "list"
+    elif isinstance(value, dict):
+        shape = "object"
+        rows = next((value[key] for key in ("events", "items", "plays")
+                     if isinstance(value.get(key), list)), [])
+    else:
+        return {"shape": type(value).__name__, "count": 0, "fields": "",
+                "goal_markers": 0}
+    fields = sorted({key for row in rows[:20] if isinstance(row, dict) for key in row})
+    markers = sum(
+        bool(row.get("scoringPlay") or row.get("isGoal") or row.get("goal"))
+        or any("goal" in str((row.get(key) or {}).get("text", "")).lower()
+               for key in ("type",) if isinstance(row.get(key), dict))
+        for row in rows if isinstance(row, dict)
+    )
+    return {"shape": shape, "count": len(rows), "fields": ",".join(fields),
+            "goal_markers": markers}
+
+
 def summary_coverage(payload):
     if not isinstance(payload, dict):
         raise ValueError("Summary response must be an object")
@@ -31,7 +54,12 @@ def summary_coverage(payload):
         scoring = []
     if not isinstance(plays, list):
         plays = []
-    return {"keys": ",".join(keys), "scoring_plays": len(scoring),
+    key_events = event_section(payload.get("keyEvents"))
+    commentary = event_section(payload.get("commentary"))
+    return {"keys": ",".join(keys),
+            **{"key_events_" + key: value for key, value in key_events.items()},
+            **{"commentary_" + key: value for key, value in commentary.items()},
+            "scoring_plays": len(scoring),
             "plays": len(plays),
             "play_scoring_flags": sum(bool(p.get("scoringPlay")) for p in plays if isinstance(p, dict))}
 
