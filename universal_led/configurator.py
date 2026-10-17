@@ -1374,11 +1374,13 @@ def main():
             favorite_teams=english['favorite_teams'],
             mode=english['mode'],
             rotation_seconds=english['rotation_seconds'])
-        for league, worker in english_workers.items():
-            worker.feed.refresh_seconds = english['refresh_seconds']
-            worker.set_timezone(time_preferences['timezone'])
-            if settings['sports']['english']['enabled'] and league in english['enabled_leagues']:
-                worker.start()
+        from .english_workers import sync_english_workers
+        sync_english_workers(
+            english_workers,
+            sport_enabled=settings['sports']['english']['enabled'],
+            enabled_leagues=english['enabled_leagues'],
+            refresh_seconds=english['refresh_seconds'],
+            timezone_name=time_preferences['timezone'])
         enabled = [sport for sport in ('mlb', 'nhl', 'nba', 'wnba', 'nfl', 'mls', 'nwsl', 'english') if settings['sports'][sport]['enabled']]
         renderer.set_supplemental_stride(len(enabled))
         board.configure_rotation(enabled, interval=settings['mlb']['rotation_seconds'],
