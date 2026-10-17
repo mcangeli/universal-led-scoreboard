@@ -32,6 +32,10 @@ class SoccerScreenTests(unittest.TestCase):
         game = SoccerMatch("m1", "MLS", "ATL", "MIA", 2, 1, "in", clock="90+3'", period=2)
         self.assertEqual(match_screen(game).footer, "2H 90+3'")
 
+    def test_halftime_displays_ht_instead_of_stale_clock(self):
+        game = SoccerMatch("m1", "NWSL", "ATL", "MIA", 1, 1, "halftime", clock="45'", period=1)
+        self.assertEqual(match_screen(game).footer, "HT")
+
     def test_nwsl_match_uses_shared_layout(self):
         self.assertEqual(match_screen(self.match("NWSL")).header, "NWSL")
 
