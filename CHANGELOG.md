@@ -1,5 +1,25 @@
 # Changelog
 
+## v0.4.5 (release candidate, 2026-10-17)
+
+### Added and improved
+- Web dashboard matrix hardware controls for enable/disable, brightness, mapping, and GPIO slowdown, with persisted settings.
+- Browser-based software updates with branch selection, current release-family filtering, and optional full branch list.
+- Live games take precedence over scheduled games and supplemental clock, weather, and news screens across enabled sports.
+- Dashboard update progress, privileged helper installation, and saved matrix-state reconciliation.
+
+### Safety and reliability
+- Candidate code is fetched and tested before deployment; remote ancestry is checked after fetch.
+- Older or divergent branch switches are rejected; required updater and matrix helpers are checked.
+- Failed update branch requests are discarded; post-deployment rollback restores the dashboard helper installations.
+- Fresh installer defaults to main and respects saved physical-matrix state.
+
+### Validation and outstanding acceptance
+- Raspberry Pi 3: 854 regression tests passed, 15 skipped, before final documentation/version changes.
+- Web updates, branch discovery, and matrix on/off controls verified on physical hardware.
+- Pending: incompatible-branch rejection in browser, simulated post-checkout rollback, fresh-image installation, and release tagging. No merge to main yet.
+
+
 ## v0.4.0 (2026-10-16)
 
 ### Added
