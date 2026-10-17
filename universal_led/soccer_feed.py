@@ -30,6 +30,18 @@ def parse_scoreboard(payload: Mapping, league: str) -> tuple[SoccerMatch, ...]:
         status = event.get("status") or {}
         status_type = status.get("type") or {}
         state = str(status_type.get("state") or status_type.get("name") or "unknown").lower()
+        # ESPN's status.type.state is normally "pre", "in", or "post".
+        # Some provider snapshots only include the long status name.
+        state = {
+            "status_in_progress": "in",
+            "status_halftime": "in",
+            "status_end_period": "in",
+            "status_scheduled": "pre",
+            "status_final": "post",
+            "status_full_time": "post",
+            "status_postponed": "postponed",
+            "status_canceled": "canceled",
+        }.get(state, state)
         goals = []
         for detail in competition.get("details", []) or []:
             if not detail.get("scoringPlay"):
