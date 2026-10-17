@@ -1,0 +1,139 @@
+import unittest
+from datetime import date
+
+from universal_led.soccer import SoccerMatch
+from universal_led.soccer_data import SoccerFeed
+from universal_led.soccer_native import parse_mls_matches, parse_nwsl_matches
+from universal_led.soccer_providers import SoccerProviderRouter, ProviderUnavailable
+
+
+def match(league="MLS"):
+    return SoccerMatch("1", league, "ATL", "MIA", 1, 0, "live")
+
+
+class SoccerProviderTests(unittest.TestCase):
+    def test_primary_preferred(self):
+        router = SoccerProviderRouter("MLS", primary=lambda d: [match()],
+                                      fallback=lambda d: self.fail("fallback called"))
+        self.assertEqual(router.fetch(date.today()), (match(),))
+        self.assertEqual(router.last_source, "league")
+
+    def test_fallback_after_primary_failure(self):
+        router = SoccerProviderRouter("MLS", primary=lambda d: (_ for _ in ()).throw(OSError("offline")),
+                                      fallback=lambda d: [match()])
+        self.assertEqual(router.fetch(date.today()), (match(),))
+        self.assertEqual(router.last_source, "espn")
+        self.assertIn("offline", router.last_primary_error)
+
+    def test_empty_primary_does_not_trigger_fallback(self):
+        router = SoccerProviderRouter("MLS", primary=lambda d: [],
+                                      fallback=lambda d: self.fail("fallback called"))
+        self.assertEqual(router.fetch(date.today()), ())
+
+    def test_league_only_does_not_fallback(self):
+        router = SoccerProviderRouter("MLS", mode="league_only",
+                                      fallback=lambda d: [match()])
+        with self.assertRaises(ProviderUnavailable):
+            router.fetch(date.today())
+
+    def test_espn_only_does_not_call_primary(self):
+        router = SoccerProviderRouter("MLS", mode="espn_only",
+                                      primary=lambda d: self.fail("primary called"),
+                                      fallback=lambda d: [match()])
+        self.assertEqual(router.fetch(date.today()), (match(),))
+
+    def test_cross_league_data_rejected(self):
+        router = SoccerProviderRouter("MLS", mode="league_only",
+                                      primary=lambda d: [match("NWSL")])
+        with self.assertRaises(ProviderUnavailable):
+            router.fetch(date.today())
+
+    def test_fallback_failure_clears_stale_source(self):
+        router = SoccerProviderRouter("MLS", primary=lambda d: [match()],
+                                      fallback=lambda d: (_ for _ in ()).throw(OSError("ESPN offline")))
+        router.fetch(date.today())
+        router.primary = lambda d: (_ for _ in ()).throw(OSError("league offline"))
+        with self.assertRaisesRegex(ProviderUnavailable, "ESPN fallback unavailable"):
+            router.fetch(date.today())
+        self.assertIsNone(router.last_source)
+        self.assertIn("league offline", router.last_primary_error)
+        self.assertIn("ESPN offline", router.last_fallback_error)
+
+    def test_invalid_fallback_match_is_reported(self):
+        router = SoccerProviderRouter("NWSL", mode="espn_only",
+                                      fallback=lambda d: [match("MLS")])
+        with self.assertRaisesRegex(ProviderUnavailable, "ESPN fallback unavailable"):
+            router.fetch(date.today())
+        self.assertIsNone(router.last_source)
+
+    def test_successful_fallback_clears_prior_error(self):
+        router = SoccerProviderRouter("MLS", mode="espn_only",
+                                      fallback=lambda d: (_ for _ in ()).throw(OSError("offline")))
+        with self.assertRaises(ProviderUnavailable):
+            router.fetch(date.today())
+        router.fallback = lambda d: [match()]
+        self.assertEqual(router.fetch(date.today()), (match(),))
+        self.assertIsNone(router.last_fallback_error)
+        self.assertEqual(router.last_source, "espn")
+
+    def test_league_only_failure_clears_previous_source(self):
+        router = SoccerProviderRouter("MLS", mode="league_only", primary=lambda d: [match()])
+        router.fetch(date.today())
+        router.primary = lambda d: (_ for _ in ()).throw(OSError("native offline"))
+        with self.assertRaises(ProviderUnavailable):
+            router.fetch(date.today())
+        self.assertIsNone(router.last_source)
+        self.assertIn("native offline", router.last_primary_error)
+
+    def test_missing_fallback_clears_previous_source(self):
+        router = SoccerProviderRouter("MLS", mode="espn_only", fallback=lambda d: [match()])
+        router.fetch(date.today())
+        router.fallback = None
+        with self.assertRaises(ProviderUnavailable):
+            router.fetch(date.today())
+        self.assertIsNone(router.last_source)
+
+    def test_espn_only_clears_old_primary_error(self):
+        router = SoccerProviderRouter("MLS", primary=lambda d: (_ for _ in ()).throw(OSError("native offline")),
+                                      fallback=lambda d: [match()])
+        router.fetch(date.today())
+        self.assertIsNotNone(router.last_primary_error)
+        router.mode = "espn_only"
+        router.fetch(date.today())
+        self.assertIsNone(router.last_primary_error)
+        self.assertEqual(router.last_source, "espn")
+
+    def test_cached_feed_uses_provider(self):
+        router = SoccerProviderRouter("MLS", primary=lambda d: [match()])
+        feed = SoccerFeed("MLS", provider=router,
+                          fetcher=lambda *args: self.fail("ESPN fetch called"))
+        self.assertEqual(feed.refresh(date.today()), [match()])
+
+    def test_invalid_mode(self):
+        with self.assertRaises(ValueError):
+            SoccerProviderRouter("MLS", mode="random")
+
+    def test_mls_native_match(self):
+        rows = [{"matchId": "MLS-MAT-1", "homeTeamThreeLetterCode": "ATL",
+                 "awayTeamThreeLetterCode": "MIA", "homeTeamGoals": 2,
+                 "awayTeamGoals": 1, "matchStatus": "Live"}]
+        parsed = parse_mls_matches(rows)
+        self.assertEqual((parsed[0].home_id, parsed[0].status, parsed[0].home_score), ("ATL", "live", 2))
+        self.assertEqual(parsed[0].goals, ())
+
+    def test_nwsl_native_match(self):
+        rows = [{"match_id": "N1", "home_team_id": "h", "away_team_id": "a",
+                 "home_score_push": 1, "away_score_push": 0, "status": "Live"}]
+        self.assertEqual(parse_nwsl_matches(rows)[0].status, "live")
+
+    def test_unrecognized_native_shape_rejected(self):
+        with self.assertRaises(ValueError):
+            parse_mls_matches({"unexpected": []})
+
+    def test_missing_nwsl_team_ids_rejected(self):
+        with self.assertRaises(ValueError):
+            parse_nwsl_matches([{"match_id": "N1", "status": "Live"}])
+
+
+if __name__ == "__main__":
+    unittest.main()

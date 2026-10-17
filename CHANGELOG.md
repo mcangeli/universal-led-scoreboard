@@ -1,5 +1,23 @@
 # Changelog
 
+## v0.5.0 (release candidate, 2026-10-17)
+
+### Added
+- MLS and NWSL 64×32 match screens, favorites, configuration, automatic news and multi-sport rotation.
+- Soccer match clocks, stoppage time, halftime and final status handling; goal-event parsing and deduplication.
+- ESPN soccer scoreboards as the validated baseline. League-specific feeds remain future work pending endpoint and licensing verification.
+
+### Improved
+- Live-game priority across enabled sports; supplemental clock, weather and news screens yield while eligible games are live.
+- Contrast protection for dark MLB and NHL team colors, including configurable MLB palette pages.
+- Browser preview framebuffer parity tests and additional multi-sport regression coverage.
+
+### Validation and release gates
+- Raspberry Pi 5: 1,043 tests passed, 15 expected skips, reported October 17, 2026.
+- Raspberry Pi 3 preflight: web and matrix services active, web endpoint healthy and frames fresh.
+- Production /etc/uls configuration, /var/lib/uls state and systemd services backed up; archive integrity checks passed.
+- Pending: production installation, physical matrix acceptance for this candidate, live NWSL and scoring transitions, and final release tag. Automated fixtures are not a substitute for these observations.
+
 ## v0.4.5 (release candidate, 2026-10-17)
 
 ### Added and improved

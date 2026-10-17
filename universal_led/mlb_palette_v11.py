@@ -3,7 +3,7 @@ from dataclasses import dataclass, field
 from .display import Framebuffer
 from .mlb_classic import BaseballGame, small
 from .mlb_classic_v9 import start_label, draw_start_label
-from .colors import load_palette
+from .colors import load_palette, readable_on_black
 from .mlb_team_marks import draw_team_mark, SPRITES
 
 @dataclass(frozen=True)
@@ -24,7 +24,7 @@ class MLBPaletteScreen:
             fb.pixel(x,7,c['separator'])
         for y,team,value in ((10,g.away,g.away_probable if page==1 else g.away_record),
                              (20,g.home,g.home_probable if page==1 else g.home_record)):
-            small(fb,team,1,y,self.team_colors.get(team,c['text']))
+            small(fb,team,1,y,readable_on_black(self.team_colors.get(team,c['text'])))
             if page==1:
                 # Names are shortened to last names to fit the 64-pixel matrix.
                 # Preserve surname particles/hyphenation when possible; compact
@@ -49,7 +49,7 @@ class MLBPaletteScreen:
         for y,team,values in (
             (8,g.away,(g.away_runs,g.away_hits,g.away_errors)),
             (18,g.home,(g.home_runs,g.home_hits,g.home_errors))):
-            fb.text(team,1,y-1,self.team_colors.get(team,c['text']))
+            fb.text(team,1,y-1,readable_on_black(self.team_colors.get(team,c['text'])))
             if g.status in ('live', 'pregame'):
                 if team.upper() in SPRITES or team.upper() == 'TB':
                     draw_team_mark(fb,team,24,y-2)
