@@ -34,7 +34,7 @@ class EnglishServiceWiringTests(unittest.TestCase):
     def test_configurator_includes_runtime_wiring(self):
         source = Path(__file__).resolve().parents[1] / "universal_led" / "configurator.py"
         text = source.read_text(encoding="utf-8")
-        self.assertIn("board.english = english_renderer", text)
+        self.assertIn("english_renderer=english_renderer", text)
         self.assertIn("english_workers.values()", text)
         self.assertIn("settings['sports']['english']['enabled']", text)
 
