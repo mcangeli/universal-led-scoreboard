@@ -12,6 +12,15 @@ Status: **release candidate, not tagged or merged**. This checklist separates ve
 - [x] News controls for MLS and NWSL covered by automated tests.
 - [x] Live MLS halftime display: CLT–PHI showed `HT` after ESPN state/name parsing fix (user confirmed October 17, 2026).
 
+## Provider strategy (confirmed decision)
+
+- Prefer **league-specific MLS and NWSL sources** when a stable, permitted, validated endpoint and adapter are available.
+- Keep the currently working ESPN scoreboard feeds as the v0.5.0 baseline and fallback; do not switch an unverified provider into production.
+- MLS and NWSL must have separate adapters and contract tests, since league response schemas may differ.
+- Use the existing `SoccerProviderRouter` policy: valid empty primary results are authoritative; provider failures may fall back to ESPN. Log active provider and last primary error for diagnosis.
+- Before enabling a league-specific adapter, verify endpoint availability, licensing/terms, scores, status/clock, team identifiers, goal events, and failure behavior against live data.
+- Future configurator work: surface active provider and fallback state without exposing secrets.
+
 ## Outstanding before v0.5.0 tag
 
 - [ ] Complete current ESPN MLS and NWSL live-feed verification: MLS CLT–PHI halftime is confirmed, but NWSL, team IDs, other status values, second-half restart and final transitions still need observation.
