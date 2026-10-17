@@ -28,13 +28,15 @@ fi
 NEW=$(as_owner git ls-remote --exit-code "$REMOTE" "refs/heads/$BRANCH" | awk 'NR==1{print $1}')
 [[ "$NEW" =~ ^[a-f0-9]{40}$ ]] || { echo "Target branch unavailable" >&2; exit 1; }
 if [[ "$OLD" == "$NEW" && "$OLD_BRANCH" == "$BRANCH" ]]; then rm -f "$REQUEST"; echo "Already up to date ($OLD)."; exit 0; fi
+echo "Fetching selected branch $BRANCH..."
+as_owner git fetch "$REMOTE" "$BRANCH"
+[[ "$(as_owner git rev-parse FETCH_HEAD)" == "$NEW" ]] || { echo "Remote branch changed during update; retry." >&2; exit 1; }
 if [[ "$BRANCH" == "$OLD_BRANCH" ]]; then
   as_owner git merge-base --is-ancestor "$OLD" "$NEW" || { echo "Not a fast-forward; update cancelled." >&2; exit 1; }
 fi
 STAGE=$(as_owner mktemp -d /tmp/uls-update.XXXXXXXX)
 cleanup() { as_owner git -C "$APP" worktree remove --force "$STAGE" >/dev/null 2>&1 || true; as_owner rm -rf -- "$STAGE"; }
 trap cleanup EXIT
-as_owner git fetch "$REMOTE" "$BRANCH"
 as_owner git worktree add --detach "$STAGE" "$NEW"
 echo "Checking candidate code before changing the installation..."
 as_owner "$VENV/bin/python" -m compileall -q "$STAGE/universal_led" "$STAGE/tests"
