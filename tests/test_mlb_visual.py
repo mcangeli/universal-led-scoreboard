@@ -1,4 +1,5 @@
 import unittest
+from universal_led.colors import readable_on_black
 from universal_led.mlb_classic import BaseballGame
 from universal_led.mlb_visual import MLBVisualScreen, TEAM_COLORS
 from universal_led.mlb_data import parse_schedule
@@ -7,8 +8,8 @@ class VisualTests(unittest.TestCase):
     def test_colors_and_dimensions(self):
         f=MLBVisualScreen().render()
         self.assertEqual((f.width,f.height),(64,32))
-        self.assertIn(TEAM_COLORS['ATL'],f.pixels[17])
-        self.assertIn(TEAM_COLORS['NYM'],f.pixels[7])
+        self.assertIn(readable_on_black(TEAM_COLORS['ATL']),f.pixels[17])
+        self.assertIn(readable_on_black(TEAM_COLORS['NYM']),f.pixels[7])
     def test_statuses(self):
         for status in ('live','pregame','final','delayed','postponed'):
             with self.subTest(status=status):
