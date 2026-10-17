@@ -51,6 +51,20 @@ class EnglishWorkerLifecycleTests(unittest.TestCase):
         self.sync(False, ["EPL", "LEAGUE_ONE"])
         self.assertFalse(any(worker.running for worker in self.workers.values()))
 
+    def test_reapplying_identical_settings_does_not_restart_workers(self):
+        self.sync(True, ["EPL"])
+        self.sync(True, ["EPL"])
+        self.assertEqual(self.workers["EPL"].started, 1)
+        self.assertEqual(self.workers["EPL"].stopped, 0)
+        self.assertEqual(self.workers["LEAGUE_TWO"].stopped, 0)
+
+    def test_disabling_and_reenabling_starts_a_new_worker(self):
+        self.sync(True, ["EPL"])
+        self.sync(False, ["EPL"])
+        self.sync(True, ["EPL"])
+        self.assertEqual(self.workers["EPL"].started, 2)
+        self.assertEqual(self.workers["EPL"].stopped, 1)
+
     def test_invalid_division_is_rejected_before_changes(self):
         with self.assertRaises(ValueError):
             self.sync(True, ["INVALID"])
