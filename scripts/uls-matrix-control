@@ -1,0 +1,23 @@
+#!/usr/bin/env bash
+# Narrowly scoped privileged physical matrix service controller.
+set -Eeuo pipefail
+[[ "$EUID" -eq 0 && "$#" -eq 1 ]] || { echo "Usage: uls-matrix-control {apply|status}" >&2; exit 2; }
+case "$1" in
+  status)
+    systemctl is-active uls-matrix.service || true
+    ;;
+  apply)
+    [[ -f /etc/systemd/system/uls-matrix.service ]] || { echo "Physical matrix service not installed" >&2; exit 1; }
+    # Validate configuration before touching the working matrix.
+    enabled=$(/opt/uls/venv/bin/python -c 'from universal_led.matrix_settings import load_matrix_settings; print("yes" if load_matrix_settings("/etc/uls/matrix.json")["enabled"] else "no")')
+    if [[ "$enabled" == yes ]]; then
+      systemctl restart uls-matrix.service
+      systemctl is-active --quiet uls-matrix.service
+    elif [[ "$enabled" == no ]]; then
+      systemctl stop uls-matrix.service
+    else
+      echo "Invalid matrix enabled state" >&2; exit 1
+    fi
+    ;;
+  *) echo "Unsupported matrix action" >&2; exit 2 ;;
+esac
