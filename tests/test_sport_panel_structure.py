@@ -67,13 +67,13 @@ class SportPanelStructureTests(unittest.TestCase):
     def test_all_sport_panels_are_independent(self):
         parser = DivPanelParser()
         parser.feed(HTML)
-        self.assertEqual(parser.panels, ['mlb', 'nhl', 'nba', 'wnba', 'nfl', 'mls', 'nwsl'])
+        self.assertEqual(parser.panels, ['mlb', 'nhl', 'nba', 'wnba', 'nfl', 'mls', 'nwsl', 'english'])
         self.assertEqual(parser.nested, [])
         self.assertEqual(parser.open_panels, [])
 
     def test_dropdown_selects_only_requested_panel(self):
         self.assertIn("panel.hidden=panel.dataset.sportPanel!==name", HTML)
-        for sport in ['mlb', 'nhl', 'nba', 'wnba', 'nfl', 'mls', 'nwsl']:
+        for sport in ['mlb', 'nhl', 'nba', 'wnba', 'nfl', 'mls', 'nwsl', 'english']:
             self.assertIn('<option value="'+sport+'">', HTML)
             self.assertIn('data-sport-panel="'+sport+'" hidden', HTML)
 
