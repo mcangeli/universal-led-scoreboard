@@ -1,70 +1,33 @@
-# v0.1.0 Core Foundation release gate
+# Universal LED Scoreboard v0.4.5 release acceptance
 
-Status: candidate, not tagged. Validate on a real Pi before merging or tagging.
+Status: feature branch candidate, not merged or tagged.
 
-## What is implemented
+## Verified on Raspberry Pi 3, Trixie, 64×32 matrix
 
-- MLB live, pregame, final, favorite-team selection and 64x32 rotation.
-- Shared countdown renderer; automatic MLB league and favorite-team opening dates.
-- Background opening-day schedule fetch, cache fallback, and diagnostics.
-- Native configurator, protected settings, board emulator, Wi-Fi tools.
-- Clock, weather, news, system services, and physical matrix startup splash.
+- [x] Full regression suite: 854 tests passed, 15 skipped (October 17, 2026).
+- [x] Dashboard update checks and installations work without shell intervention.
+- [x] Dashboard discovers remote branches and offers current release-family filtering.
+- [x] Selecting an older incompatible branch produces an unsafe-branch rejection without installing it.
+- [x] Physical matrix enable/disable works independently of dashboard and emulator.
+- [x] Live games take priority over supplementary screens.
 
-NBA, NFL, NHL, MLS, and EFL data/rendering remain future releases. Their countdown layout can reuse the shared renderer.
+## Remaining release gates
 
-## Deployed system layout
+- [ ] Controlled post-checkout failure verifies automatic rollback of code, privileged helpers, dashboard availability, and saved matrix state. Do not inject a failure into the production Pi without a verified recovery image and explicit test procedure.
+- [ ] Fresh-image installation in emulator mode, then physical mode on a spare card or Pi; verify password setup, services, board preview, driver, and dashboard update helpers.
+- [ ] Verify reboot persistence of matrix configuration and normal dashboard operations.
+- [ ] Review redistribution licenses, logos, feeds, and attributions.
+- [ ] Run final full regression suite and record count and skipped tests.
+- [ ] Merge reviewed candidate into main, then tag v0.4.5. Do not tag or merge before acceptance.
 
-- Application: `/opt/uls/app`
-- Virtual environment: `/opt/uls/venv`
-- Settings and credentials: `/etc/uls`
-- Persistent data: `/var/lib/uls`
-- Published frame: `/run/uls/live-frame.ppm`
-- Services: `uls-web.service`, `uls-matrix.service`
-- Dashboard: `http://<pi-host>:8080/`
+## Safe downgrade policy
 
-The older `universal-led-scoreboard.service` user service and `scripts/install.sh` are legacy preview paths. Do not run them over an existing `/opt/uls` system installation.
+The dashboard intentionally rejects older or divergent Git histories. Branch discovery does not imply deployability. For disaster recovery, restore a known-good image or perform an explicitly supervised recovery rather than forcing an older checkout through the dashboard.
 
-## Upgrade and smoke test
+## Maintenance
 
-```bash
-sudo ulsctl update
-sudo ulsctl status
-sudo ulsctl health
-```
+Use **System → Software Updates** for routine updates and branch selection, and **System → Matrix Hardware** for physical output. Shell commands are recovery-only after the initial installation. Configuration remains in /etc/uls and persistent state in /var/lib/uls.
 
-Updater must run all unit tests successfully before applying the fast-forward, restart both system services, and preserve settings and persistent data. After the physical startup splash (30 seconds), the board must resume live frames.
+## Previously released versions
 
-## Manual release checks
-
-- [ ] Restart from dashboard: both services restart, startup splash displays, normal frames resume.
-- [ ] Run `sudo ulsctl restart` and confirm the same behavior.
-- [ ] Run `sudo ulsctl health` after the splash: both services active, HTTP health responds, frame fresh.
-- [ ] Disable or disconnect network temporarily: web UI stays responsive and cached content continues where available.
-- [ ] Confirm MLB schedule failure never blocks frame generation; diagnostics report the warning.
-- [ ] Confirm countdown league and ATL favorite-team dates; ensure countdown yields to live game.
-- [ ] Confirm clock, weather, news, and game screens rotate without empty slots.
-- [ ] Confirm saving settings survives web service restart without invalid form token.
-- [ ] Verify Wi-Fi recovery/fallback using the existing Wi-Fi deployment checklist.
-- [ ] Validate a clean installation on a supported Pi using documented system-service steps.
-- [ ] Review GPL and third-party attribution before public release.
-
-## Recovery
-
-```bash
-sudo ulsctl status
-sudo ulsctl logs
-sudo ulsctl restart
-sudo ulsctl health
-```
-
-If the dashboard restart control is unavailable on a migrated system, install its scoped helper once:
-
-```bash
-sudo bash /opt/uls/app/scripts/install-dashboard-restart-helper.sh
-```
-
-The updater rejects dirty working trees and failed candidate tests; if service validation fails after applying code, it attempts rollback to the prior commit.
-
-## Release decision
-
-Only merge and tag `v0.1.0` after the test suite and manual checks are recorded as passing. Do not tag solely because unit tests pass.
+Historical v0.1.0 foundation checks have been superseded by this checklist. See CHANGELOG.md for v0.2.0 through v0.4.5 development history.
