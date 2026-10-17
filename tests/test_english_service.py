@@ -36,7 +36,8 @@ class EnglishServiceWiringTests(unittest.TestCase):
         text = source.read_text(encoding="utf-8")
         self.assertIn("english_renderer=english_renderer", text)
         self.assertIn("english_workers.values()", text)
-        self.assertIn("settings['sports']['english']['enabled']", text)
+        self.assertIn("sport_enabled=settings['sports']['english']['enabled']", text)
+        self.assertIn("sync_english_workers(", text)
 
 
 if __name__ == "__main__":
