@@ -58,7 +58,7 @@ def parse_scoreboard(payload: Mapping, league: str) -> tuple[SoccerMatch, ...]:
             team = detail.get("team") or {}
             scorer = _credited_scorer(detail)
             clock = detail.get("clock") or {}
-            minute = clock.get("displayValue") or detail.get("displayClock")
+            minute = (clock.get("displayValue") if isinstance(clock, Mapping) else None) or detail.get("displayClock")
             goals.append(SoccerGoal(
                 event_id=str(event_id),
                 team_id=_team_id(team),
@@ -114,7 +114,10 @@ def _match_clock(status, competition):
     for source in (status, competition.get("status") or {}):
         if not isinstance(source, Mapping):
             continue
-        value = source.get("displayClock") or (source.get("clock") or {}).get("displayValue") if isinstance(source.get("clock"), Mapping) else source.get("displayClock")
+        clock = source.get("clock")
+        value = source.get("displayClock")
+        if not value and isinstance(clock, Mapping):
+            value = clock.get("displayValue")
         if value is not None and str(value).strip():
             return str(value).strip()
     return None
