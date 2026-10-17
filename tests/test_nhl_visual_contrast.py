@@ -23,7 +23,7 @@ class NHLVisualContrastTests(unittest.TestCase):
 
     def test_original_team_colors_unchanged(self):
         colors = {"BOS": (0, 0, 35)}
-        NHLVisualScreen(game=HockeyGame(away="BOS", home="NYR"), team_colors=colors).render()
+        NHLVisualScreen(game=sample_game(), team_colors=colors).render()
         self.assertEqual(colors["BOS"], (0, 0, 35))
 
 
