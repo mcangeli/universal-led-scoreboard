@@ -27,19 +27,15 @@ For a physical board you need a compatible 64×32 RGB LED matrix, appropriate po
 
 ## Installation status
 
-**v0.4.0 adds NFL to the validated MLB, NHL, NBA and WNBA baseline.** The validated production installation runs two **system-level** services (`uls-web.service` and `uls-matrix.service`) from `/opt/uls/app`. The older `scripts/install.sh` installs a separate user-level preview service and **must not be used as the clean-install procedure for the current system layout**.
+**v0.4.5 release candidate builds on the validated MLB, NHL, NBA, WNBA and NFL baseline.** The validated production installation runs two **system-level** services (`uls-web.service` and `uls-matrix.service`) from `/opt/uls/app`. The older `scripts/install.sh` installs a separate user-level preview service and **must not be used as the clean-install procedure for the current system layout**.
 
-The system installer and CLI updater have been exercised on the Raspberry Pi installation. The v0.4.0 regression suite passed on the production Pi (780 tests, 15 skipped); v0.3.0 passed 752 tests with 15 skipped; the prior v0.2.0 baseline passed 717 tests with 15 skipped. Both system services started automatically after a full reboot during v0.2.0 verification. MLB, NHL and news rotation were visually confirmed on the physical matrix; NBA and WNBA screens were subsequently confirmed on the physical matrix for v0.3.0. Dashboard-initiated update installation remains a separate acceptance item. See [Installation and first-run guide](docs/INSTALLATION.md) and [Foundation release checklist](docs/FOUNDATION-RELEASE-CHECKLIST.md). Preserve a known-good boot card during hardware experiments.
+The system installer and CLI updater have been exercised on the Raspberry Pi installation. The v0.4.0 regression suite passed on the production Pi (780 tests, 15 skipped); v0.3.0 passed 752 tests with 15 skipped; the prior v0.2.0 baseline passed 717 tests with 15 skipped. Both system services started automatically after a full reboot during v0.2.0 verification. MLB, NHL and news rotation were visually confirmed on the physical matrix; NBA and WNBA screens were subsequently confirmed on the physical matrix for v0.3.0. Dashboard-initiated updates have since been verified on the Raspberry Pi 3. See [Installation and first-run guide](docs/INSTALLATION.md) and [Foundation release checklist](docs/FOUNDATION-RELEASE-CHECKLIST.md). Preserve a known-good boot card during hardware experiments.
 
 ### Updating an existing system installation
 
-```bash
-sudo ulsctl update
-sudo ulsctl health
-sudo ulsctl status
-```
+Use **System → Software Updates** in the web dashboard to check for updates, select a compatible release branch, and install. Candidate tests run before deployment, with progress and failures shown in the browser. Unsafe older or divergent branch switches are rejected. Use `sudo ulsctl health` and `sudo ulsctl status` only for recovery or diagnostics.
 
-The updater validates the candidate test suite before installation, synchronizes the installed `ulsctl` command, and restarts both services. Configuration under `/etc/uls` and data under `/var/lib/uls` are preserved.
+The updater validates the candidate test suite before installation, synchronizes the installed `ulsctl` command, restarts the web service, and applies the saved physical-matrix enabled state. Configuration under `/etc/uls` and data under `/var/lib/uls` are preserved.
 
 **Security:** The configurator uses HTTP on the LAN. Do not expose port 8080 to the public internet without HTTPS and appropriate access controls.
 
@@ -80,7 +76,7 @@ python3 -m universal_led --output splash.ppm
 - **Service does not start:** Run `sudo ulsctl logs` and `sudo ulsctl status` for the system installation.
 - **Changes are not visible in the browser:** Refresh the page after restarting the service.
 
-## v0.4.5 development verification\n\n- Feature branch: `feature/0.4.5-dashboard-polish` (not yet tagged or merged as a production release).\n- Raspberry Pi regression suite: **816 tests passed, 15 skipped** (October 16, 2026).\n- Physical matrix observation: a live game took precedence and supplemental pages did not interrupt it.\n- Automated coverage checks cross-sport live priority, MLB cached multi-game detection, favorite/fallback/all modes, suppression of supplemental screens, and return to rotation after live games end.\n- Still to verify on the physical matrix: return to normal rotation after the last live game finishes, and dashboard update/install workflow.\n- For the installed system use `sudo ulsctl status`, `sudo ulsctl health`, and `sudo ulsctl restart`; the actual systemd units are `uls-matrix.service` and `uls-web.service`.\n\n## v0.4.0 NFL verification
+## v0.4.5 release-candidate verification\n\n- Feature branch: `feature/0.4.5-dashboard-polish`, not yet tagged or merged.\n- Raspberry Pi 3 regression suite: **854 tests passed, 15 skipped** (October 17, 2026), before final documentation and version edits.\n- Dashboard-initiated update, remote branch discovery, release-family branch filtering, and matrix enable/disable were confirmed on the Pi.\n- Physical matrix live-game precedence was observed; automated tests cover return to normal rotation.\n- Remaining acceptance: reject an incompatible branch through the browser, validate recovery after a simulated post-checkout failure, and independently test fresh-image installation.\n\n## v0.4.0 NFL verification
 
 Configure NFL under Sports & Rotation. Enable NFL headlines separately under Content & News. The NFL feed currently targets the local game day, so Sunday's matchups may not appear on Friday. NFL RSS parsing, configuration, and game rendering are covered by regression tests. Live NFL headlines and game transitions still require physical-matrix observation.
 
