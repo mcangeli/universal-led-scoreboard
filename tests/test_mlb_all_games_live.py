@@ -86,5 +86,42 @@ class MLBAllGamesLiveTests(unittest.TestCase):
             screen.assert_called_once()
 
 
+    def test_supplemental_rotation_resumes_after_last_live_game(self):
+        from unittest.mock import patch
+
+        state = {"live": True}
+        game = SimpleNamespace(status="pregame")
+        renderer = SimpleNamespace(
+            directory="/unused",
+            _selection=lambda: (game, 0),
+            has_live_games=lambda: state["live"],
+            weather=None,
+            news=None,
+            opening_feed=None,
+            _lock=__import__("threading").Lock(),
+            _started=__import__("time").monotonic(),
+            _supplemental_stride=1,
+            settings=lambda: {"mlb": {"rotation_seconds": 12}},
+        )
+        with patch("universal_led.runtime_settings.read_config", return_value={
+            "teams": {}, "scoreboard": {},
+        }), patch("universal_led.runtime_settings.MLBPaletteScreen") as game_screen, \
+             patch("universal_led.runtime_settings.load_time_weather",
+                   return_value={"clock_enabled": True, "weather_enabled": False,
+                                 "timezone": "UTC", "time_format": "12h"}), \
+             patch("universal_led.runtime_settings.Path") as path, \
+             patch("universal_led.runtime_settings.current_countdown", return_value=None), \
+             patch("universal_led.runtime_settings.choose_screen", return_value="clock") as choose, \
+             patch("universal_led.runtime_settings.ClockScreen") as clock_screen:
+            path.return_value.__truediv__.return_value.exists.return_value = True
+            game_screen.return_value.render.return_value = "GAME"
+            clock_screen.return_value.render.return_value = "CLOCK"
+            self.assertEqual(ConfiguredMLBRenderer.frame(renderer), "GAME")
+            choose.assert_not_called()
+            state["live"] = False
+            self.assertEqual(ConfiguredMLBRenderer.frame(renderer), "CLOCK")
+            choose.assert_called_once()
+
+
 if __name__ == "__main__":
     unittest.main()
