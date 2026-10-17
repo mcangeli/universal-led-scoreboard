@@ -6,6 +6,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from typing import Mapping
+from .colors import readable_on_black
 from .display import Framebuffer
 from .mlb_classic import small
 from .nhl_data import HockeyGame
@@ -44,7 +45,7 @@ class NHLVisualScreen:
         g = self.game
         for y, team, score, record in ((10, g.away, g.away_score, g.away_record),
                                        (18, g.home, g.home_score, g.home_record)):
-            accent = (self.team_colors or TEAM_COLORS).get(team, WHITE)
+            accent = readable_on_black((self.team_colors or TEAM_COLORS).get(team, WHITE))
             small(fb, team[:3].ljust(3), 2, y, accent)
             # Team-colored mini puck keeps the sport's visual language.
             draw_puck(fb, 24, y, accent)
