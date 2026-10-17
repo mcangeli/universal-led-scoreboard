@@ -55,6 +55,7 @@ rollback() {
   rm -f "$REQUEST"
   install -m 755 "$APP/scripts/ulsctl" /usr/local/bin/ulsctl || true
   bash "$APP/scripts/install-dashboard-update-helper.sh" || true
+  bash "$APP/scripts/install-dashboard-restart-helper.sh" || true
   systemctl restart uls-web.service || true
   if systemctl list-unit-files uls-matrix.service --no-legend 2>/dev/null | grep -q uls-matrix.service; then bash "$APP/scripts/uls-matrix-control" apply || true; fi
   echo "Rollback attempted; check: sudo ulsctl status" >&2
