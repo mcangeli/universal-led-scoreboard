@@ -10,10 +10,11 @@ Status: **release candidate, not tagged or merged**. This checklist separates ve
 - [x] Combined MLS/NWSL fixture tests for favorites, live-game priority, halftime, scheduled and final screens.
 - [x] Regression coverage for duplicate goal IDs and halftime goal suppression.
 - [x] News controls for MLS and NWSL covered by automated tests.
+- [x] Live MLS halftime display: CLT–PHI showed `HT` after ESPN state/name parsing fix (user confirmed October 17, 2026).
 
 ## Outstanding before v0.5.0 tag
 
-- [ ] Confirm current ESPN MLS and NWSL endpoint responses on a day with actual games; verify team IDs, status values, match clock, halftime and final transitions. No claim of live-feed verification until observed.
+- [ ] Complete current ESPN MLS and NWSL live-feed verification: MLS CLT–PHI halftime is confirmed, but NWSL, team IDs, other status values, second-half restart and final transitions still need observation.
 - [ ] Observe an actual scoring event and credited scorer (including whether provider supplies `details` and stable goal IDs). Verify goal announcement timing on the board.
 - [ ] With MLS and NWSL both enabled, check favorite-team persistence after dashboard save/reload and simultaneous live-match rotation.
 - [ ] Confirm live games suppress news, weather and time; verify supplemental screens resume when all eligible live games end.
