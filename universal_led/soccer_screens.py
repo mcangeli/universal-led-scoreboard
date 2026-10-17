@@ -57,6 +57,8 @@ def _match_status(match: SoccerMatch) -> str:
         return "FINAL"
     if status in ("pre", "scheduled"):
         return "PRE"
+    if status == "halftime":
+        return "HT"
     if is_live(match):
         clock = (match.clock or "").strip()
         if clock:
