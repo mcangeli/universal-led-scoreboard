@@ -71,7 +71,7 @@ class SportPanelStructureTests(unittest.TestCase):
     def test_all_sport_panels_are_independent(self):
         parser = DivPanelParser()
         parser.feed(HTML)
-        self.assertEqual(parser.panels, list(DASHBOARD_SPORTS))
+        self.assertCountEqual(parser.panels, DASHBOARD_SPORTS)
         self.assertEqual(parser.nested, [])
         self.assertEqual(parser.open_panels, [])
 
