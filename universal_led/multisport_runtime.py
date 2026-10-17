@@ -86,6 +86,19 @@ class MultiSportRenderer:
                 available.append(sport)
         return tuple(available)
 
+    def _live_sports(self, available):
+        """Return sports with live cached games, without fetching network data."""
+        live = []
+        for sport in available:
+            renderer = self._renderer(sport)
+            try:
+                game = renderer.game()
+                if game is not None and getattr(game, "status", None) == "live":
+                    live.append(sport)
+            except Exception:
+                continue
+        return tuple(live)
+
     def _selected(self):
         with self._lock:
             if not self._auto_rotation:
@@ -93,6 +106,9 @@ class MultiSportRenderer:
         available = self._available()
         if not available:
             return None
+        live = self._live_sports(available)
+        if live:
+            available = live
         with self._lock:
             interval = self._interval
             started = self._started
