@@ -91,6 +91,24 @@ class SoccerFeedTests(unittest.TestCase):
         self.assertEqual(len(match.goals), 1)
         self.assertIsNone(match.goals[0].scorer)
 
+    def test_team_abbreviations_normalized_for_favorites(self):
+        from universal_led.soccer_rotation import eligible_matches
+        payload = fixture()
+        payload["events"][0]["competitions"][0]["competitors"][0]["team"]["abbreviation"] = " atl "
+        match, = parse_scoreboard(payload, "MLS")
+        self.assertEqual(match.home_id, "ATL")
+        self.assertEqual(eligible_matches([match], favorites=["ATL"], mode="favorites"), (match,))
+
+    def test_goal_team_identifier_normalized(self):
+        detail = {"id": "g1", "scoringPlay": True, "team": {"abbreviation": " atl "}}
+        match, = parse_scoreboard(fixture([detail]), "MLS")
+        self.assertEqual(match.goals[0].team_id, "ATL")
+
+    def test_missing_team_identifier_does_not_create_phantom_match(self):
+        payload = fixture()
+        payload["events"][0]["competitions"][0]["competitors"][0]["team"] = {}
+        self.assertEqual(parse_scoreboard(payload, "NWSL"), ())
+
     def test_unsupported_league_rejected(self):
         with self.assertRaises(ValueError):
             parse_scoreboard(fixture(), "EFL")
