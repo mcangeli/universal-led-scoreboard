@@ -1251,8 +1251,16 @@ def main():
         soccer_worker = BackgroundSoccerFeed(soccer_feed, on_match=soccer_renderer.update)
         soccer_workers[key] = soccer_worker
         soccer_renderers[key] = soccer_renderer
+    from .english_football import COMPETITIONS
+    from .english_rotation import EnglishFootballRenderer
+    english_feeds = {league: SoccerFeed(league) for league in COMPETITIONS}
+    english_renderer = EnglishFootballRenderer(english_feeds)
+    english_workers = {
+        league: BackgroundSoccerFeed(english_feeds[league], on_match=english_renderer.update)
+        for league in COMPETITIONS
+    }
     renderer.news = None  # Universal news is owned by the shared board scheduler.
-    board = MultiSportRenderer(renderer, nhl_renderer, news=news, settings_getter=renderer.settings, nba_renderer=nba_renderer, wnba_renderer=wnba_renderer, nfl_renderer=nfl_renderer, mls_renderer=soccer_renderers['mls'], nwsl_renderer=soccer_renderers['nwsl'])
+    board = MultiSportRenderer(renderer, nhl_renderer, news=news, settings_getter=renderer.settings, nba_renderer=nba_renderer, wnba_renderer=wnba_renderer, nfl_renderer=nfl_renderer, mls_renderer=soccer_renderers['mls'], nwsl_renderer=soccer_renderers['nwsl'], english_renderer=english_renderer)
     # Apply persisted sport choice on service startup, not just after web saves.
     def game():
         return board.game()
@@ -1306,7 +1314,18 @@ def main():
             soccer_workers[league].set_timezone(time_preferences['timezone'])
             if settings['sports'][league]['enabled']:
                 soccer_workers[league].start()
-        enabled = [sport for sport in ('mlb', 'nhl', 'nba', 'wnba', 'nfl', 'mls', 'nwsl') if settings['sports'][sport]['enabled']]
+        english = settings['english']
+        english_renderer.configure(
+            enabled=english['enabled_leagues'],
+            favorite_teams=english['favorite_teams'],
+            mode=english['mode'],
+            rotation_seconds=english['rotation_seconds'])
+        for league, worker in english_workers.items():
+            worker.feed.refresh_seconds = english['refresh_seconds']
+            worker.set_timezone(time_preferences['timezone'])
+            if settings['sports']['english']['enabled'] and league in english['enabled_leagues']:
+                worker.start()
+        enabled = [sport for sport in ('mlb', 'nhl', 'nba', 'wnba', 'nfl', 'mls', 'nwsl', 'english') if settings['sports'][sport]['enabled']]
         renderer.set_supplemental_stride(len(enabled))
         board.configure_rotation(enabled, interval=settings['mlb']['rotation_seconds'],
                                  preferred=settings['active_sport'])
@@ -1356,6 +1375,8 @@ def main():
         wnba_feed.stop()
         nfl_feed.stop()
         for worker in soccer_workers.values():
+            worker.stop()
+        for worker in english_workers.values():
             worker.stop()
 if __name__=='__main__':
     main()
