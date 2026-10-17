@@ -19,12 +19,23 @@ BRANCH=$(as_owner git branch --show-current)
 echo "Fetching $REMOTE/$BRANCH..."
 as_owner git fetch "$REMOTE" "$BRANCH"
 OLD=$(as_owner git rev-parse HEAD)
-NEW=$(as_owner git rev-parse "refs/remotes/$REMOTE/$BRANCH")
-if [[ "$OLD" == "$NEW" ]]; then echo "Already up to date ($OLD)."; exit 0; fi
-as_owner git merge-base --is-ancestor "$OLD" "$NEW" || { echo "Not a fast-forward; update cancelled." >&2; exit 1; }
+OLD_BRANCH="$BRANCH"
+REQUEST=/var/lib/uls/update/target-branch
+if [[ -f "$REQUEST" ]]; then
+  TARGET=$(cat "$REQUEST")
+  [[ "$TARGET" =~ ^[a-zA-Z0-9._/-]{1,160}$ && "$TARGET" != *..* && "$TARGET" != /* && "$TARGET" != */ ]] || { echo "Invalid requested branch" >&2; exit 1; }
+  BRANCH="$TARGET"
+fi
+NEW=$(as_owner git ls-remote --exit-code "$REMOTE" "refs/heads/$BRANCH" | awk 'NR==1{print $1}')
+[[ "$NEW" =~ ^[a-f0-9]{40}$ ]] || { echo "Target branch unavailable" >&2; exit 1; }
+if [[ "$OLD" == "$NEW" && "$OLD_BRANCH" == "$BRANCH" ]]; then echo "Already up to date ($OLD)."; exit 0; fi
+if [[ "$BRANCH" == "$OLD_BRANCH" ]]; then
+  as_owner git merge-base --is-ancestor "$OLD" "$NEW" || { echo "Not a fast-forward; update cancelled." >&2; exit 1; }
+fi
 STAGE=$(as_owner mktemp -d /tmp/uls-update.XXXXXXXX)
 cleanup() { as_owner git -C "$APP" worktree remove --force "$STAGE" >/dev/null 2>&1 || true; as_owner rm -rf -- "$STAGE"; }
 trap cleanup EXIT
+as_owner git fetch "$REMOTE" "$BRANCH"
 as_owner git worktree add --detach "$STAGE" "$NEW"
 echo "Checking candidate code before changing the installation..."
 as_owner "$VENV/bin/python" -m compileall -q "$STAGE/universal_led" "$STAGE/tests"
@@ -34,6 +45,7 @@ rollback() {
   local failed_status=$?
   trap - ERR
   echo "Update failed (exit $failed_status). Restoring $OLD..." >&2
+  if [[ "$(as_owner git branch --show-current)" != "$OLD_BRANCH" ]]; then as_owner git checkout -f "$OLD_BRANCH" || true; fi
   if ! as_owner git reset --hard "$OLD"; then
     echo "CRITICAL: Could not restore Git checkout automatically." >&2
   fi
@@ -44,7 +56,11 @@ rollback() {
   exit "$failed_status"
 }
 trap rollback ERR
-as_owner git merge --ff-only "$NEW"
+if [[ "$BRANCH" == "$OLD_BRANCH" ]]; then
+  as_owner git merge --ff-only "$NEW"
+else
+  as_owner git checkout -B "$BRANCH" "$NEW"
+fi
 # Refresh the installed CLI after the candidate has passed its tests.
 # The operator invokes /usr/local/bin/ulsctl, not the Git checkout copy.
 install -m 755 "$APP/scripts/ulsctl" /usr/local/bin/ulsctl
@@ -67,6 +83,7 @@ for i in {1..20}; do
   sleep 1
 done
 curl --fail --silent --output /dev/null --max-time 2 http://127.0.0.1:8080/
+rm -f "$REQUEST"
 trap - ERR
 echo "ULS updated successfully: $OLD -> $NEW"
 echo "Settings in /etc/uls and persistent data in /var/lib/uls were untouched."
