@@ -21,7 +21,6 @@ class SoccerConfiguratorIntegrationTests(unittest.TestCase):
 
     def test_persisted_soccer_controls_are_loaded_and_saved(self):
         html = configurator.HTML
-        self.assertIn("settings[league].enabled", html) if False else None
         self.assertIn("next.sports[league].enabled=", html)
         self.assertIn("next[league].favorite_teams=", html)
         self.assertIn("options.favorite_teams.join(', ')", html)
