@@ -23,6 +23,24 @@ class SoccerFeedTests(unittest.TestCase):
         self.assertEqual((match.home_id, match.away_id, match.home_score, match.away_score), ("ATL", "MIA", 2, 1))
         self.assertEqual(match.status, "in")
 
+    def test_long_form_live_status_prioritized(self):
+        from universal_led.soccer_rotation import is_live
+        for name in ("STATUS_IN_PROGRESS", "STATUS_HALFTIME", "STATUS_END_PERIOD"):
+            payload = fixture()
+            payload["events"][0]["status"]["type"] = {"name": name}
+            game, = parse_scoreboard(payload, "MLS")
+            self.assertTrue(is_live(game), name)
+
+    def test_long_form_scheduled_and_final_status(self):
+        from universal_led.soccer_rotation import is_live
+        for name, expected in (("STATUS_SCHEDULED", "pre"), ("STATUS_FINAL", "post"),
+                               ("STATUS_FULL_TIME", "post")):
+            payload = fixture()
+            payload["events"][0]["status"]["type"] = {"name": name}
+            game, = parse_scoreboard(payload, "NWSL")
+            self.assertEqual(game.status, expected)
+            self.assertFalse(is_live(game))
+
     def test_nwsl_uses_same_parser(self):
         match, = parse_scoreboard(fixture(), "NWSL")
         self.assertEqual(match.league, "NWSL")
