@@ -89,6 +89,8 @@ def parse_scoreboard(payload: Mapping, league: str) -> tuple[SoccerMatch, ...]:
             goals=tuple(goals),
             clock=_match_clock(status, competition),
             period=_match_period(status, competition),
+            home_club_key=_english_club_key(competition, "home") if league in ("EPL", "CHAMPIONSHIP", "LEAGUE_ONE", "LEAGUE_TWO") else None,
+            away_club_key=_english_club_key(competition, "away") if league in ("EPL", "CHAMPIONSHIP", "LEAGUE_ONE", "LEAGUE_TWO") else None,
         ))
     return tuple(matches)
 
@@ -146,4 +148,14 @@ def _match_period(status, competition):
             return int(value)
         except (TypeError, ValueError):
             continue
+    return None
+
+
+def _english_club_key(competition, side):
+    for entry in competition.get("competitors") or []:
+        if isinstance(entry, Mapping) and entry.get("homeAway") == side:
+            team = entry.get("team") or {}
+            if isinstance(team, Mapping) and team.get("id") is not None:
+                value = str(team["id"]).strip()
+                return f"espn:{value}" if value else None
     return None
