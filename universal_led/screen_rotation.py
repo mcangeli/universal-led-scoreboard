@@ -2,7 +2,9 @@
 
 A live favorite-team game bypasses this scheduler entirely.
 """
-def choose_screen(position, *, has_game, clock, weather, news, interval=5, countdown=False):
+def choose_screen(position, *, has_game, clock, weather, news, interval=5, countdown=False, live_games=False):
+    if live_games:
+        return 'game'
     options=[]
     if clock: options.append('clock')
     if weather: options.append('weather')
