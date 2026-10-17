@@ -29,7 +29,7 @@ For a physical board you need a compatible 64×32 RGB LED matrix, appropriate po
 
 **v0.4.5 release candidate builds on the validated MLB, NHL, NBA, WNBA and NFL baseline.** The validated production installation runs two **system-level** services (`uls-web.service` and `uls-matrix.service`) from `/opt/uls/app`. The older `scripts/install.sh` installs a separate user-level preview service and **must not be used as the clean-install procedure for the current system layout**.
 
-The system installer and CLI updater have been exercised on the Raspberry Pi installation. The v0.4.0 regression suite passed on the production Pi (780 tests, 15 skipped); v0.3.0 passed 752 tests with 15 skipped; the prior v0.2.0 baseline passed 717 tests with 15 skipped. Both system services started automatically after a full reboot during v0.2.0 verification. MLB, NHL and news rotation were visually confirmed on the physical matrix; NBA and WNBA screens were subsequently confirmed on the physical matrix for v0.3.0. Dashboard-initiated updates have since been verified on the Raspberry Pi 3. See [Installation and first-run guide](docs/INSTALLATION.md) and [Foundation release checklist](docs/FOUNDATION-RELEASE-CHECKLIST.md). Preserve a known-good boot card during hardware experiments.
+The system installer has been validated from a clean Raspberry Pi OS Trixie image on a Raspberry Pi 5 in emulator mode, including dashboard display after reboot. Dashboard updates and physical matrix operation have been validated separately on the Raspberry Pi 3. The v0.4.0 regression suite passed on the production Pi (780 tests, 15 skipped); v0.3.0 passed 752 tests with 15 skipped; the prior v0.2.0 baseline passed 717 tests with 15 skipped. Both system services started automatically after a full reboot during v0.2.0 verification. MLB, NHL and news rotation were visually confirmed on the physical matrix; NBA and WNBA screens were subsequently confirmed on the physical matrix for v0.3.0. Dashboard-initiated updates have since been verified on the Raspberry Pi 3. See [Installation and first-run guide](docs/INSTALLATION.md) and [v0.4.5 release checklist](docs/FOUNDATION-RELEASE-CHECKLIST.md). Preserve a known-good boot card during hardware experiments.
 
 ### Updating an existing system installation
 
@@ -58,7 +58,7 @@ sudo ulsctl logs
 sudo ulsctl health
 ```
 
-The physical worker shows an approximately 30-second startup splash before normal frames. The health command verifies both services, the HTTP endpoint, and freshness of the published framebuffer. Clean-image installation and compatibility on additional Raspberry Pi models still need independent validation.
+The physical worker shows an approximately 30-second startup splash before normal frames. The health command verifies both services, the HTTP endpoint, and freshness of the published framebuffer. Clean-image emulator installation has been validated on the Raspberry Pi 5; fresh-image physical-driver installation and compatibility on additional Raspberry Pi models still need independent validation.
 
 From a development checkout:
 
@@ -76,7 +76,16 @@ python3 -m universal_led --output splash.ppm
 - **Service does not start:** Run `sudo ulsctl logs` and `sudo ulsctl status` for the system installation.
 - **Changes are not visible in the browser:** Refresh the page after restarting the service.
 
-## v0.4.5 release-candidate verification\n\n- Feature branch: `feature/0.4.5-dashboard-polish`, not yet tagged or merged.\n- Raspberry Pi 3 regression suite: **854 tests passed, 15 skipped** (October 17, 2026), before final documentation and version edits.\n- Dashboard-initiated update, remote branch discovery, release-family branch filtering, and matrix enable/disable were confirmed on the Pi.\n- Physical matrix live-game precedence was observed; automated tests cover return to normal rotation.\n- Remaining acceptance: reject an incompatible branch through the browser, validate recovery after a simulated post-checkout failure, and independently test fresh-image installation.\n\n## v0.4.0 NFL verification
+## v0.4.5 release-candidate verification
+
+- Feature branch: `feature/0.4.5-dashboard-polish`, not yet tagged or merged.
+- Raspberry Pi 3: **857 tests passed, 15 skipped** (October 17, 2026), including isolated rollback and fresh-install regression coverage.
+- Dashboard update, remote branch discovery, release-family filtering, matrix enable/disable, and rejection of an older unsafe branch confirmed on the Pi 3.
+- Raspberry Pi 5: clean Raspberry Pi OS Trixie installation in emulator mode succeeded; board display remained operational after reboot.
+- Automated rollback uses isolated command stubs; a real post-deployment failure and restoration have not been demonstrated.
+- Remaining acceptance: clean physical-driver install, any outstanding Wi-Fi/operational checks, license review, and release decision.
+
+## v0.4.0 NFL verification
 
 Configure NFL under Sports & Rotation. Enable NFL headlines separately under Content & News. The NFL feed currently targets the local game day, so Sunday's matchups may not appear on Friday. NFL RSS parsing, configuration, and game rendering are covered by regression tests. Live NFL headlines and game transitions still require physical-matrix observation.
 
