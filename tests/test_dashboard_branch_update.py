@@ -30,6 +30,11 @@ class DashboardBranchUpdateTests(unittest.TestCase):
         self.assertIn('OLD_BRANCH="$BRANCH"', script)
         self.assertIn('as_owner git checkout -f "$OLD_BRANCH"', script)
 
+    def test_fetch_precedes_fast_forward_validation(self):
+        script = (ROOT / "scripts" / "uls-update").read_text()
+        self.assertLess(script.index('as_owner git fetch "$REMOTE" "$BRANCH"'), script.index('as_owner git merge-base --is-ancestor'))
+        self.assertIn('as_owner git rev-parse FETCH_HEAD', script)
+
     def test_privileged_selector_limits_input(self):
         script = (ROOT / "scripts" / "uls-update-select").read_text()
         compile(script, "uls-update-select", "exec")
