@@ -60,6 +60,14 @@ class SoccerFeedTests(unittest.TestCase):
         self.assertEqual(len(game.goals), 1)
         self.assertIsNone(game.goals[0].minute)
 
+    def test_halftime_remains_live_and_preserves_status(self):
+        from universal_led.soccer_rotation import is_live
+        payload = fixture()
+        payload["events"][0]["status"]["type"] = {"name": "STATUS_HALFTIME"}
+        game, = parse_scoreboard(payload, "MLS")
+        self.assertEqual(game.status, "halftime")
+        self.assertTrue(is_live(game))
+
     def test_nwsl_uses_same_parser(self):
         match, = parse_scoreboard(fixture(), "NWSL")
         self.assertEqual(match.league, "NWSL")
