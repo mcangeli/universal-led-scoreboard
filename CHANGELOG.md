@@ -15,10 +15,12 @@
 - Fresh installer defaults to main and respects saved physical-matrix state.
 
 ### Validation and outstanding acceptance
-- Raspberry Pi 3: 854 regression tests passed, 15 skipped, before final documentation/version changes.
-- Web updates, branch discovery, and matrix on/off controls verified on physical hardware.
-- Pending: incompatible-branch rejection in browser, simulated post-checkout rollback, fresh-image installation, and release tagging. No merge to main yet.
-
+- Raspberry Pi 3: **857 tests passed, 15 skipped** on October 17, 2026.
+- Physical matrix controls, dashboard software updates, and rejection of an older unsafe branch verified on Pi 3.
+- Isolated rollback test executes the recovery function with Git/service side effects stubbed; real post-deployment rollback remains unverified.
+- Raspberry Pi 5: clean Raspberry Pi OS Trixie installation in emulator mode succeeded; dashboard/board display remained operational after reboot.
+- Installer now explicitly installs NetworkManager and permits first-run credential creation.
+- Outstanding: clean physical-driver installation, license/attribution review, and release tagging. No merge to main yet.
 
 ## v0.4.0 (2026-10-16)
 
