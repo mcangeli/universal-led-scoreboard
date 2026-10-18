@@ -175,7 +175,8 @@ class MultiSportRenderer:
             headlines = self.news.items()
             if headlines and self._live_sports():
                 headlines = []
-            game = renderer.game() if headlines and renderer is not None else None
+            game_getter = getattr(renderer, 'game', None) if renderer is not None else None
+            game = game_getter() if headlines and callable(game_getter) else None
             if headlines and (game is None or game.status != "live"):
                 grouped = {}
                 for item in headlines:
