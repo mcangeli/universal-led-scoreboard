@@ -10,7 +10,7 @@ from .display import Framebuffer
 class MultiSportRenderer:
     """Route cached frames without network access; retain legacy single-sport mode."""
 
-    def __init__(self, mlb_renderer, nhl_renderer, active_sport="mlb", clock=time.monotonic, news=None, settings_getter=None, nba_renderer=None, wnba_renderer=None, nfl_renderer=None, mls_renderer=None, nwsl_renderer=None, english_renderer=None):
+    def __init__(self, mlb_renderer, nhl_renderer, active_sport="mlb", clock=time.monotonic, news=None, settings_getter=None, nba_renderer=None, wnba_renderer=None, nfl_renderer=None, mls_renderer=None, nwsl_renderer=None, english_renderer=None, scoring_alerts=None, alert_renderer=None):
         self.mlb = mlb_renderer
         self.nhl = nhl_renderer
         self.nba = nba_renderer
@@ -19,6 +19,8 @@ class MultiSportRenderer:
         self.mls = mls_renderer
         self.nwsl = nwsl_renderer
         self.english = english_renderer
+        self.scoring_alerts = scoring_alerts
+        self.alert_renderer = alert_renderer
         self.clock = clock
         self.news = news
         self.settings_getter = settings_getter
@@ -132,6 +134,12 @@ class MultiSportRenderer:
         return available[slot % len(available)]
 
     def frame(self):
+        # Optional scoring interruptions precede game/news rotation. A missing
+        # adapter or disabled alerts leave the existing behavior unchanged.
+        if self.scoring_alerts is not None and self.alert_renderer is not None:
+            event = self.scoring_alerts.next_alert(self.clock())
+            if event is not None:
+                return self.alert_renderer(event)
         sport = self._selected()
         renderer = self._renderer(sport)
         if self.news is not None and self.settings_getter is not None:
