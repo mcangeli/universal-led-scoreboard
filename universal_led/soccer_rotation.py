@@ -6,6 +6,7 @@ not modify its priorities or access matrix hardware directly.
 from collections.abc import Iterable
 
 from .soccer import SoccerMatch
+from .game_interruptions import InterruptionPolicy, show_interruption
 
 
 LIVE_STATES = frozenset(("in", "live", "in_progress", "inprogress", "halftime"))
@@ -21,11 +22,16 @@ def eligible_matches(
     *,
     favorites: Iterable[str] = (),
     mode: str = "all",
+    interruption_policy: InterruptionPolicy | None = None,
+    has_live_games: bool | None = None,
 ) -> tuple[SoccerMatch, ...]:
     """Filter soccer matches by team favorites, without changing game status."""
     if mode not in ("all", "favorites", "fallback"):
         raise ValueError("Unknown soccer selection mode")
     games = tuple(matches)
+    live_present = any(is_live(game) for game in games) if has_live_games is None else has_live_games
+    games = tuple(game for game in games if show_interruption(
+        game.status, has_live_games=live_present, policy=interruption_policy))
     if mode == "all":
         return games
     favorite_ids = {str(team).strip().upper() for team in favorites if str(team).strip()}
