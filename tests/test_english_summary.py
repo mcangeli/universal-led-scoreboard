@@ -30,9 +30,16 @@ class EnglishSummaryGoalTests(unittest.TestCase):
                               {"id": "1", "scoringPlay": True}]}
         self.assertEqual(len(parse_key_event_goals(data)), 1)
 
-    def test_unknown_participant_role_does_not_invent_scorer(self):
+    def test_single_untyped_participant_is_credited(self):
         data = {"keyEvents": [{"id": "1", "scoringPlay": True,
                                "participants": [{"athlete": {"displayName": "Assistant"}}]}]}
+        self.assertEqual(parse_key_event_goals(data)[0].scorer, "Assistant")
+
+    def test_multiple_untyped_participants_do_not_guess_scorer(self):
+        data = {"keyEvents": [{"id": "2", "scoringPlay": True,
+                               "participants": [
+                                   {"athlete": {"displayName": "Scorer"}},
+                                   {"athlete": {"displayName": "Assistant"}}]}]}
         self.assertIsNone(parse_key_event_goals(data)[0].scorer)
 
     def test_non_list_key_events_and_invalid_payload(self):
