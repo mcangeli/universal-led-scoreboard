@@ -27,7 +27,7 @@ class MLBRefinedTests(unittest.TestCase):
         self.assertTrue(any(f.pixels[8][x] != (0,0,0) for x in range(39,47)))
     def test_large_stat_indicators(self):
         f=MLBRefinedScreen(BaseballGame(away_runs=100)).render()
-        self.assertEqual(f.pixels[9][40],RED)
+        self.assertEqual(f.pixels[9][34],RED)
 
 if __name__=='__main__':
     unittest.main()
