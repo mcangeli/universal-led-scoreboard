@@ -37,12 +37,12 @@ class PaletteV11Tests(unittest.TestCase):
                                      away_errors=0, home_runs=12,
                                      home_hits=15, home_errors=10))
         for y in (8, 18):
-            for x in (43, 44, 45, 53, 54, 55):
+            for x in (42, 43, 44, 52, 53, 54):
                 with self.subTest(x=x, y=y):
                     self.assertTrue(all(f.pixels[row][x] == (0, 0, 0)
                                         for row in range(y, y+5)))
         for y in (8, 18):
-            for start in (36, 46, 56):
+            for start in (35, 45, 55):
                 self.assertTrue(any(f.pixels[row][x] == (1, 2, 3)
                                     for row in range(y, y+5)
                                     for x in range(start, start+7)))
