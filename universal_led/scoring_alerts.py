@@ -74,11 +74,11 @@ class ScoringAlerts:
                 # Put favorites ahead of queued nonfavorites, retaining
                 # their arrival order; never interrupt an active alert.
                 index = next((i for i, queued in enumerate(self._pending)
-                              if queued.team_id.upper() not in favorites),
+                              if not queued[0]),
                              len(self._pending))
-                self._pending.insert(index, event)
+                self._pending.insert(index, (True, event))
             else:
-                self._pending.append(event)
+                self._pending.append((False, event))
         return accepted
 
     def next_alert(self, now):
@@ -89,6 +89,6 @@ class ScoringAlerts:
             self._active = None
             self._expires = None
         if self._active is None and self._pending:
-            self._active = self._pending.popleft()
+            self._active = self._pending.popleft()[1]
             self._expires = now + self.seconds
         return self._active
