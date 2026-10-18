@@ -29,7 +29,7 @@ class SoccerDisplayController:
         self._expires: float | None = None
         self._latest: dict[tuple[str, str], SoccerMatch] = {}
 
-    def update(self, match: SoccerMatch) -> None:
+    def update(self, match: SoccerMatch, *, announce=True) -> None:
         key = (match.league, match.match_id)
         self._latest[key] = match
         # Goals only merit a celebration while play is underway. Late feed
@@ -38,7 +38,11 @@ class SoccerDisplayController:
         new_events = self.tracker.observe(match)
         # Halftime keeps the match in the live rotation, but feed corrections
         # during the break must not trigger a new goal celebration.
-        if is_live(match) and match.status.strip().lower() != "halftime":
+        if not announce:
+            self._pending.clear()
+            self._active = None
+            self._expires = None
+        if announce and is_live(match) and match.status.strip().lower() != "halftime":
             for goal in new_events:
                 self._pending.append(PendingGoal(match, goal))
         else:
