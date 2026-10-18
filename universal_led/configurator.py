@@ -1307,7 +1307,9 @@ def main():
         soccer_renderers[key] = soccer_renderer
     from .english_football import COMPETITIONS
     from .english_rotation import EnglishFootballRenderer
-    english_feeds = {league: SoccerFeed(league) for league in COMPETITIONS}
+    from .english_goals import EnglishGoalEnricher
+    english_goal_enricher = EnglishGoalEnricher()
+    english_feeds = {league: SoccerFeed(league, enrich=english_goal_enricher) for league in COMPETITIONS}
     english_renderer = EnglishFootballRenderer(english_feeds)
     english_workers = {
         league: BackgroundSoccerFeed(english_feeds[league], on_match=english_renderer.update)
