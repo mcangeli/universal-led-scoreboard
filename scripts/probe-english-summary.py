@@ -8,6 +8,7 @@ from urllib.request import Request, urlopen
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 from universal_led.english_football import COMPETITIONS
+from universal_led.english_summary import parse_key_event_goals
 
 BASE = "https://site.api.espn.com/apis/site/v2/sports/soccer"
 
@@ -55,10 +56,16 @@ def summary_coverage(payload):
     if not isinstance(plays, list):
         plays = []
     key_events = event_section(payload.get("keyEvents"))
+    parsed_goals = parse_key_event_goals(payload)
     commentary = event_section(payload.get("commentary"))
     return {"keys": ",".join(keys),
             **{"key_events_" + key: value for key, value in key_events.items()},
             **{"commentary_" + key: value for key, value in commentary.items()},
+            "parsed_goals": len(parsed_goals),
+            "parsed_team_ids": sum(bool(goal.team_id) for goal in parsed_goals),
+            "parsed_scorers": sum(bool(goal.scorer) for goal in parsed_goals),
+            "parsed_minutes": sum(bool(goal.minute) for goal in parsed_goals),
+            "parsed_unique_ids": len({goal.event_id for goal in parsed_goals}),
             "scoring_plays": len(scoring),
             "plays": len(plays),
             "play_scoring_flags": sum(bool(p.get("scoringPlay")) for p in plays if isinstance(p, dict))}
