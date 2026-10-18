@@ -81,6 +81,15 @@ class ScoringAlerts:
                 self._pending.append((False, event))
         return accepted
 
+    def baseline(self, sport, league, game_id, events):
+        """Ingest confirmed IDs without announcing them (halftime/final)."""
+        key = (sport, league, str(game_id))
+        events = tuple(events)
+        if any((e.sport, e.league, e.game_id) != key for e in events):
+            raise ValueError("Scoring event belongs to another game")
+        self._seen.setdefault(key, set()).update(e.event_id for e in events)
+        return ()
+
     def next_alert(self, now):
         """Return active event or None; expire and restore rotation naturally."""
         if not self.enabled:
