@@ -10,6 +10,8 @@ class Renderer:
     def __init__(self, games=False, live=False):
         self.games = games
         self.live = live
+    def game(self):
+        return None
     def has_games(self):
         return self.games
     def has_live_games(self):
