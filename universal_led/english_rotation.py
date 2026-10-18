@@ -9,6 +9,7 @@ from .soccer_display import SoccerDisplayController
 from .soccer_scoring_alerts import observe_soccer_match
 from .soccer_pixels import render_soccer_screen
 from .soccer_rotation import eligible_matches, prioritize_live, is_live
+from .game_interruptions import InterruptionPolicy
 
 
 class EnglishFootballRenderer:
@@ -19,6 +20,8 @@ class EnglishFootballRenderer:
         self.feeds = dict(feeds)
         self.clock = clock
         self.scoring_alerts = scoring_alerts
+        self.interruption_policy = InterruptionPolicy()
+        self.external_live_games = False
         self.display = SoccerDisplayController(goal_seconds)
         self.configure(enabled=enabled, favorite_teams=favorite_teams,
                        mode=mode, rotation_seconds=rotation_seconds)
@@ -45,9 +48,12 @@ class EnglishFootballRenderer:
             matches.extend(match for match in self.feeds[league].games() if match.league == league)
         # Live games outrank scheduled favorite fixtures. Apply favorites
         # within the live pool, not across matches in different states.
-        matches = prioritize_live(matches)
-        return eligible_matches(matches, favorites=self.favorite_teams,
-                                mode="favorites" if self.mode == "favorite" else self.mode)
+        live_present = self.external_live_games or any(is_live(match) for match in matches)
+        matches = eligible_matches(matches, favorites=self.favorite_teams,
+                                   mode="favorites" if self.mode == "favorite" else self.mode,
+                                   interruption_policy=self.interruption_policy,
+                                   has_live_games=live_present)
+        return prioritize_live(matches)
 
     def has_games(self):
         return bool(self._games())
