@@ -86,6 +86,17 @@ class SoccerRotationTests(unittest.TestCase):
         delayed = match(status="delayed")
         self.assertEqual(eligible_matches((delayed,), has_live_games=True), ())
 
+    def test_always_show_interruption_remains_eligible(self):
+        live = match(status="live")
+        delayed = match(home="NY", status="delayed")
+        policy = InterruptionPolicy(delayed="always")
+        self.assertEqual(eligible_matches((live, delayed), interruption_policy=policy),
+                         (live, delayed))
+
+    def test_invalid_interruption_choice_rejected(self):
+        with self.assertRaises(ValueError):
+            InterruptionPolicy(rescheduled="sometimes")
+
     def test_unknown_mode_rejected(self):
         with self.assertRaises(ValueError):
             eligible_matches([match()], mode="guess")
