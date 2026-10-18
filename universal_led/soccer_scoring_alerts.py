@@ -32,21 +32,6 @@ def observe_soccer_match(alerts, match, *, favorite_teams=()):
     """
     events = soccer_score_events(match)
     if not is_live(match) or match.status.strip().lower() == "halftime":
-        # Record IDs without enqueuing late corrections or halftime changes.
-        # The queue is disabled temporarily only for this observation.
-        # A dedicated ingest-only method avoids mutating alert configuration.
-        return alerts.observe(match_sport(match), match.league, str(match.match_id),
-                              events, favorite_teams=()) if not alerts.enabled else _baseline_only(alerts, match, events)
+        return alerts.baseline("soccer", match.league, str(match.match_id), events)
     return alerts.observe("soccer", match.league, str(match.match_id),
                           events, favorite_teams=favorite_teams)
-
-
-def match_sport(match):
-    return "soccer"
-
-
-def _baseline_only(alerts, match, events):
-    key = ("soccer", match.league, str(match.match_id))
-    ids = {e.event_id for e in events}
-    alerts._seen.setdefault(key, set()).update(ids)
-    return ()
