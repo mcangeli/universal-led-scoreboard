@@ -154,6 +154,7 @@ class MultiSportRenderer:
         # Standings are optional idle pages, never interruptions. They may
         # appear only when no enabled sport has an eligible game. Existing
         # scoring alerts have already been handled above.
+        idle_news_slot = False
         if (self.standings_rotation is not None
                 and not self._live_sports()
                 and not self._available()
@@ -169,6 +170,7 @@ class MultiSportRenderer:
             idle_slot = int(max(0, self.clock() - self._started) // duration)
             if idle_slot % 2 == 0:
                 return self.standings_rotation.frame()
+            idle_news_slot = True
         if self.news is not None and self.settings_getter is not None:
             headlines = self.news.items()
             if headlines and self._live_sports():
@@ -188,7 +190,7 @@ class MultiSportRenderer:
                 elapsed = max(0.0, self.clock() - self._news_started)
                 interval = self._interval
                 frequency = timing["rotation_interval"]
-                if int(elapsed // interval) % frequency == frequency - 1:
+                if idle_news_slot or int(elapsed // interval) % frequency == frequency - 1:
                     page = int(elapsed // (frequency * interval)) % len(ordered)
                     item = ordered[page]
                     offset = int((elapsed % interval) * timing["scroll_chars_per_second"])
