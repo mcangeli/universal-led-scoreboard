@@ -19,13 +19,15 @@ DEFAULT_SETTINGS={
     'nwsl':{'favorite_teams':[],'mode':'fallback','refresh_seconds':60,'rotation_seconds':12,'provider':'league_first'},
     'english':{'favorite_teams':[],'mode':'fallback','refresh_seconds':60,'rotation_seconds':12,
                'enabled_leagues':['EPL','CHAMPIONSHIP','LEAGUE_ONE','LEAGUE_TWO']},
-    'news':{'rotation_interval':5,'headline_seconds':12,'scroll_chars_per_second':3}
+    'news':{'rotation_interval':5,'headline_seconds':12,'scroll_chars_per_second':3},
+    'scoring_alerts':{'enabled':False,'scope':'favorites','seconds':8}
 }
 
 def validate_settings(value):
-    if not isinstance(value,dict) or not (set(DEFAULT_SETTINGS)-{'news','nhl','nba','wnba','nfl','mls','nwsl','english'} <= set(value) <= set(DEFAULT_SETTINGS)):
+    if not isinstance(value,dict) or not (set(DEFAULT_SETTINGS)-{'news','nhl','nba','wnba','nfl','mls','nwsl','english','scoring_alerts'} <= set(value) <= set(DEFAULT_SETTINGS)):
         raise ValueError('Settings require version, active_sport, sports and mlb')
-    value=dict(value,news=dict(DEFAULT_SETTINGS['news']) | value.get('news',{}),
+    value=dict(value,scoring_alerts=dict(DEFAULT_SETTINGS['scoring_alerts']) | value.get('scoring_alerts',{}),
+               news=dict(DEFAULT_SETTINGS['news']) | value.get('news',{}),
                nhl=dict(DEFAULT_SETTINGS['nhl']) | value.get('nhl',{}),
                nba=dict(DEFAULT_SETTINGS['nba']) | value.get('nba',{}),
                wnba=dict(DEFAULT_SETTINGS['wnba']) | value.get('wnba',{}),
@@ -33,6 +35,11 @@ def validate_settings(value):
                mls=dict(DEFAULT_SETTINGS['mls']) | value.get('mls',{}),
                nwsl=dict(DEFAULT_SETTINGS['nwsl']) | value.get('nwsl',{}),
                english=dict(DEFAULT_SETTINGS['english']) | value.get('english',{}))
+    alert_options=value['scoring_alerts']
+    if set(alert_options)!=set(DEFAULT_SETTINGS['scoring_alerts']):
+        raise ValueError('Invalid scoring alert settings')
+    from .scoring_alerts import ScoringAlerts
+    ScoringAlerts(**alert_options)
     if set(value['news'])!=set(DEFAULT_SETTINGS['news']):
         raise ValueError('Invalid news rotation settings')
     for key,minimum,maximum in (('rotation_interval',1,20),('headline_seconds',3,120),('scroll_chars_per_second',1,15)):
