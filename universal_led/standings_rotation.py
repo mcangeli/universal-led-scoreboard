@@ -14,6 +14,7 @@ class StandingsRotation:
         self.caches = dict(caches)
         self.clock = clock
         self.started = clock()
+        self._page_identity = None
         self.configure(enabled=enabled, page_seconds=page_seconds)
 
     def configure(self, *, enabled=False, page_seconds=12):
@@ -65,6 +66,16 @@ class StandingsRotation:
         pages = self._pages()
         if not pages:
             return Framebuffer(64, 32)
+        # A refresh can add or remove pages mid-slot. Keep the currently
+        # displayed league/page stable until the next scheduled transition.
         slot = int(max(0, self.clock() - self.started) // self.page_seconds)
-        league, rows, offset = pages[slot % len(pages)]
+        identities = [(league, rows[offset].group, offset)
+                      for league, rows, offset in pages]
+        if self._page_identity is not None and self._page_slot == slot and self._page_identity in identities:
+            index = identities.index(self._page_identity)
+        else:
+            index = slot % len(pages)
+        self._page_identity = identities[index]
+        self._page_slot = slot
+        league, rows, offset = pages[index]
         return render_standings(league, rows, offset=offset)
