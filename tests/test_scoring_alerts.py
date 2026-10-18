@@ -11,6 +11,46 @@ def event(sport="soccer", league="EPL", game="42", eid="g1", team="ARS"):
 
 
 class ScoringAlertTests(unittest.TestCase):
+    def test_basketball_direct_lead_change_only(self):
+        from dataclasses import replace
+        from universal_led.nba_data import BasketballGame
+        from universal_led.nba_engine import ConfiguredNBARenderer
+        class Feed:
+            def games(self):
+                return [self.current]
+        feed=Feed()
+        feed.current=BasketballGame("game1",None,"ATL","BOS","Atlanta","Boston",10,8,"live")
+        alerts=ScoringAlerts(enabled=True,scope="all")
+        renderer=ConfiguredNBARenderer(feed,scoring_alerts=alerts)
+        renderer.game()
+        self.assertIsNone(alerts.next_alert(0))
+        feed.current=replace(feed.current,away_score=10,home_score=10)
+        renderer.game()
+        feed.current=replace(feed.current,away_score=10,home_score=12)
+        renderer.game()
+        self.assertIsNone(alerts.next_alert(1))
+        feed.current=replace(feed.current,away_score=14,home_score=12)
+        renderer.game()
+        self.assertEqual(alerts.next_alert(2).team_id,"ATL")
+        renderer.game()
+        self.assertIsNone(alerts.next_alert(11))
+
+    def test_basketball_lead_change_respects_favorite_scope(self):
+        from dataclasses import replace
+        from universal_led.nba_data import BasketballGame
+        from universal_led.nba_engine import ConfiguredNBARenderer
+        class Feed:
+            def games(self):
+                return [self.current]
+        feed=Feed()
+        feed.current=BasketballGame("game2",None,"ATL","BOS","Atlanta","Boston",8,10,"live")
+        alerts=ScoringAlerts(enabled=True,scope="favorites")
+        renderer=ConfiguredNBARenderer(feed,favorite_teams=["ATL"],scoring_alerts=alerts)
+        renderer.game()
+        feed.current=replace(feed.current,away_score=12,home_score=10)
+        renderer.game()
+        self.assertEqual(alerts.next_alert(0).team_id,"ATL")
+
     def test_disabled_by_default_and_no_historical_replay(self):
         alerts = ScoringAlerts()
         self.assertEqual(alerts.observe("soccer", "EPL", "42", [event()]), ())
