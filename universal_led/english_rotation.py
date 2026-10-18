@@ -49,11 +49,13 @@ class EnglishFootballRenderer:
         # Live games outrank scheduled favorite fixtures. Apply favorites
         # within the live pool, not across matches in different states.
         live_present = self.external_live_games or any(is_live(match) for match in matches)
-        matches = eligible_matches(matches, favorites=self.favorite_teams,
-                                   mode="favorites" if self.mode == "favorite" else self.mode,
-                                   interruption_policy=self.interruption_policy,
-                                   has_live_games=live_present)
-        return prioritize_live(matches)
+        # Select the live pool before applying favorite/fallback filtering.
+        # Otherwise a scheduled favorite can hide a live nonfavorite.
+        matches = prioritize_live(matches)
+        return eligible_matches(matches, favorites=self.favorite_teams,
+                                mode="favorites" if self.mode == "favorite" else self.mode,
+                                interruption_policy=self.interruption_policy,
+                                has_live_games=live_present)
 
     def has_games(self):
         return bool(self._games())
