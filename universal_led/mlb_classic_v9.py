@@ -39,7 +39,7 @@ class MLBClassicV9Screen:
         # Each numeric column has 8px: x=36..42, 46..52, 56..62.
         # Headers centered on the same right edges as their values.
         for letter,right in zip('RHE',(42,52,62)):
-            small(fb,letter,right-2,1,GOLD)
+            small(fb,letter,right-1,1,GOLD)
         for y,team,stats in (
             (8,g.away,(g.away_runs,g.away_hits,g.away_errors)),
             (18,g.home,(g.home_runs,g.home_hits,g.home_errors))):
@@ -51,7 +51,7 @@ class MLBClassicV9Screen:
                         fb.pixel(x,y+3,RED)
                 else:
                     digits=str(value)
-                    small(fb,digits,right-(len(digits)*4-1),y,WHITE)
+                    small(fb,digits,right-1 if len(digits)==1 else right-5,y,WHITE)
         for x in range(64):
             fb.pixel(x,25,(28,37,48))
         if g.status == 'pregame':
