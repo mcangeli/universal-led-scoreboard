@@ -25,6 +25,24 @@ class SoccerNewsTests(unittest.TestCase):
             self.assertEqual(len(items), 1)
             self.assertEqual(items[0].source, league)
 
+    def test_english_and_efl_are_distinct_sources(self):
+        for league in ("english", "efl"):
+            self.assertIn(league, SUPPORTED_NEWS)
+        premier = SoccerNewsFeed("english")
+        efl = SoccerNewsFeed("efl")
+        self.assertNotEqual(premier.feed.sources[0].url, efl.feed.sources[0].url)
+        self.assertIn("Championship", efl.feed.sources[0].url)
+
+    def test_efl_news_respects_enable_flags(self):
+        class Stub:
+            def items(self):
+                return ["EFL headline"]
+        settings = {"sports": {k: dict(v) for k, v in DEFAULT_SETTINGS["sports"].items()}}
+        providers = AutomaticSportsNews(providers={"efl": Stub()})
+        self.assertEqual(providers.items(settings), [])
+        settings["sports"]["efl"] = {"enabled": True, "news_enabled": True}
+        self.assertEqual(providers.items(settings), ["EFL headline"])
+
     def test_sport_flags_gate_automatic_soccer_news(self):
         class Stub:
             def __init__(self, league):
