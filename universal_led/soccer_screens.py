@@ -45,7 +45,7 @@ def goal_screen(match: SoccerMatch, goal: SoccerGoal) -> SoccerScreen:
     minute = _fit(goal.minute or "", 6)
     return SoccerScreen(
         kind="goal",
-        header=_fit(f"{_fit(match.league, 6)} {label}", 10),
+        header=label,
         line1=_fit(scorer or goal.team_id or "GOAL", 16),
         line2=_fit(f"{goal.team_id} {minute}".strip(), 16),
         footer=_fit(f"{score} {match.league}", 16),
