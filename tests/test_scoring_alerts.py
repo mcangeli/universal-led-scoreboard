@@ -2,6 +2,7 @@
 import unittest
 
 from universal_led.scoring_alerts import ScoreEvent, ScoringAlerts
+from universal_led.multisport_runtime import MultiSportRenderer
 
 
 def event(sport="soccer", league="EPL", game="42", eid="g1", team="ARS"):
@@ -59,6 +60,35 @@ class ScoringAlertTests(unittest.TestCase):
         alerts.observe("soccer", "EPL", "42", [event()])
         alerts.configure(enabled=False)
         self.assertIsNone(alerts.next_alert(0))
+
+    def test_scheduler_interrupts_and_resumes_original_frame(self):
+        class Renderer:
+            def frame(self):
+                return "normal-frame"
+        clock = [0]
+        alerts = ScoringAlerts(enabled=True, scope="all", seconds=3)
+        alerts.observe("soccer", "EPL", "42", [])
+        alerts.observe("soccer", "EPL", "42", [event()])
+        board = MultiSportRenderer(Renderer(), Renderer(), clock=lambda: clock[0],
+                                   scoring_alerts=alerts,
+                                   alert_renderer=lambda e: "ALERT:" + e.event_id)
+        self.assertEqual(board.frame(), "ALERT:g1")
+        clock[0] = 2
+        self.assertEqual(board.frame(), "ALERT:g1")
+        clock[0] = 3
+        self.assertEqual(board.frame(), "normal-frame")
+
+    def test_scheduler_unchanged_without_alert_renderer(self):
+        class Renderer:
+            def frame(self):
+                return "normal-frame"
+        alerts = ScoringAlerts(enabled=True, scope="all")
+        alerts.observe("soccer", "EPL", "42", [])
+        alerts.observe("soccer", "EPL", "42", [event()])
+        board = MultiSportRenderer(Renderer(), Renderer(), clock=lambda: 0,
+                                   scoring_alerts=alerts)
+        self.assertEqual(board.frame(), "normal-frame")
+        self.assertEqual(alerts.next_alert(0), event())
 
     def test_invalid_event_identity_is_rejected(self):
         alerts = ScoringAlerts(enabled=True, scope="all")
