@@ -38,6 +38,24 @@ class SoccerRendererAlertIntegrationTests(unittest.TestCase):
                 renderer.update(match(league, (SoccerGoal("goal-1", "ARS"),)))
                 self.assertEqual(alerts.next_alert(0).league, league)
 
+    def test_shared_alerts_prevent_duplicate_local_goal_cards(self):
+        alerts = ScoringAlerts(enabled=True, scope="all")
+        renderer = ConfiguredSoccerRenderer(Feed(), league="MLS",
+                                             scoring_alerts=alerts)
+        renderer.update(match("MLS"))
+        renderer.update(match("MLS", (SoccerGoal("goal-1", "ARS"),)))
+        self.assertIsNone(renderer.display._active)
+        self.assertEqual(len(renderer.display._pending), 0)
+        self.assertEqual(alerts.next_alert(0).event_id, "goal-1")
+
+    def test_disabling_shared_alerts_preserves_legacy_goal_cards(self):
+        alerts = ScoringAlerts()
+        renderer = ConfiguredSoccerRenderer(Feed(), league="MLS",
+                                             scoring_alerts=alerts)
+        renderer.update(match("MLS"))
+        renderer.update(match("MLS", (SoccerGoal("goal-1", "ARS"),)))
+        self.assertEqual(len(renderer.display._pending), 1)
+
     def test_disabled_alerts_do_not_interrupt_updates(self):
         alerts = ScoringAlerts()
         renderer = ConfiguredSoccerRenderer(Feed(), league="MLS",
