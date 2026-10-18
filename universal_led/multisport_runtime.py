@@ -5,6 +5,7 @@ import threading
 import time
 from .news_screen import NewsHeadlineScreen
 from .display import Framebuffer
+from .scoring_alert_screen import render_scoring_alert
 
 
 class MultiSportRenderer:
@@ -20,7 +21,9 @@ class MultiSportRenderer:
         self.nwsl = nwsl_renderer
         self.english = english_renderer
         self.scoring_alerts = scoring_alerts
-        self.alert_renderer = alert_renderer
+        self.alert_renderer = (alert_renderer if alert_renderer is not None
+                               else render_scoring_alert if scoring_alerts is not None
+                               else None)
         self.clock = clock
         self.news = news
         self.settings_getter = settings_getter
