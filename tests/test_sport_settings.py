@@ -38,6 +38,31 @@ class SportSettingsTests(unittest.TestCase):
         data=copy.deepcopy(DEFAULT_SETTINGS)
         data['mlb']['refresh_seconds']=0
         with self.assertRaises(ValueError):validate_settings(data)
+    def test_scoring_alert_defaults_are_disabled(self):
+        self.assertEqual(validate_settings(copy.deepcopy(DEFAULT_SETTINGS))['scoring_alerts'],
+                         {'enabled':False,'scope':'favorites','seconds':8})
+
+    def test_legacy_settings_without_scoring_alerts(self):
+        data=copy.deepcopy(DEFAULT_SETTINGS)
+        del data['scoring_alerts']
+        self.assertEqual(validate_settings(data)['scoring_alerts'],
+                         DEFAULT_SETTINGS['scoring_alerts'])
+
+    def test_scoring_alert_settings_roundtrip(self):
+        with tempfile.TemporaryDirectory() as root:
+            data=copy.deepcopy(DEFAULT_SETTINGS)
+            data['scoring_alerts']={'enabled':True,'scope':'all','seconds':12}
+            save_settings(root,data)
+            self.assertEqual(load_settings(root)['scoring_alerts'],data['scoring_alerts'])
+
+    def test_scoring_alert_invalid_options_rejected(self):
+        for option,bad in (('enabled',1),('scope','anything'),('seconds',0),('seconds',61)):
+            with self.subTest(option=option,bad=bad):
+                data=copy.deepcopy(DEFAULT_SETTINGS)
+                data['scoring_alerts'][option]=bad
+                with self.assertRaises(ValueError):
+                    validate_settings(data)
+
     def test_reject_unknown_keys(self):
         data=copy.deepcopy(DEFAULT_SETTINGS)
         data['malicious']='value'
