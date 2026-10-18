@@ -21,15 +21,17 @@ DEFAULT_SETTINGS={
                'enabled_leagues':['EPL','CHAMPIONSHIP','LEAGUE_ONE','LEAGUE_TWO']},
     'news':{'rotation_interval':5,'headline_seconds':12,'scroll_chars_per_second':3},
     'scoring_alerts':{'enabled':False,'scope':'favorites','seconds':8},
+    'standings':{'enabled':False,'page_seconds':12,'refresh_seconds':900},
     'game_interruptions':{'delayed':'when_no_live','postponed':'when_no_live',
                           'rescheduled':'when_no_live','suspended':'when_no_live'}
 }
 
 def validate_settings(value):
-    if not isinstance(value,dict) or not (set(DEFAULT_SETTINGS)-{'news','nhl','nba','wnba','nfl','mls','nwsl','english','scoring_alerts','game_interruptions'} <= set(value) <= set(DEFAULT_SETTINGS)):
+    if not isinstance(value,dict) or not (set(DEFAULT_SETTINGS)-{'news','nhl','nba','wnba','nfl','mls','nwsl','english','scoring_alerts','game_interruptions','standings'} <= set(value) <= set(DEFAULT_SETTINGS)):
         raise ValueError('Settings require version, active_sport, sports and mlb')
     value=dict(value,game_interruptions=dict(DEFAULT_SETTINGS['game_interruptions']) | value.get('game_interruptions',{}),
                scoring_alerts=dict(DEFAULT_SETTINGS['scoring_alerts']) | value.get('scoring_alerts',{}),
+               standings=dict(DEFAULT_SETTINGS['standings']) | value.get('standings',{}),
                news=dict(DEFAULT_SETTINGS['news']) | value.get('news',{}),
                nhl=dict(DEFAULT_SETTINGS['nhl']) | value.get('nhl',{}),
                nba=dict(DEFAULT_SETTINGS['nba']) | value.get('nba',{}),
@@ -38,6 +40,13 @@ def validate_settings(value):
                mls=dict(DEFAULT_SETTINGS['mls']) | value.get('mls',{}),
                nwsl=dict(DEFAULT_SETTINGS['nwsl']) | value.get('nwsl',{}),
                english=dict(DEFAULT_SETTINGS['english']) | value.get('english',{}))
+    standings=value['standings']
+    if set(standings)!=set(DEFAULT_SETTINGS['standings']) or type(standings['enabled']) is not bool:
+        raise ValueError('Invalid standings settings')
+    for key,low,high in (('page_seconds',3,3600),('refresh_seconds',60,86400)):
+        number=standings[key]
+        if type(number) not in (int,float) or not low<=number<=high:
+            raise ValueError('Invalid standings '+key)
     interruption_options=value['game_interruptions']
     if set(interruption_options)!=set(DEFAULT_SETTINGS['game_interruptions']):
         raise ValueError('Invalid game interruption settings')
