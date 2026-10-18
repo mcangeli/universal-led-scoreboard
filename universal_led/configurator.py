@@ -1328,6 +1328,7 @@ def main():
     def game():
         return board.game()
     def apply_settings(settings):
+        scoring_alerts.configure(**settings['scoring_alerts'])
         renderer.apply(settings)
         feed.feed.refresh_seconds=settings['mlb']['refresh_seconds']
         from .time_weather_settings import load_time_weather
