@@ -8,6 +8,7 @@ import re
 
 from .soccer import SoccerGoal, SoccerMatch
 from .soccer_rotation import is_live, FINAL_STATES
+from .game_interruptions import interruption_kind
 
 
 @dataclass(frozen=True)
@@ -56,6 +57,10 @@ def _match_status(match: SoccerMatch) -> str:
     status = match.status.strip().lower()
     if status in FINAL_STATES:
         return "FINAL"
+    interruption = interruption_kind(status)
+    if interruption is not None:
+        return {"delayed": "DELAYED", "postponed": "POSTPONED",
+                "rescheduled": "RESCHEDULED", "suspended": "SUSPENDED"}[interruption]
     if status in ("pre", "scheduled"):
         return "PRE"
     if status == "halftime":
