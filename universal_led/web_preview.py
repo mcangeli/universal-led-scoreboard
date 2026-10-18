@@ -32,6 +32,12 @@ async function refresh(){
 refresh();setInterval(refresh,1000);
 </script></body></html>"""
 
+def frame_payload(frame):
+    """Serialize the same rendered frame for every browser preview surface."""
+    return {'width': frame.width, 'height': frame.height,
+            'pixels': [pixel for row in frame.pixels for pixel in row]}
+
+
 def make_handler(frame_provider):
     class PreviewHandler(BaseHTTPRequestHandler):
         def do_GET(self):
@@ -41,8 +47,7 @@ def make_handler(frame_provider):
             elif self.path == '/frame.json':
                 import json
                 frame = frame_provider()
-                data = json.dumps({'width': frame.width, 'height': frame.height,
-                                   'pixels': [pixel for row in frame.pixels for pixel in row]}).encode()
+                data = json.dumps(frame_payload(frame)).encode()
                 mime = 'application/json'
             elif self.path == '/health':
                 data = b'OK'
