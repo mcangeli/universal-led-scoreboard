@@ -970,8 +970,8 @@ def make_handler(config_dir,token,frame_provider=None,settings_callback=None,fee
                     self.send_json(503, {'error': 'Board emulator not configured'})
                 else:
                     frame = board_provider()
-                    self.send_json(200, {'width': frame.width, 'height': frame.height,
-                                         'pixels': [pixel for row in frame.pixels for pixel in row]})
+                    from .web_preview import frame_payload
+                    self.send_json(200, frame_payload(frame))
                 return
             if not self.authenticated():
                 if path=='/':
