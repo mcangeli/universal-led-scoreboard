@@ -48,6 +48,29 @@ class EnglishRotationTests(unittest.TestCase):
         now[0] = 11
         self.assertEqual(renderer.game().league, "LEAGUE_ONE")
 
+    def test_live_nonfavorite_overrides_scheduled_favorite_in_fallback(self):
+        renderer = EnglishFootballRenderer({
+            "EPL": feed(match("EPL", "381", "pre"),
+                        match("EPL", "999", "in"))},
+            favorite_teams=("espn:381",), mode="fallback")
+        self.assertTrue(renderer.has_live_games())
+        self.assertEqual(renderer.game().home_id, "999")
+
+    def test_live_favorite_beats_other_live_in_fallback(self):
+        renderer = EnglishFootballRenderer({
+            "EPL": feed(match("EPL", "999", "in"),
+                        match("EPL", "381", "in"))},
+            favorite_teams=("espn:381",), mode="fallback")
+        self.assertEqual(renderer.game().home_id, "381")
+
+    def test_live_nonfavorite_cross_division_overrides_scheduled_favorite(self):
+        renderer = EnglishFootballRenderer({
+            "EPL": feed(match("EPL", "381", "pre")),
+            "CHAMPIONSHIP": feed(match("CHAMPIONSHIP", "999", "in"))},
+            favorite_teams=("espn:381",), mode="fallback")
+        self.assertTrue(renderer.has_live_games())
+        self.assertEqual(renderer.game().league, "CHAMPIONSHIP")
+
     def test_empty_enabled_set(self):
         renderer = EnglishFootballRenderer({"EPL": feed(match("EPL", "1"))}, enabled=())
         self.assertFalse(renderer.has_games())
