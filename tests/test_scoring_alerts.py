@@ -79,17 +79,29 @@ class ScoringAlertTests(unittest.TestCase):
         clock[0] = 3
         self.assertEqual(board.frame(), "normal-frame")
 
-    def test_scheduler_unchanged_without_alert_renderer(self):
+    def test_scheduler_uses_native_alert_renderer_and_resumes(self):
         class Renderer:
             def frame(self):
                 return "normal-frame"
-        alerts = ScoringAlerts(enabled=True, scope="all")
+        clock = [0]
+        alerts = ScoringAlerts(enabled=True, scope="all", seconds=3)
         alerts.observe("soccer", "EPL", "42", [])
         alerts.observe("soccer", "EPL", "42", [event()])
-        board = MultiSportRenderer(Renderer(), Renderer(), clock=lambda: 0,
+        board = MultiSportRenderer(Renderer(), Renderer(), clock=lambda: clock[0],
                                    scoring_alerts=alerts)
+        alert_frame = board.frame()
+        self.assertEqual((alert_frame.width, alert_frame.height), (64, 32))
+        self.assertTrue(any(pixel != (0, 0, 0)
+                            for row in alert_frame.pixels for pixel in row))
+        clock[0] = 3
         self.assertEqual(board.frame(), "normal-frame")
-        self.assertEqual(alerts.next_alert(0), event())
+
+    def test_scheduler_without_alerts_is_unchanged(self):
+        class Renderer:
+            def frame(self):
+                return "normal-frame"
+        board = MultiSportRenderer(Renderer(), Renderer(), clock=lambda: 0)
+        self.assertEqual(board.frame(), "normal-frame")
 
     def test_alert_screen_has_native_matrix_dimensions_and_visible_content(self):
         frame = render_scoring_alert(event())
