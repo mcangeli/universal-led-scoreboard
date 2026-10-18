@@ -20,13 +20,16 @@ DEFAULT_SETTINGS={
     'english':{'favorite_teams':[],'mode':'fallback','refresh_seconds':60,'rotation_seconds':12,
                'enabled_leagues':['EPL','CHAMPIONSHIP','LEAGUE_ONE','LEAGUE_TWO']},
     'news':{'rotation_interval':5,'headline_seconds':12,'scroll_chars_per_second':3},
-    'scoring_alerts':{'enabled':False,'scope':'favorites','seconds':8}
+    'scoring_alerts':{'enabled':False,'scope':'favorites','seconds':8},
+    'game_interruptions':{'delayed':'when_no_live','postponed':'when_no_live',
+                          'rescheduled':'when_no_live','suspended':'when_no_live'}
 }
 
 def validate_settings(value):
-    if not isinstance(value,dict) or not (set(DEFAULT_SETTINGS)-{'news','nhl','nba','wnba','nfl','mls','nwsl','english','scoring_alerts'} <= set(value) <= set(DEFAULT_SETTINGS)):
+    if not isinstance(value,dict) or not (set(DEFAULT_SETTINGS)-{'news','nhl','nba','wnba','nfl','mls','nwsl','english','scoring_alerts','game_interruptions'} <= set(value) <= set(DEFAULT_SETTINGS)):
         raise ValueError('Settings require version, active_sport, sports and mlb')
-    value=dict(value,scoring_alerts=dict(DEFAULT_SETTINGS['scoring_alerts']) | value.get('scoring_alerts',{}),
+    value=dict(value,game_interruptions=dict(DEFAULT_SETTINGS['game_interruptions']) | value.get('game_interruptions',{}),
+               scoring_alerts=dict(DEFAULT_SETTINGS['scoring_alerts']) | value.get('scoring_alerts',{}),
                news=dict(DEFAULT_SETTINGS['news']) | value.get('news',{}),
                nhl=dict(DEFAULT_SETTINGS['nhl']) | value.get('nhl',{}),
                nba=dict(DEFAULT_SETTINGS['nba']) | value.get('nba',{}),
@@ -35,6 +38,11 @@ def validate_settings(value):
                mls=dict(DEFAULT_SETTINGS['mls']) | value.get('mls',{}),
                nwsl=dict(DEFAULT_SETTINGS['nwsl']) | value.get('nwsl',{}),
                english=dict(DEFAULT_SETTINGS['english']) | value.get('english',{}))
+    interruption_options=value['game_interruptions']
+    if set(interruption_options)!=set(DEFAULT_SETTINGS['game_interruptions']):
+        raise ValueError('Invalid game interruption settings')
+    from .game_interruptions import InterruptionPolicy
+    InterruptionPolicy(**interruption_options)
     alert_options=value['scoring_alerts']
     if set(alert_options)!=set(DEFAULT_SETTINGS['scoring_alerts']):
         raise ValueError('Invalid scoring alert settings')
