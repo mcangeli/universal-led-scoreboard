@@ -1385,8 +1385,19 @@ def main():
         league: BackgroundSoccerFeed(english_feeds[league], on_match=english_renderer.update)
         for league in COMPETITIONS
     }
+    from .football_standings_runtime import FootballStandingsCache, BackgroundFootballStandings
+    from .standings_rotation import StandingsRotation
+    standings_caches = {
+        league: FootballStandingsCache(league, refresh_seconds=initial['standings']['refresh_seconds'])
+        for league in COMPETITIONS
+    }
+    standings_workers = {
+        league: BackgroundFootballStandings(cache)
+        for league, cache in standings_caches.items()
+    }
+    standings_rotation = StandingsRotation(standings_caches)
     renderer.news = None  # Universal news is owned by the shared board scheduler.
-    board = MultiSportRenderer(renderer, nhl_renderer, news=news, settings_getter=renderer.settings, nba_renderer=nba_renderer, wnba_renderer=wnba_renderer, nfl_renderer=nfl_renderer, mls_renderer=soccer_renderers['mls'], nwsl_renderer=soccer_renderers['nwsl'], english_renderer=english_renderer, scoring_alerts=scoring_alerts)
+    board = MultiSportRenderer(renderer, nhl_renderer, news=news, settings_getter=renderer.settings, nba_renderer=nba_renderer, wnba_renderer=wnba_renderer, nfl_renderer=nfl_renderer, mls_renderer=soccer_renderers['mls'], nwsl_renderer=soccer_renderers['nwsl'], english_renderer=english_renderer, scoring_alerts=scoring_alerts, standings_rotation=standings_rotation)
     # Apply persisted sport choice on service startup, not just after web saves.
     def game():
         return board.game()
@@ -1459,6 +1470,17 @@ def main():
             enabled_leagues=english['enabled_leagues'],
             refresh_seconds=english['refresh_seconds'],
             timezone_name=time_preferences['timezone'])
+        standings_options = settings['standings']
+        standings_rotation.configure(
+            enabled=standings_options['enabled'] and settings['sports']['english']['enabled'],
+            page_seconds=standings_options['page_seconds'])
+        for league, cache in standings_caches.items():
+            cache.refresh_seconds = standings_options['refresh_seconds']
+            if (standings_rotation.enabled and
+                    league in english['enabled_leagues']):
+                standings_workers[league].start()
+            else:
+                standings_workers[league].stop()
         enabled = [sport for sport in ('mlb', 'nhl', 'nba', 'wnba', 'nfl', 'mls', 'nwsl', 'english') if settings['sports'][sport]['enabled']]
         renderer.set_supplemental_stride(len(enabled))
         board.configure_rotation(enabled, interval=settings['mlb']['rotation_seconds'],
@@ -1511,6 +1533,8 @@ def main():
         for worker in soccer_workers.values():
             worker.stop()
         for worker in english_workers.values():
+            worker.stop()
+        for worker in standings_workers.values():
             worker.stop()
 if __name__=='__main__':
     main()
