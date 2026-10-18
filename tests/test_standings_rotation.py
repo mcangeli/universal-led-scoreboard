@@ -41,6 +41,28 @@ class StandingsRotationTests(unittest.TestCase):
         clock[0] = 3
         self.assertNotEqual(first, adapter.frame().pixels)
 
+    def test_competitions_interleave_instead_of_exhausting_one_table(self):
+        first = Cache([standing(str(i), i) for i in range(1, 8)])
+        second = Cache([Standing("CHAMPIONSHIP", "Championship", str(i),
+                                 10, 5, 3, 2, points=20-i,
+                                 goal_difference=i, rank=i)
+                        for i in range(1, 5)])
+        adapter = StandingsRotation({"EPL": first, "CHAMPIONSHIP": second},
+                                    enabled=True, page_seconds=3, clock=lambda: 0)
+        pages = adapter._pages()
+        self.assertEqual([(league, offset) for league, _, offset in pages],
+                         [("EPL", 0), ("CHAMPIONSHIP", 0),
+                          ("EPL", 3), ("CHAMPIONSHIP", 3),
+                          ("EPL", 6)])
+
+    def test_empty_league_does_not_block_other_tables(self):
+        adapter = StandingsRotation(
+            {"EPL": Cache([]), "CHAMPIONSHIP": Cache([
+                Standing("CHAMPIONSHIP", "Championship", "1",
+                         1, 1, 0, points=3, rank=1)])},
+            enabled=True)
+        self.assertEqual(len(adapter._pages()), 1)
+
     def test_incomplete_ranks_do_not_guess(self):
         bad = Standing("EPL", "Premier League", "ARS", 1, 1, 0,
                        points=3, goal_difference=1)
