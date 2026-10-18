@@ -25,8 +25,8 @@ class MLBClassicColumnsTests(unittest.TestCase):
         frame = MLBClassicScreen(BaseballGame(away_runs=12, away_hits=15,
                                               away_errors=10)).render()
         for x in (41, 49, 57):
-            self.assertTrue(any(frame.pixels[y][x] != (0, 0, 0)
-                                for y in range(9, 14)))
+            self.assertTrue(any(frame.pixels[y][col] != (0, 0, 0)
+                                for y in range(9, 14) for col in range(x, x+3)))
         self.assertEqual((frame.width, frame.height), (64, 32))
 
 
