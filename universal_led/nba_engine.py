@@ -50,8 +50,11 @@ class ConfiguredNBARenderer:
                 continue
             leader = (game.away if game.away_score > game.home_score else
                       game.home if game.home_score > game.away_score else None)
+            first = game.game_id not in self._lead_snapshots
             previous = self._lead_snapshots.get(game.game_id)
             self._lead_snapshots[game.game_id] = leader
+            if first and self.scoring_alerts is not None:
+                self.scoring_alerts.baseline(self.league.lower(), self.league, str(game.game_id), ())
             if previous is None or leader is None or previous == leader:
                 continue
             if self.scoring_alerts is None:
@@ -76,6 +79,7 @@ class ConfiguredNBARenderer:
 
     def game(self):
         games = self._eligible_games()
+        self._observe_lead_changes(games)
         if not games:
             return None
         live = [g for g in games if g.status == "live"]
