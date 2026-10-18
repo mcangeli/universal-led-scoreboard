@@ -19,6 +19,7 @@ class Standing:
     points: Optional[int] = None
     goal_difference: Optional[int] = None
     rank: Optional[int] = None
+    abbreviation: Optional[str] = None
 
     def __post_init__(self):
         if not self.league or not self.group or not self.team_id:
@@ -32,6 +33,8 @@ class Standing:
             raise ValueError("Points must be an integer")
         if self.goal_difference is not None and type(self.goal_difference) is not int:
             raise ValueError("Goal difference must be an integer")
+        if self.abbreviation is not None and (not isinstance(self.abbreviation, str) or not self.abbreviation.strip()):
+            raise ValueError('Invalid team abbreviation')
         if self.rank is not None and (type(self.rank) is not int or self.rank < 1):
             raise ValueError("Official rank must be a positive integer")
 
