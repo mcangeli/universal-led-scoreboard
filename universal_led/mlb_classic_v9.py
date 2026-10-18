@@ -38,13 +38,13 @@ class MLBClassicV9Screen:
         fb = Framebuffer(64,32)
         # Each numeric column has 8px: x=36..42, 46..52, 56..62.
         # Headers centered on the same right edges as their values.
-        for letter,right in zip('RHE',(42,52,62)):
+        for letter,right in zip('RHE',(40,50,60)):
             small(fb,letter,right-1,1,GOLD)
         for y,team,stats in (
             (8,g.away,(g.away_runs,g.away_hits,g.away_errors)),
             (18,g.home,(g.home_runs,g.home_hits,g.home_errors))):
             fb.text(team,1,y-1,TEAM_COLORS.get(team,WHITE))
-            for right,value in zip((42,52,62),stats):
+            for right,value in zip((40,50,60),stats):
                 if value >= 100:
                     for x in (right-6,right-2):
                         fb.pixel(x,y+1,RED)
