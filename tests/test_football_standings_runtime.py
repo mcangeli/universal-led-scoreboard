@@ -59,6 +59,34 @@ class FootballStandingsRuntimeTests(unittest.TestCase):
         self.assertEqual(cache.status()["state"], "running")
         self.assertIsNone(cache.status()["error"])
 
+    def test_outage_recovery_preserves_cached_rows_until_new_data_arrives(self):
+        now = [0]
+        responses = iter((["initial"], OSError("upstream unavailable"),
+                          ["recovered"]))
+        calls = []
+        def fetch(league):
+            calls.append(league)
+            result = next(responses)
+            if isinstance(result, Exception):
+                raise result
+            return result
+        cache = FootballStandingsCache("EPL", fetcher=fetch,
+                                       refresh_seconds=60, clock=lambda: now[0])
+        self.assertEqual(cache.refresh(), ("initial",))
+        self.assertEqual(cache.status()["last_success"], 0)
+        now[0] = 60
+        self.assertEqual(cache.refresh(), ("initial",))
+        self.assertEqual(cache.status()["state"], "error")
+        self.assertEqual(cache.status()["last_success"], 0)
+        now[0] = 90
+        self.assertEqual(cache.refresh(), ("initial",))
+        self.assertEqual(len(calls), 2)
+        now[0] = 120
+        self.assertEqual(cache.refresh(), ("recovered",))
+        self.assertEqual(cache.status()["state"], "running")
+        self.assertEqual(cache.status()["last_success"], 120)
+        self.assertEqual(len(calls), 3)
+
     def test_invalid_refresh_interval(self):
         with self.assertRaises(ValueError):
             FootballStandingsCache("EPL", refresh_seconds=0)
