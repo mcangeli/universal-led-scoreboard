@@ -23,7 +23,7 @@ class MLBColoredScreen:
         # Global scoreboard palette applies to R/H/E header and separator.
         for x in range(64):
             fb.pixel(x,25,self.scoreboard_colors['separator'])
-        for right in (46,54,62):
+        for right in (42,52,62):
             for yy in range(1,6):
                 for xx in range(right-2,right+1):
                     if fb.pixels[yy][xx]!=(0,0,0):
