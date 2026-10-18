@@ -23,7 +23,7 @@ class ClassicV9Tests(unittest.TestCase):
         self.assertEqual(f.pixels[28][20],RED)
     def test_large_score_indicator(self):
         f=MLBClassicV9Screen(BaseballGame(away_runs=100)).render()
-        self.assertEqual(f.pixels[9][36],RED)
+        self.assertEqual(f.pixels[9][34],RED)
     def test_start_time_fallback(self):
         self.assertEqual(start_label(None),'PREGAME')
         self.assertEqual(start_label('bad-date'),'PREGAME')
