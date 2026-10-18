@@ -44,6 +44,22 @@ class SoccerScreenTests(unittest.TestCase):
         game = SoccerMatch("m1", "NWSL", "ATL", "MIA", 1, 1, "halftime", clock="45'", period=1)
         self.assertEqual(match_screen(game).footer, "HT")
 
+    def test_interrupted_match_keeps_league_and_score(self):
+        for league in ("MLS", "NWSL", "EPL", "CHAMPIONSHIP"):
+            with self.subTest(league=league):
+                game = SoccerMatch("m1", league, "ATL", "MIA", 2, 1, "rain_delay")
+                screen = match_screen(game)
+                self.assertEqual(screen.header, league[:5] + "~" if len(league) > 6 else league)
+                self.assertEqual(screen.footer, "DELAYED")
+                self.assertIn("2", screen.line2)
+
+    def test_interruption_aliases_use_readable_status(self):
+        for raw, expected in (("ppd", "POSTPONED"), ("rescheduled", "RESCHEDULED"),
+                              ("susp", "SUSPENDED")):
+            with self.subTest(raw=raw):
+                game = SoccerMatch("m1", "EPL", "ARS", "CHE", 0, 0, raw)
+                self.assertEqual(match_screen(game).footer, expected)
+
     def test_nwsl_match_uses_shared_layout(self):
         self.assertEqual(match_screen(self.match("NWSL")).header, "NWSL")
 
