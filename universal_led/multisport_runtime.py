@@ -127,8 +127,7 @@ class MultiSportRenderer:
             if not self._auto_rotation:
                 return self._active
         live = self._live_sports()
-        # Share global live state with interruption-aware soccer renderers.
-        # Only configured soccer adapters expose this optional contract.
+        # Share global live state with interruption-aware sport adapters.
         for sport in self._enabled:
             adapter = self._renderer(sport)
             if adapter is not None and hasattr(adapter, "external_live_games"):
