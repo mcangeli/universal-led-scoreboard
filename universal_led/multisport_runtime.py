@@ -158,7 +158,17 @@ class MultiSportRenderer:
                 and not self._live_sports()
                 and not self._available()
                 and self.standings_rotation.has_pages()):
-            return self.standings_rotation.frame()
+            # Give cached news its own idle slots rather than letting a
+            # standings table permanently crowd it off the board.
+            has_news = (self.news is not None and
+                        self.settings_getter is not None and
+                        bool(self.news.items()))
+            if not has_news:
+                return self.standings_rotation.frame()
+            duration = self.standings_rotation.page_seconds
+            idle_slot = int(max(0, self.clock() - self._started) // duration)
+            if idle_slot % 2 == 0:
+                return self.standings_rotation.frame()
         if self.news is not None and self.settings_getter is not None:
             headlines = self.news.items()
             if headlines and self._live_sports():
