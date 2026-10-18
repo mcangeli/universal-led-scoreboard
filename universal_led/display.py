@@ -27,6 +27,7 @@ FONT = {
 'U':('10001','10001','10001','10001','10001','10001','01110'),
 'V':('10001','10001','10001','10001','10001','01010','00100'),
 ' ':('00000',)*7,
+"'":('00100','00100','00100','00000','00000','00000','00000'),
 'M':('10001','11011','10101','10101','10001','10001','10001'),
 'Y':('10001','10001','01010','00100','00100','00100','00100'),
 'T':('11111','00100','00100','00100','00100','00100','00100'),
@@ -56,7 +57,7 @@ class Framebuffer:
     def text(self, value: str, x: int, y: int, color: RGB, scale: int = 1):
         if scale < 1:
             raise ValueError('Scale must be positive')
-        for index, char in enumerate(value.upper()):
+        for index, char in enumerate(value.replace('’', "'").replace('‘', "'").upper()):
             glyph = FONT.get(char)
             if glyph is None:
                 raise ValueError(f'Unsupported character: {char!r}')
