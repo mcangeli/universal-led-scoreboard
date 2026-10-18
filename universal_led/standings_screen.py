@@ -14,7 +14,7 @@ def render_standings(league, rows, *, offset=0):
     """Draw league label plus three ranked entries; rows are already ordered.
 
     The caller owns official ordering and page selection. Team IDs are used
-    until a provider-qualified abbreviation lookup is available.
+    only as a fallback when the provider has no abbreviation.
     """
     if type(offset) is not int or offset < 0:
         raise ValueError("Invalid standings page offset")
@@ -27,7 +27,7 @@ def render_standings(league, rows, *, offset=0):
         rank = standing.rank if standing.rank is not None else offset + index + 1
         # Columns: position (0-11), team (14-37), points (43-61).
         frame.text(_safe(str(rank), 2), 0, y, GREEN)
-        frame.text(_safe(standing.team_id, 4), 14, y, WHITE)
+        frame.text(_safe(standing.abbreviation or standing.team_id, 4), 14, y, WHITE)
         if standing.points is not None:
             frame.text(_safe(str(standing.points), 3), 43, y, GOLD)
     return frame
