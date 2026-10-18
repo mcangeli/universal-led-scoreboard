@@ -34,6 +34,38 @@ class EnglishGoalEnrichmentTests(unittest.TestCase):
         original = match()
         self.assertEqual(EnglishGoalEnricher(fetcher=failing)(original), original)
 
+    def test_temporary_summary_outage_retains_confirmed_goals(self):
+        from universal_led.soccer import GoalEventTracker
+        responses = [
+            {"keyEvents": [{"id": "g1", "scoringPlay": True}]},
+            OSError("temporary outage"),
+            {"keyEvents": [{"id": "g1", "scoringPlay": True}]},
+        ]
+        def fetch(*args):
+            response = responses.pop(0)
+            if isinstance(response, Exception):
+                raise response
+            return response
+        enricher = EnglishGoalEnricher(fetcher=fetch)
+        tracker = GoalEventTracker()
+        initial = enricher(match())
+        self.assertEqual(tracker.observe(initial), ())
+        during_outage = enricher(match())
+        self.assertEqual([goal.event_id for goal in during_outage.goals], ["g1"])
+        self.assertEqual(tracker.observe(during_outage), ())
+        recovered = enricher(match())
+        self.assertEqual(tracker.observe(recovered), ())
+
+    def test_goal_cache_isolated_per_match(self):
+        enricher = EnglishGoalEnricher(fetcher=lambda *args: {
+            "keyEvents": [{"id": "g1", "scoringPlay": True}]})
+        enricher(match())
+        from dataclasses import replace
+        other = replace(match(), match_id="different")
+        enricher.fetcher = lambda *args: (_ for _ in ()).throw(OSError("offline"))
+        self.assertEqual(enricher(other).goals, ())
+        self.assertEqual(enricher(match()).goals[0].event_id, "g1")
+
     def test_feed_refresh_runs_enrichment_and_retains_scores(self):
         enricher = EnglishGoalEnricher(fetcher=lambda *args: {"keyEvents": [
             {"id": "goal1", "scoringPlay": True}]})
