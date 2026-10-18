@@ -41,3 +41,11 @@ def show_interruption(status, *, has_live_games=False, policy=None):
     policy = policy or InterruptionPolicy()
     choice = getattr(policy, kind)
     return choice == "always" or (choice == "when_no_live" and not has_live_games)
+
+
+def filter_interrupted_games(games, *, has_live_games=False, policy=None):
+    """Filter cached provider games without changing order or provider statuses."""
+    games = tuple(games)
+    live_present = has_live_games or any(getattr(game, "status", None) == "live" for game in games)
+    return [game for game in games if show_interruption(
+        getattr(game, "status", None), has_live_games=live_present, policy=policy)]
