@@ -29,6 +29,20 @@ class FootballStandingsFeedTests(unittest.TestCase):
         self.assertEqual([r.rank for r in rows], [2, 1])
         self.assertEqual(rows[0].group, "Premier League")
 
+    def test_provider_abbreviation_is_preserved(self):
+        data = {"standings": {"entries": [{
+            **entry("42", 1, 10, 3),
+            "team": {"id": "42", "abbreviation": "ARS"},
+        }]}}
+        rows = parse_football_standings(data, "EPL")
+        self.assertEqual(rows[0].team_id, "42")
+        self.assertEqual(rows[0].abbreviation, "ARS")
+
+    def test_missing_abbreviation_keeps_identity_fallback(self):
+        rows = parse_football_standings(
+            {"standings": {"entries": [entry("42", 1, 10, 3)]}}, "EPL")
+        self.assertIsNone(rows[0].abbreviation)
+
     def test_missing_team_identity_is_skipped(self):
         data = {"standings": {"entries": [{"team": {}, "stats": []}]}}
         self.assertEqual(parse_football_standings(data, "EPL"), ())
