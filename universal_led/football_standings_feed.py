@@ -37,7 +37,8 @@ def parse_football_standings(payload, league):
                 draws=number("ties", "draws"),
                 points=number("points", default=0),
                 goal_difference=number("pointDifferential", "goalDifference"),
-                rank=number("rank", default=index)))
+                rank=number("rank", default=index),
+                abbreviation=(str(team.get('abbreviation') or '').strip() or None)))
     return tuple(results)
 
 
