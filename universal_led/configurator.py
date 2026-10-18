@@ -105,12 +105,12 @@ section h2{font-size:clamp(21px,1.6vw,26px);line-height:1.25;margin:0 0 18px}
 <section><h2>NHL Team Colors</h2><p class="muted">NHL colors are stored separately from MLB. Use the same RGB editor for both sports.</p><label for="nhl-edit-team">NHL team to edit</label> <select id="nhl-edit-team"></select><div id="nhl-color-editor" class="grid"></div><button type="button" id="nhl-save-color">Save NHL Color</button> <button type="button" id="nhl-reset-color">Reset NHL Color</button> <span id="nhl-color-status" role="status"></span></section>
 <section><h2>MLB Team Colors</h2><p class="muted">Edit one team at a time, using the same compact controls as NHL. All other team colors remain unchanged.</p><label for="edit-team">MLB team to edit</label> <select id="edit-team"></select><div id="teams" class="grid"></div><button id="mlb-save-color" type="button">Save MLB Color</button> <button id="mlb-reset-color" type="button">Reset MLB Color</button> <span id="mlb-color-status" role="status"></span></section>
 <section><button id="save">Save Color Settings</button> <button id="cancel" type="button">Cancel Changes</button> <button id="reset" type="button">Reset Selected Color</button> <span id="status" role="status"></span>
-<p class="muted">Available on your trusted LAN. Backups are created before overwriting existing files.</p></section></div><div data-page="news" hidden><section><h2>Content &amp; News Sources</h2><p class="muted">Configure RSS or Atom feeds for future ticker use. Automatic and custom feeds display during available news rotation slots.</p><fieldset class="favorite-fieldset"><legend>Automatic Sports News</legend><p class="muted">Enable headlines separately for each sport. News appears during non-live rotation slots when that sport is enabled.</p><label><input type="checkbox" id="mlb-news-enabled"> MLB official headlines</label> <label><input type="checkbox" id="nhl-news-enabled"> NHL headlines</label> <label><input type="checkbox" id="nba-news-enabled"> NBA headlines</label> <label><input type="checkbox" id="wnba-news-enabled"> WNBA headlines</label> <label><input type="checkbox" id="nfl-news-enabled"> NFL headlines</label> <label><input type="checkbox" id="mls-news-enabled"> MLS headlines</label> <label><input type="checkbox" id="nwsl-news-enabled"> NWSL headlines</label> <button type="button" onclick="saveAutomaticNews()">Save Automatic News</button><p id="auto-news-status" role="status"></p></fieldset><fieldset class="favorite-fieldset"><legend>News Display Timing</legend><label>Show news every N non-live slots <input id="news-interval" type="number" min="1" max="20"></label> <label>Headline duration (seconds) <input id="news-duration" type="number" min="3" max="120"></label> <label>Scroll speed (characters/second) <input id="news-speed" type="number" min="1" max="15"></label> <button type="button" onclick="saveNewsTiming()">Save News Timing</button><p id="news-timing-status" role="status"></p></fieldset><h3>Additional Custom Feeds</h3><div id="news-sources"></div><button type="button" id="news-add" onclick="addNewsSource()">Add Source</button> <button type="button" onclick="saveNewsSources()">Save News Sources</button> <p id="news-status" role="status"></p></section></div></main></div>
+<p class="muted">Available on your trusted LAN. Backups are created before overwriting existing files.</p></section></div><div data-page="news" hidden><section><h2>Content &amp; News Sources</h2><p class="muted">Configure RSS or Atom feeds for future ticker use. Automatic and custom feeds display during available news rotation slots.</p><fieldset class="favorite-fieldset"><legend>Automatic Sports News</legend><p class="muted">Enable headlines separately for each sport. News appears during non-live rotation slots when that sport is enabled.</p><label><input type="checkbox" id="mlb-news-enabled"> MLB official headlines</label> <label><input type="checkbox" id="nhl-news-enabled"> NHL headlines</label> <label><input type="checkbox" id="nba-news-enabled"> NBA headlines</label> <label><input type="checkbox" id="wnba-news-enabled"> WNBA headlines</label> <label><input type="checkbox" id="nfl-news-enabled"> NFL headlines</label> <label><input type="checkbox" id="mls-news-enabled"> MLS headlines</label> <label><input type="checkbox" id="nwsl-news-enabled"> NWSL headlines</label> <button type="button" onclick="saveAutomaticNews()">Save Automatic News</button><p id="auto-news-status" role="status"></p></fieldset><fieldset class="favorite-fieldset"><legend>News Display Timing</legend><label>Show news every N non-live slots <input id="news-interval" type="number" min="1" max="20"></label> <label>Headline duration (seconds) <input id="news-duration" type="number" min="3" max="120"></label> <label>Scroll speed (characters/second) <input id="news-speed" type="number" min="1" max="15"></label> <button type="button" onclick="saveNewsTiming()">Save News Timing</button><p id="news-timing-status" role="status"></p></fieldset><fieldset class="favorite-fieldset"><legend>Live Scoring Alerts</legend><p>Briefly interrupt the board for confirmed soccer goals. Uses your existing favorite-team selections.</p><label><input type="checkbox" id="scoring-alerts-enabled"> Enable scoring alerts</label><label>Announce goals for <select id="scoring-alerts-scope"><option value="favorites">Favorite teams only</option><option value="all">All enabled games</option></select></label><label>Alert duration (seconds) <input id="scoring-alerts-seconds" type="number" min="1" max="60" step="1"></label><button type="button" onclick="saveScoringAlerts()">Save Scoring Alerts</button><p id="scoring-alerts-status" role="status"></p></fieldset><h3>Additional Custom Feeds</h3><div id="news-sources"></div><button type="button" id="news-add" onclick="addNewsSource()">Add Source</button> <button type="button" onclick="saveNewsSources()">Save News Sources</button> <p id="news-status" role="status"></p></section></div></main></div>
 <script>
 const token=__TOKEN__;
 async function logout(){await fetch('/logout',{method:'POST',headers:{'X-Configurator-Token':token}});location.href='/login'}
 let state=null,saved=null,dirty=false,selectedTeam='ATL',selected=null,settings=null;
-function showPage(name){document.querySelectorAll('.nav-item').forEach(button=>button.classList.toggle('active',button.getAttribute('onclick')==="showPage('"+name+"')"));document.querySelectorAll('[data-page]').forEach(el=>el.hidden=el.dataset.page!==name);if(name==='news'){loadNewsSources();loadAutomaticNews();loadNewsTiming()}if(name==='display'){loadClockSettings();loadCountdown();}if(name==='dashboard'||name==='system')refreshStatus();if(name==='system'){refreshSystem();checkSoftwareUpdate();}if(name==='matrix-settings'){loadMatrixSettings();refreshMatrixStatus();}if(name==='wifi'){refreshWifi();refreshWifiProfiles();refreshRecoveryReadiness();scanWifi()}}
+function showPage(name){document.querySelectorAll('.nav-item').forEach(button=>button.classList.toggle('active',button.getAttribute('onclick')==="showPage('"+name+"')"));document.querySelectorAll('[data-page]').forEach(el=>el.hidden=el.dataset.page!==name);if(name==='news'){loadNewsSources();loadAutomaticNews();loadNewsTiming();loadScoringAlerts()}if(name==='display'){loadClockSettings();loadCountdown();}if(name==='dashboard'||name==='system')refreshStatus();if(name==='system'){refreshSystem();checkSoftwareUpdate();}if(name==='matrix-settings'){loadMatrixSettings();refreshMatrixStatus();}if(name==='wifi'){refreshWifi();refreshWifiProfiles();refreshRecoveryReadiness();scanWifi()}}
 async function refreshMatrixStatus(){
  const el=document.getElementById('matrix-service-state');
  try{const response=await fetch('/api/matrix-status',{cache:'no-store'});const result=await response.json();
@@ -162,6 +162,40 @@ async function saveAutomaticNews(){
  const saved=await fetch('/api/settings',{method:'POST',headers:{'Content-Type':'application/json','X-Configurator-Token':token},body:JSON.stringify(data)});
  const result=await saved.json();if(!saved.ok)throw Error(result.error||'Save failed');settings=result.settings;status.textContent='Automatic sports news preferences saved.'}
  catch(err){status.textContent=err.message}
+}
+async function loadScoringAlerts(){
+ const status=document.getElementById('scoring-alerts-status');
+ try{
+  const response=await fetch('/api/settings',{cache:'no-store'});
+  if(!response.ok)throw Error('Unable to load scoring alerts');
+  const data=await response.json();
+  const options=data.scoring_alerts||{enabled:false,scope:'favorites',seconds:8};
+  document.getElementById('scoring-alerts-enabled').checked=options.enabled;
+  document.getElementById('scoring-alerts-scope').value=options.scope;
+  document.getElementById('scoring-alerts-seconds').value=options.seconds;
+  status.textContent='';
+ }catch(err){status.textContent=err.message}
+}
+async function saveScoringAlerts(){
+ const status=document.getElementById('scoring-alerts-status');
+ const seconds=Number(document.getElementById('scoring-alerts-seconds').value);
+ if(!Number.isInteger(seconds)||seconds<1||seconds>60){status.textContent='Duration must be 1 to 60 seconds.';return}
+ status.textContent='Saving…';
+ try{
+  const response=await fetch('/api/settings',{cache:'no-store'});
+  if(!response.ok)throw Error('Unable to load settings');
+  const data=await response.json();
+  data.scoring_alerts={
+   enabled:document.getElementById('scoring-alerts-enabled').checked,
+   scope:document.getElementById('scoring-alerts-scope').value,
+   seconds:seconds
+  };
+  const saved=await fetch('/api/settings',{method:'POST',headers:{'Content-Type':'application/json','X-Configurator-Token':token},body:JSON.stringify(data)});
+  const result=await saved.json();
+  if(!saved.ok)throw Error(result.error||'Save failed');
+  settings=result.settings;
+  status.textContent='Scoring alerts saved. Apply saved settings if prompted.';
+ }catch(err){status.textContent=err.message}
 }
 async function loadNewsTiming(){
  const status=document.getElementById('news-timing-status');
