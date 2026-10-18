@@ -3,6 +3,8 @@ import unittest
 from universal_led.soccer import SoccerMatch, SoccerGoal
 from universal_led.scoring_alerts import ScoringAlerts
 from universal_led.soccer_scoring_alerts import observe_soccer_match, soccer_score_events
+from universal_led.game_interruptions import InterruptionPolicy, interruption_kind, show_interruption
+from universal_led.soccer_rotation import eligible_matches
 
 
 def match(league="EPL", status="live", goals=()):
@@ -12,6 +14,22 @@ def match(league="EPL", status="live", goals=()):
 
 
 class SoccerScoringAlertTests(unittest.TestCase):
+    def test_interruption_aliases_and_default_live_priority(self):
+        self.assertEqual(interruption_kind("RAIN DELAY"), "delayed")
+        self.assertEqual(interruption_kind("PPD"), "postponed")
+        self.assertFalse(show_interruption("delayed", has_live_games=True))
+        self.assertTrue(show_interruption("delayed", has_live_games=False))
+
+    def test_interruption_policy_controls_soccer_eligibility(self):
+        live = match(status="live")
+        delayed = match(status="delayed")
+        self.assertEqual(eligible_matches((live, delayed)), (live,))
+        self.assertEqual(eligible_matches((delayed,)), (delayed,))
+        policy = InterruptionPolicy(delayed="hide")
+        self.assertEqual(eligible_matches((delayed,), interruption_policy=policy), ())
+        with self.assertRaises(ValueError):
+            InterruptionPolicy(postponed="invalid")
+
     def test_initial_snapshot_never_replays_historical_goals(self):
         alerts = ScoringAlerts(enabled=True, scope="all")
         goal = SoccerGoal("g1", "ARS", scorer="Player One")
