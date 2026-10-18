@@ -43,6 +43,22 @@ def event_section(value):
             "goal_markers": markers}
 
 
+def participant_coverage(payload):
+    """Report participant field names and role labels, never player names."""
+    events = payload.get("keyEvents") or []
+    participants = [p for event in events if isinstance(event, dict) and event.get("scoringPlay")
+                    for p in (event.get("participants") or []) if isinstance(p, dict)]
+    roles = sorted({str(p.get("type") or p.get("role") or "") for p in participants})
+    fields = sorted({key for p in participants for key in p})
+    nested = sorted({key for p in participants
+                     for field in ("athlete", "player", "participant")
+                     if isinstance(p.get(field), dict) for key in p[field]})
+    return {"participant_count": len(participants),
+            "participant_fields": ",".join(fields),
+            "participant_roles": ",".join(roles),
+            "participant_nested_fields": ",".join(nested)}
+
+
 def summary_coverage(payload):
     if not isinstance(payload, dict):
         raise ValueError("Summary response must be an object")
@@ -57,10 +73,12 @@ def summary_coverage(payload):
         plays = []
     key_events = event_section(payload.get("keyEvents"))
     parsed_goals = parse_key_event_goals(payload)
+    participants = participant_coverage(payload)
     commentary = event_section(payload.get("commentary"))
     return {"keys": ",".join(keys),
             **{"key_events_" + key: value for key, value in key_events.items()},
             **{"commentary_" + key: value for key, value in commentary.items()},
+            **participants,
             "parsed_goals": len(parsed_goals),
             "parsed_team_ids": sum(bool(goal.team_id) for goal in parsed_goals),
             "parsed_scorers": sum(bool(goal.scorer) for goal in parsed_goals),
