@@ -1294,6 +1294,10 @@ def main():
     from .soccer_native_http import NativeLeagueProvider
     # Native URLs are opt-in until the league-specific API contract is verified.
     # ESPN remains a safe fallback without requiring credentials.
+    # One shared queue for every soccer league. Opt-in settings are introduced
+    # separately; disabled by default so existing installations are unchanged.
+    from .scoring_alerts import ScoringAlerts
+    scoring_alerts = ScoringAlerts()
     soccer_workers = {}
     soccer_renderers = {}
     for league in ('MLS', 'NWSL'):
@@ -1304,7 +1308,7 @@ def main():
         fallback = lambda day, name=league: parse_scoreboard(fetch_scores(name, day), name)
         router = SoccerProviderRouter(league, primary=primary, fallback=fallback)
         soccer_feed = SoccerFeed(league, provider=router)
-        soccer_renderer = ConfiguredSoccerRenderer(soccer_feed, league=league)
+        soccer_renderer = ConfiguredSoccerRenderer(soccer_feed, league=league, scoring_alerts=scoring_alerts)
         soccer_worker = BackgroundSoccerFeed(soccer_feed, on_match=soccer_renderer.update)
         soccer_workers[key] = soccer_worker
         soccer_renderers[key] = soccer_renderer
@@ -1313,13 +1317,13 @@ def main():
     from .english_goals import EnglishGoalEnricher
     english_goal_enricher = EnglishGoalEnricher()
     english_feeds = {league: SoccerFeed(league, enrich=english_goal_enricher) for league in COMPETITIONS}
-    english_renderer = EnglishFootballRenderer(english_feeds)
+    english_renderer = EnglishFootballRenderer(english_feeds, scoring_alerts=scoring_alerts)
     english_workers = {
         league: BackgroundSoccerFeed(english_feeds[league], on_match=english_renderer.update)
         for league in COMPETITIONS
     }
     renderer.news = None  # Universal news is owned by the shared board scheduler.
-    board = MultiSportRenderer(renderer, nhl_renderer, news=news, settings_getter=renderer.settings, nba_renderer=nba_renderer, wnba_renderer=wnba_renderer, nfl_renderer=nfl_renderer, mls_renderer=soccer_renderers['mls'], nwsl_renderer=soccer_renderers['nwsl'], english_renderer=english_renderer)
+    board = MultiSportRenderer(renderer, nhl_renderer, news=news, settings_getter=renderer.settings, nba_renderer=nba_renderer, wnba_renderer=wnba_renderer, nfl_renderer=nfl_renderer, mls_renderer=soccer_renderers['mls'], nwsl_renderer=soccer_renderers['nwsl'], english_renderer=english_renderer, scoring_alerts=scoring_alerts)
     # Apply persisted sport choice on service startup, not just after web saves.
     def game():
         return board.game()
