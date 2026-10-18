@@ -16,7 +16,7 @@ def compact_name(value):
     while start>0 and parts[start-1].upper() in particles:
         start-=1
     name=' '.join(parts[start:]).upper()
-    return ''.join(ch if ch in SMALL and ch != "'" else ' ' for ch in name).strip() or 'TBD'
+    return ''.join(ch if ch in SMALL else ' ' for ch in name).strip() or 'TBD'
 
 
 def visible_name(value, offset=0, width=13):
