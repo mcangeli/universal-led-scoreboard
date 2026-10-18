@@ -63,12 +63,18 @@ class StandingsRotation:
         return bool(self._pages())
 
     def frame(self):
+        slot = int(max(0, self.clock() - self.started) // self.page_seconds)
+        return self.frame_for_slot(slot)
+
+    def frame_for_slot(self, slot):
+        """Render a logical standings slot, independent of inserted news slots."""
+        if type(slot) is not int or slot < 0:
+            raise ValueError("Invalid standings slot")
         pages = self._pages()
         if not pages:
             return Framebuffer(64, 32)
         # A refresh can add or remove pages mid-slot. Keep the currently
         # displayed league/page stable until the next scheduled transition.
-        slot = int(max(0, self.clock() - self.started) // self.page_seconds)
         identities = [(league, rows[offset].group, offset)
                       for league, rows, offset in pages]
         if self._page_identity is not None and self._page_slot == slot and self._page_identity in identities:
