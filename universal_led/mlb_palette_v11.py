@@ -44,7 +44,7 @@ class MLBPaletteScreen:
         if g.status == 'pregame' and self.pregame_page % 3:
             return self._pregame_detail()
         fb=Framebuffer(64,32)
-        for label,right in zip('RHE',(46,54,62)):
+        for label,right in zip('RHE',(42,52,62)):
             small(fb,label,right-2,1,c['accent'])
         for y,team,values in (
             (8,g.away,(g.away_runs,g.away_hits,g.away_errors)),
@@ -62,7 +62,7 @@ class MLBPaletteScreen:
                 if y==winner_y:
                     for dx,dy in ((0,0),(1,1),(0,2)):
                         fb.pixel(24+dx,y+dy,c['accent'])
-            for right,value in zip((46,54,62),values):
+            for right,value in zip((42,52,62),values):
                 if value>=100:
                     for x in (right-6,right-2):
                         fb.pixel(x,y+1,c['error'])
