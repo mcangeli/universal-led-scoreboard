@@ -1339,11 +1339,11 @@ def main():
     from .nba_runtime import BackgroundNBAFeed
     from .nba_engine import ConfiguredNBARenderer
     nba_feed = BackgroundNBAFeed(NBAFeed())
-    nba_renderer = ConfiguredNBARenderer(nba_feed)
+    nba_renderer = ConfiguredNBARenderer(nba_feed, scoring_alerts=scoring_alerts, league='NBA')
     from .wnba_feed import WNBAFeed
     from .wnba_engine import ConfiguredWNBARenderer
     wnba_feed = BackgroundNBAFeed(WNBAFeed())
-    wnba_renderer = ConfiguredWNBARenderer(wnba_feed)
+    wnba_renderer = ConfiguredWNBARenderer(wnba_feed, scoring_alerts=scoring_alerts, league='WNBA')
     from .nfl_feed import NFLFeed
     from .nfl_runtime import BackgroundNFLFeed
     from .nfl_engine import ConfiguredNFLRenderer
