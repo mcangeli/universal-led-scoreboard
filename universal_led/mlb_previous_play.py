@@ -6,7 +6,7 @@ from .colors import load_palette
 
 
 def sanitize_play(text):
-    return ''.join(ch if ch in SMALL else ' ' for ch in (text or '').upper())
+    return ''.join(ch if ch in SMALL else ' ' for ch in (text or '').replace('’', "'").replace('‘', "'").upper())
 
 
 
