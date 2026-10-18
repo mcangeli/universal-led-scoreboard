@@ -11,7 +11,7 @@ class ScoringAlertStartupTests(unittest.TestCase):
         self.assertIn("scoring_alerts = ScoringAlerts()", source)
         self.assertIn("ConfiguredSoccerRenderer(soccer_feed, league=league, scoring_alerts=scoring_alerts)", source)
         self.assertIn("EnglishFootballRenderer(english_feeds, scoring_alerts=scoring_alerts)", source)
-        self.assertIn("english_renderer=english_renderer, scoring_alerts=scoring_alerts)", source)
+        self.assertIn("english_renderer=english_renderer, scoring_alerts=scoring_alerts, standings_rotation=standings_rotation)", source)
 
 
 if __name__ == "__main__":
