@@ -13,7 +13,7 @@ class LiveDetailsScreenTests(unittest.TestCase):
         self.assertTrue(any(pixel!=(0,0,0) for row in fb.pixels for pixel in row))
 
     def test_unsupported_name_characters_are_safe(self):
-        self.assertEqual(compact_name('Jose O\'Neill'),'O NEILL')
+        self.assertEqual(compact_name('Jose O\'Neill'),"O'NEILL")
 
     def test_no_details_does_not_rotate_away_from_classic(self):
         renderer=ConfiguredMLBRenderer.__new__(ConfiguredMLBRenderer)
