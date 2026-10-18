@@ -1,6 +1,6 @@
 # v0.6.0 English Football Release Checklist
 
-Status: **release candidate; do not tag or promote until acceptance is complete**.
+Status: **release candidate; automated regression reported green (1,158 tests, October 17, 2026); live ESPN acceptance and Pi 3 deployment checks outstanding**. Do not tag or promote until acceptance is complete.
 
 ## Scope
 - Premier League (EPL), Championship, League One, League Two.
@@ -16,6 +16,12 @@ Status: **release candidate; do not tag or promote until acceptance is complete*
 4. Inspect the dashboard: English disabled by default; division selection, favorites and settings persist; existing sports still work.
 5. Check the board emulator in both no-live and simulated live modes; live fixtures suppress news/time/weather and non-live matches.
 6. Confirm service health and logs: `sudo ulsctl health`, `sudo ulsctl status`, `sudo ulsctl logs`.
+
+## Acceptance evidence and limitations
+- Development Pi full-suite run reported by tester: **1,158 tests passed**, October 17, 2026. This is user-reported device execution, not CI attestation.
+- Simulated lifecycle, duplicate suppression, temporary summary outages, legacy v0.5 settings and release metadata covered by tests.
+- Historical ESPN summary probes verified 11 goal IDs and 7 scorer names; **no live ESPN goal event has been observed**.
+- Hardware Pi 3 deployment of this branch, updater rollback, and real live timing remain unverified. The candidate has not been deployed or tagged.
 
 ## Real ESPN live acceptance (not yet verified)
 - Observe a scheduled English match becoming live, halftime and final.
