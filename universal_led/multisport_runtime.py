@@ -169,7 +169,7 @@ class MultiSportRenderer:
             duration = self.standings_rotation.page_seconds
             # Anchor idle slots to the standings timer, which resets only
             # when standings preferences actually change.
-            idle_slot = int(max(0, self.clock() - self.standings_rotation.started) // duration)
+            idle_slot = int(max(0, self.clock() - getattr(self.standings_rotation, 'started', self._started)) // duration)
             if idle_slot % 2 == 0:
                 return self.standings_rotation.frame()
             idle_news_slot = True
