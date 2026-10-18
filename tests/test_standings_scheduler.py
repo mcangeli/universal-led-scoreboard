@@ -77,6 +77,25 @@ class StandingsSchedulerTests(unittest.TestCase):
         self.assertEqual(board.frame().pixels[0][0], (4, 5, 6))
         self.assertEqual(standings.calls, 2)
 
+    def test_idle_news_slot_uses_standings_clock_after_reconfiguration(self):
+        now = [0]
+        class News:
+            def items(self):
+                return [SimpleNamespace(source="SPORT", text="NEWS")]
+        standings = Standings()
+        standings.page_seconds = 3
+        standings.started = 0
+        board = MultiSportRenderer(
+            Renderer(), Renderer(), clock=lambda: now[0],
+            news=News(), settings_getter=lambda: {"news": {
+                "rotation_interval": 99, "scroll_chars_per_second": 1}},
+            standings_rotation=standings)
+        now[0] = 6
+        standings.started = 6
+        self.assertEqual(board.frame().pixels[0][0], (4, 5, 6))
+        now[0] = 9
+        self.assertNotEqual(board.frame().pixels[0][0], (4, 5, 6))
+
     def test_scoring_alert_interrupts_standings_then_restores_them(self):
         now = [0]
         alerts = ScoringAlerts(enabled=True, scope="all", seconds=3)
