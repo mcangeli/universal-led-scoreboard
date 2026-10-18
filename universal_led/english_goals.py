@@ -28,12 +28,17 @@ class EnglishGoalEnricher:
 
     def __init__(self, fetcher=fetch_summary):
         self.fetcher = fetcher
+        self._last_goals = {}
 
     def __call__(self, match):
         if match.league not in COMPETITIONS or not is_live(match):
             return match
+        key = (match.league, match.match_id)
         try:
             goals = parse_key_event_goals(self.fetcher(match.league, match.match_id))
         except (OSError, ValueError, TypeError, KeyError):
-            return match
+            # Keep previously confirmed goal IDs during temporary summary outages.
+            # Otherwise an empty snapshot can cause later duplicate alerts.
+            return replace(match, goals=self._last_goals.get(key, match.goals))
+        self._last_goals[key] = goals
         return replace(match, goals=goals)
