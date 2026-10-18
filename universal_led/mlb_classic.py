@@ -56,6 +56,7 @@ SMALL={
 'O':('111','101','101','101','111'),
 ':':('000','110','000','110','000'),
 ' ':('000',)*5,
+"'":('010','010','000','000','000'),
 }
 def small(fb: Framebuffer, text: str, x: int, y: int, color=WHITE):
     for i,ch in enumerate(text.upper()):
