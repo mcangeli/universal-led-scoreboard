@@ -11,7 +11,7 @@ from .scoring_alert_screen import render_scoring_alert
 class MultiSportRenderer:
     """Route cached frames without network access; retain legacy single-sport mode."""
 
-    def __init__(self, mlb_renderer, nhl_renderer, active_sport="mlb", clock=time.monotonic, news=None, settings_getter=None, nba_renderer=None, wnba_renderer=None, nfl_renderer=None, mls_renderer=None, nwsl_renderer=None, english_renderer=None, scoring_alerts=None, alert_renderer=None):
+    def __init__(self, mlb_renderer, nhl_renderer, active_sport="mlb", clock=time.monotonic, news=None, settings_getter=None, nba_renderer=None, wnba_renderer=None, nfl_renderer=None, mls_renderer=None, nwsl_renderer=None, english_renderer=None, scoring_alerts=None, alert_renderer=None, standings_rotation=None):
         self.mlb = mlb_renderer
         self.nhl = nhl_renderer
         self.nba = nba_renderer
@@ -21,6 +21,7 @@ class MultiSportRenderer:
         self.nwsl = nwsl_renderer
         self.english = english_renderer
         self.scoring_alerts = scoring_alerts
+        self.standings_rotation = standings_rotation
         self.alert_renderer = (alert_renderer if alert_renderer is not None
                                else render_scoring_alert if scoring_alerts is not None
                                else None)
@@ -150,6 +151,14 @@ class MultiSportRenderer:
                 return self.alert_renderer(event)
         sport = self._selected()
         renderer = self._renderer(sport)
+        # Standings are optional idle pages, never interruptions. They may
+        # appear only when no enabled sport has an eligible game. Existing
+        # scoring alerts have already been handled above.
+        if (self.standings_rotation is not None
+                and not self._live_sports()
+                and not self._available()
+                and self.standings_rotation.has_pages()):
+            return self.standings_rotation.frame()
         if self.news is not None and self.settings_getter is not None:
             headlines = self.news.items()
             if headlines and self._live_sports():
