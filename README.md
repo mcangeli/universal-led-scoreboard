@@ -2,14 +2,14 @@
 
 Universal LED Scoreboard turns a Raspberry Pi and a compact RGB LED matrix into a configurable sports scoreboard, clock, weather display and news ticker. It combines classic score layouts with a browser-based configurator and a live 64×32 board preview, so most everyday changes do not require editing Python or JSON.
 
-The project is being built as a multi-sport platform. **MLB, NHL, NBA, WNBA and NFL are implemented.** MLS and NWSL are implemented on the v0.5.0 soccer release branch; EFL is not yet active.
+The project supports MLB, NHL, NBA, WNBA, NFL, MLS and NWSL. **English football (Premier League, Championship, League One and League Two)** is implemented on the v0.6.0 release-candidate branch, pending live-match acceptance. The legacy EFL sport identifier is not enabled.
 
 ## What it does
 
 - Displays MLB games with classic scoreboard, live matchup and previous-play views.
 - Displays NHL games on 64×32 classic and visual layouts, including scheduled, live, intermission, overtime, shootout, final and postponed status indicators. Scheduled-game screens show team records when available.
 - Displays NBA and WNBA scheduled, live and final games with pregame tipoff times and team records when supplied by the feed.
-- Lets you select favorite teams across MLB, NHL, NBA, WNBA, NFL, MLS and NWSL, configure game selection modes, and rotate enabled sports.
+- Lets you select favorite teams across MLB, NHL, NBA, WNBA, NFL, MLS, NWSL and English football, configure game selection modes, and rotate enabled sports.
 - Gives **live games in enabled sports** priority over scheduled games, final scores, clock, weather and news. Favorite-only mode limits eligible games to configured teams; fallback/all modes include other live games. Supplemental screens return when the last eligible live game ends.
 - Shows an optional clock with a timezone dropdown and 12/24-hour formats.
 - Shows optional weather with colored pixel-art icons, temperature and forecast high/low. Choose Open-Meteo or OpenWeatherMap; OpenWeatherMap requires your own API key.
@@ -41,7 +41,7 @@ The updater validates the candidate test suite before installation, synchronizes
 
 ## Configure and use
 
-After signing in, start with the sport and team rotation settings, including separate MLS and NWSL controls. Add your favorite team abbreviations (for example `ATL`), choose which games to display, and adjust rotation timing. When an eligible game is live, the board prioritizes live-game screens across enabled sports and suppresses supplemental pages. In favorite-only mode, only configured teams qualify; fallback/all modes allow other live matchups. Normal rotation resumes after the final eligible live game ends.
+After signing in, start with the sport and team rotation settings, including separate MLS, NWSL and English Football controls. English football supports choosing divisions and selecting favorite clubs by stable ESPN club ID; its default state is disabled. Add your favorite team abbreviations (for example `ATL`), choose which games to display, and adjust rotation timing. When an eligible game is live, the board prioritizes live-game screens across enabled sports and suppresses supplemental pages. In favorite-only mode, only configured teams qualify; fallback/all modes allow other live matchups. Normal rotation resumes after the final eligible live game ends.
 
 Under **Display Settings → Time & Weather**, enable the clock, choose a timezone and time format, and optionally enable weather. Enter a city or US ZIP code and choose Fahrenheit or Celsius. Open-Meteo is the default provider; for OpenWeatherMap, select it and enter your API key in the dedicated field. The key is stored separately from ordinary settings. Weather requests run in the background and use a cache, so brief network interruptions need not blank the board.
 
@@ -75,6 +75,14 @@ python3 -m universal_led --output splash.ppm
 - **A screen is not appearing:** An eligible live game intentionally suppresses supplemental pages and non-live games. Check the sport's favorite/fallback/all selection mode and enabled sports. Normal rotation resumes when the last eligible live game ends.
 - **Service does not start:** Run `sudo ulsctl logs` and `sudo ulsctl status` for the system installation.
 - **Changes are not visible in the browser:** Refresh the page after restarting the service.
+
+## v0.6.0 English football release-candidate verification
+
+- Branch: `feature/0.6.0-english-football`; **not yet merged, tagged or deployed to production**.
+- Four divisions: Premier League, Championship, League One and League Two, with ESPN-backed fixtures, scores, club IDs, favorites, shared 64×32 layout and combined live-first rotation.
+- English football is disabled by default. Goal enrichment polls ESPN match summaries **only for live fixtures** in the background; failures preserve scores and no network access occurs during frame rendering.
+- Historical ESPN summary samples on October 17, 2026 yielded 11/11 stable goal IDs, 11/11 team IDs and match minutes, and 7/11 identified scorers. **Live ESPN goal delivery has not yet been verified**.
+- Before production promotion, complete simulated lifecycle acceptance, a full regression run, a live-match observation, and Pi 3 upgrade/rollback health checks. See [v0.6.0 release checklist](docs/V060-RELEASE-CHECKLIST.md).
 
 ## v0.5.0 soccer release-candidate verification
 

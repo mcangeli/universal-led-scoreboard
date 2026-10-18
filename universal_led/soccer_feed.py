@@ -36,6 +36,9 @@ def parse_scoreboard(payload: Mapping, league: str) -> tuple[SoccerMatch, ...]:
         status = event.get("status") or {}
         status_type = status.get("type") or {}
         state = str(status_type.get("state") or status_type.get("name") or "unknown").lower()
+        # Match status detail may contain stoppage-time or halftime labels.
+        # Keep halftime in the live rotation, even when ESPN supplies "in".
+        # Some feeds report half-time as a descriptive phrase rather than a code.
         # ESPN can report state="in" alongside name="STATUS_HALFTIME".
         phase_fields = (
             status_type.get("name"), status_type.get("description"),
@@ -44,7 +47,7 @@ def parse_scoreboard(payload: Mapping, league: str) -> tuple[SoccerMatch, ...]:
         )
         if state in ("in", "live", "in_progress", "inprogress") and any(
             isinstance(value, str) and value.strip().lower().replace("_", " ") in
-            ("status halftime", "halftime", "half time", "ht")
+            ("status halftime", "halftime", "half time", "ht", "half-time")
             for value in phase_fields
         ):
             state = "halftime"
@@ -89,6 +92,8 @@ def parse_scoreboard(payload: Mapping, league: str) -> tuple[SoccerMatch, ...]:
             goals=tuple(goals),
             clock=_match_clock(status, competition),
             period=_match_period(status, competition),
+            home_club_key=_english_club_key(competition, "home") if league in ("EPL", "CHAMPIONSHIP", "LEAGUE_ONE", "LEAGUE_TWO") else None,
+            away_club_key=_english_club_key(competition, "away") if league in ("EPL", "CHAMPIONSHIP", "LEAGUE_ONE", "LEAGUE_TWO") else None,
         ))
     return tuple(matches)
 
@@ -146,4 +151,14 @@ def _match_period(status, competition):
             return int(value)
         except (TypeError, ValueError):
             continue
+    return None
+
+
+def _english_club_key(competition, side):
+    for entry in competition.get("competitors") or []:
+        if isinstance(entry, Mapping) and entry.get("homeAway") == side:
+            team = entry.get("team") or {}
+            if isinstance(team, Mapping) and team.get("id") is not None:
+                value = str(team["id"]).strip()
+                return f"espn:{value}" if value else None
     return None

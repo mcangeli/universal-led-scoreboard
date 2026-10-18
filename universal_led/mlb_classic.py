@@ -56,6 +56,7 @@ SMALL={
 'O':('111','101','101','101','111'),
 ':':('000','110','000','110','000'),
 ' ':('000',)*5,
+"'":('010','010','000','000','000'),
 }
 def small(fb: Framebuffer, text: str, x: int, y: int, color=WHITE):
     for i,ch in enumerate(text.upper()):
@@ -121,6 +122,7 @@ class MLBClassicScreen:
         g=self.game
         fb=Framebuffer(64,32)
         # Compact R/H/E grid on the right, teams on the left.
+        small(fb,'MLB',1,1,GOLD)
         small(fb,'RHE',43,1,GOLD)
         fb.text(g.away.upper(),1,8,WHITE)
         fb.text(g.home.upper(),1,18,GREEN)

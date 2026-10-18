@@ -1,6 +1,7 @@
 """Cached soccer feed adapter for the existing MultiSportRenderer contract."""
 import time
 
+from .soccer import SUPPORTED_LEAGUES
 from .soccer_display import SoccerDisplayController
 from .soccer_pixels import render_soccer_screen
 from .soccer_rotation import eligible_matches, prioritize_live, is_live
@@ -9,7 +10,7 @@ from .soccer_rotation import eligible_matches, prioritize_live, is_live
 class ConfiguredSoccerRenderer:
     def __init__(self, feed, *, league, favorite_teams=(), mode="fallback",
                  rotation_seconds=12, goal_seconds=8, clock=time.monotonic):
-        if league not in ("MLS", "NWSL"):
+        if league not in SUPPORTED_LEAGUES:
             raise ValueError("Unsupported soccer league")
         self.feed = feed
         self.league = league

@@ -35,7 +35,7 @@ def eligible_matches(
         return games
     selected = tuple(
         match for match in games
-        if match.home_id.strip().upper() in favorite_ids or match.away_id.strip().upper() in favorite_ids
+        if any(identifier.strip().upper() in favorite_ids for identifier in (match.home_id, match.away_id, match.home_club_key or '', match.away_club_key or ''))
     )
     return selected if mode == "favorites" or selected else games
 

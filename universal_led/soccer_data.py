@@ -10,7 +10,9 @@ from urllib.request import Request, urlopen
 
 from .soccer_feed import parse_scoreboard
 
-LEAGUE_SLUGS = {"MLS": "usa.1", "NWSL": "usa.nwsl"}
+LEAGUE_SLUGS = {"MLS": "usa.1", "NWSL": "usa.nwsl",
+                "EPL": "eng.1", "CHAMPIONSHIP": "eng.2",
+                "LEAGUE_ONE": "eng.3", "LEAGUE_TWO": "eng.4"}
 API_BASE = "https://site.api.espn.com/apis/site/v2/sports/soccer"
 
 
@@ -32,7 +34,7 @@ def fetch_scores(league: str, day: date, *, timeout=5.0):
 
 class SoccerFeed:
     def __init__(self, league: str, *, fetcher=fetch_scores, refresh_seconds=60,
-                 clock=time.monotonic, provider=None):
+                 clock=time.monotonic, provider=None, enrich=None):
         if league not in LEAGUE_SLUGS:
             raise ValueError("Unsupported soccer league")
         if type(refresh_seconds) not in (int, float) or not 5 <= refresh_seconds <= 3600:
@@ -40,6 +42,7 @@ class SoccerFeed:
         self.league = league
         self.fetcher = fetcher
         self.provider = provider
+        self.enrich = enrich
         self.refresh_seconds = refresh_seconds
         self.clock = clock
         self._lock = threading.Lock()
@@ -67,6 +70,12 @@ class SoccerFeed:
                 with self._lock:
                     self.last_error = str(exc)
                     return list(self._games)
+            if self.enrich is not None:
+                # Enrichment failures must never hide otherwise valid scores.
+                try:
+                    games = tuple(self.enrich(game) for game in games)
+                except Exception:
+                    pass
             with self._lock:
                 self._games = games
                 self._day = day
