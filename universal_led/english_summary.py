@@ -43,6 +43,14 @@ def parse_key_event_goals(payload):
                     scorer = athlete.get("displayName") or athlete.get("fullName")
                 if scorer:
                     break
+            # ESPN English summaries omit roles on many goal events. A
+            # single participant is unambiguous; multiple untyped people are not.
+            if scorer is None and len(participants) == 1:
+                participant = participants[0]
+                if isinstance(participant, Mapping) and not participant.get("type") and not participant.get("role"):
+                    athlete = participant.get("athlete") or {}
+                    if isinstance(athlete, Mapping):
+                        scorer = athlete.get("displayName") or athlete.get("fullName")
         goals.append(SoccerGoal(event_id=str(event_id), team_id=team_id,
                                 scorer=scorer,
                                 minute=str(minute) if minute is not None else None,
