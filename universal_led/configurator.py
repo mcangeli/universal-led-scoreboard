@@ -922,6 +922,23 @@ def make_handler(config_dir,token,frame_provider=None,settings_callback=None,fee
                 self.send_login();return
             if path=='/health':
                 self.send_json(200,{'status':'ok'});return
+            # Public, read-only scoreboard surfaces. All configuration APIs stay private.
+            if path in ('/board', '/frame.json'):
+                if path == '/board':
+                    body = BOARD_HTML.encode()
+                    self.send_response(200)
+                    self.send_header('Content-Type', 'text/html; charset=utf-8')
+                    self.send_header('Cache-Control', 'no-store')
+                    self.send_header('Content-Length', str(len(body)))
+                    self.end_headers()
+                    self.wfile.write(body)
+                elif board_provider is None:
+                    self.send_json(503, {'error': 'Board emulator not configured'})
+                else:
+                    frame = board_provider()
+                    self.send_json(200, {'width': frame.width, 'height': frame.height,
+                                         'pixels': [pixel for row in frame.pixels for pixel in row]})
+                return
             if not self.authenticated():
                 if path=='/':
                     self.send_response(303);self.send_header('Location','/login');self.end_headers()
@@ -935,20 +952,6 @@ def make_handler(config_dir,token,frame_provider=None,settings_callback=None,fee
                 self.send_header('Content-Length',str(len(body)))
                 self.end_headers()
                 self.wfile.write(body)
-            elif path=='/board':
-                body=BOARD_HTML.encode()
-                self.send_response(200)
-                self.send_header('Content-Type','text/html; charset=utf-8')
-                self.send_header('Cache-Control','no-store')
-                self.send_header('Content-Length',str(len(body)))
-                self.end_headers()
-                self.wfile.write(body)
-            elif path=='/frame.json':
-                if board_provider is None:
-                    self.send_json(503,{'error':'Board emulator not configured'})
-                else:
-                    frame=board_provider()
-                    self.send_json(200,{'width':frame.width,'height':frame.height,'pixels':[pixel for row in frame.pixels for pixel in row]})
             elif path=='/api/config':
                 try:self.send_json(200,read_config(config_dir))
                 except (OSError,ValueError) as exc:self.send_json(500,{'error':str(exc)})
