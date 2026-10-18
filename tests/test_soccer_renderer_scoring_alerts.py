@@ -18,6 +18,20 @@ def match(league, goals=(), status="live"):
 
 
 class SoccerRendererAlertIntegrationTests(unittest.TestCase):
+    def test_interruption_filter_uses_one_cached_feed_snapshot(self):
+        class CountingFeed:
+            def __init__(self):
+                self.calls = 0
+
+            def games(self):
+                self.calls += 1
+                return (match("MLS", status="delayed"),)
+
+        feed = CountingFeed()
+        renderer = ConfiguredSoccerRenderer(feed, league="MLS")
+        self.assertEqual(len(renderer._games()), 1)
+        self.assertEqual(feed.calls, 1)
+
     def test_mls_and_nwsl_update_deliver_confirmed_goal(self):
         for league in ("MLS", "NWSL"):
             with self.subTest(league=league):
