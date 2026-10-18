@@ -32,6 +32,7 @@ def observe_soccer_match(alerts, match, *, favorite_teams=()):
     """
     events = soccer_score_events(match)
     if not is_live(match) or match.status.strip().lower() == "halftime":
+        alerts.cancel_game("soccer", match.league, str(match.match_id))
         return alerts.baseline("soccer", match.league, str(match.match_id), events)
     return alerts.observe("soccer", match.league, str(match.match_id),
                           events, favorite_teams=favorite_teams)
