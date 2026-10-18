@@ -91,6 +91,25 @@ class StandingsRotationTests(unittest.TestCase):
         adapter.configure(enabled=True, page_seconds=15)
         self.assertEqual(adapter.started, 8)
 
+    def test_feed_refresh_does_not_jump_to_different_league_mid_slot(self):
+        now = [0]
+        first = Cache([standing("ARS", 1)])
+        second = Cache([Standing("CHAMPIONSHIP", "Championship", "1",
+                                 1, 1, 0, points=3, rank=1)])
+        adapter = StandingsRotation({"EPL": first, "CHAMPIONSHIP": second},
+                                    enabled=True, page_seconds=10,
+                                    clock=lambda: now[0])
+        adapter.frame()
+        self.assertEqual(adapter._page_identity[0], "EPL")
+        first.value = (standing("ARS", 1), standing("CHE", 2),
+                       standing("LIV", 3), standing("MUN", 4))
+        now[0] = 5
+        adapter.frame()
+        self.assertEqual(adapter._page_identity[0], "EPL")
+        now[0] = 10
+        adapter.frame()
+        self.assertEqual(adapter._page_identity[0], "CHAMPIONSHIP")
+
     def test_invalid_settings(self):
         with self.assertRaises(ValueError):
             StandingsRotation({}, enabled="yes")
