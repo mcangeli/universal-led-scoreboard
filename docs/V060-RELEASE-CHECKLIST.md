@@ -1,6 +1,6 @@
 # v0.6.0 English Football Release Checklist
 
-Status: **release candidate; automated regression reported green (1,164 tests, October 18, 2026); live ESPN acceptance and Pi 3 deployment checks outstanding**. Do not tag or promote until acceptance is complete.
+Status: **live display behavior accepted by tester October 18, 2026; 1,164 pre-release tests passed; final-version regression and Pi 3 deployment checks outstanding**. Release metadata set to 0.6.0; do not deploy to production until final regression and release review.
 
 ## Scope
 - Premier League (EPL), Championship, League One, League Two.
@@ -22,11 +22,11 @@ Status: **release candidate; automated regression reported green (1,164 tests, O
 - Simulated lifecycle, duplicate suppression, temporary summary outages, legacy v0.5 settings and release metadata covered by tests.
 - October 18: candidate update passed 1,164 tests (15 skipped) after apostrophe glyph, MLB surname regression, and candidate import-path fixes; tester reported successful update. News apostrophe rendering still needs visual inspection on the matrix/emulator.
 - Historical ESPN summary probes verified 11 goal IDs and 7 scorer names; **no live ESPN goal event has been observed**.
-- EPL pregame information appeared on the emulator on October 18, 2026 (user-observed); live transition, clock and goal alerts remain unverified.
+- EPL pregame, live clock, second half, extra time and final score rotation were observed by tester on October 18, 2026. Tester explicitly accepted live behavior. A live goal announcement was not individually confirmed, so event-specific behavior remains covered by simulated tests.
 - Anonymous `/board` and `/frame.json` access now have a passing regression test; direct anonymous browser verification remains a manual acceptance check. All configuration APIs remain authenticated.
 - Hardware Pi 3 deployment of this branch, updater rollback, and real live timing remain unverified. The candidate has not been deployed or tagged.
 
-## Real ESPN live acceptance (not yet verified)
+## Real ESPN live acceptance (tester accepted; detailed goal-event evidence incomplete)
 - Observe a scheduled English match becoming live, halftime and final.
 - Verify clock/score updates and a **new** goal summary event arrives while live.
 - Confirm goal screen appears once for a new official event ID and expires back to match view.
@@ -35,7 +35,7 @@ Status: **release candidate; automated regression reported green (1,164 tests, O
 
 ## Release and Pi 3 rollout
 1. Keep production on the known-good v0.5.0 release until checks above pass.
-2. Verify clean working tree and matching release metadata; change `__version__` from `0.6.0.dev0` to `0.6.0` **only when ready to release**.
+2. Verify clean working tree and matching release metadata; `__version__` is now `0.6.0`. Run final regression after this metadata change.
 3. Merge reviewed branch into main, tag `v0.6.0`, and use the existing dashboard updater to install on the Pi 3.
 4. Before update, preserve a known-good recovery card/backup; do not overwrite saved `/etc/uls` configuration or `/var/lib/uls` data.
 5. First boot: leave English disabled, verify existing sports, physical 64×32 board, web login, `sudo ulsctl health` and logs.
