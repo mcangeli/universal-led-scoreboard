@@ -96,6 +96,16 @@ class ScoringAlerts:
         self._seen.setdefault(key, set()).update(e.event_id for e in events)
         return ()
 
+    def cancel_game(self, sport, league, game_id):
+        """Drop stale announcements when a match enters halftime or finishes."""
+        key = (sport, league, str(game_id))
+        self._pending = deque((favorite, event) for favorite, event in self._pending
+                              if (event.sport, event.league, event.game_id) != key)
+        if self._active is not None and (
+                self._active.sport, self._active.league, self._active.game_id) == key:
+            self._active = None
+            self._expires = None
+
     def next_alert(self, now):
         """Return active event or None; expire and restore rotation naturally."""
         if not self.enabled:
