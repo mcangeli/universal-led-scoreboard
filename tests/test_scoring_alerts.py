@@ -111,6 +111,51 @@ class ScoringAlertTests(unittest.TestCase):
         self.assertEqual([alerts.next_alert(t).event_id for t in (0, 2, 4)], ["c", "a", "b"])
         self.assertIsNone(alerts.next_alert(6))
 
+    def test_simultaneous_leagues_queue_separately_and_resume(self):
+        alerts = ScoringAlerts(enabled=True, scope="all", seconds=3)
+        epl = event(league="EPL", game="42", eid="epl-goal")
+        mls = event(league="MLS", game="42", eid="mls-goal")
+        alerts.observe("soccer", "EPL", "42", [])
+        alerts.observe("soccer", "MLS", "42", [])
+        alerts.observe("soccer", "EPL", "42", [epl])
+        alerts.observe("soccer", "MLS", "42", [mls])
+        self.assertEqual(alerts.next_alert(0), epl)
+        self.assertEqual(alerts.next_alert(2), epl)
+        self.assertEqual(alerts.next_alert(3), mls)
+        self.assertIsNone(alerts.next_alert(6))
+
+    def test_favorite_joins_queue_without_preempting_active_alert(self):
+        alerts = ScoringAlerts(enabled=True, scope="all", seconds=2)
+        for game in ("1", "2", "3"):
+            alerts.observe("soccer", "EPL", game, [])
+        first = event(game="1", eid="first", team="CHE")
+        second = event(game="2", eid="second", team="MUN")
+        favorite = event(game="3", eid="favorite", team="ARS")
+        alerts.observe("soccer", "EPL", "1", [first], favorite_teams=["ARS"])
+        self.assertEqual(alerts.next_alert(0), first)
+        alerts.observe("soccer", "EPL", "2", [second], favorite_teams=["ARS"])
+        alerts.observe("soccer", "EPL", "3", [favorite], favorite_teams=["ARS"])
+        self.assertEqual(alerts.next_alert(1), first)
+        self.assertEqual(alerts.next_alert(2), favorite)
+        self.assertEqual(alerts.next_alert(4), second)
+        self.assertIsNone(alerts.next_alert(6))
+
+    def test_cancel_game_at_halftime_or_final_drops_only_its_alerts(self):
+        alerts = ScoringAlerts(enabled=True, scope="all", seconds=2)
+        first = event(game="1", eid="first")
+        stale = event(game="1", eid="stale")
+        other = event(league="MLS", game="1", eid="other")
+        alerts.observe("soccer", "EPL", "1", [])
+        alerts.observe("soccer", "MLS", "1", [])
+        alerts.observe("soccer", "EPL", "1", [first, stale])
+        alerts.observe("soccer", "MLS", "1", [other])
+        self.assertEqual(alerts.next_alert(0), first)
+        alerts.cancel_game("soccer", "EPL", "1")
+        self.assertEqual(alerts.next_alert(1), other)
+        self.assertIsNone(alerts.next_alert(3))
+        alerts.observe("soccer", "EPL", "1", [first, stale])
+        self.assertIsNone(alerts.next_alert(4))
+
     def test_transient_missing_event_does_not_replay(self):
         alerts = ScoringAlerts(enabled=True, scope="all", seconds=1)
         alerts.observe("soccer", "EPL", "42", [])
