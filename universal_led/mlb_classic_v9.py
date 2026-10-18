@@ -51,7 +51,7 @@ class MLBClassicV9Screen:
                         fb.pixel(x,y+3,RED)
                 else:
                     digits=str(value)
-                    small(fb,digits,right-1 if len(digits)==1 else right-5,y,WHITE)
+                    small(fb,digits,right-1 if len(digits)==1 else right-3,y,WHITE)
         for x in range(64):
             fb.pixel(x,25,(28,37,48))
         if g.status == 'pregame':
