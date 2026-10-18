@@ -6,17 +6,19 @@ import time
 
 from .english_football import COMPETITIONS
 from .soccer_display import SoccerDisplayController
+from .soccer_scoring_alerts import observe_soccer_match
 from .soccer_pixels import render_soccer_screen
 from .soccer_rotation import eligible_matches, prioritize_live, is_live
 
 
 class EnglishFootballRenderer:
     def __init__(self, feeds, *, enabled=None, favorite_teams=(), mode="fallback",
-                 rotation_seconds=12, goal_seconds=8, clock=time.monotonic):
+                 rotation_seconds=12, goal_seconds=8, clock=time.monotonic, scoring_alerts=None):
         if not isinstance(feeds, dict) or any(key not in COMPETITIONS for key in feeds):
             raise ValueError("Expected English competition feed mapping")
         self.feeds = dict(feeds)
         self.clock = clock
+        self.scoring_alerts = scoring_alerts
         self.display = SoccerDisplayController(goal_seconds)
         self.configure(enabled=enabled, favorite_teams=favorite_teams,
                        mode=mode, rotation_seconds=rotation_seconds)
@@ -70,3 +72,6 @@ class EnglishFootballRenderer:
     def update(self, match):
         if match.league in self.enabled and match.league in self.feeds:
             self.display.update(match)
+            if self.scoring_alerts is not None:
+                observe_soccer_match(self.scoring_alerts, match,
+                                     favorite_teams=self.favorite_teams)
