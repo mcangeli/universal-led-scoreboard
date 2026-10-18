@@ -18,6 +18,31 @@ class ScoringAlertTests(unittest.TestCase):
         self.assertEqual(alerts.observe("soccer", "EPL", "42", [event()]), ())
         self.assertIsNone(alerts.next_alert(0))
 
+    def test_enable_does_not_replay_goals_seen_while_disabled(self):
+        alerts = ScoringAlerts()
+        alerts.observe("soccer", "EPL", "42", [])
+        alerts.observe("soccer", "EPL", "42", [event()])
+        alerts.configure(enabled=True, scope="all")
+        alerts.observe("soccer", "EPL", "42", [event()])
+        self.assertIsNone(alerts.next_alert(0))
+        fresh = event(eid="g2")
+        alerts.observe("soccer", "EPL", "42", [event(), fresh])
+        self.assertEqual(alerts.next_alert(1), fresh)
+
+    def test_disabling_active_alert_resumes_immediately(self):
+        class Renderer:
+            def frame(self):
+                return "normal-frame"
+        alerts = ScoringAlerts(enabled=True, scope="all")
+        alerts.observe("soccer", "EPL", "42", [])
+        alerts.observe("soccer", "EPL", "42", [event()])
+        board = MultiSportRenderer(Renderer(), Renderer(), clock=lambda: 0,
+                                   scoring_alerts=alerts,
+                                   alert_renderer=lambda e: "alert-frame")
+        self.assertEqual(board.frame(), "alert-frame")
+        alerts.configure(enabled=False)
+        self.assertEqual(board.frame(), "normal-frame")
+
     def test_new_event_interrupts_once_then_returns_to_rotation(self):
         alerts = ScoringAlerts(enabled=True, scope="all", seconds=5)
         alerts.observe("soccer", "EPL", "42", [])
