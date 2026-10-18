@@ -123,7 +123,7 @@ class MLBClassicScreen:
         fb=Framebuffer(64,32)
         # Compact R/H/E grid on the right, teams on the left.
         small(fb,'MLB',1,1,GOLD)
-        small(fb,'RHE',43,1,GOLD)
+        # Each R/H/E statistic owns a 7px-wide, two-digit column.\n        # Labels are centered; values are right-aligned in their column.\n        for x,label in zip((41,49,57),'RHE'):\n            small(fb,label,x+2,1,GOLD)
         fb.text(g.away.upper(),1,8,WHITE)
         fb.text(g.home.upper(),1,18,GREEN)
         for y,values in ((9,(g.away_runs,g.away_hits,g.away_errors)),
