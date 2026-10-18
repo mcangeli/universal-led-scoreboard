@@ -3,18 +3,20 @@ import time
 
 from .soccer import SUPPORTED_LEAGUES
 from .soccer_display import SoccerDisplayController
+from .soccer_scoring_alerts import observe_soccer_match
 from .soccer_pixels import render_soccer_screen
 from .soccer_rotation import eligible_matches, prioritize_live, is_live
 
 
 class ConfiguredSoccerRenderer:
     def __init__(self, feed, *, league, favorite_teams=(), mode="fallback",
-                 rotation_seconds=12, goal_seconds=8, clock=time.monotonic):
+                 rotation_seconds=12, goal_seconds=8, clock=time.monotonic, scoring_alerts=None):
         if league not in SUPPORTED_LEAGUES:
             raise ValueError("Unsupported soccer league")
         self.feed = feed
         self.league = league
         self.clock = clock
+        self.scoring_alerts = scoring_alerts
         self.display = SoccerDisplayController(goal_seconds)
         self.configure(favorite_teams=favorite_teams, mode=mode, rotation_seconds=rotation_seconds)
 
@@ -56,3 +58,6 @@ class ConfiguredSoccerRenderer:
     def update(self, match):
         if match.league == self.league:
             self.display.update(match)
+            if self.scoring_alerts is not None:
+                observe_soccer_match(self.scoring_alerts, match,
+                                     favorite_teams=self.favorite_teams)
