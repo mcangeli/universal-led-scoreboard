@@ -167,6 +167,31 @@ class StandingsSchedulerTests(unittest.TestCase):
         self.assertEqual((frame.width, frame.height), (64, 32))
         self.assertEqual(standings.calls, 0)
 
+    def test_game_final_then_empty_schedule_returns_to_standings(self):
+        now = [0]
+        game_renderer = Renderer(games=True, live=True)
+        standings = Standings()
+        board = MultiSportRenderer(game_renderer, Renderer(),
+                                   clock=lambda: now[0],
+                                   standings_rotation=standings)
+        self.assertEqual(board.frame().pixels[0][0], (1, 2, 3))
+        self.assertEqual(standings.calls, 0)
+        # Final scores remain eligible for the day's game rotation.
+        now[0] = 60
+        game_renderer.live = False
+        self.assertEqual(board.frame().pixels[0][0], (1, 2, 3))
+        self.assertEqual(standings.calls, 0)
+        # Only when the day's games are no longer eligible do idle
+        # standings return.
+        now[0] = 120
+        game_renderer.games = False
+        self.assertEqual(board.frame().pixels[0][0], (4, 5, 6))
+        self.assertEqual(standings.calls, 1)
+        # A newly scheduled game takes priority immediately.
+        game_renderer.games = True
+        self.assertEqual(board.frame().pixels[0][0], (1, 2, 3))
+        self.assertEqual(standings.calls, 1)
+
     def test_disabled_standings_preserve_blank_fallback(self):
         board = MultiSportRenderer(Renderer(), Renderer(), standings_rotation=Standings(False))
         self.assertEqual(board.frame().pixels[0][0], (1, 2, 3))
