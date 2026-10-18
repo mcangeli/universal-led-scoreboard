@@ -21,9 +21,12 @@ class StandingsRotation:
             raise ValueError("Invalid standings enabled flag")
         if type(page_seconds) not in (int, float) or not 3 <= page_seconds <= 3600:
             raise ValueError("Invalid standings page duration")
+        changed = (getattr(self, 'enabled', None) != enabled or
+                   getattr(self, 'page_seconds', None) != page_seconds)
         self.enabled = enabled
         self.page_seconds = page_seconds
-        self.started = self.clock()
+        if changed:
+            self.started = self.clock()
 
     def _pages(self):
         if not self.enabled:
