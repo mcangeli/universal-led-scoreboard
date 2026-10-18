@@ -71,7 +71,8 @@ class EnglishFootballRenderer:
 
     def update(self, match):
         if match.league in self.enabled and match.league in self.feeds:
-            self.display.update(match)
+            self.display.update(match, announce=not (self.scoring_alerts is not None
+                                                    and self.scoring_alerts.enabled))
             if self.scoring_alerts is not None:
                 observe_soccer_match(self.scoring_alerts, match,
                                      favorite_teams=self.favorite_teams)
