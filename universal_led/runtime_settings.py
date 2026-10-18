@@ -59,8 +59,8 @@ class ConfiguredMLBRenderer:
         """Keep game and pregame page on the same rotation clock."""
         settings=self.settings()['mlb']
         all_games=self.feed.games()
-        policy=InterruptionPolicy(**self.settings()['game_interruptions'])
-        all_games=filter_interrupted_games(all_games, has_live_games=self.external_live_games,
+        policy=InterruptionPolicy(**self.settings().get('game_interruptions', {}))
+        all_games=filter_interrupted_games(all_games, has_live_games=getattr(self, 'external_live_games', False),
                                            policy=policy)
         favorites=set(settings.get('favorite_teams',settings.get('favorite_team',['ATL'])))
         selected=select_games(all_games,settings.get('favorite_teams',settings.get('favorite_team',['ATL'])),settings['mode'])
@@ -107,9 +107,9 @@ class ConfiguredMLBRenderer:
         return game,page
 
     def has_games(self):
-        policy=InterruptionPolicy(**self.settings()['game_interruptions'])
+        policy=InterruptionPolicy(**self.settings().get('game_interruptions', {}))
         return bool(filter_interrupted_games(self.feed.games(),
-                    has_live_games=self.external_live_games, policy=policy))
+                    has_live_games=getattr(self, 'external_live_games', False), policy=policy))
 
     def has_live_games(self):
         """Check the cached MLB schedule, not just the current rotation slot.
