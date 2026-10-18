@@ -69,7 +69,7 @@ class MLBPaletteScreen:
                         fb.pixel(x,y+3,c['error'])
                 else:
                     digits=str(value)
-                    small(fb,digits,right-1 if len(digits)==1 else right-5,y,c['text'])
+                    small(fb,digits,right-1 if len(digits)==1 else right-3,y,c['text'])
         for x in range(64):
             fb.pixel(x,25,c['separator'])
         if g.status=='pregame':
