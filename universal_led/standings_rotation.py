@@ -28,22 +28,31 @@ class StandingsRotation:
     def _pages(self):
         if not self.enabled:
             return ()
-        pages = []
+        # Interleave competitions by page so a full 20-team league table
+        # cannot monopolize the display for several minutes.
+        by_league = []
         for league, cache in self.caches.items():
             rows = cache.rows()
             if not rows:
                 continue
+            league_pages = []
             groups = {}
             for row in rows:
                 groups.setdefault(row.group, []).append(row)
             for group_rows in groups.values():
-                # Provider ranks are authoritative. Missing ranks mean the
-                # provider response is incomplete; do not invent positions.
+                # Official ranks are authoritative; never guess standings.
                 if any(row.rank is None for row in group_rows):
                     continue
                 ordered = order_standings(group_rows)
                 for offset in range(0, len(ordered), 3):
-                    pages.append((league, ordered, offset))
+                    league_pages.append((league, ordered, offset))
+            if league_pages:
+                by_league.append(league_pages)
+        pages = []
+        for index in range(max(map(len, by_league), default=0)):
+            for league_pages in by_league:
+                if index < len(league_pages):
+                    pages.append(league_pages[index])
         return tuple(pages)
 
     def has_pages(self):
