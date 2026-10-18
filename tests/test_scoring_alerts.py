@@ -3,6 +3,7 @@ import unittest
 
 from universal_led.scoring_alerts import ScoreEvent, ScoringAlerts
 from universal_led.multisport_runtime import MultiSportRenderer
+from universal_led.scoring_alert_screen import render_scoring_alert
 
 
 def event(sport="soccer", league="EPL", game="42", eid="g1", team="ARS"):
@@ -89,6 +90,18 @@ class ScoringAlertTests(unittest.TestCase):
                                    scoring_alerts=alerts)
         self.assertEqual(board.frame(), "normal-frame")
         self.assertEqual(alerts.next_alert(0), event())
+
+    def test_alert_screen_has_native_matrix_dimensions_and_visible_content(self):
+        frame = render_scoring_alert(event())
+        self.assertEqual((frame.width, frame.height), (64, 32))
+        self.assertTrue(any(pixel != (0, 0, 0)
+                            for row in frame.pixels for pixel in row))
+
+    def test_alert_screen_handles_untrusted_long_provider_description(self):
+        scoring = ScoreEvent("soccer", "LEAGUE_ONE", "42", "goal", "ARS",
+                             "goal", "A scorer scored! / 90+4")
+        frame = render_scoring_alert(scoring)
+        self.assertEqual((frame.width, frame.height), (64, 32))
 
     def test_invalid_event_identity_is_rejected(self):
         alerts = ScoringAlerts(enabled=True, scope="all")
