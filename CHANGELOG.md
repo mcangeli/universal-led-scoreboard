@@ -1,5 +1,23 @@
 # Changelog
 
+## v0.7.0 (release candidate, 2026-10-18)
+
+### Added
+- Configurable football standings rotation on the 64×32 board, including idle standings pages and news interleaving.
+- Scoring alerts and live-game prioritization regression coverage across the shared scheduler.
+- Cached standings refresh with recovery after transient provider failures.
+
+### Improved
+- MLB R/H/E column spacing and alignment for one- and two-digit statistics across supported layouts.
+- Responsive browser board preview on narrow screens.
+- Standings page sequencing when news occupies alternate idle slots.
+
+### Validation and outstanding release gates
+- Raspberry Pi 5: user-confirmed **1,311 tests passing, 15 skipped** on October 18, 2026.
+- Additional live → final → idle standings → new-game priority regression added after that confirmed run; pending candidate updater validation.
+- EPL live clock, halftime, second half, stoppage time and final display observed on the test board.
+- Pending: final full-suite run, physical-matrix review of latest alignment, provider integration acceptance, and approval before merging or tagging. This is **not yet a tagged release**.
+
 ## v0.5.0 (release candidate, 2026-10-17)
 
 ### Added
