@@ -1335,6 +1335,8 @@ def main():
     from .multisport_runtime import MultiSportRenderer
     nhl_feed = BackgroundNHLFeed(NHLFeed())
     nhl_renderer = ConfiguredNHLRenderer(nhl_feed, config_dir=args.config_dir)
+    from .scoring_alerts import ScoringAlerts
+    scoring_alerts = ScoringAlerts()
     from .nba_feed import NBAFeed
     from .nba_runtime import BackgroundNBAFeed
     from .nba_engine import ConfiguredNBARenderer
@@ -1359,8 +1361,6 @@ def main():
     # ESPN remains a safe fallback without requiring credentials.
     # One shared queue for every soccer league. Opt-in settings are introduced
     # separately; disabled by default so existing installations are unchanged.
-    from .scoring_alerts import ScoringAlerts
-    scoring_alerts = ScoringAlerts()
     soccer_workers = {}
     soccer_renderers = {}
     for league in ('MLS', 'NWSL'):
