@@ -32,6 +32,21 @@ class PaletteV11Tests(unittest.TestCase):
             with self.subTest(status=status):
                 f=self.screen(BaseballGame(status=status))
                 self.assertIn((10,11,12),f.pixels[27])
+    def test_double_digit_totals_have_clear_column_gutters(self):
+        f = self.screen(BaseballGame(away_runs=31, away_hits=11,
+                                     away_errors=0, home_runs=12,
+                                     home_hits=15, home_errors=10))
+        for y in (8, 18):
+            for x in (43, 44, 45, 53, 54, 55):
+                with self.subTest(x=x, y=y):
+                    self.assertTrue(all(f.pixels[row][x] == (0, 0, 0)
+                                        for row in range(y, y+5)))
+        for y in (8, 18):
+            for start in (36, 46, 56):
+                self.assertTrue(any(f.pixels[row][x] == (1, 2, 3)
+                                    for row in range(y, y+5)
+                                    for x in range(start, start+7)))
+
     def test_large_stats(self):
         f=self.screen(BaseballGame(away_runs=100))
         self.assertEqual(f.pixels[9][36],(10,11,12))
