@@ -43,6 +43,12 @@ class ScoringAlerts:
             raise ValueError("Invalid scoring alert settings")
         if type(seconds) not in (int, float) or not 1 <= seconds <= 60:
             raise ValueError("Invalid scoring alert duration")
+        # Switching on starts with a clean announcement queue. Event IDs
+        # observed while disabled remain baselined and are never replayed.
+        if enabled and not getattr(self, 'enabled', False):
+            self._pending.clear()
+            self._active = None
+            self._expires = None
         self.enabled = enabled
         self.scope = scope
         self.seconds = seconds
