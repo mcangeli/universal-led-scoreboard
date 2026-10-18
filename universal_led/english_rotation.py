@@ -41,6 +41,9 @@ class EnglishFootballRenderer:
             if league not in self.enabled or league not in self.feeds:
                 continue
             matches.extend(match for match in self.feeds[league].games() if match.league == league)
+        # Live games outrank scheduled favorite fixtures. Apply favorites
+        # within the live pool, not across matches in different states.
+        matches = prioritize_live(matches)
         return eligible_matches(matches, favorites=self.favorite_teams,
                                 mode="favorites" if self.mode == "favorite" else self.mode)
 
