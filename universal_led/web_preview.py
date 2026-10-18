@@ -7,8 +7,9 @@ from .display import Framebuffer, splash
 HTML = """<!doctype html><html lang="en"><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Universal LED Scoreboard Preview</title>
-<style>body{font-family:system-ui;background:#0b1422;color:#f5f5f5;text-align:center;padding:2rem}
-canvas{width:min(96vw,896px);image-rendering:pixelated;border:8px solid #29384b;background:black}
+<style>*{box-sizing:border-box}
+body{margin:0;font-family:system-ui;background:#0b1422;color:#f5f5f5;text-align:center;padding:clamp(12px,4vw,32px)}
+canvas{display:block;width:100%;max-width:896px;height:auto;aspect-ratio:2/1;margin:0 auto;image-rendering:pixelated;border:clamp(3px,1vw,8px) solid #29384b;background:black}
 small{color:#b7c4d2}</style></head><body>
 <h1>Universal LED Scoreboard</h1><p>64 × 32 software emulator</p>
 <canvas id="led" width="64" height="32" aria-label="LED matrix preview"></canvas>
