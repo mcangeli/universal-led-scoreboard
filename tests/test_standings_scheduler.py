@@ -4,6 +4,7 @@ from types import SimpleNamespace
 
 from universal_led.display import Framebuffer
 from universal_led.multisport_runtime import MultiSportRenderer
+from universal_led.scoring_alerts import ScoringAlerts, ScoreEvent
 
 
 class Renderer:
@@ -75,6 +76,52 @@ class StandingsSchedulerTests(unittest.TestCase):
         now[0] = 6
         self.assertEqual(board.frame().pixels[0][0], (4, 5, 6))
         self.assertEqual(standings.calls, 2)
+
+    def test_scoring_alert_interrupts_standings_then_restores_them(self):
+        now = [0]
+        alerts = ScoringAlerts(enabled=True, scope="all", seconds=3)
+        event = ScoreEvent("soccer", "EPL", "game-1", "goal-1", "ARS", "GOAL")
+        alerts.observe("soccer", "EPL", "game-1", [])
+        alerts.observe("soccer", "EPL", "game-1", [event])
+        standings = Standings()
+        def alert_frame(_event):
+            frame = Framebuffer()
+            frame.pixel(0, 0, (9, 8, 7))
+            return frame
+        board = MultiSportRenderer(Renderer(), Renderer(),
+                                   clock=lambda: now[0],
+                                   scoring_alerts=alerts,
+                                   alert_renderer=alert_frame,
+                                   standings_rotation=standings)
+        self.assertEqual(board.frame().pixels[0][0], (9, 8, 7))
+        self.assertEqual(standings.calls, 0)
+        now[0] = 3
+        self.assertEqual(board.frame().pixels[0][0], (4, 5, 6))
+        self.assertEqual(standings.calls, 1)
+
+    def test_idle_news_supports_renderer_without_game_method(self):
+        now = [3]
+        class News:
+            def items(self):
+                return [SimpleNamespace(source="SPORT", text="NEWS")]
+        class NoGameRenderer:
+            def has_games(self):
+                return False
+            def has_live_games(self):
+                return False
+            def frame(self):
+                return Framebuffer()
+        standings = Standings()
+        standings.page_seconds = 3
+        board = MultiSportRenderer(
+            NoGameRenderer(), NoGameRenderer(), clock=lambda: now[0],
+            news=News(), settings_getter=lambda: {"news": {
+                "rotation_interval": 99, "scroll_chars_per_second": 1}},
+            standings_rotation=standings)
+        board._started = 0
+        frame = board.frame()
+        self.assertEqual((frame.width, frame.height), (64, 32))
+        self.assertEqual(standings.calls, 0)
 
     def test_disabled_standings_preserve_blank_fallback(self):
         board = MultiSportRenderer(Renderer(), Renderer(), standings_rotation=Standings(False))
