@@ -74,6 +74,23 @@ class StandingsRotationTests(unittest.TestCase):
         self.assertFalse(adapter.has_pages())
         self.assertEqual((adapter.frame().width, adapter.frame().height), (64, 32))
 
+    def test_reapplying_same_settings_preserves_page_timing(self):
+        now = [0]
+        adapter = StandingsRotation({"EPL": Cache([standing("ARS", 1)])},
+                                    enabled=True, page_seconds=12,
+                                    clock=lambda: now[0])
+        now[0] = 8
+        adapter.configure(enabled=True, page_seconds=12)
+        self.assertEqual(adapter.started, 0)
+
+    def test_changed_settings_restart_page_timing(self):
+        now = [0]
+        adapter = StandingsRotation({}, enabled=True, page_seconds=12,
+                                    clock=lambda: now[0])
+        now[0] = 8
+        adapter.configure(enabled=True, page_seconds=15)
+        self.assertEqual(adapter.started, 8)
+
     def test_invalid_settings(self):
         with self.assertRaises(ValueError):
             StandingsRotation({}, enabled="yes")
