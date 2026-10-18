@@ -34,7 +34,7 @@ class PaletteV11Tests(unittest.TestCase):
                 self.assertIn((10,11,12),f.pixels[27])
     def test_large_stats(self):
         f=self.screen(BaseballGame(away_runs=100))
-        self.assertEqual(f.pixels[9][40],(10,11,12))
+        self.assertEqual(f.pixels[9][36],(10,11,12))
 
 if __name__=='__main__':
     unittest.main()
