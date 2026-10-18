@@ -63,6 +63,25 @@ class SportSettingsTests(unittest.TestCase):
                 with self.assertRaises(ValueError):
                     validate_settings(data)
 
+    def test_legacy_settings_without_interruption_preferences(self):
+        data=copy.deepcopy(DEFAULT_SETTINGS)
+        del data['game_interruptions']
+        self.assertEqual(validate_settings(data)['game_interruptions'],
+                         DEFAULT_SETTINGS['game_interruptions'])
+
+    def test_interruption_preferences_roundtrip(self):
+        with tempfile.TemporaryDirectory() as root:
+            data=copy.deepcopy(DEFAULT_SETTINGS)
+            data['game_interruptions']['postponed']='hide'
+            save_settings(root,data)
+            self.assertEqual(load_settings(root)['game_interruptions']['postponed'],'hide')
+
+    def test_invalid_interruption_preference_rejected(self):
+        data=copy.deepcopy(DEFAULT_SETTINGS)
+        data['game_interruptions']['delayed']='occasionally'
+        with self.assertRaises(ValueError):
+            validate_settings(data)
+
     def test_reject_unknown_keys(self):
         data=copy.deepcopy(DEFAULT_SETTINGS)
         data['malicious']='value'
