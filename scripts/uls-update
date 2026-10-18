@@ -48,7 +48,7 @@ for required in scripts/uls-update scripts/uls-update-select scripts/uls-update-
 done
 echo "Checking candidate code before changing the installation..."
 as_owner "$VENV/bin/python" -m compileall -q "$STAGE/universal_led" "$STAGE/tests"
-(cd "$STAGE" && as_owner "$VENV/bin/python" -m unittest discover -s tests -p 'test_*.py')
+(cd "$STAGE" && as_owner env PYTHONPATH="$STAGE" "$VENV/bin/python" -m unittest discover -s tests -p 'test_*.py')
 echo "Tests passed. Installing fast-forward..."
 rollback() {
   local failed_status=$?
