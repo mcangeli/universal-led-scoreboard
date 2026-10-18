@@ -19,7 +19,7 @@ class MLBRefinedScreen:
         fb.text(g.home, 1, 17, GREEN)
         for y, stats in ((8, (g.away_runs, g.away_hits, g.away_errors)),
                          (18, (g.home_runs, g.home_hits, g.home_errors))):
-            for right, value in zip((46, 54, 62), stats):
+            for right, value in zip((42, 52, 62), stats):
                 # Each 8-pixel slot fits two 3x5 digits; don't silently truncate.
                 label = str(value) if value < 100 else '++'
                 if label == '++':
