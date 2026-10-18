@@ -171,7 +171,9 @@ class MultiSportRenderer:
             # when standings preferences actually change.
             idle_slot = int(max(0, self.clock() - getattr(self.standings_rotation, 'started', self._started)) // duration)
             if idle_slot % 2 == 0:
-                return self.standings_rotation.frame()
+                logical_frame = getattr(self.standings_rotation, 'frame_for_slot', None)
+                return (logical_frame(idle_slot // 2) if callable(logical_frame)
+                        else self.standings_rotation.frame())
             idle_news_slot = True
         if self.news is not None and self.settings_getter is not None:
             headlines = self.news.items()
