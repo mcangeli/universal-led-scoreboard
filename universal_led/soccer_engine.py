@@ -34,11 +34,11 @@ class ConfiguredSoccerRenderer:
         self.started = self.clock()
 
     def _games(self):
-        games = (game for game in self.feed.games() if game.league == self.league)
+        games = tuple(game for game in self.feed.games() if game.league == self.league)
         mode = "favorites" if self.mode == "favorite" else self.mode
         return eligible_matches(games, favorites=self.favorite_teams, mode=mode,
                                 interruption_policy=self.interruption_policy,
-                                has_live_games=self.external_live_games or any(is_live(g) for g in self.feed.games() if g.league == self.league))
+                                has_live_games=self.external_live_games or any(is_live(g) for g in games))
 
     def has_games(self):
         return bool(self._games())
