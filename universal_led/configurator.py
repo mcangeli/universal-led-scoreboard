@@ -1391,6 +1391,10 @@ def main():
     def game():
         return board.game()
     def apply_settings(settings):
+        from .game_interruptions import InterruptionPolicy
+        interruption_policy = InterruptionPolicy(**settings['game_interruptions'])
+        for soccer_renderer in (*soccer_renderers.values(), english_renderer):
+            soccer_renderer.interruption_policy = interruption_policy
         scoring_alerts.configure(**settings['scoring_alerts'])
         renderer.apply(settings)
         feed.feed.refresh_seconds=settings['mlb']['refresh_seconds']
