@@ -13,12 +13,21 @@ class ScoringAlertConfiguratorTests(unittest.TestCase):
         self.assertIn('value="all"', HTML)
 
     def test_news_navigation_loads_alert_preferences(self):
-        self.assertIn("loadNewsTiming();loadScoringAlerts()", HTML)
+        self.assertIn("loadNewsTiming();loadScoringAlerts();loadGameInterruptions()", HTML)
 
     def test_save_uses_authenticated_existing_settings_endpoint(self):
         self.assertIn("async function saveScoringAlerts()", HTML)
         self.assertIn("data.scoring_alerts=", HTML)
         self.assertIn("'X-Configurator-Token':token", HTML)
+
+    def test_game_interruption_controls_and_save(self):
+        for kind in ("delayed", "postponed", "rescheduled", "suspended"):
+            with self.subTest(kind=kind):
+                self.assertIn('id="interruption-'+kind+'"', HTML)
+        for value in ("hide", "when_no_live", "always"):
+            self.assertIn('value="'+value+'"', HTML)
+        self.assertIn("async function saveGameInterruptions()", HTML)
+        self.assertIn("data.game_interruptions=", HTML)
 
     def test_duration_has_client_side_limits(self):
         self.assertIn('id="scoring-alerts-seconds" type="number" min="1" max="60"', HTML)
