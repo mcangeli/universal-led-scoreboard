@@ -13,6 +13,7 @@ class MLBRefinedScreen:
         fb = Framebuffer(64, 32)
         # Main rows: team names at left, score totals at right.
         # 5x7 labels occupy x=1..17. Compact 3x5 stats occupy x=39..62.
+        small(fb, 'MLB', 1, 1, GOLD)
         small(fb, 'R H E'.replace(' ', ''), 43, 1, GOLD)
         fb.text(g.away, 1, 7, WHITE)
         fb.text(g.home, 1, 17, GREEN)
