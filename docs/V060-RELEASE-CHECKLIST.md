@@ -1,6 +1,6 @@
 # v0.6.0 English Football Release Checklist
 
-Status: **release candidate; automated regression reported green (1,159 tests, October 18, 2026); live ESPN acceptance and Pi 3 deployment checks outstanding**. Do not tag or promote until acceptance is complete.
+Status: **release candidate; automated regression reported green (1,164 tests, October 18, 2026); live ESPN acceptance and Pi 3 deployment checks outstanding**. Do not tag or promote until acceptance is complete.
 
 ## Scope
 - Premier League (EPL), Championship, League One, League Two.
@@ -18,8 +18,9 @@ Status: **release candidate; automated regression reported green (1,159 tests, O
 6. Confirm service health and logs: `sudo ulsctl health`, `sudo ulsctl status`, `sudo ulsctl logs`.
 
 ## Acceptance evidence and limitations
-- Development Pi full-suite run reported by tester: **1,159 tests passed**, October 18, 2026. This is user-reported device execution, not CI attestation.
+- Development Pi full-suite run reported by tester: **1,164 tests passed**, October 18, 2026. This is user-reported device execution, not CI attestation.
 - Simulated lifecycle, duplicate suppression, temporary summary outages, legacy v0.5 settings and release metadata covered by tests.
+- October 18: candidate update passed 1,164 tests (15 skipped) after apostrophe glyph, MLB surname regression, and candidate import-path fixes; tester reported successful update. News apostrophe rendering still needs visual inspection on the matrix/emulator.
 - Historical ESPN summary probes verified 11 goal IDs and 7 scorer names; **no live ESPN goal event has been observed**.
 - EPL pregame information appeared on the emulator on October 18, 2026 (user-observed); live transition, clock and goal alerts remain unverified.
 - Anonymous `/board` and `/frame.json` access now have a passing regression test; direct anonymous browser verification remains a manual acceptance check. All configuration APIs remain authenticated.
