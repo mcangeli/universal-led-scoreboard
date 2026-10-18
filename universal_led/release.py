@@ -8,7 +8,7 @@ import subprocess
 
 from . import __version__
 
-PREVIEW = "0.4.0"
+PREVIEW = "0.6.0"
 STAGE = 0
 
 
