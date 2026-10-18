@@ -2,6 +2,7 @@ import unittest
 
 from universal_led.soccer import SoccerMatch
 from universal_led.soccer_rotation import eligible_matches, is_live, prioritize_live
+from universal_led.game_interruptions import InterruptionPolicy, interruption_kind
 
 
 def match(league="MLS", home="ATL", away="MIA", status="in"):
@@ -61,6 +62,29 @@ class SoccerRotationTests(unittest.TestCase):
     def test_leagues_can_be_mixed(self):
         games = [match(), match(league="NWSL", home="POR")]
         self.assertEqual(prioritize_live(games), tuple(games))
+
+    def test_interruption_status_aliases(self):
+        self.assertEqual(interruption_kind("RAIN DELAY"), "delayed")
+        self.assertEqual(interruption_kind("PPD"), "postponed")
+        self.assertEqual(interruption_kind("SUSP"), "suspended")
+
+    def test_live_fixture_hides_delayed_fixture_by_default(self):
+        live = match(status="live")
+        delayed = match(home="NY", status="delayed")
+        self.assertEqual(eligible_matches((live, delayed)), (live,))
+
+    def test_delayed_fixture_visible_without_live_game(self):
+        delayed = match(status="delayed")
+        self.assertEqual(eligible_matches((delayed,)), (delayed,))
+
+    def test_hide_postponed_fixture(self):
+        postponed = match(status="postponed")
+        policy = InterruptionPolicy(postponed="hide")
+        self.assertEqual(eligible_matches((postponed,), interruption_policy=policy), ())
+
+    def test_explicit_global_live_state_hides_delayed(self):
+        delayed = match(status="delayed")
+        self.assertEqual(eligible_matches((delayed,), has_live_games=True), ())
 
     def test_unknown_mode_rejected(self):
         with self.assertRaises(ValueError):
