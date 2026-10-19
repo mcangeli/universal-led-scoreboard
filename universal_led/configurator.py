@@ -520,6 +520,21 @@ async function saveCountdown(){
  const data={enabled:document.getElementById('countdown-enabled').checked,sport:value('sport'),
   season:value('season'),opening_at:value('opening')||null,source:value('source'),target:value('target'),
   team:value('team')||null,window:value('window'),within_days:Number(value('days'))};
+ const reject=(id,message)=>{status.textContent=message;document.getElementById('countdown-'+id).focus();};
+ if(value('days')===''||!Number.isInteger(data.within_days)||data.within_days<1||data.within_days>366){reject('days','Countdown days must be a whole number from 1 to 366.');return;}
+ if(data.enabled){
+  if(data.source==='automatic'){
+   if(data.sport!=='mlb'){reject('sport','Automatic countdown dates currently support MLB only.');return;}
+   if(!/^\\d{4}$/.test(data.season)){reject('season','Automatic MLB countdown requires a four-digit season.');return;}
+   if(data.target==='favorite'&&!/^[A-Za-z]{3}$/.test(data.team||'')){reject('team','Favorite-team automatic countdown requires a three-letter team code.');return;}
+  }else if(!data.opening_at){reject('opening','Enabled manual countdown requires an opening date and timezone.');return;}
+ }
+ if(data.opening_at){
+  const hasZone=/(Z|[+-]\\d{2}:\\d{2})$/i.test(data.opening_at);
+  if(!hasZone||!Number.isFinite(Date.parse(data.opening_at))){reject('opening','Opening date must be a valid ISO timestamp with a timezone offset.');return;}
+  if(!data.season){reject('season','A season is required when an opening date is set.');return;}
+  if(data.target==='favorite'&&!data.team){reject('team','A favorite-team opening date requires a team code.');return;}
+ }
  try{
   const response=await fetch('/api/season-countdown',{method:'POST',headers:{'Content-Type':'application/json','X-Configurator-Token':token},body:JSON.stringify(data)});
   const result=await response.json();if(!response.ok)throw Error(result.error||'Save failed');
