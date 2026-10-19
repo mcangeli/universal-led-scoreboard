@@ -1998,10 +1998,17 @@ def main():
     def feed_status():
         return feed.status()
     def sports_feed_status():
+        # Non-MLB workers expose monotonic timestamps for scheduling.
+        # Translate them to wall-clock seconds only for dashboard reporting.
+        def dashboard_status(worker, *, unix_time=False):
+            status=dict(worker.status())
+            if not unix_time and status.get('last_success') is not None:
+                status['last_success']=time.time()-(time.monotonic()-status['last_success'])
+            return status
         feeds={'mlb':feed,'nhl':nhl_feed,'nba':nba_feed,'wnba':wnba_feed,
                'nfl':nfl_feed,'mls':soccer_workers['mls'],'nwsl':soccer_workers['nwsl']}
-        result={name:worker.status() for name,worker in feeds.items()}
-        league_states=[worker.status() for worker in english_workers.values()]
+        result={name:dashboard_status(worker,unix_time=name=='mlb') for name,worker in feeds.items()}
+        league_states=[dashboard_status(worker) for worker in english_workers.values()]
         errors=[entry.get('error') for entry in league_states if entry.get('error')]
         result['english']={'state':'error' if errors else 'running' if any(entry.get('state')=='running' for entry in league_states) else 'starting',
                            'games':sum(entry.get('games',0) for entry in league_states),
