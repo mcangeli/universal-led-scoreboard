@@ -1,5 +1,4 @@
 import unittest
-from unittest.mock import patch
 
 from universal_led.nhl_standings_diagnostic import diagnose
 from universal_led.standings import Standing
@@ -18,6 +17,16 @@ class NHLStandingsDiagnosticTests(unittest.TestCase):
         result = diagnose(season_fetcher=season, standings_fetcher=lambda _: [row])
         self.assertTrue(result["eligible"])
         self.assertEqual(result["groups"], {"Atlantic": 1})
+
+    def test_real_provider_null_start_and_played_standings(self):
+        from universal_led.nhl_season_calendar import parse_nhl_season_windows
+        from datetime import date
+        payload = {'data': [{'id': 20262027, 'regularSeasonStartDate': None,
+                             'startDate': '2026-09-29T17:00:00',
+                             'regularSeasonEndDate': '2027-04-10T00:00:00'}]}
+        windows = parse_nhl_season_windows(payload, today=date(2026, 10, 19))
+        self.assertEqual(windows[0]['phase'], 'regular')
+        self.assertEqual(windows[0]['end'], '2027-04-11T00:00:00Z')
 
     def test_calendar_failure_does_not_hide_feed_error(self):
         def failed(_):
