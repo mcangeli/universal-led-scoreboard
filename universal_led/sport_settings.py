@@ -41,7 +41,7 @@ def validate_settings(value):
                nwsl=dict(DEFAULT_SETTINGS['nwsl']) | value.get('nwsl',{}),
                english=dict(DEFAULT_SETTINGS['english']) | value.get('english',{}))
     standings=value['standings']
-    optional_standings = {'leagues', 'mlb_divisions', 'nhl_divisions', 'nhl_wild_cards', 'nba_conferences', 'nfl_divisions', 'mls_conferences'}
+    optional_standings = {'leagues', 'mlb_divisions', 'nhl_divisions', 'nhl_wild_cards', 'nba_conferences', 'nfl_divisions', 'mls_conferences', 'nwsl', 'wnba'}
     if (not set(DEFAULT_SETTINGS['standings']) <= set(standings)
             or set(standings) - set(DEFAULT_SETTINGS['standings']) - optional_standings
             or type(standings['enabled']) is not bool):
@@ -85,6 +85,8 @@ def validate_settings(value):
         if (not isinstance(groups, list) or len(groups) != len(set(groups)) or
                 any(type(name) is not str or name not in NFL_DIVISIONS for name in groups)):
             raise ValueError('Invalid NFL standings division selection')
+    if any(type(standings[key]) is not bool for key in ('nwsl', 'wnba') if key in standings):
+        raise ValueError('Invalid single-table standings selection')
     if 'mls_conferences' in standings:
         from .mls_standings_feed import MLS_CONFERENCES
         groups = standings['mls_conferences']
