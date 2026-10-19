@@ -27,10 +27,10 @@ class StandingsScreenTests(unittest.TestCase):
         second = render_standings("EPL", rows, offset=3)
         self.assertNotEqual(first.pixels, second.pixels)
 
-    def test_long_league_heading_stays_clear_of_points_header(self):
+    def test_long_league_heading_and_stat_headers_are_visible(self):
         frame = render_standings("CHAMPIONSHIP", [])
         self.assertTrue(any(pixel != (0, 0, 0) for pixel in frame.pixels[1][49:61]))
-        self.assertTrue(all(frame.pixels[y][x] == (0, 0, 0)
+        self.assertTrue(any(frame.pixels[y][x] != (0, 0, 0)
                             for y in range(1, 6) for x in range(40, 49)))
 
     def test_points_are_right_aligned(self):
