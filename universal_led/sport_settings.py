@@ -41,7 +41,7 @@ def validate_settings(value):
                nwsl=dict(DEFAULT_SETTINGS['nwsl']) | value.get('nwsl',{}),
                english=dict(DEFAULT_SETTINGS['english']) | value.get('english',{}))
     standings=value['standings']
-    optional_standings = {'leagues', 'mlb_divisions', 'nhl_divisions', 'nhl_wild_cards', 'nba_conferences'}
+    optional_standings = {'leagues', 'mlb_divisions', 'nhl_divisions', 'nhl_wild_cards', 'nba_conferences', 'nfl_divisions'}
     if (not set(DEFAULT_SETTINGS['standings']) <= set(standings)
             or set(standings) - set(DEFAULT_SETTINGS['standings']) - optional_standings
             or type(standings['enabled']) is not bool):
@@ -79,6 +79,12 @@ def validate_settings(value):
         if (not isinstance(groups, list) or any(type(name) is not str or name not in NBA_CONFERENCES for name in groups)
                 or len(groups) != len(set(groups))):
             raise ValueError('Invalid NBA conference selection')
+    if 'nfl_divisions' in standings:
+        from .nfl_standings_feed import NFL_DIVISIONS
+        groups = standings['nfl_divisions']
+        if (not isinstance(groups, list) or len(groups) != len(set(groups)) or
+                any(type(name) is not str or name not in NFL_DIVISIONS for name in groups)):
+            raise ValueError('Invalid NFL standings division selection')
     for key,low,high in (('page_seconds',3,3600),('refresh_seconds',60,86400)):
         number=standings[key]
         if type(number) not in (int,float) or not low<=number<=high:
