@@ -79,7 +79,6 @@ class ConfiguredNBARenderer:
 
     def game(self):
         games = self._eligible_games()
-        self._observe_lead_changes(games)
         if not games:
             return None
         live = [g for g in games if g.status == "live"]
