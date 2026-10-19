@@ -1557,6 +1557,20 @@ def main():
     }
     standings_caches.update(mlb_standings_caches)
     standings_caches.update(nhl_standings_caches)
+    from .nba_standings_feed import NBA_CONFERENCES, fetch_nba_conference
+    nba_standings_caches = {
+        conference: FootballStandingsCache(
+            'NBA', fetcher=lambda _league, group=conference: fetch_nba_conference(group),
+            refresh_seconds=initial['standings']['refresh_seconds'],
+            cache_dir=Path(args.config_dir) / 'standings-cache',
+            cache_key='nba-' + conference.lower())
+        for conference in NBA_CONFERENCES
+    }
+    nba_standings_workers = {
+        conference: BackgroundFootballStandings(cache)
+        for conference, cache in nba_standings_caches.items()
+    }
+    standings_caches.update(nba_standings_caches)
     from .standings_season_status import StandingsSeasonStatus
     from .standings_season_worker import SeasonCalendarWorker
     from .mlb_season_calendar import fetch_mlb_season_windows
@@ -1675,11 +1689,12 @@ def main():
             nhl_season_worker.start()
         else:
             nhl_season_worker.stop()
+        selected_nba_conferences = standings_options.get('nba_conferences', [])
         standings_rotation.configure(
             enabled=standings_options['enabled'],
             page_seconds=standings_options['page_seconds'],
             selected_leagues=[*selected_standings_leagues, *selected_mlb_groups,
-                              *selected_nhl_groups])
+                              *selected_nhl_groups, *selected_nba_conferences])
         for league, cache in standings_caches.items():
             cache.refresh_seconds = standings_options['refresh_seconds']
             if league in nhl_standings_workers:
