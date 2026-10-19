@@ -11,7 +11,7 @@ from .scoring_alert_screen import render_scoring_alert
 class MultiSportRenderer:
     """Route cached frames without network access; retain legacy single-sport mode."""
 
-    def __init__(self, mlb_renderer, nhl_renderer, active_sport="mlb", clock=time.monotonic, news=None, settings_getter=None, nba_renderer=None, wnba_renderer=None, nfl_renderer=None, mls_renderer=None, nwsl_renderer=None, english_renderer=None, scoring_alerts=None, alert_renderer=None, standings_rotation=None, final_handoff=None):
+    def __init__(self, mlb_renderer, nhl_renderer, active_sport="mlb", clock=time.monotonic, news=None, settings_getter=None, nba_renderer=None, wnba_renderer=None, nfl_renderer=None, mls_renderer=None, nwsl_renderer=None, english_renderer=None, scoring_alerts=None, alert_renderer=None, standings_rotation=None, final_handoff=None, timezone_getter=None):
         self.mlb = mlb_renderer
         self.nhl = nhl_renderer
         self.nba = nba_renderer
@@ -22,6 +22,8 @@ class MultiSportRenderer:
         self.english = english_renderer
         self.scoring_alerts = scoring_alerts
         self.standings_rotation = standings_rotation
+        self.timezone_getter = timezone_getter
+        self._connect_soccer_standings()
         self.final_handoff = final_handoff
         self._final_slot = None
         self.alert_renderer = (alert_renderer if alert_renderer is not None
@@ -38,6 +40,30 @@ class MultiSportRenderer:
         self._auto_rotation = False
         self._started = clock()
         self.set_active_sport(active_sport)
+
+    def _connect_soccer_standings(self):
+        """Reuse the exact caches already owned by the idle standings rotation."""
+        caches = getattr(self.standings_rotation, 'caches', None)
+        if not caches:
+            return
+        if self.english is not None:
+            attach = getattr(self.english, 'set_standings_caches', None)
+            if callable(attach):
+                attach(caches)
+        for league, adapter in (('MLS', self.mls), ('NWSL', self.nwsl)):
+            attach = getattr(adapter, 'set_standings_cache', None)
+            if callable(attach) and league in caches:
+                attach(caches[league])
+
+    def _sync_soccer_timezone(self):
+        """Apply the configured timezone to all soccer pregame screens."""
+        if self.timezone_getter is None:
+            return
+        timezone = self.timezone_getter()
+        for adapter in (self.english, self.mls, self.nwsl):
+            display = getattr(adapter, 'display', None)
+            if display is not None:
+                display.timezone = timezone
 
     @property
     def active_sport(self):
@@ -145,6 +171,7 @@ class MultiSportRenderer:
         return available[slot % len(available)]
 
     def frame(self):
+        self._sync_soccer_timezone()
         # Optional scoring interruptions precede game/news rotation. A missing
         # adapter or disabled alerts leave the existing behavior unchanged.
         if self.scoring_alerts is not None and self.alert_renderer is not None:
