@@ -36,12 +36,12 @@ class ScoreChangeObserver:
             events = tuple(
                 ScoreEvent(self.sport, self.league, key,
                            f"score:{team}:{new}", team, self.kind,
-                           f"{away} - {home}")
+                           home_team=game.home, away_team=game.away,
+                           home_score=scores[1], away_score=scores[0])
                 for team, old, new in (
                     (game.away, previous[0], scores[0]),
                     (game.home, previous[1], scores[1]))
                 if new > old
-                for away, home in (scores,)
             )
             emitted.extend(self.alerts.observe(
                 self.sport, self.league, key, events,
