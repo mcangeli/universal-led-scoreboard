@@ -66,3 +66,67 @@ def fetch_mlb_group(division, *, fetcher=fetch_mlb_standings):
     if division not in DIVISION_KEYS.values():
         raise ValueError("Unknown MLB division")
     return tuple(row for row in fetcher() if row.group == division)
+
+
+WILD_CARD_KEYS = ('AL_WILD_CARD', 'NL_WILD_CARD')
+
+
+def parse_mlb_wild_card(payload):
+    """Official wild-card ranks, excluding division leaders; top five per league.
+
+    MLB supplies wildCardRank and wildCardGamesBack. Never derive rankings
+    from win percentage because official tiebreakers can differ.
+    """
+    results = {'AL_WILD_CARD': [], 'NL_WILD_CARD': []}
+    for record in payload.get('records', []):
+        division = (record.get('division') or {}).get('id')
+        league_id = (record.get('league') or {}).get('id')
+        if league_id not in (103, 104):
+            if division in (200, 201, 202):
+                league_id = 103
+            elif division in (203, 204, 205):
+                league_id = 104
+        key = {103: 'AL_WILD_CARD', 104: 'NL_WILD_CARD'}.get(league_id)
+        if key is None:
+            continue
+        for team in record.get('teamRecords', []):
+            rank = team.get('wildCardRank')
+            if rank in (None, '', '-'):
+                continue
+            try:
+                rank = int(rank)
+                wins = int(team['wins'])
+                losses = int(team['losses'])
+            except (TypeError, ValueError, KeyError):
+                continue
+            if rank < 1 or wins < 0 or losses < 0:
+                continue
+            identifier = (team.get('team') or {}).get('id')
+            abbreviation = TEAM_ABBREVIATIONS.get(identifier) or str(
+                (team.get('team') or {}).get('abbreviation') or identifier)
+            results[key].append(Standing(
+                league='MLB', group=key, team_id=str(identifier),
+                played=wins + losses, wins=wins, losses=losses,
+                rank=rank, abbreviation=abbreviation[:3],
+                games_back=str(team.get('wildCardGamesBack', '-'))))
+    return tuple(row for key in WILD_CARD_KEYS
+                 for row in sorted(results[key], key=lambda row: row.rank)[:5])
+
+
+def fetch_mlb_wild_card(*, season=None, fetch=None):
+    params = {'leagueId': '103,104', 'standingsTypes': 'wildCard',
+              'hydrate': 'team'}
+    if season is not None:
+        params['season'] = int(season)
+    url = API + '?' + urlencode(params)
+    if fetch is None:
+        def fetch(address):
+            with urlopen(address, timeout=8) as response:
+                return json.load(response)
+    return parse_mlb_wild_card(fetch(url))
+
+
+def fetch_mlb_wild_card_group(group, *, fetcher=fetch_mlb_wild_card):
+    if group not in WILD_CARD_KEYS:
+        raise ValueError('Unknown MLB wild card group')
+    return tuple(row for row in fetcher() if row.group == group)
