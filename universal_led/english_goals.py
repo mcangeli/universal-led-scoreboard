@@ -40,5 +40,17 @@ class EnglishGoalEnricher:
             # Keep previously confirmed goal IDs during temporary summary outages.
             # Otherwise an empty snapshot can cause later duplicate alerts.
             return replace(match, goals=self._last_goals.get(key, match.goals))
-        self._last_goals[key] = goals
-        return replace(match, goals=goals)
+        # Summary events may lag the scoreboard details. Retain any
+        # authoritative IDs already supplied by either feed so a temporary
+        # empty summary cannot erase an event before the alert observer sees it.
+        merged = {goal.event_id: goal for goal in self._last_goals.get(key, ())
+                  if goal.event_id}
+        for goal in match.goals:
+            if goal.event_id:
+                merged.setdefault(goal.event_id, goal)
+        for goal in goals:
+            if goal.event_id:
+                merged[goal.event_id] = goal
+        combined = tuple(merged.values())
+        self._last_goals[key] = combined
+        return replace(match, goals=combined)
