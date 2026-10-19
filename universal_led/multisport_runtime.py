@@ -238,7 +238,7 @@ class MultiSportRenderer:
                         bool(self.news.items()))
             if not available_games and not has_news:
                 return self.standings_rotation.frame()
-            duration = self.standings_rotation.page_seconds
+            duration = getattr(self.standings_rotation, 'page_seconds', self._interval)
             idle_slot = int(max(0, self.clock() - getattr(self.standings_rotation, 'started', self._started)) // duration)
             if idle_slot % 2 == 0:
                 logical_frame = getattr(self.standings_rotation, 'frame_for_slot', None)
