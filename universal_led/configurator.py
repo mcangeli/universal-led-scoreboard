@@ -1147,7 +1147,14 @@ def make_handler(config_dir,token,frame_provider=None,settings_callback=None,fee
                 root=Path('/var/lib/uls/update')
                 try:
                     state=(root/'status').read_text(encoding='utf-8').strip()
-                    log=(root/'latest.log').read_text(encoding='utf-8')[-12000:]
+                    # Keep complete updater output available in the dashboard. Cap at
+                    # 2 MiB to avoid unbounded response sizes on broken installs.
+                    log_path=root/'latest.log'
+                    with log_path.open('rb') as stream:
+                        log=stream.read(2 * 1024 * 1024 + 1)
+                    if len(log)>2 * 1024 * 1024:
+                        log=log[:2 * 1024 * 1024]+b'\\n[Log exceeds 2 MiB; view complete file over SSH.]'
+                    log=log.decode('utf-8', errors='replace')
                 except OSError:
                     state,log='not started',''
                 self.send_json(200,{'status':state,'log':log})
