@@ -147,3 +147,59 @@ def validate_portable_sections(archive_bytes: bytes, destination: str | Path) ->
                 raise ValueError("Unknown NHL team color keys")
     preview["schema_valid"] = True
     return preview
+
+
+def restore_portable(archive_bytes: bytes, destination: str | Path, sections: list[str]) -> dict:
+    """Restore explicitly selected sections with rollback on write failure.
+
+    Validation happens before writes. Every original file is retained in a
+    local recovery directory, and originals are restored if a write fails.
+    """
+    import os
+    import tempfile
+    import shutil
+    from uuid import uuid4
+
+    preview = validate_portable_sections(archive_bytes, destination)
+    if not isinstance(sections, list) or not sections or len(sections) != len(set(sections)):
+        raise ValueError("Select one or more distinct sections")
+    if any(type(section) is not str or section not in preview["sections"] for section in sections):
+        raise ValueError("Unknown or unapproved restore section")
+    root = Path(destination)
+    root.mkdir(parents=True, exist_ok=True)
+    recovery = root / "backups" / ("portable-restore-" + uuid4().hex)
+    recovery.mkdir(parents=True, exist_ok=False)
+    originals = {}
+    applied = []
+    try:
+        with zipfile.ZipFile(io.BytesIO(archive_bytes)) as archive:
+            for section in sections:
+                target = root / (section + ".json")
+                originals[section] = target.read_bytes() if target.exists() else None
+                if originals[section] is not None:
+                    (recovery / (section + ".json")).write_bytes(originals[section])
+            for section in sections:
+                target = root / (section + ".json")
+                payload = archive.read(section + ".json")
+                fd, tmp = tempfile.mkstemp(prefix=".portable-", dir=root)
+                try:
+                    with os.fdopen(fd, "wb") as stream:
+                        stream.write(payload)
+                        stream.flush()
+                        os.fsync(stream.fileno())
+                    os.replace(tmp, target)
+                    applied.append(section)
+                finally:
+                    if os.path.exists(tmp):
+                        os.unlink(tmp)
+    except Exception:
+        for section in reversed(applied):
+            target = root / (section + ".json")
+            previous = originals[section]
+            if previous is None:
+                target.unlink(missing_ok=True)
+            else:
+                target.write_bytes(previous)
+        raise
+    return {"applied": True, "sections": applied, "hardware_preserved": True,
+            "recovery_directory": str(recovery)}
