@@ -49,8 +49,8 @@ def match_screen(match: SoccerMatch, *, timezone: str = 'America/New_York') -> S
     return SoccerScreen(
         kind="match",
         header=_fit(match.league, 6),
-        line1=_fit(away, 10) if pregame else f"{_fit(match.away_id, 5):<5} {match.away_score:>2}",
-        line2=_fit(home, 10) if pregame else f"{_fit(match.home_id, 5):<5} {match.home_score:>2}",
+        line1=away if pregame else f"{_fit(match.away_id, 5):<5} {match.away_score:>2}",
+        line2=home if pregame else f"{_fit(match.home_id, 5):<5} {match.home_score:>2}",
         footer=_fit(footer, 12),
     )
 
