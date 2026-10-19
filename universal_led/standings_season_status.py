@@ -24,6 +24,11 @@ class StandingsSeasonStatus:
         with self._lock:
             self._phases[competition] = phase
 
+    def invalidate(self, competition):
+        """Known calendar no longer covers the date; hide stale standings."""
+        with self._lock:
+            self._phases.pop(competition, None)
+
     def phase(self, competition):
         with self._lock:
             return self._phases.get(competition, UNKNOWN)
