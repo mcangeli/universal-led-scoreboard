@@ -1384,6 +1384,9 @@ def main():
     from .nfl_engine import ConfiguredNFLRenderer
     nfl_feed = BackgroundNFLFeed(NFLFeed())
     nfl_renderer = ConfiguredNFLRenderer(nfl_feed, scoring_alerts=scoring_alerts)
+    # Observe score changes as feeds refresh, even when another sport owns the display.
+    nhl_feed.on_games = lambda games: nhl_renderer.score_observer.observe(games, favorite_teams=nhl_renderer.favorite_teams)
+    nfl_feed.on_games = lambda games: nfl_renderer.score_observer.observe(games, favorite_teams=nfl_renderer.favorite_teams)
     from .soccer_data import SoccerFeed, fetch_scores
     from .soccer_runtime import BackgroundSoccerFeed
     from .soccer_engine import ConfiguredSoccerRenderer
