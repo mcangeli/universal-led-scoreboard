@@ -57,6 +57,17 @@ def _tiny_text(frame, value, x, y, color, limit):
                     frame.pixel(x + index * 4 + dx, y + dy, color)
 
 
+def _mlb_text(frame, value, x, y, color, limit):
+    """Four-pixel-tall glyphs leave a full blank scanline between teams."""
+    for index, char in enumerate(str(value).upper()[:limit]):
+        glyph = TINY.get(char, TINY[" "])
+        # Compress the five-pixel font without changing character width.
+        for dy, source_row in enumerate((0, 1, 2, 4)):
+            for dx, bit in enumerate(glyph[source_row]):
+                if bit == "1":
+                    frame.pixel(x + index * 4 + dx, y + dy, color)
+
+
 def render_standings(league, rows, *, offset=0):
     """Display five MLB rows or three football rows without collisions."""
     if type(offset) is not int or offset < 0:
@@ -79,14 +90,14 @@ def render_standings(league, rows, *, offset=0):
         rank = standing.rank if standing.rank is not None else offset + index + 1
         if is_mlb:
             # Five compact 3x5 rows fit below the six-pixel header.
-            _tiny_text(frame, str(rank), 1, y, GREEN, 1)
-            _tiny_text(frame, standing.abbreviation or standing.team_id, 11, y, WHITE, 3)
+            _mlb_text(frame, str(rank), 1, y, GREEN, 1)
+            _mlb_text(frame, standing.abbreviation or standing.team_id, 11, y, WHITE, 3)
         else:
             _tiny_text(frame, str(rank).rjust(2), 1, y, GREEN, 2)
             _tiny_text(frame, standing.abbreviation or standing.team_id, 15, y, WHITE, 5)
         if is_mlb:
-            _tiny_text(frame, str(standing.wins)[-2:].rjust(2), 44, y, GOLD, 2)
-            _tiny_text(frame, str(standing.losses)[-2:].rjust(2), 56, y, GOLD, 2)
+            _mlb_text(frame, str(standing.wins)[-2:].rjust(2), 44, y, GOLD, 2)
+            _mlb_text(frame, str(standing.losses)[-2:].rjust(2), 56, y, GOLD, 2)
         elif standing.points is not None:
             points = str(standing.points)[-3:]
             _tiny_text(frame, points.rjust(3), 49, y, GOLD, 3)
