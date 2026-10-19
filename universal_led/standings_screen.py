@@ -188,7 +188,7 @@ def render_standings(league, rows, *, offset=0):
     _tiny_text(frame, labels.get(league, league), 1, 1, GOLD, 9)
     # Compact soccer columns: club | W | L | D | points.
     # Two-digit results fit in each stat column on the 64x32 matrix.
-    for label, x in (("W", 24), ("L", 34), ("D", 44), ("P", 56)):
+    for label, x in (("W", 23), ("L", 33), ("D", 43), ("P", 53)):
         _tiny_text(frame, label, x, 1, GOLD, 1)
     for x in range(64):
         frame.pixel(x, 8, DIM)
@@ -199,5 +199,5 @@ def render_standings(league, rows, *, offset=0):
                          (standing.draws, 42)):
             _tiny_text(frame, str(value)[-2:].rjust(2), x, y, WHITE, 2)
         if standing.points is not None:
-            _tiny_text(frame, str(standing.points)[-2:].rjust(2), 54, y, GOLD, 2)
+            _tiny_text(frame, str(standing.points)[-3:].rjust(3), 49, y, GOLD, 3)
     return frame
