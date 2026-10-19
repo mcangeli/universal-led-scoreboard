@@ -166,6 +166,21 @@ def _render_nfl_division(frame, league, rows, offset):
             _tiny_text(frame, str(value)[-2:].rjust(2), x, y, WHITE, 2)
 
 
+def _render_wnba_table(frame, rows, offset):
+    """WNBA league table: team, wins, losses, games behind."""
+    _tiny_text(frame, "WNBA", 0, 1, GOLD, 4)
+    for label, x in (("W", 25), ("L", 37), ("GB", 49)):
+        _tiny_text(frame, label, x, 1, GOLD, 2)
+    for x in range(64):
+        frame.pixel(x, 8, DIM)
+    for index, standing in enumerate(tuple(rows)[offset:offset + 3]):
+        y = 11 + index * 7
+        _tiny_text(frame, standing.abbreviation or standing.team_id, 0, y, WHITE, 3)
+        _tiny_text(frame, str(standing.wins)[-2:].rjust(2), 22, y, WHITE, 2)
+        _tiny_text(frame, str(standing.losses)[-2:].rjust(2), 34, y, WHITE, 2)
+        _tiny_text(frame, (standing.games_back or "-")[:4], 48, y, GREEN, 4)
+
+
 def render_standings(league, rows, *, offset=0):
     """Display five MLB rows or three football rows without collisions."""
     if type(offset) is not int or offset < 0:
@@ -182,6 +197,9 @@ def render_standings(league, rows, *, offset=0):
         return frame
     if rows and rows[0].league == "NBA":
         _render_nba_conference(frame, league, rows, offset)
+        return frame
+    if rows and rows[0].league == "WNBA":
+        _render_wnba_table(frame, rows, offset)
         return frame
     labels = {"Eastern Conference": "MLS E", "Western Conference": "MLS W",
               "CHAMPIONSHIP": "CHAMP", "LEAGUE_ONE": "LGE 1",
