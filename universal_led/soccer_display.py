@@ -1,6 +1,6 @@
 """Time-bounded goal announcements for the soccer display rotation."""
 from collections import deque
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 
 from .soccer import GoalEventTracker, SoccerGoal, SoccerMatch
 from .soccer_screens import SoccerScreen, goal_screen, match_screen
@@ -57,6 +57,13 @@ class SoccerDisplayController:
         """Return a goal screen while active, otherwise the latest match screen."""
         key = (match.league, match.match_id)
         current = self._latest.get(key, match)
+        # Feed updates may precede standings enrichment. Preserve goal state
+        # but use cached pregame records from the selected render snapshot.
+        if current.status == match.status and current.status.strip().lower() in ('pre', 'scheduled'):
+            current = replace(current,
+                              home_record=match.home_record or current.home_record,
+                              away_record=match.away_record or current.away_record,
+                              kickoff=match.kickoff or current.kickoff)
         if self._active is not None and self._expires is not None and now >= self._expires:
             self._active = None
             self._expires = None
