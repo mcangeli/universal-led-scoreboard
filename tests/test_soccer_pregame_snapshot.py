@@ -21,7 +21,7 @@ class PregameSnapshotTests(unittest.TestCase):
         controller = SoccerDisplayController()
         controller.update(original)
         screen = controller.screen(replace(original, home_record=None), 0)
-        self.assertIn("4-2-2", screen.line1)
+        self.assertIn("4-2-2", screen.line2)
 
 
 if __name__ == "__main__":
