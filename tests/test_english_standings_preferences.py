@@ -35,7 +35,7 @@ class EnglishStandingsPreferencesTests(unittest.TestCase):
         self.assertIn("selected_standings_leagues = standings_options.get('leagues', english['enabled_leagues'])", source)
         self.assertIn("selected_mlb_divisions = standings_options.get('mlb_divisions', [])", source)
         self.assertIn("selected_nhl_divisions = standings_options.get('nhl_divisions', [])", source)
-        self.assertIn("selected_leagues=[*selected_standings_leagues, *selected_mlb_divisions,", source)
+        self.assertIn("selected_leagues=[*selected_standings_leagues, *selected_mlb_groups,", source)
         self.assertIn("*selected_nhl_divisions])", source)
         self.assertIn("if needs_pregame_records or needs_standings_page:", source)
 
