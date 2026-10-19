@@ -44,6 +44,7 @@ TINY = {
     "7": ("111", "001", "010", "010", "010"),
     "8": ("010", "101", "010", "101", "010"),
     "9": ("010", "101", "011", "001", "110"),
+    "-": ("000", "000", "111", "000", "000"),
     " ": ("000",) * 5,
 }
 
@@ -57,15 +58,31 @@ def _tiny_text(frame, value, x, y, color, limit):
                     frame.pixel(x + index * 4 + dx, y + dy, color)
 
 
-def _mlb_text(frame, value, x, y, color, limit):
-    """Four-pixel-tall glyphs leave a full blank scanline between teams."""
-    for index, char in enumerate(str(value).upper()[:limit]):
-        glyph = TINY.get(char, TINY[" "])
-        # Compress the five-pixel font without changing character width.
-        for dy, source_row in enumerate((0, 1, 2, 4)):
-            for dx, bit in enumerate(glyph[source_row]):
-                if bit == "1":
-                    frame.pixel(x + index * 4 + dx, y + dy, color)
+def _render_mlb_division(frame, league, rows, offset):
+    """Five complete 3x5 rows with a blank scanline, like the original board.
+
+    A 32-pixel matrix cannot hold a six-pixel title plus five legible
+    five-pixel rows and gaps. Use the original board's bottom division
+    indicator instead of an oversized header.
+    """
+    for index, standing in enumerate(tuple(rows)[offset:offset + 5]):
+        y = index * 6
+        rank = standing.rank if standing.rank is not None else offset + index + 1
+        _tiny_text(frame, str(rank)[-1:], 1, y, GREEN, 1)
+        _tiny_text(frame, standing.abbreviation or standing.team_id, 9, y, WHITE, 3)
+        _tiny_text(frame, str(standing.wins)[-2:].rjust(2), 38, y, GOLD, 2)
+        _tiny_text(frame, "-", 46, y, DIM, 1)
+        _tiny_text(frame, str(standing.losses)[-2:].rjust(2), 51, y, GOLD, 2)
+    # Six segments: AL west/central/east, NL west/central/east.
+    segments = {'AL WEST': 0, 'AL CENTRAL': 1, 'AL EAST': 2,
+                'NL WEST': 3, 'NL CENTRAL': 4, 'NL EAST': 5}
+    selected = segments.get(league.upper().replace('_', ' '))
+    for x in range(64):
+        frame.pixel(x, 31, DIM if x % 11 != 10 else (0, 0, 0))
+    if selected is not None:
+        start = selected * 11 if selected < 5 else 55
+        for x in range(start, min(start + 9, 64)):
+            frame.pixel(x, 31, GREEN)
 
 
 def render_standings(league, rows, *, offset=0):
@@ -73,32 +90,21 @@ def render_standings(league, rows, *, offset=0):
     if type(offset) is not int or offset < 0:
         raise ValueError("Invalid standings page offset")
     frame = Framebuffer(64, 32)
+    if rows and rows[0].league == "MLB":
+        _render_mlb_division(frame, league, rows, offset)
+        return frame
     labels = {"CHAMPIONSHIP": "CHAMP", "LEAGUE_ONE": "LGE 1",
               "LEAGUE_TWO": "LGE 2"}
     _tiny_text(frame, labels.get(league, league), 1, 1, GOLD, 9)
-    is_mlb = bool(rows) and rows[0].league == "MLB"
-    if is_mlb:
-        _tiny_text(frame, "W", 48, 1, GOLD, 1)
-        _tiny_text(frame, "L", 60, 1, GOLD, 1)
-    else:
-        _tiny_text(frame, "PTS", 49, 1, GOLD, 3)
+    _tiny_text(frame, "PTS", 49, 1, GOLD, 3)
     for x in range(64):
-        frame.pixel(x, 6 if is_mlb else 8, DIM)
-    page_size = 5 if is_mlb else 3
-    for index, standing in enumerate(tuple(rows)[offset:offset + page_size]):
-        y = (7 + index * 5) if is_mlb else (11 + index * 7)
+        frame.pixel(x, 8, DIM)
+    for index, standing in enumerate(tuple(rows)[offset:offset + 3]):
+        y = 11 + index * 7
         rank = standing.rank if standing.rank is not None else offset + index + 1
-        if is_mlb:
-            # Five compact 3x5 rows fit below the six-pixel header.
-            _mlb_text(frame, str(rank), 1, y, GREEN, 1)
-            _mlb_text(frame, standing.abbreviation or standing.team_id, 11, y, WHITE, 3)
-        else:
-            _tiny_text(frame, str(rank).rjust(2), 1, y, GREEN, 2)
-            _tiny_text(frame, standing.abbreviation or standing.team_id, 15, y, WHITE, 5)
-        if is_mlb:
-            _mlb_text(frame, str(standing.wins)[-2:].rjust(2), 44, y, GOLD, 2)
-            _mlb_text(frame, str(standing.losses)[-2:].rjust(2), 56, y, GOLD, 2)
-        elif standing.points is not None:
+        _tiny_text(frame, str(rank).rjust(2), 1, y, GREEN, 2)
+        _tiny_text(frame, standing.abbreviation or standing.team_id, 15, y, WHITE, 5)
+        if standing.points is not None:
             points = str(standing.points)[-3:]
             _tiny_text(frame, points.rjust(3), 49, y, GOLD, 3)
     return frame
