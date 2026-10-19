@@ -97,5 +97,5 @@ class StandingsRotation:
                       int(within_slot * len(league_pages) / self.page_seconds))
         league, rows, offset = league_pages[section]
         label = (rows[0].group.replace('_', ' ') if rows[0].league == 'MLB'
-                 else rows[0].group if rows[0].league in ('NHL', 'NBA') else league)
+                 else rows[0].group if rows[0].league in ('NHL', 'NBA', 'NFL') else league)
         return render_standings(label, rows, offset=offset)
