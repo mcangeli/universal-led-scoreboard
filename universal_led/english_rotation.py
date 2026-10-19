@@ -62,6 +62,10 @@ class EnglishFootballRenderer:
                                 interruption_policy=self.interruption_policy,
                                 has_live_games=live_present)
 
+    def set_standings_caches(self, caches):
+        """Attach existing background-refreshed caches without network access."""
+        self.standings_caches = dict(caches or {})
+
     def has_games(self):
         return bool(self._games())
 
