@@ -43,11 +43,13 @@ class StandingsSchedulerTests(unittest.TestCase):
         self.assertEqual(board.frame().pixels[0][0], (4, 5, 6))
         self.assertEqual(standings.calls, 1)
 
-    def test_scheduled_games_precede_standings(self):
+    def test_scheduled_games_share_rotation_with_standings(self):
+        now = [0]
         standings = Standings()
-        board = MultiSportRenderer(Renderer(games=True), Renderer(), standings_rotation=standings)
+        board = MultiSportRenderer(Renderer(games=True), Renderer(), clock=lambda: now[0], standings_rotation=standings)
+        self.assertEqual(board.frame().pixels[0][0], (4, 5, 6))
+        now[0] = board._interval
         self.assertEqual(board.frame().pixels[0][0], (1, 2, 3))
-        self.assertEqual(standings.calls, 0)
 
     def test_live_games_precede_standings(self):
         standings = Standings()
@@ -179,18 +181,18 @@ class StandingsSchedulerTests(unittest.TestCase):
         # Final scores remain eligible for the day's game rotation.
         now[0] = 60
         game_renderer.live = False
-        self.assertEqual(board.frame().pixels[0][0], (1, 2, 3))
-        self.assertEqual(standings.calls, 0)
+        self.assertEqual(board.frame().pixels[0][0], (4, 5, 6))
+        self.assertEqual(standings.calls, 1)
         # Only when the day's games are no longer eligible do idle
         # standings return.
         now[0] = 120
         game_renderer.games = False
         self.assertEqual(board.frame().pixels[0][0], (4, 5, 6))
-        self.assertEqual(standings.calls, 1)
-        # A newly scheduled game takes priority immediately.
+        self.assertEqual(standings.calls, 2)
+        # A newly scheduled game joins the rotation without suppressing standings.
         game_renderer.games = True
-        self.assertEqual(board.frame().pixels[0][0], (1, 2, 3))
-        self.assertEqual(standings.calls, 1)
+        self.assertEqual(board.frame().pixels[0][0], (4, 5, 6))
+        self.assertEqual(standings.calls, 3)
 
     def test_disabled_standings_preserve_blank_fallback(self):
         board = MultiSportRenderer(Renderer(), Renderer(), standings_rotation=Standings(False))
