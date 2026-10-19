@@ -22,6 +22,14 @@ class ReleaseIdentityTests(unittest.TestCase):
                           'v0.7.0' if args[0] == 'describe' else None):
             self.assertEqual(release.installed_release(), 'v0.7.0')
 
+    def test_detached_checkout_at_main_head(self):
+        def git(*args):
+            if args[0] == 'branch':
+                return 'origin/main\\norigin/feature/0.7.0-scoring-standings'
+            return None
+        with patch.object(release, '_git', side_effect=git):
+            self.assertEqual(release.installed_release(), 'main')
+
     def test_detached_checkout_without_release_metadata(self):
         with patch.object(release, '_git', return_value=None):
             self.assertEqual(release.display_version(), 'v0.7.0 · development')
