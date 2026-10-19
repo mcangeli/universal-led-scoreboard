@@ -14,11 +14,12 @@ from .football_standings_feed import fetch_football_standings
 class FootballStandingsCache:
     def __init__(self, league, *, fetcher=fetch_football_standings,
                  refresh_seconds=900, clock=time.monotonic, cache_dir=None,
-                 cache_key=None):
+                 cache_key=None, expected_group=None):
         if type(refresh_seconds) not in (int, float) or not 60 <= refresh_seconds <= 86400:
             raise ValueError("Invalid standings refresh interval")
         self.league = league
         self.cache_key = cache_key or league
+        self.expected_group = expected_group
         self.cache_path = (Path(cache_dir) / (self.cache_key.lower() + ".json")) if cache_dir is not None else None
         self.fetcher = fetcher
         self.refresh_seconds = refresh_seconds
@@ -39,7 +40,9 @@ class FootballStandingsCache:
             if payload.get("league") != self.league or payload.get("cache_key", self.league) != self.cache_key:
                 return
             rows = tuple(Standing(**item) for item in payload["rows"])
-            if rows and all(row.league == self.league for row in rows):
+            if rows and all(row.league == self.league and
+                            (self.expected_group is None or row.group == self.expected_group)
+                            for row in rows):
                 self._rows = rows
         except (OSError, ValueError, TypeError, KeyError):
             return
@@ -74,11 +77,11 @@ class FootballStandingsCache:
                 with self._lock:
                     self.last_error = "Standings feed returned no teams"
                     return self._rows
-            if (self.cache_path is not None and
-                    all(isinstance(row, Standing) for row in rows) and
-                    any(row.league != self.league for row in rows)):
+            if any(not isinstance(row, Standing) or row.league != self.league or
+                   (self.expected_group is not None and row.group != self.expected_group)
+                   for row in rows):
                 with self._lock:
-                    self.last_error = "Standings feed returned a different league"
+                    self.last_error = "Standings feed returned a different league or group"
                     return self._rows
             if rows and all(isinstance(row, Standing) for row in rows):
                 self._save_disk(rows)
