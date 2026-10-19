@@ -7,7 +7,11 @@ API = 'https://api.nhle.com/stats/rest/en/season?limit=-1'
 
 
 def parse_nhl_season_windows(payload, *, today=None):
-    """Select a season spanning the current year, never guess NHL dates."""
+    """Select provider season bounds; missing regular start uses season start.
+
+    The standings gate additionally requires played regular-season games, so
+    the broader preseason-inclusive start cannot activate empty standings.
+    """
     if not isinstance(payload, dict) or not isinstance(payload.get('data'), list):
         raise ValueError('Invalid NHL seasons response')
     today = today or date.today()
@@ -20,7 +24,7 @@ def parse_nhl_season_windows(payload, *, today=None):
                 (today.year - 1) * 10000 + today.year,
                 today.year * 10000 + today.year + 1):
             continue
-        first = season.get('regularSeasonStartDate')
+        first = season.get('regularSeasonStartDate') or season.get('startDate')
         last = season.get('regularSeasonEndDate')
         if not isinstance(first, str) or not isinstance(last, str):
             continue
