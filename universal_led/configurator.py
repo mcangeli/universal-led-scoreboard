@@ -956,7 +956,12 @@ async function refreshStatus(){
    for(const sport of (data.sports||[])){
     const card=document.createElement('div');card.className='dashboard-tile';
     const heading=document.createElement('h3');heading.textContent=sport.label;
-    const detail=document.createElement('p');detail.textContent=(sport.enabled?'Enabled':'Disabled')+' | Rotation: '+sport.rotation_seconds+'s | Feed: '+sport.feed_state;
+    const active=rotation.selected_sport===sport.id;
+    const live=Array.isArray(rotation.live_sports)&&rotation.live_sports.includes(sport.id);
+    const detail=document.createElement('p');
+    const activity=!sport.enabled?'Disabled':active?'Currently selected':live?'Live game available':'Enabled';
+    detail.textContent=activity+' | Rotation: '+sport.rotation_seconds+'s | Feed: '+sport.feed_state;
+    if(active){card.style.borderColor='#d7b46d';card.setAttribute('aria-label',sport.label+' currently selected');}
     card.append(heading,detail);sportGrid.append(card);
    }
   }
