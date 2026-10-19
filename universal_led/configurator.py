@@ -1481,7 +1481,8 @@ def main():
     from .football_standings_runtime import FootballStandingsCache, BackgroundFootballStandings
     from .standings_rotation import StandingsRotation
     standings_caches = {
-        league: FootballStandingsCache(league, refresh_seconds=initial['standings']['refresh_seconds'])
+        league: FootballStandingsCache(league, refresh_seconds=initial['standings']['refresh_seconds'],
+                                     cache_dir=Path(args.config_dir) / 'standings-cache')
         for league in COMPETITIONS
     }
     standings_workers = {
@@ -1569,7 +1570,7 @@ def main():
             page_seconds=standings_options['page_seconds'])
         for league, cache in standings_caches.items():
             cache.refresh_seconds = standings_options['refresh_seconds']
-            if (standings_rotation.enabled and
+            if (settings['sports']['english']['enabled'] and
                     league in english['enabled_leagues']):
                 standings_workers[league].start()
             else:
@@ -1579,6 +1580,8 @@ def main():
         board.configure_rotation(enabled, interval=settings['mlb']['rotation_seconds'],
                                  preferred=settings['active_sport'])
     apply_settings(initial)
+    def standings_status():
+        return board.soccer_pregame_diagnostics()
     def feed_status():
         return feed.status()
     def countdown_status():
@@ -1610,7 +1613,7 @@ def main():
     frame_thread = threading.Thread(target=publish_frames, daemon=True, name='frame-publisher')
     frame_thread.start()
     try:
-        with ThreadingHTTPServer((args.host,args.port),make_handler(args.config_dir,token,game,apply_settings,feed_status,board.frame,countdown_status)) as server:
+        with ThreadingHTTPServer((args.host,args.port),make_handler(args.config_dir,token,game,apply_settings,feed_status,board.frame,countdown_status,standings_status)) as server:
             print(f'Configurator listening on {args.host}:{args.port}',flush=True)
             server.serve_forever()
     finally:
