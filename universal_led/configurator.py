@@ -110,7 +110,7 @@ section h2{font-size:clamp(21px,1.6vw,26px);line-height:1.25;margin:0 0 18px}
 const token=__TOKEN__;
 async function logout(){await fetch('/logout',{method:'POST',headers:{'X-Configurator-Token':token}});location.href='/login'}
 let state=null,saved=null,dirty=false,selectedTeam='ATL',selected=null,settings=null;
-function showPage(name){if(!document.querySelector('[data-page="'+name+'"]'))return;document.querySelectorAll('.nav-item').forEach(button=>{const active=button.getAttribute('onclick')==="showPage('"+name+"')";button.classList.toggle('active',active);if(active)button.setAttribute('aria-current','page');else button.removeAttribute('aria-current');});document.querySelectorAll('[data-page]').forEach(el=>el.hidden=el.dataset.page!==name);if(name==='news'){loadNewsSources();loadAutomaticNews();loadNewsTiming();loadScoringAlerts();loadGameInterruptions();loadStandingsSettings()}if(name==='display'){loadClockSettings();loadCountdown();}if(name==='dashboard'||name==='system')refreshStatus();if(name==='system'){refreshSystem();checkSoftwareUpdate();}if(name==='matrix-settings'){loadMatrixSettings();refreshMatrixStatus();}if(name==='wifi'){refreshWifi();refreshWifiProfiles();refreshRecoveryReadiness();scanWifi()}}
+function showPage(name){if(!document.querySelector('[data-page="'+name+'"]'))return;if(name!=='sports'&&sportsSettingsDirty&&!confirm('You have unsaved sport settings changes. Leave this page without saving?'))return;document.querySelectorAll('.nav-item').forEach(button=>{const active=button.getAttribute('onclick')==="showPage('"+name+"')";button.classList.toggle('active',active);if(active)button.setAttribute('aria-current','page');else button.removeAttribute('aria-current');});document.querySelectorAll('[data-page]').forEach(el=>el.hidden=el.dataset.page!==name);if(name==='news'){loadNewsSources();loadAutomaticNews();loadNewsTiming();loadScoringAlerts();loadGameInterruptions();loadStandingsSettings()}if(name==='display'){loadClockSettings();loadCountdown();}if(name==='dashboard'||name==='system')refreshStatus();if(name==='system'){refreshSystem();checkSoftwareUpdate();}if(name==='matrix-settings'){loadMatrixSettings();refreshMatrixStatus();}if(name==='wifi'){refreshWifi();refreshWifiProfiles();refreshRecoveryReadiness();scanWifi()}}
 async function refreshMatrixStatus(){
  const el=document.getElementById('matrix-service-state');
  try{const response=await fetch('/api/matrix-status',{cache:'no-store'});const result=await response.json();
@@ -582,6 +582,8 @@ function showSportsView(view){
 function selectSport(name){
  const picker=document.getElementById('sport-picker');
  if(!Array.from(picker.options).some(option=>option.value===name))return;
+ const current=document.querySelector('[data-sport-panel]:not([hidden])');
+ if(current&&current.dataset.sportPanel!==name&&sportsSettingsDirty&&!confirm('You have unsaved sport settings changes. Switch sports without saving?')){picker.value=current.dataset.sportPanel;return;}
  picker.value=name;
  document.querySelectorAll('[data-sport-panel]').forEach(panel=>panel.hidden=panel.dataset.sportPanel!==name);
  showSportsView('configure');
