@@ -13,9 +13,10 @@ def select_games(games, teams=None, mode="fallback"):
     return matched if matched or mode == "favorite" else list(games)
 
 class BackgroundNBAFeed:
-    def __init__(self, feed, day_provider=None, timezone_name="America/New_York"):
+    def __init__(self, feed, day_provider=None, timezone_name="America/New_York", on_games=None):
         ZoneInfo(timezone_name)
         self.feed = feed
+        self.on_games = on_games
         self.timezone_name = timezone_name
         self.day_provider = day_provider or self._local_day
         self._stop = threading.Event()
@@ -29,7 +30,10 @@ class BackgroundNBAFeed:
         self.timezone_name = timezone_name
 
     def refresh_once(self):
-        return self.feed.refresh(self.day_provider())
+        games = self.feed.refresh(self.day_provider())
+        if self.on_games is not None and self.feed.status().get("state") != "error":
+            self.on_games(games)
+        return games
 
     def _run(self):
         while not self._stop.is_set():
