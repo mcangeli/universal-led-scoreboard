@@ -38,10 +38,10 @@ class StandingsRotationTests(unittest.TestCase):
         adapter = StandingsRotation({"EPL": cache}, enabled=True,
                                     page_seconds=3, clock=lambda: clock[0])
         first = adapter.frame().pixels
-        clock[0] = 3
+        clock[0] = 1.5
         self.assertNotEqual(first, adapter.frame().pixels)
 
-    def test_competitions_interleave_instead_of_exhausting_one_table(self):
+    def test_competition_pages_are_grouped_within_one_slot(self):
         first = Cache([standing(str(i), i) for i in range(1, 8)])
         second = Cache([Standing("CHAMPIONSHIP", "Championship", str(i),
                                  10, 5, 3, 2, points=20-i,
@@ -50,10 +50,26 @@ class StandingsRotationTests(unittest.TestCase):
         adapter = StandingsRotation({"EPL": first, "CHAMPIONSHIP": second},
                                     enabled=True, page_seconds=3, clock=lambda: 0)
         pages = adapter._pages()
-        self.assertEqual([(league, offset) for league, _, offset in pages],
-                         [("EPL", 0), ("CHAMPIONSHIP", 0),
-                          ("EPL", 3), ("CHAMPIONSHIP", 3),
-                          ("EPL", 6)])
+        self.assertEqual([[(league, offset) for league, _, offset in group]
+                          for group in pages],
+                         [[("EPL", 0), ("EPL", 3), ("EPL", 6)],
+                          [("CHAMPIONSHIP", 0), ("CHAMPIONSHIP", 3)]])
+
+    def test_five_sections_share_twenty_second_league_slot(self):
+        now = [0.0]
+        rows = [standing(str(i), i) for i in range(1, 16)]
+        adapter = StandingsRotation({'EPL': Cache(rows)}, enabled=True,
+                                    page_seconds=20, clock=lambda: now[0])
+        self.assertEqual(len(adapter._pages()[0]), 5)
+        frames = []
+        for second in (0, 4, 8, 12, 16):
+            now[0] = second
+            frames.append(adapter.frame().pixels)
+        self.assertEqual(len({repr(frame) for frame in frames}), 5)
+        now[0] = 19.99
+        self.assertEqual(adapter.frame().pixels, frames[4])
+        now[0] = 20
+        self.assertEqual(adapter.frame().pixels, frames[0])
 
     def test_empty_league_does_not_block_other_tables(self):
         adapter = StandingsRotation(
