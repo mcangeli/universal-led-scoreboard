@@ -26,6 +26,9 @@ class ScoreChangeObserver:
             if previous is None:
                 self.alerts.baseline(self.sport, self.league, key, ())
                 continue
+            if game.status in ("final", "postponed", "canceled", "cancelled"):
+                self.alerts.cancel_game(self.sport, self.league, key)
+                continue
             if game.status != "live" or any(type(v) is not int for v in scores + previous):
                 continue
             if any(new < old for old, new in zip(previous, scores)):
