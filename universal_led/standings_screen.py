@@ -183,10 +183,11 @@ def render_standings(league, rows, *, offset=0):
     if rows and rows[0].league == "NBA":
         _render_nba_conference(frame, league, rows, offset)
         return frame
-    labels = {"Eastern Conference": "MLS EAST", "Western Conference": "MLS WEST",
+    labels = {"Eastern Conference": "MLS E", "Western Conference": "MLS W",
               "CHAMPIONSHIP": "CHAMP", "LEAGUE_ONE": "LGE 1",
               "LEAGUE_TWO": "LGE 2"}
-    _tiny_text(frame, labels.get(league, league), 1, 1, GOLD, 9)
+    # The heading must end before the first stat column at x=23.
+    _tiny_text(frame, labels.get(league, league), 1, 1, GOLD, 5)
     # Compact soccer columns: club | W | L | D | points.
     # Two-digit results fit in each stat column on the 64x32 matrix.
     for label, x in (("W", 23), ("L", 33), ("D", 43), ("P", 53)):
