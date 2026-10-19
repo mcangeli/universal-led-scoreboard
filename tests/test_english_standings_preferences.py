@@ -1,4 +1,4 @@
-"""English game coverage and standings page selection are independent."""
+"""English standings selections respect enabled game leagues."""
 import copy
 import inspect
 import unittest
@@ -32,11 +32,12 @@ class EnglishStandingsPreferencesTests(unittest.TestCase):
         self.assertIn('id="english-standings-leagues"', configurator.HTML)
         self.assertIn("next.standings.leagues=Array.from(", configurator.HTML)
         source = inspect.getsource(configurator.main)
-        self.assertIn("selected_standings_leagues = standings_options.get('leagues', english['enabled_leagues'])", source)
-        self.assertIn("selected_mlb_divisions = standings_options.get('mlb_divisions', [])", source)
-        self.assertIn("selected_nhl_divisions = standings_options.get('nhl_divisions', [])", source)
+        self.assertIn("league for league in standings_options.get('leagues', english['enabled_leagues'])", source)
+        self.assertIn("if english_enabled and league in english['enabled_leagues']", source)
+        self.assertIn("if settings['sports']['mlb']['enabled'] else []", source)
+        self.assertIn("if settings['sports']['nhl']['enabled'] else []", source)
         self.assertIn("selected_leagues=[*selected_standings_leagues, *selected_mlb_groups,", source)
-        self.assertIn("selected_nba_conferences = standings_options.get('nba_conferences', [])", source)
+        self.assertIn("if settings['sports']['nba']['enabled'] else []", source)
         self.assertIn("*selected_nhl_groups, *selected_nba_conferences])", source)
         self.assertIn("if needs_pregame_records or needs_standings_page:", source)
 
