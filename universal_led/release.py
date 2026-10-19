@@ -33,8 +33,10 @@ def installed_release():
     # useful only when it points at this exact commit.
     refs = _git('branch', '-r', '--points-at', 'HEAD')
     if refs:
-        for line in refs.splitlines():
-            name = line.strip()
+        names = [line.strip() for line in refs.splitlines()]
+        if 'origin/main' in names:
+            return 'main'
+        for name in names:
             if name.startswith('origin/feature/'):
                 return name[len('origin/'):]
     return 'development'
