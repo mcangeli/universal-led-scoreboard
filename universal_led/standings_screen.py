@@ -186,15 +186,18 @@ def render_standings(league, rows, *, offset=0):
     labels = {"CHAMPIONSHIP": "CHAMP", "LEAGUE_ONE": "LGE 1",
               "LEAGUE_TWO": "LGE 2"}
     _tiny_text(frame, labels.get(league, league), 1, 1, GOLD, 9)
-    _tiny_text(frame, "PTS", 49, 1, GOLD, 3)
+    # Compact soccer columns: club | W | L | D | points.
+    # Two-digit results fit in each stat column on the 64x32 matrix.
+    for label, x in (("W", 24), ("L", 34), ("D", 44), ("P", 56)):
+        _tiny_text(frame, label, x, 1, GOLD, 1)
     for x in range(64):
         frame.pixel(x, 8, DIM)
     for index, standing in enumerate(tuple(rows)[offset:offset + 3]):
         y = 11 + index * 7
-        rank = standing.rank if standing.rank is not None else offset + index + 1
-        _tiny_text(frame, str(rank).rjust(2), 1, y, GREEN, 2)
-        _tiny_text(frame, standing.abbreviation or standing.team_id, 15, y, WHITE, 5)
+        _tiny_text(frame, standing.abbreviation or standing.team_id, 0, y, WHITE, 5)
+        for value, x in ((standing.wins, 22), (standing.losses, 32),
+                         (standing.draws, 42)):
+            _tiny_text(frame, str(value)[-2:].rjust(2), x, y, WHITE, 2)
         if standing.points is not None:
-            points = str(standing.points)[-3:]
-            _tiny_text(frame, points.rjust(3), 49, y, GOLD, 3)
+            _tiny_text(frame, str(standing.points)[-2:].rjust(2), 54, y, GOLD, 2)
     return frame
