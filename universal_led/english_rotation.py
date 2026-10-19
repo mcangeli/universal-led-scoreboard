@@ -15,7 +15,7 @@ from .soccer_pregame import with_cached_records
 
 class EnglishFootballRenderer:
     def __init__(self, feeds, *, enabled=None, favorite_teams=(), mode="fallback",
-                 rotation_seconds=12, goal_seconds=8, clock=time.monotonic, scoring_alerts=None, standings_caches=None):
+                 rotation_seconds=12, goal_seconds=8, clock=time.monotonic, scoring_alerts=None, standings_caches=None, timezone='America/New_York'):
         if not isinstance(feeds, dict) or any(key not in COMPETITIONS for key in feeds):
             raise ValueError("Expected English competition feed mapping")
         self.feeds = dict(feeds)
@@ -24,7 +24,7 @@ class EnglishFootballRenderer:
         self.scoring_alerts = scoring_alerts
         self.interruption_policy = InterruptionPolicy()
         self.external_live_games = False
-        self.display = SoccerDisplayController(goal_seconds)
+        self.display = SoccerDisplayController(goal_seconds, timezone=timezone)
         self.configure(enabled=enabled, favorite_teams=favorite_teams,
                        mode=mode, rotation_seconds=rotation_seconds)
 
