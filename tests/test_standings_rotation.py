@@ -71,6 +71,32 @@ class StandingsRotationTests(unittest.TestCase):
         now[0] = 20
         self.assertEqual(adapter.frame().pixels, frames[0])
 
+    def test_six_team_group_stays_together_before_next_league(self):
+        now = [0.0]
+        first = Cache([standing(str(i), i) for i in range(1, 7)])
+        second = Cache([Standing('CHAMPIONSHIP', 'Championship', 'X',
+                                 10, 5, 3, 2, points=20, rank=1)])
+        rotation = StandingsRotation({'EPL': first, 'CHAMPIONSHIP': second},
+                                     enabled=True, page_seconds=20,
+                                     clock=lambda: now[0])
+        self.assertEqual([len(group) for group in rotation._pages()], [2, 1])
+        rotation.frame()
+        self.assertEqual(rotation._page_identity[0], 'EPL')
+        now[0] = 11
+        rotation.frame()
+        self.assertEqual(rotation._page_identity[0], 'EPL')
+        now[0] = 20
+        rotation.frame()
+        self.assertEqual(rotation._page_identity[0], 'CHAMPIONSHIP')
+
+    def test_mlb_five_team_division_remains_single_section(self):
+        rows = [Standing('MLB', 'NL_EAST', str(i), 100, 60, 40,
+                         rank=i, abbreviation='ATL') for i in range(1, 6)]
+        rotation = StandingsRotation({'NL_EAST': Cache(rows)},
+                                     enabled=True, page_seconds=20,
+                                     clock=lambda: 0)
+        self.assertEqual([len(group) for group in rotation._pages()], [1])
+
     def test_empty_league_does_not_block_other_tables(self):
         adapter = StandingsRotation(
             {"EPL": Cache([]), "CHAMPIONSHIP": Cache([
