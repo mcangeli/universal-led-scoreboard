@@ -24,19 +24,19 @@ def render_standings(league, rows, *, offset=0):
     labels = {"CHAMPIONSHIP": "CHAMP", "LEAGUE_ONE": "LGE 1",
               "LEAGUE_TWO": "LGE 2"}
     frame.text(_safe(labels.get(league, league), 6), 1, 0, GOLD)
-    frame.text("PTS", 45, 0, GOLD)
+    frame.text("PT", 51, 0, GOLD)
     for x in range(64):
         frame.pixel(x, 8, DIM)
 
-    # Seven-pixel glyphs with a separator pixel between the first two
-    # rows. The final row ends at pixel 31, inside the physical panel.
+    # Seven-pixel glyphs; rows are separated and stay on the panel.
     for index, standing in enumerate(tuple(rows)[offset:offset + 3]):
         y = (10, 18, 25)[index]
         rank = standing.rank if standing.rank is not None else offset + index + 1
-        frame.text(_safe(rank, 2), 1, y, GREEN)
+        rank_label = _safe(rank, 2)
+        frame.text(rank_label, 1, y, GREEN)
         club = _safe(standing.abbreviation or standing.team_id, 3)
         frame.text(club, 17, y, WHITE)
         if standing.points is not None:
             points = _safe(standing.points, 3)
-            frame.text(points, 44 + (3 - len(points)) * 6, y, GOLD)
+            frame.text(points, 46 + (3 - len(points)) * 6, y, GOLD)
     return frame
