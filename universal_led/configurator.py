@@ -1529,7 +1529,20 @@ def main():
     }
     standings_caches.update(mlb_standings_caches)
     standings_caches.update(nhl_standings_caches)
-    standings_rotation = StandingsRotation(standings_caches)
+    from .standings_season_status import StandingsSeasonStatus
+    from .standings_season_worker import SeasonCalendarWorker
+    from .mlb_season_calendar import fetch_mlb_season_windows
+    season_status = StandingsSeasonStatus()
+    mlb_season_worker = SeasonCalendarWorker(
+        'MLB', fetch_mlb_season_windows, season_status)
+    def standings_season_eligible(competition):
+        # Only MLB has a verified season-calendar adapter at this stage.
+        # Leave other sports' existing behavior unchanged until supported.
+        if competition in mlb_standings_caches:
+            return season_status.eligible('MLB')
+        return True
+    standings_rotation = StandingsRotation(
+        standings_caches, season_policy=standings_season_eligible)
     renderer.news = None  # Universal news is owned by the shared board scheduler.
     board = MultiSportRenderer(renderer, nhl_renderer, news=news, settings_getter=renderer.settings, nba_renderer=nba_renderer, wnba_renderer=wnba_renderer, nfl_renderer=nfl_renderer, mls_renderer=soccer_renderers['mls'], nwsl_renderer=soccer_renderers['nwsl'], english_renderer=english_renderer, scoring_alerts=scoring_alerts, standings_rotation=standings_rotation)
     # Apply persisted sport choice on service startup, not just after web saves.
@@ -1607,6 +1620,10 @@ def main():
         standings_options = settings['standings']
         selected_standings_leagues = standings_options.get('leagues', english['enabled_leagues'])
         selected_mlb_divisions = standings_options.get('mlb_divisions', [])
+        if standings_options['enabled'] and selected_mlb_divisions:
+            mlb_season_worker.start()
+        else:
+            mlb_season_worker.stop()
         selected_nhl_divisions = standings_options.get('nhl_divisions', [])
         standings_rotation.configure(
             enabled=standings_options['enabled'],
@@ -1698,5 +1715,6 @@ def main():
             worker.stop()
         for worker in nhl_standings_workers.values():
             worker.stop()
+        mlb_season_worker.stop()
 if __name__=='__main__':
     main()
