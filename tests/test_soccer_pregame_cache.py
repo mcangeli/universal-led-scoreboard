@@ -4,6 +4,7 @@ from universal_led.soccer import SoccerMatch
 from universal_led.standings import Standing
 from universal_led.soccer_pregame import with_cached_records
 from universal_led.english_rotation import EnglishFootballRenderer
+from universal_led.soccer_engine import ConfiguredSoccerRenderer
 
 
 class Cache:
@@ -33,6 +34,16 @@ class PregameCacheTests(unittest.TestCase):
     def test_live_match_unchanged(self):
         game = SoccerMatch("m", "EPL", "ARS", "CHE", 2, 1, "in")
         self.assertIs(with_cached_records(game, Cache().rows()), game)
+
+    def test_runtime_cache_attachment(self):
+        renderer = EnglishFootballRenderer({"EPL": Feed()})
+        renderer.set_standings_caches({"EPL": Cache()})
+        self.assertEqual(renderer.game().home_record, "6-4-2")
+
+    def test_soccer_adapter_cache_attachment(self):
+        renderer = ConfiguredSoccerRenderer(Feed(), league="EPL")
+        renderer.set_standings_cache(Cache())
+        self.assertEqual(renderer.game().home_record, "6-4-2")
 
     def test_renderer_uses_supplied_cache_without_refresh(self):
         renderer = EnglishFootballRenderer({"EPL": Feed()},
