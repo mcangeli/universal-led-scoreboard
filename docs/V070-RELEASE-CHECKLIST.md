@@ -1,6 +1,6 @@
 # v0.7.0 Scoring and Standings Release Checklist
 
-Status: **release candidate, not merged or tagged** (October 18, 2026).
+Status: **release candidate, not merged or tagged** (October 19, 2026).
 
 ## Scope
 
@@ -13,7 +13,7 @@ Status: **release candidate, not merged or tagged** (October 18, 2026).
 
 ## Acceptance evidence
 
-- [x] Raspberry Pi 5 candidate updater: **1,312 tests passed, 15 skipped**, user-reported October 18, 2026.
+- [x] Raspberry Pi 5 development updater: **1,507 tests passed, 15 skipped**, user-reported October 19, 2026; board display visually confirmed satisfactory.
 - [x] EPL live game: clock progression, halftime, second half, added time and final rotation observed.
 - [x] MLB R/H/E improved alignment visually reviewed after pixel test corrections.
 - [x] Standings outage and recovery covered by deterministic regression tests.
@@ -23,8 +23,9 @@ Status: **release candidate, not merged or tagged** (October 18, 2026).
 - [x] Production Pi 3 live-game priority: live games rotate across enabled sports and final scores do not interrupt while live games are eligible.
 - [x] Visual review of latest MLB R/H/E alignment and board layouts reported satisfactory on October 18, 2026; physical-matrix-specific confirmation is not separately established.
 - [x] Production-target Pi 3: user reports successful candidate update installation, all sports enabled, and live-game rotation and sport layouts visually confirmed (October 18, 2026). Final-score and idle-standings transitions are awaiting games to finish; configuration retention is not separately verified.
-- [ ] Check licenses/attributions and changelog/README accuracy.
-- [x] Updater candidate preflight: 1,312 tests passed, 15 skipped, user-confirmed October 18, 2026 (prior to documentation-only commits).
+- [x] README and changelog updated for v0.7.0 scope and news/standings controls.
+- [ ] Complete license and attribution review (not yet independently verified).
+- [x] Updater candidate preflight: 1,507 tests passed, 15 skipped, user-confirmed October 19, 2026 after dashboard regression and documentation changes.
 - [ ] Merge into main and tag v0.7.0 **only after explicit approval**.
 
 ## Smoke test
@@ -42,7 +43,7 @@ Status: **release candidate, not merged or tagged** (October 18, 2026).
 
 Use the dashboard's candidate validation before installation. Preserve the existing `/etc/uls` configuration and `/var/lib/uls` data, and retain a known-good boot card for physical-device changes. Do not treat automated unit tests as proof of physical-driver compatibility or live-feed correctness.
 
-## Final-score handoff acceptance (planned)
+## Final-score handoff acceptance (original specification; see implementation tests)
 
 - When an eligible live game becomes final, retain a pending final-score presentation until at least one **complete** display slot has actually been shown.
 - Default one appearance; configurable one, two or three appearances under Sports & Rotation.
@@ -52,10 +53,12 @@ Use the dashboard's candidate validation before installation. Preserve the exist
 - After the required appearances, normal scheduled/final rotation and idle standings rules apply.
 - Add deterministic scheduler regressions for one/multiple finishes, simultaneous finishes, interrupted slots, and the timeout boundary before production rollout.
 
-Status: specification approved; implementation and acceptance tests pending.
+Status: implementation and deterministic regression tests are present in this candidate (see `tests/test_final_score_handoff.py` and `tests/test_final_handoff_routing.py`). Physical live-to-final handoff acceptance remains pending; the original criteria above are retained as a review checklist.
 
 
 ## Sports polish gate (dev first; production held)
+
+These are acceptance criteria, not a claim that each has been observed live. Automated pregame and transition tests exist, but provider-specific physical acceptance remains separate.
 
 - [ ] Soccer pregame displays W-D-L records for both clubs and scheduled kickoff in configured local time across EPL, Championship, League One, League Two, MLS, and NWSL.
 - [ ] Soccer pregame draws from cached/provider standings with correct team ID mapping; missing or stale records show a clear fallback, never invented 0-0-0.
