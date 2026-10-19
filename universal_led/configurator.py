@@ -574,12 +574,15 @@ async function saveClockSettings(){
 }
 
 function showSportsView(view){
+ if(!['overview','configure','rotation'].includes(view))return;
  document.querySelectorAll('.sports-subnav button').forEach(button=>{const active=button.dataset.sportsView===view;button.classList.toggle('active',active);button.setAttribute('aria-pressed',String(active))});
  ['overview','configure','rotation'].forEach(name=>document.getElementById('sports-'+name).hidden=name!==view);
  if(view==='rotation')refreshSportsRotationSummary();
 }
 function selectSport(name){
- const picker=document.getElementById('sport-picker');picker.value=name;
+ const picker=document.getElementById('sport-picker');
+ if(!Array.from(picker.options).some(option=>option.value===name))return;
+ picker.value=name;
  document.querySelectorAll('[data-sport-panel]').forEach(panel=>panel.hidden=panel.dataset.sportPanel!==name);
  showSportsView('configure');
 }
@@ -587,9 +590,11 @@ function refreshSportsRotationSummary(){
  const target=document.getElementById('sports-rotation-summary');target.replaceChildren();
  if(!settings)return;
  ['mlb','nhl','nba','wnba','nfl','mls','nwsl','english'].forEach(name=>{
-  const node=document.createElement('div');node.className='item';
+  const node=document.createElement('button');node.type='button';node.className='item sport-choice';
   const sport=settings[name],enabled=settings.sports[name].enabled;
-  node.textContent=name.toUpperCase()+' · '+(enabled?'Enabled':'Disabled')+' · '+sport.rotation_seconds+'s per game · '+sport.refresh_seconds+'s feed refresh';
+  node.textContent=name.toUpperCase()+' · '+(enabled?'Enabled':'Disabled')+' · '+sport.rotation_seconds+'s per game · '+sport.refresh_seconds+'s feed refresh · Configure →';
+  node.setAttribute('aria-label','Configure '+name.toUpperCase()+' rotation settings');
+  node.addEventListener('click',()=>selectSport(name));
   target.append(node);
  });
 }
