@@ -961,7 +961,10 @@ async function refreshStatus(){
     const detail=document.createElement('p');
     const activity=!sport.enabled?'Disabled':active?'Currently selected':live?'Live game available':'Enabled';
     const refreshed=sport.feed_last_success==null?'Never':when(sport.feed_last_success);
-    detail.textContent=activity+' | Rotation: '+sport.rotation_seconds+'s | Feed: '+sport.feed_state+(sport.feed_games==null?'':' | Games: '+sport.feed_games)+' | Last success: '+refreshed+(sport.feed_error?' | Error: '+sport.feed_error:'');
+    const age=sport.feed_last_success==null?null:Math.max(0,Date.now()/1000-sport.feed_last_success);
+    const stale=sport.enabled&&sport.feed_state==='running'&&age!==null&&age>Math.max(300,3*sport.refresh_seconds);
+    const health=!sport.enabled?'Not monitored':sport.feed_state==='error'?'Error':stale?'Stale':sport.feed_state==='starting'?'Starting':sport.feed_state==='running'?'Healthy':'Unavailable';
+    detail.textContent=activity+' | Rotation: '+sport.rotation_seconds+'s | Feed: '+health+(sport.feed_games==null?'':' | Games: '+sport.feed_games)+' | Last success: '+refreshed+(sport.feed_error?' | Error: '+sport.feed_error:'');
     if(active){card.style.borderColor='#d7b46d';card.setAttribute('aria-label',sport.label+' currently selected');}
     card.append(heading,detail);sportGrid.append(card);
    }
@@ -1328,6 +1331,7 @@ def make_handler(config_dir,token,frame_provider=None,settings_callback=None,fee
                 feed_states=sports_feed_status() if sports_feed_status else {}
                 sports=[{'id':name,'label':label,'enabled':settings['sports'][name]['enabled'],
                          'rotation_seconds':settings[name]['rotation_seconds'],
+                         'refresh_seconds':settings[name]['refresh_seconds'],
                          'feed_state':feed_states.get(name,{}).get('state','unavailable'),
                          'feed_games':feed_states.get(name,{}).get('games'),
                          'feed_error':feed_states.get(name,{}).get('error'),
