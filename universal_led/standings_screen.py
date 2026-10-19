@@ -63,7 +63,7 @@ def _render_mlb_division(frame, league, rows, offset):
 
     Source: standings/src/mlb_led_scoreboard_standings/renderer.py
     Coordinates: coordinates/w64h32.example.json. On 64x32 the original
-    games-back column starts at x=64 and is intentionally not visible.
+    games-back column starts at x=64 in the original; ULS fits it at x=48.
     """
     division = league.upper().replace("_", " ")
     # Original standings.al.divider / standings.nl.divider colors.
@@ -82,10 +82,16 @@ def _render_mlb_division(frame, league, rows, offset):
             frame.pixel(x, baseline, divider)
         _tiny_text(frame, standing.abbreviation or standing.team_id,
                    1, baseline - 5, team_color, 3)
-        record = f"{standing.wins:>3}-{standing.losses:<3}"
-        # Original center_text_position(record, x=31, font_width=4).
-        record_x = 31 - (len(record) * 4) // 2
-        _tiny_text(frame, record, record_x, baseline - 5, stat_color, 7)
+        # Keep the hyphen at the same pixel in every row, including 100+ wins.
+        _tiny_text(frame, str(standing.wins)[-3:].rjust(3),
+                   16, baseline - 5, stat_color, 3)
+        _tiny_text(frame, "-", 28, baseline - 5, stat_color, 1)
+        _tiny_text(frame, str(standing.losses)[-3:].rjust(3),
+                   32, baseline - 5, stat_color, 3)
+        gb = standing.games_back if standing.games_back is not None else "-"
+        gb = gb[-4:]
+        _tiny_text(frame, gb, 64 - len(gb) * 4,
+                   baseline - 5, stat_color, 4)
 
 
 def render_standings(league, rows, *, offset=0):
