@@ -59,3 +59,9 @@ def fetch_mlb_standings(*, season=None, fetch=None):
             with urlopen(address, timeout=8) as response:
                 return json.load(response)
     return parse_mlb_standings(fetch(url))
+
+def fetch_mlb_group(division, *, fetcher=fetch_mlb_standings):
+    """Adapt one official MLB division to the existing cached worker API."""
+    if division not in DIVISION_KEYS.values():
+        raise ValueError("Unknown MLB division")
+    return tuple(row for row in fetcher() if row.group == division)
