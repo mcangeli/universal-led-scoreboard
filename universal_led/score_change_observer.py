@@ -14,6 +14,9 @@ class ScoreChangeObserver:
         self.kind = kind
         self._previous = {}
 
+    def _should_announce(self, game):
+        return True
+
     def observe(self, games, *, favorite_teams=()):
         if self.alerts is None:
             return ()
@@ -29,7 +32,7 @@ class ScoreChangeObserver:
             if game.status in ("final", "postponed", "canceled", "cancelled"):
                 self.alerts.cancel_game(self.sport, self.league, key)
                 continue
-            if game.status != "live" or any(type(v) is not int for v in scores + previous):
+            if game.status != "live" or not self._should_announce(game) or any(type(v) is not int for v in scores + previous):
                 continue
             if any(new < old for old, new in zip(previous, scores)):
                 continue
@@ -58,3 +61,9 @@ class NHLGoalObserver(ScoreChangeObserver):
 
     def __init__(self, alerts):
         super().__init__(alerts, sport="nhl", league="NHL", kind="GOAL")
+
+    def _should_announce(self, game):
+        # Intermission and shootout scoreboard changes are not live-play goals.
+        # The normal snapshot update still establishes the next baseline.
+        return not (getattr(game, "intermission", False) or
+                    getattr(game, "shootout", False))
