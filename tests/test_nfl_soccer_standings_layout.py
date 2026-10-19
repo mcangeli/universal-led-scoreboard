@@ -18,7 +18,7 @@ class StandingsLayoutTests(unittest.TestCase):
 
     def test_soccer_layout_contains_all_four_stat_columns(self):
         source = inspect.getsource(standings_screen.render_standings)
-        for label in ('("W", 23)', '("L", 33)', '("D", 43)', '("P", 53)'):
+        for label in ('("W", 24)', '("L", 34)', '("D", 44)', '("P", 53)'):
             self.assertIn(label, source)
 
     def test_soccer_render_accepts_draws_and_points(self):
