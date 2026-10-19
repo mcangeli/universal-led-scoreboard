@@ -38,6 +38,22 @@ class NFLStandingsFeedTests(unittest.TestCase):
         self.assertEqual([r.abbreviation for r in fetch_nfl_division(
             "AFC East", fetcher=lambda _: rows)], ["BUF", "NE"])
 
+    def test_live_conference_shape_without_nested_divisions(self):
+        payload = {"children": [
+            {"name": "American Football Conference", "standings": {"entries": [
+                entry("NE", 3, 3, 0), entry("BUF", 5, 1, 0),
+                entry("KC", 4, 2, 0), entry("BAL", 3, 2, 1)]}},
+            {"name": "National Football Conference", "standings": {"entries": [
+                entry("ATL", 4, 2, 0), entry("TB", 3, 3, 0),
+                entry("SF", 5, 1, 0)]}},
+        ]}
+        rows = parse_nfl_standings(payload)
+        self.assertEqual(len(rows), 7)
+        self.assertEqual([(r.abbreviation, r.rank) for r in rows
+                          if r.group == "AFC East"], [("BUF", 1), ("NE", 2)])
+        self.assertEqual([r.abbreviation for r in rows
+                          if r.group == "NFC South"], ["ATL", "TB"])
+
     def test_reject_unknown_division_and_bad_payload(self):
         with self.assertRaises(ValueError):
             fetch_nfl_division("AFC Space", fetcher=lambda _: ())
