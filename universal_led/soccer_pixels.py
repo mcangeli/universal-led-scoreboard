@@ -36,10 +36,12 @@ def _pregame_team_line(frame, value, y, color):
         return False
     record_width = 4 * len(record) - 1
     club = _safe(club, 5)
-    max_club = max(1, (64 - record_width - 3) // 6)
+    side_padding = 2
+    gap = 2
+    max_club = max(1, (64 - 2 * side_padding - record_width - gap + 1) // 6)
     club = club[:max_club]
-    frame.text(club, 0, y, color)
-    start = 64 - record_width
+    frame.text(club, side_padding, y, color)
+    start = 64 - side_padding - record_width
     for index, char in enumerate(record):
         for dy, bits in enumerate(RECORD_FONT[char]):
             for dx, bit in enumerate(bits):
