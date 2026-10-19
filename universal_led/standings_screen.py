@@ -72,14 +72,13 @@ def render_standings(league, rows, *, offset=0):
     else:
         _tiny_text(frame, "PTS", 49, 1, GOLD, 3)
     for x in range(64):
-        frame.pixel(x, 8, DIM)
+        frame.pixel(x, 6 if is_mlb else 8, DIM)
     page_size = 5 if is_mlb else 3
     for index, standing in enumerate(tuple(rows)[offset:offset + page_size]):
-        y = (9 + index * 4) if is_mlb else (11 + index * 7)
+        y = (7 + index * 5) if is_mlb else (11 + index * 7)
         rank = standing.rank if standing.rank is not None else offset + index + 1
         if is_mlb:
-            # Five 5-pixel glyph rows cannot fit below an 8-pixel header.
-            # Use one 3-pixel-high rank/team/record line per team.
+            # Five compact 3x5 rows fit below the six-pixel header.
             _tiny_text(frame, str(rank), 1, y, GREEN, 1)
             _tiny_text(frame, standing.abbreviation or standing.team_id, 11, y, WHITE, 3)
         else:
