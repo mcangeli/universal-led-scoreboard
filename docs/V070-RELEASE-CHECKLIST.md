@@ -20,8 +20,9 @@ Status: **release candidate, not merged or tagged** (October 18, 2026).
 - [x] Live → final → idle standings → new eligible game priority covered by deterministic regression tests.
 - [ ] Confirm standings pages against actual provider responses on the device.
 - [ ] Observe a real scoring event and alert on the production Pi 3; no live score event has yet been confirmed.
+- [x] Production Pi 3 live-game priority: live games rotate across enabled sports and final scores do not interrupt while live games are eligible.
 - [x] Visual review of latest MLB R/H/E alignment and board layouts reported satisfactory on October 18, 2026; physical-matrix-specific confirmation is not separately established.
-- [x] Production-target Pi 3: user reports successful candidate update installation and all sports enabled (October 18, 2026). Configuration retention and ongoing physical display behavior still require observation.
+- [x] Production-target Pi 3: user reports successful candidate update installation, all sports enabled, and live-game rotation and sport layouts visually confirmed (October 18, 2026). Final-score and idle-standings transitions are awaiting games to finish; configuration retention is not separately verified.
 - [ ] Check licenses/attributions and changelog/README accuracy.
 - [x] Updater candidate preflight: 1,312 tests passed, 15 skipped, user-confirmed October 18, 2026 (prior to documentation-only commits).
 - [ ] Merge into main and tag v0.7.0 **only after explicit approval**.
