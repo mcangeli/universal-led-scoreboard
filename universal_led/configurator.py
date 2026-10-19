@@ -1571,6 +1571,21 @@ def main():
         for conference, cache in nba_standings_caches.items()
     }
     standings_caches.update(nba_standings_caches)
+    from .nfl_standings_feed import NFL_DIVISIONS, fetch_nfl_division
+    nfl_standings_caches = {
+        division: FootballStandingsCache(
+            'NFL', fetcher=lambda _league, group=division: fetch_nfl_division(group),
+            refresh_seconds=initial['standings']['refresh_seconds'],
+            cache_dir=Path(args.config_dir) / 'standings-cache',
+            cache_key='nfl-' + division.lower().replace(' ', '-'),
+            expected_group=division)
+        for division in NFL_DIVISIONS
+    }
+    nfl_standings_workers = {
+        division: BackgroundFootballStandings(cache)
+        for division, cache in nfl_standings_caches.items()
+    }
+    standings_caches.update(nfl_standings_caches)
     from .standings_season_status import StandingsSeasonStatus
     from .standings_season_worker import SeasonCalendarWorker
     from .mlb_season_calendar import fetch_mlb_season_windows
@@ -1594,6 +1609,8 @@ def main():
         if competition in nhl_standings_caches:
             return (season_status.eligible('NHL') and
                     any(row.played > 0 for row in nhl_standings_caches[competition].rows()))
+        if competition in nfl_standings_caches:
+            return any(row.played > 0 for row in nfl_standings_caches[competition].rows())
         if competition in nba_standings_caches and nba_season_worker is not None:
             return season_status.eligible('NBA')
         return True
@@ -1715,13 +1732,22 @@ def main():
                 nba_season_worker.start()
             else:
                 nba_season_worker.stop()
+        selected_nfl_divisions = (standings_options.get('nfl_divisions', [])
+                                  if settings['sports']['nfl']['enabled'] else [])
         standings_rotation.configure(
             enabled=standings_options['enabled'],
             page_seconds=standings_options['page_seconds'],
             selected_leagues=[*selected_standings_leagues, *selected_mlb_groups,
-                              *selected_nhl_groups, *selected_nba_conferences])
+                              *selected_nhl_groups, *selected_nba_conferences,
+                              *selected_nfl_divisions])
         for league, cache in standings_caches.items():
             cache.refresh_seconds = standings_options['refresh_seconds']
+            if league in nfl_standings_workers:
+                if standings_options['enabled'] and league in selected_nfl_divisions:
+                    nfl_standings_workers[league].start()
+                else:
+                    nfl_standings_workers[league].stop()
+                continue
             if league in nba_standings_workers:
                 if standings_options['enabled'] and league in selected_nba_conferences:
                     nba_standings_workers[league].start()
