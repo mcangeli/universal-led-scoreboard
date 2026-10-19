@@ -41,13 +41,9 @@ def validate_settings(value):
                nwsl=dict(DEFAULT_SETTINGS['nwsl']) | value.get('nwsl',{}),
                english=dict(DEFAULT_SETTINGS['english']) | value.get('english',{}))
     standings=value['standings']
-    if (set(standings) not in (set(DEFAULT_SETTINGS['standings']), set(DEFAULT_SETTINGS['standings']) | {'leagues'},
-                                   set(DEFAULT_SETTINGS['standings']) | {'mlb_divisions'},
-                                   set(DEFAULT_SETTINGS['standings']) | {'leagues', 'mlb_divisions'},
-                                   set(DEFAULT_SETTINGS['standings']) | {'nhl_divisions'},
-                                   set(DEFAULT_SETTINGS['standings']) | {'leagues', 'nhl_divisions'},
-                                   set(DEFAULT_SETTINGS['standings']) | {'mlb_divisions', 'nhl_divisions'},
-                                   set(DEFAULT_SETTINGS['standings']) | {'leagues', 'mlb_divisions', 'nhl_divisions'})
+    optional_standings = {'leagues', 'mlb_divisions', 'nhl_divisions', 'nhl_wild_cards'}
+    if (not set(DEFAULT_SETTINGS['standings']) <= set(standings)
+            or set(standings) - set(DEFAULT_SETTINGS['standings']) - optional_standings
             or type(standings['enabled']) is not bool):
         raise ValueError('Invalid standings settings')
     if 'leagues' in standings:
@@ -70,6 +66,13 @@ def validate_settings(value):
                 any(not isinstance(name, str) or name not in NHL_DIVISIONS
                     for name in divisions)):
             raise ValueError('Invalid NHL standings division selection')
+    if 'nhl_wild_cards' in standings:
+        from .nhl_standings_feed import NHL_WILD_CARD_GROUPS
+        groups = standings['nhl_wild_cards']
+        if (not isinstance(groups, list) or len(groups) != len(set(groups)) or
+                any(not isinstance(name, str) or name not in NHL_WILD_CARD_GROUPS
+                    for name in groups)):
+            raise ValueError('Invalid NHL wild card selection')
     for key,low,high in (('page_seconds',3,3600),('refresh_seconds',60,86400)):
         number=standings[key]
         if type(number) not in (int,float) or not low<=number<=high:
