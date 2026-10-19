@@ -13,9 +13,9 @@ class PortableRestoreFailureTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as source, tempfile.TemporaryDirectory() as destination:
             src, dst = Path(source), Path(destination)
             (src / "teams.json").write_text(json.dumps({"ATL": {"primary": "#123456"}}))
-            (src / "scoreboard.json").write_text(json.dumps({"background": "#112233"}))
+            (src / "scoreboard.json").write_text(json.dumps({"text": "#112233"}))
             (dst / "teams.json").write_text('{"ATL":{"primary":"#654321"}}')
-            (dst / "scoreboard.json").write_text('{"background":"#334455"}')
+            (dst / "scoreboard.json").write_text('{"text":"#334455"}')
             (dst / "matrix.json").write_text('{"enabled":true}')
             original = {name: (dst / name).read_bytes() for name in
                         ("teams.json", "scoreboard.json", "matrix.json")}
