@@ -9,7 +9,7 @@ class HostnamedBackupTests(unittest.TestCase):
         source = inspect.getsource(configurator)
         self.assertIn("socket.gethostname()", source)
         self.assertIn("hostname=re.sub(", source)
-        self.assertIn("'portable-backup-'+time.strftime('%Y-%m-%d')+'.zip'", source)
+        self.assertIn("portable-backup-'+time.strftime('%Y-%m-%d')+'.zip'", source)
         self.assertIn("self.send_header('Content-Disposition','attachment; filename='+", source.replace("'attachment; filename="'+filename+'"'", "'attachment; filename='+"))
 
     def test_browser_uses_server_filename(self):
