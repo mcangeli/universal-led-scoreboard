@@ -12,7 +12,8 @@ def _stat(stats, *names):
     for stat in stats:
         if isinstance(stat, dict) and (stat.get('name') in names or
                                       stat.get('abbreviation') in names):
-            return stat.get('value', stat.get('displayValue'))
+            value = stat.get('value')
+            return value if value is not None else stat.get('displayValue')
     return None
 
 
@@ -53,13 +54,13 @@ def parse_nba_standings(payload):
             wins = _integer(_stat(stats, 'wins', 'W'))
             losses = _integer(_stat(stats, 'losses', 'L'))
             rank = _integer(_stat(stats, 'playoffSeed', 'rank', 'seed'))
-            if rank is None:
+            if rank is None or rank < 1:
                 rank = position
             if not isinstance(code, str) or not code.strip() or wins is None or losses is None:
                 continue
             games_back = _stat(stats, 'gamesBehind', 'GB')
             if games_back is not None:
-                games_back = str(games_back)[:5]
+                games_back = str(games_back).strip()[:5]
             result.append(Standing(
                 league='NBA', group=group, team_id=code.upper(),
                 abbreviation=code.upper()[:3], played=wins + losses,
