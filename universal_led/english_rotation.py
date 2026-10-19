@@ -10,14 +10,16 @@ from .soccer_scoring_alerts import observe_soccer_match
 from .soccer_pixels import render_soccer_screen
 from .soccer_rotation import eligible_matches, prioritize_live, is_live
 from .game_interruptions import InterruptionPolicy
+from .soccer_pregame import with_cached_records
 
 
 class EnglishFootballRenderer:
     def __init__(self, feeds, *, enabled=None, favorite_teams=(), mode="fallback",
-                 rotation_seconds=12, goal_seconds=8, clock=time.monotonic, scoring_alerts=None):
+                 rotation_seconds=12, goal_seconds=8, clock=time.monotonic, scoring_alerts=None, standings_caches=None):
         if not isinstance(feeds, dict) or any(key not in COMPETITIONS for key in feeds):
             raise ValueError("Expected English competition feed mapping")
         self.feeds = dict(feeds)
+        self.standings_caches = dict(standings_caches or {})
         self.clock = clock
         self.scoring_alerts = scoring_alerts
         self.interruption_policy = InterruptionPolicy()
@@ -45,7 +47,10 @@ class EnglishFootballRenderer:
         for league in COMPETITIONS:
             if league not in self.enabled or league not in self.feeds:
                 continue
-            matches.extend(match for match in self.feeds[league].games() if match.league == league)
+            cache = self.standings_caches.get(league)
+            rows = cache.rows() if cache is not None else ()
+            matches.extend(with_cached_records(match, rows) for match in self.feeds[league].games()
+                           if match.league == league)
         # Live games outrank scheduled favorite fixtures. Apply favorites
         # within the live pool, not across matches in different states.
         live_present = self.external_live_games or any(is_live(match) for match in matches)
