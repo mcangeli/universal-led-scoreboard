@@ -946,7 +946,10 @@ async function refreshStatus(){
   document.getElementById('feed-indicator').dataset.state=data.feed.error?'error':(data.feed.state==='ok'||data.feed.state==='healthy'?'healthy':'unknown');
   const when=timestamp=>timestamp?new Date(timestamp*1000).toLocaleString():'Not yet';
   document.getElementById('last-refresh').textContent='Last attempt: '+when(data.feed.last_attempt)+' | Last successful refresh: '+when(data.feed.last_success);
-  document.getElementById('current-game').textContent=data.current_game?('On board: '+data.current_game.away+' @ '+data.current_game.home+' | '+data.current_game.status):'No game selected';
+  const rotation=data.rotation||{};
+  const selected=rotation.selected_sport?String(rotation.selected_sport).toUpperCase():'None';
+  const priority=rotation.priority==='live'?'Live games first':rotation.priority==='normal'?'Normal rotation':'Unavailable';
+  document.getElementById('current-game').textContent=(data.current_game?('Selected game: '+data.current_game.away+' @ '+data.current_game.home+' | '+data.current_game.status):'No game selected')+' | Selected sport: '+selected+' | '+priority;
   const sportGrid=document.getElementById('dashboard-sports');
   if(sportGrid){
    sportGrid.replaceChildren();
@@ -1320,7 +1323,7 @@ def make_handler(config_dir,token,frame_provider=None,settings_callback=None,fee
                          'rotation_seconds':settings[name]['rotation_seconds'],
                          'feed_state':feed.get('state','unavailable') if name=='mlb' else 'unavailable'}
                         for name,label in labels.items()]
-                self.send_json(200,{'application':'Universal LED Scoreboard','uptime_seconds':int(time.monotonic()-started),'board':{'width':64,'height':32,'backend':'emulator'},'feed':feed,'current_game':current,'sports':sports})
+                self.send_json(200,{'application':'Universal LED Scoreboard','uptime_seconds':int(time.monotonic()-started),'board':{'width':64,'height':32,'backend':'emulator'},'feed':feed,'current_game':current,'sports':sports,'rotation':rotation_status() if rotation_status else {'selected_sport':None,'priority':'unavailable','live_sports':[]}})
             elif path=='/api/feed':
                 self.send_json(200,feed_status() if feed_status else {'state':'unavailable'})
             elif path=='/api/defaults':
