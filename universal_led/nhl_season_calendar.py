@@ -34,7 +34,9 @@ def parse_nhl_season_windows(payload, *, today=None):
         windows.append({'phase': 'regular', 'start': start.isoformat() + 'T00:00:00Z',
                         'end': end.isoformat() + 'T00:00:00Z'})
     if not windows:
-        raise ValueError('NHL seasons response has no verified regular-season dates')
+        candidates = [item for item in payload['data'] if isinstance(item, dict) and str(item.get('id', '')).startswith(str(today.year))]
+        fields = [{key: item.get(key) for key in ('id', 'regularSeasonStartDate', 'regularSeasonEndDate', 'startDate', 'endDate')} for item in candidates[:3]]
+        raise ValueError('NHL seasons response has no verified regular-season dates; current-year season fields: ' + repr(fields))
     return windows
 
 
