@@ -31,8 +31,10 @@ class EnglishStandingsPreferencesTests(unittest.TestCase):
     def test_dashboard_and_startup_wire_selections(self):
         self.assertIn('id="english-standings-leagues"', configurator.HTML)
         self.assertIn("next.standings.leagues=Array.from(", configurator.HTML)
-        self.assertIn("selected_leagues=standings_options.get('leagues', english['enabled_leagues'])",
-                      inspect.getsource(configurator.main))
+        source = inspect.getsource(configurator.main)
+        self.assertIn("selected_standings_leagues = standings_options.get('leagues', english['enabled_leagues'])", source)
+        self.assertIn("selected_leagues=selected_standings_leagues", source)
+        self.assertIn("if needs_pregame_records or needs_standings_page:", source)
 
 
 if __name__ == '__main__':
