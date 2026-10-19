@@ -9,20 +9,31 @@ from pathlib import Path
 SERVICE = 'universal-led-scoreboard.service'
 
 def service_status():
-    try:
-        result = subprocess.run(
-            ['systemctl', '--user', 'show', SERVICE,
-             '--property=LoadState,ActiveState,SubState,UnitFileState',
-             '--no-pager'], capture_output=True, text=True, timeout=2, check=False)
+    """Prefer the supported system unit, retaining legacy user-unit support."""
+    candidates = (
+        (['systemctl', 'show', 'uls-web.service'], 'uls-web.service'),
+        (['systemctl', '--user', 'show', SERVICE], SERVICE),
+    )
+    for command, unit in candidates:
+        try:
+            result = subprocess.run(
+                command + ['--property=LoadState,ActiveState,SubState,UnitFileState',
+                           '--no-pager'],
+                capture_output=True, text=True, timeout=2, check=False)
+        except (OSError, subprocess.TimeoutExpired):
+            continue
         if result.returncode:
-            return {'state':'unavailable','detail':'User systemd manager or unit unavailable'}
+            continue
         values = dict(line.split('=', 1) for line in result.stdout.splitlines() if '=' in line)
-        return {'state':values.get('ActiveState','unknown'),
-                'substate':values.get('SubState','unknown'),
-                'enabled':values.get('UnitFileState','unknown'),
-                'loaded':values.get('LoadState','unknown')}
-    except (OSError, subprocess.TimeoutExpired):
-        return {'state':'unavailable','detail':'systemctl unavailable'}
+        if values.get('LoadState') != 'loaded':
+            continue
+        return {'state':values.get('ActiveState') or 'unknown',
+                'substate':values.get('SubState') or 'unknown',
+                'enabled':values.get('UnitFileState') or 'unknown',
+                'loaded':values.get('LoadState') or 'unknown',
+                'unit':unit}
+    return {'state':'unavailable','detail':'No installed scoreboard web service found'}
+
 
 def system_status():
     disk = shutil.disk_usage(Path.home())
