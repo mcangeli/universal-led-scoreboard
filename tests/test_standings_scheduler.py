@@ -181,18 +181,17 @@ class StandingsSchedulerTests(unittest.TestCase):
         # Final scores remain eligible for the day's game rotation.
         now[0] = 60
         game_renderer.live = False
-        self.assertEqual(board.frame().pixels[0][0], (4, 5, 6))
-        self.assertEqual(standings.calls, 1)
-        # Only when the day's games are no longer eligible do idle
-        # standings return.
+        self.assertEqual(board.frame().pixels[0][0], (1, 2, 3))
+        self.assertEqual(standings.calls, 0)
+        # Once the schedule is empty, standings own the display.
         now[0] = 120
         game_renderer.games = False
         self.assertEqual(board.frame().pixels[0][0], (4, 5, 6))
-        self.assertEqual(standings.calls, 2)
+        self.assertEqual(standings.calls, 1)
         # A newly scheduled game joins the rotation without suppressing standings.
         game_renderer.games = True
         self.assertEqual(board.frame().pixels[0][0], (4, 5, 6))
-        self.assertEqual(standings.calls, 3)
+        self.assertEqual(standings.calls, 2)
 
     def test_disabled_standings_preserve_blank_fallback(self):
         board = MultiSportRenderer(Renderer(), Renderer(), standings_rotation=Standings(False))
