@@ -960,7 +960,8 @@ async function refreshStatus(){
     const live=Array.isArray(rotation.live_sports)&&rotation.live_sports.includes(sport.id);
     const detail=document.createElement('p');
     const activity=!sport.enabled?'Disabled':active?'Currently selected':live?'Live game available':'Enabled';
-    detail.textContent=activity+' | Rotation: '+sport.rotation_seconds+'s | Feed: '+sport.feed_state+(sport.feed_games===null?'':' | Games: '+sport.feed_games)+(sport.feed_error?' | Error: '+sport.feed_error:'');
+    const refreshed=sport.feed_last_success==null?'Never':when(sport.feed_last_success);
+    detail.textContent=activity+' | Rotation: '+sport.rotation_seconds+'s | Feed: '+sport.feed_state+(sport.feed_games==null?'':' | Games: '+sport.feed_games)+' | Last success: '+refreshed+(sport.feed_error?' | Error: '+sport.feed_error:'');
     if(active){card.style.borderColor='#d7b46d';card.setAttribute('aria-label',sport.label+' currently selected');}
     card.append(heading,detail);sportGrid.append(card);
    }
@@ -1329,7 +1330,8 @@ def make_handler(config_dir,token,frame_provider=None,settings_callback=None,fee
                          'rotation_seconds':settings[name]['rotation_seconds'],
                          'feed_state':feed_states.get(name,{}).get('state','unavailable'),
                          'feed_games':feed_states.get(name,{}).get('games'),
-                         'feed_error':feed_states.get(name,{}).get('error')}
+                         'feed_error':feed_states.get(name,{}).get('error'),
+                         'feed_last_success':feed_states.get(name,{}).get('last_success')}
                         for name,label in labels.items()]
                 self.send_json(200,{'application':'Universal LED Scoreboard','uptime_seconds':int(time.monotonic()-started),'board':{'width':64,'height':32,'backend':'emulator'},'feed':feed,'current_game':current,'sports':sports,'rotation':rotation_status() if rotation_status else {'selected_sport':None,'priority':'unavailable','live_sports':[]}})
             elif path=='/api/feed':
@@ -2003,6 +2005,7 @@ def main():
         errors=[entry.get('error') for entry in league_states if entry.get('error')]
         result['english']={'state':'error' if errors else 'running' if any(entry.get('state')=='running' for entry in league_states) else 'starting',
                            'games':sum(entry.get('games',0) for entry in league_states),
+                           'last_success':min((entry['last_success'] for entry in league_states if entry.get('last_success') is not None),default=None) if all(entry.get('last_success') is not None for entry in league_states) else None,
                            'error':'; '.join(str(error) for error in errors) if errors else None}
         return result
     def countdown_status():
