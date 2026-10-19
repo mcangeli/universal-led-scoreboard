@@ -157,7 +157,6 @@ def restore_portable(archive_bytes: bytes, destination: str | Path, sections: li
     """
     import os
     import tempfile
-    import shutil
     from uuid import uuid4
 
     preview = validate_portable_sections(archive_bytes, destination)
@@ -189,6 +188,8 @@ def restore_portable(archive_bytes: bytes, destination: str | Path, sections: li
                         os.fsync(stream.fileno())
                     os.replace(tmp, target)
                     applied.append(section)
+                    if target.read_bytes() != payload:
+                        raise OSError('Restore verification failed: ' + section)
                 finally:
                     if os.path.exists(tmp):
                         os.unlink(tmp)
@@ -199,7 +200,17 @@ def restore_portable(archive_bytes: bytes, destination: str | Path, sections: li
             if previous is None:
                 target.unlink(missing_ok=True)
             else:
-                target.write_bytes(previous)
+                fd, tmp = tempfile.mkstemp(prefix=".portable-rollback-", dir=root)
+                try:
+                    with os.fdopen(fd, "wb") as stream:
+                        stream.write(previous)
+                        stream.flush()
+                        os.fsync(stream.fileno())
+                    os.replace(tmp, target)
+                finally:
+                    if os.path.exists(tmp):
+                        os.unlink(tmp)
         raise
-    return {"applied": True, "sections": applied, "hardware_preserved": True,
+    return {"applied": True, "verified": True, "sections": applied,
+            "hardware_preserved": True, "restart_required": True,
             "recovery_directory": str(recovery)}
