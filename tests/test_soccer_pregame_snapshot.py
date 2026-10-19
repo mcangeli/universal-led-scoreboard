@@ -12,8 +12,8 @@ class PregameSnapshotTests(unittest.TestCase):
         controller.update(original)
         enriched = replace(original, home_record="4-2-2", away_record="5-1-2")
         screen = controller.screen(enriched, 0)
-        self.assertIn("4-2-2", screen.line1)
-        self.assertIn("5-1-2", screen.line2)
+        self.assertIn("4-2-2", screen.line2)
+        self.assertIn("5-1-2", screen.line1)
 
     def test_missing_enrichment_does_not_erase_feed_record(self):
         original = SoccerMatch("m", "EPL", "COV", "TOT", 0, 0, "pre",
