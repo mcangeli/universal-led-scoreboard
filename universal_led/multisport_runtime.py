@@ -226,30 +226,25 @@ class MultiSportRenderer:
                         return draw(final_game)
         sport = self._selected()
         renderer = self._renderer(sport)
-        # Standings are optional idle pages, never interruptions. They may
-        # appear only when no enabled sport has an eligible game. Existing
-        # scoring alerts have already been handled above.
+        # Live games suppress standings; scheduled pregame games do not.
+        # Alternate standings with pregame/news content when both exist.
         idle_news_slot = False
         if (self.standings_rotation is not None
                 and not self._live_sports()
-                and not self._available()
                 and self.standings_rotation.has_pages()):
-            # Give cached news its own idle slots rather than letting a
-            # standings table permanently crowd it off the board.
+            available_games = bool(self._available())
             has_news = (self.news is not None and
                         self.settings_getter is not None and
                         bool(self.news.items()))
-            if not has_news:
+            if not available_games and not has_news:
                 return self.standings_rotation.frame()
             duration = self.standings_rotation.page_seconds
-            # Anchor idle slots to the standings timer, which resets only
-            # when standings preferences actually change.
             idle_slot = int(max(0, self.clock() - getattr(self.standings_rotation, 'started', self._started)) // duration)
             if idle_slot % 2 == 0:
                 logical_frame = getattr(self.standings_rotation, 'frame_for_slot', None)
                 return (logical_frame(idle_slot // 2) if callable(logical_frame)
                         else self.standings_rotation.frame())
-            idle_news_slot = True
+            idle_news_slot = not available_games and has_news
         if self.news is not None and self.settings_getter is not None:
             headlines = self.news.items()
             if headlines and self._live_sports():
