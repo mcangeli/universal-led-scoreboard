@@ -53,3 +53,15 @@ Use the dashboard's candidate validation before installation. Preserve the exist
 - Add deterministic scheduler regressions for one/multiple finishes, simultaneous finishes, interrupted slots, and the timeout boundary before production rollout.
 
 Status: specification approved; implementation and acceptance tests pending.
+
+
+## Sports polish gate (dev first; production held)
+
+- [ ] Soccer pregame displays W-D-L records for both clubs and scheduled kickoff in configured local time across EPL, Championship, League One, League Two, MLS, and NWSL.
+- [ ] Soccer pregame draws from cached/provider standings with correct team ID mapping; missing or stale records show a clear fallback, never invented 0-0-0.
+- [ ] Pregame header identifies the competition; labels, records, and time fit 64x32 without truncation or overlap.
+- [ ] Pregame, live, halftime, stoppage, interruption, final, and rotation transitions pass per-league regressions.
+- [ ] All enabled sports receive pregame/live/final visual review on the Pi 5 dev board preview and physical matrix when available.
+- [ ] Full test suite passes on dev, clean install/update retains configuration, and explicit sign-off precedes production deployment.
+
+Dev workflow: commit only to feature/0.7.0-scoring-standings; validate on the dev installation. Production is intentionally held at its current installed build even if the displayed version string also reads 0.7.0.
