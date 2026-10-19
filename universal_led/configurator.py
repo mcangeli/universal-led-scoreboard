@@ -309,7 +309,7 @@ async function saveNewsSources(){
  catch(err){status.textContent=err.message}
 }
 const clone=value=>JSON.parse(JSON.stringify(value));
-function markDirty(){dirty=JSON.stringify(state)!==JSON.stringify(saved);document.getElementById('dirty').textContent=dirty?'Unsaved changes':'All changes saved';}
+function markDirty(){dirty=JSON.stringify(state)!==JSON.stringify(saved)||(nhlColors!==null&&nhlSavedColors!==null&&JSON.stringify(nhlColors)!==JSON.stringify(nhlSavedColors));document.getElementById('dirty').textContent=dirty?'Unsaved changes':'All changes saved';}
 const hex=rgb=>'#'+rgb.map(x=>x.toString(16).padStart(2,'0')).join('');
 const rgb=hex=>[1,3,5].map(i=>parseInt(hex.slice(i,i+2),16));
 function section(name){
@@ -388,7 +388,7 @@ document.getElementById('mlb-reset-color').onclick=async()=>{
   section('teams');markDirty();draw();status.textContent='Default restored in editor. Save to apply.';
  }catch(err){status.textContent=err.message}
 };
-document.getElementById('cancel').onclick=()=>{state=clone(saved);selected=null;section('scoreboard');section('teams');markDirty();draw();document.getElementById('status').textContent='Unsaved changes discarded.'};
+document.getElementById('cancel').onclick=()=>{state=clone(saved);if(nhlSavedColors!==null){nhlColors=clone(nhlSavedColors);showNHLColorEditor();document.getElementById('nhl-color-status').textContent='Unsaved NHL color changes discarded.';}selected=null;section('scoreboard');section('teams');markDirty();draw();document.getElementById('status').textContent='Unsaved changes discarded.'};
 document.getElementById('reset').onclick=async()=>{
  const status=document.getElementById('status');
  if(!selected){status.textContent='Select a color first.';return;}
@@ -426,7 +426,7 @@ document.getElementById('save').onclick=async()=>{
   saved=clone(state);markDirty();status.textContent='Saved. Other running preview processes may require restart to reload colors.';
  }catch(err){status.textContent=err.message}
 };
-let nhlColors=null,nhlColorDefaults=null;
+let nhlColors=null,nhlSavedColors=null,nhlColorDefaults=null;
 function showNHLColorEditor(){
  const code=document.getElementById('nhl-edit-team').value;
  const target=document.getElementById('nhl-color-editor');target.replaceChildren();
@@ -442,7 +442,7 @@ function showNHLColorEditor(){
  const update=next=>{
   nhlColors[code]=next;picker.value=hex(next);hexValue.textContent=hex(next).toUpperCase();
   sliders.forEach((entry,i)=>{entry.input.value=next[i];entry.output.textContent=next[i]});
-  document.getElementById('nhl-color-status').textContent='Unsaved NHL color changes.';
+  markDirty();document.getElementById('nhl-color-status').textContent='Unsaved NHL color changes.';
  };
  ['Red','Green','Blue'].forEach((channel,i)=>{
   const row=document.createElement('label');row.className='color-channel';
@@ -458,7 +458,7 @@ function showNHLColorEditor(){
 }
 async function loadNHLColors(){
  const response=await fetch('/api/nhl-colors',{cache:'no-store'});if(!response.ok)throw Error('Cannot load NHL colors');
- nhlColors=await response.json();
+ nhlColors=await response.json();nhlSavedColors=clone(nhlColors);markDirty();
  const defaults=await fetch('/api/defaults');if(!defaults.ok)throw Error('Cannot load default colors');
  nhlColorDefaults=(await defaults.json()).nhl_teams;
  const select=document.getElementById('nhl-edit-team'),previous=select.value;select.replaceChildren();
@@ -469,7 +469,7 @@ async function loadNHLColors(){
 document.getElementById('nhl-edit-team').onchange=showNHLColorEditor;
 document.getElementById('nhl-reset-color').onclick=()=>{
  const code=document.getElementById('nhl-edit-team').value;
- nhlColors[code]=[...nhlColorDefaults[code]];showNHLColorEditor();
+ nhlColors[code]=[...nhlColorDefaults[code]];showNHLColorEditor();markDirty();
  document.getElementById('nhl-color-status').textContent='Default restored in editor. Save to apply.';
 };
 document.getElementById('nhl-save-color').onclick=async()=>{
@@ -481,7 +481,7 @@ document.getElementById('nhl-save-color').onclick=async()=>{
  try{
   const response=await fetch('/api/nhl-colors',{method:'POST',headers:{'Content-Type':'application/json','X-Configurator-Token':token},body:JSON.stringify({[code]:color})});
   const result=await response.json();if(!response.ok)throw Error(result.error||'Save failed');
-  status.textContent='Saved NHL '+code+' color. Restart the matrix after renderer support is installed.';
+  nhlSavedColors[code]=clone(color);markDirty();status.textContent='Saved NHL '+code+' color.';
  }catch(err){status.textContent=err.message}
 };
 const NHL_TEAMS=[["ANA","Anaheim Ducks"],["BOS","Boston Bruins"],["BUF","Buffalo Sabres"],["CGY","Calgary Flames"],["CAR","Carolina Hurricanes"],["CHI","Chicago Blackhawks"],["COL","Colorado Avalanche"],["CBJ","Columbus Blue Jackets"],["DAL","Dallas Stars"],["DET","Detroit Red Wings"],["EDM","Edmonton Oilers"],["FLA","Florida Panthers"],["LAK","Los Angeles Kings"],["MIN","Minnesota Wild"],["MTL","Montréal Canadiens"],["NSH","Nashville Predators"],["NJD","New Jersey Devils"],["NYI","New York Islanders"],["NYR","New York Rangers"],["OTT","Ottawa Senators"],["PHI","Philadelphia Flyers"],["PIT","Pittsburgh Penguins"],["SJS","San Jose Sharks"],["SEA","Seattle Kraken"],["STL","St. Louis Blues"],["TBL","Tampa Bay Lightning"],["TOR","Toronto Maple Leafs"],["UTA","Utah Mammoth"],["VAN","Vancouver Canucks"],["VGK","Vegas Golden Knights"],["WSH","Washington Capitals"],["WPG","Winnipeg Jets"]];
