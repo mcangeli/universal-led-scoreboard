@@ -59,15 +59,12 @@ def _tiny_text(frame, value, x, y, color, limit):
 
 
 def _render_mlb_division(frame, league, rows, offset):
-    """Port the original MLB-LED-Scoreboard 64x32 standings geometry.
+    """Adapt original MLB-LED-Scoreboard 64x32 three-column standings.
 
-    Original coordinates: six-pixel row pitch, team x=1, vertical divider
-    x=13, record x=31, height=30, bottom division indicator.
-    The narrow center gutter adds an explicit division abbreviation.
+    Five six-pixel rows: team, win-loss record, official games back.
+    Division is identified by the original six-segment footer.
     """
     division = league.upper().replace("_", " ")
-    codes = {'AL EAST': 'ALE', 'AL CENTRAL': 'ALC', 'AL WEST': 'ALW',
-             'NL EAST': 'NLE', 'NL CENTRAL': 'NLC', 'NL WEST': 'NLW'}
     for x in range(64):
         frame.pixel(x, 0, DIM)
     for y in range(30):
@@ -75,12 +72,10 @@ def _render_mlb_division(frame, league, rows, offset):
     for index, standing in enumerate(tuple(rows)[offset:offset + 5]):
         y = index * 6 + 1
         _tiny_text(frame, standing.abbreviation or standing.team_id, 1, y, WHITE, 3)
-        # Explicit league/division code, not just a cryptic bottom marker.
-        if index == 0:
-            _tiny_text(frame, codes.get(division, 'MLB'), 16, y, GREEN, 3)
-        _tiny_text(frame, str(standing.wins)[-3:], 31, y, GOLD, 3)
-        _tiny_text(frame, "-", 43, y, DIM, 1)
-        _tiny_text(frame, str(standing.losses)[-3:], 47, y, GOLD, 3)
+        record = f'{standing.wins}-{standing.losses}'
+        _tiny_text(frame, record, 17, y, GOLD, 7)
+        gb = standing.games_back if standing.games_back is not None else '-'
+        _tiny_text(frame, gb[-5:], 63 - len(gb[-5:]) * 4, y, GOLD, 5)
         for x in range(64):
             frame.pixel(x, y + 5, DIM)
     segments = {'AL WEST': 0, 'AL CENTRAL': 1, 'AL EAST': 2,
