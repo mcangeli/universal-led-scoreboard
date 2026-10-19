@@ -43,7 +43,8 @@ def parse_mlb_standings(payload):
                 league="MLB", group=DIVISION_KEYS[division_id],
                 team_id=str(team_id), played=wins + losses,
                 wins=wins, losses=losses, rank=rank,
-                abbreviation=code[:3]))
+                abbreviation=code[:3],
+                games_back=str(team.get("divisionGamesBack", "-"))))
     return tuple(rows)
 
 
