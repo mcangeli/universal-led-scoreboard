@@ -1387,6 +1387,9 @@ def main():
     # Observe score changes as feeds refresh, even when another sport owns the display.
     nhl_feed.on_games = lambda games: nhl_renderer.score_observer.observe(games, favorite_teams=nhl_renderer.favorite_teams)
     nfl_feed.on_games = lambda games: nfl_renderer.score_observer.observe(games, favorite_teams=nfl_renderer.favorite_teams)
+    from .mlb_score_alerts import MLBRunObserver
+    mlb_run_observer = MLBRunObserver(scoring_alerts, lambda: renderer.settings()['mlb']['favorite_teams'])
+    feed.on_games = mlb_run_observer.observe
     nba_feed.on_games = nba_renderer._observe_lead_changes
     wnba_feed.on_games = wnba_renderer._observe_lead_changes
     from .soccer_data import SoccerFeed, fetch_scores
