@@ -183,7 +183,8 @@ def render_standings(league, rows, *, offset=0):
     if rows and rows[0].league == "NBA":
         _render_nba_conference(frame, league, rows, offset)
         return frame
-    labels = {"CHAMPIONSHIP": "CHAMP", "LEAGUE_ONE": "LGE 1",
+    labels = {"Eastern Conference": "MLS EAST", "Western Conference": "MLS WEST",
+              "CHAMPIONSHIP": "CHAMP", "LEAGUE_ONE": "LGE 1",
               "LEAGUE_TWO": "LGE 2"}
     _tiny_text(frame, labels.get(league, league), 1, 1, GOLD, 9)
     # Compact soccer columns: club | W | L | D | points.
