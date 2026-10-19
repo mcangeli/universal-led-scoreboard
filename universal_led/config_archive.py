@@ -117,3 +117,33 @@ def inspect_portable(archive_bytes: bytes, destination: str | Path) -> dict:
             }
     except (zipfile.BadZipFile, UnicodeDecodeError, KeyError, TypeError, json.JSONDecodeError) as exc:
         raise ValueError("Invalid configuration archive") from exc
+
+
+def validate_portable_sections(archive_bytes: bytes, destination: str | Path) -> dict:
+    """Perform schema checks after integrity inspection, without writing files.
+
+    Legacy optional fields are normalized using the application's validators.
+    Device-specific settings are never eligible for this operation.
+    """
+    preview = inspect_portable(archive_bytes, destination)
+    from .sport_settings import validate_settings
+    from .colors import normalize_team_colors, normalize_scoreboard_colors
+    from .nhl_colors import NHL_TEAM_COLORS
+    from .time_weather_settings import validate_time_weather
+    from .season_countdown_settings import validate as validate_countdown
+    validators = {
+        "settings": validate_settings,
+        "teams": normalize_team_colors,
+        "nhl_teams": normalize_team_colors,
+        "scoreboard": normalize_scoreboard_colors,
+        "time_weather": validate_time_weather,
+        "season_countdown": validate_countdown,
+    }
+    with zipfile.ZipFile(io.BytesIO(archive_bytes)) as archive:
+        for section in preview["sections"]:
+            value = json.loads(archive.read(section + ".json"))
+            validators[section](value)
+            if section == "nhl_teams" and set(value) - set(NHL_TEAM_COLORS):
+                raise ValueError("Unknown NHL team color keys")
+    preview["schema_valid"] = True
+    return preview
