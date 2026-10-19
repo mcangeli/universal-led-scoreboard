@@ -239,7 +239,6 @@ def validate_settings(value):
     if not isinstance(mlb,dict):
         raise ValueError('Invalid MLB settings')
     # Older settings.json files predate the live-page split. Preserve them.
-    legacy_keys=set(DEFAULT_SETTINGS['mlb'])-{'live_classic_percent','live_matchup_percent'}
     current_keys=set(DEFAULT_SETTINGS['mlb'])
     allowed_legacy=(current_keys-{'favorite_teams'})|{'favorite_team'}
     if set(mlb) not in (current_keys,current_keys-{'live_classic_percent','live_matchup_percent'},
