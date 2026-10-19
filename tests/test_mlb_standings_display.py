@@ -33,14 +33,25 @@ class MLBStandingsDisplayTests(unittest.TestCase):
             self.assertTrue(all(frame.pixels[y][x] == (0, 0, 255)
                                 for x in range(64)))
 
-    def test_original_64x32_games_back_is_offscreen(self):
+    def test_games_back_is_visible_on_64x32(self):
         row = Standing('MLB', 'AL_EAST', '147', 100, 60, 40,
                        rank=1, abbreviation='NYY', games_back='3.5')
         with_gb = render_standings('AL EAST', (row,))
         without_gb = render_standings(
             'AL EAST', (Standing('MLB', 'AL_EAST', '147', 100, 60, 40,
                                  rank=1, abbreviation='NYY'),))
-        self.assertEqual(with_gb.pixels, without_gb.pixels)
+        self.assertNotEqual(with_gb.pixels, without_gb.pixels)
+        self.assertTrue(any(with_gb.pixels[y][x] == (171, 181, 170)
+                            for y in range(1, 6) for x in range(48, 64)))
+
+    def test_hyphen_stays_aligned_for_three_digit_records(self):
+        rows = tuple(Standing('MLB', 'AL_EAST', str(i), 160,
+                              wins, 160 - wins, rank=i + 1,
+                              abbreviation='NYY', games_back=str(i))
+                     for i, wins in enumerate((99, 100, 101, 98, 97)))
+        frame = render_standings('AL EAST', rows)
+        for index in range(5):
+            self.assertEqual(frame.pixels[3 + index * 6][28], (171, 181, 170))
 
     def test_mlb_division_is_single_rotation_page(self):
         rows = tuple(Standing('MLB', 'NL_EAST', str(i), 100,
