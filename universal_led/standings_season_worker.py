@@ -40,7 +40,9 @@ class SeasonCalendarWorker:
             with self._lock:
                 self._windows = windows
                 self.last_error = None
-            if phase != 'unknown':
+            if phase == 'unknown':
+                self.status.invalidate(self.competition)
+            else:
                 self.status.update(self.competition, phase)
             return phase
         except Exception as exc:
@@ -55,7 +57,9 @@ class SeasonCalendarWorker:
         if not windows:
             return 'unknown'
         phase = season_phase(windows, self.clock())
-        if phase != 'unknown':
+        if phase == 'unknown':
+            self.status.invalidate(self.competition)
+        else:
             self.status.update(self.competition, phase)
         return phase
 
