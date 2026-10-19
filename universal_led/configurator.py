@@ -1582,7 +1582,11 @@ def main():
             cache.refresh_seconds = standings_options['refresh_seconds']
             # Standings are a separate content feed, not dependent on
             # whether English football game screens are enabled.
-            if standings_options['enabled'] and league in selected_standings_leagues:
+            needs_pregame_records = (settings['sports']['english']['enabled'] and
+                                     league in english['enabled_leagues'])
+            needs_standings_page = (standings_options['enabled'] and
+                                    league in selected_standings_leagues)
+            if needs_pregame_records or needs_standings_page:
                 standings_workers[league].start()
             else:
                 standings_workers[league].stop()
