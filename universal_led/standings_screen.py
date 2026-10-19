@@ -111,6 +111,28 @@ def _render_mlb_division(frame, league, rows, offset):
                    baseline - 5, stat_color, 4)
 
 
+def _render_nhl_division(frame, league, rows, offset):
+    """NHL division: team, wins, regulation losses, OTL, points.
+
+    Three rows per 64x32 page. Overtime losses must never be merged into
+    regulation losses or presented as football draws.
+    """
+    heading = {"Atlantic": "ATL", "Metropolitan": "MET",
+               "Central": "CEN", "Pacific": "PAC"}.get(league, league[:3])
+    _tiny_text(frame, heading, 0, 1, GOLD, 3)
+    for label, x in (("W", 17), ("L", 27), ("O", 37), ("P", 53)):
+        _tiny_text(frame, label, x, 1, GOLD, 1)
+    for x in range(64):
+        frame.pixel(x, 8, DIM)
+    for index, standing in enumerate(tuple(rows)[offset:offset + 3]):
+        y = 11 + index * 7
+        _tiny_text(frame, standing.abbreviation or standing.team_id, 0, y, WHITE, 3)
+        for value, x in ((standing.wins, 15), (standing.losses, 25),
+                         (standing.draws, 35), (standing.points, 49)):
+            _tiny_text(frame, str(value if value is not None else "-").rjust(2),
+                       x, y, GREEN if x == 49 else WHITE, 2)
+
+
 def render_standings(league, rows, *, offset=0):
     """Display five MLB rows or three football rows without collisions."""
     if type(offset) is not int or offset < 0:
@@ -118,6 +140,9 @@ def render_standings(league, rows, *, offset=0):
     frame = Framebuffer(64, 32)
     if rows and rows[0].league == "MLB":
         _render_mlb_division(frame, league, rows, offset)
+        return frame
+    if rows and rows[0].league == "NHL":
+        _render_nhl_division(frame, league, rows, offset)
         return frame
     labels = {"CHAMPIONSHIP": "CHAMP", "LEAGUE_ONE": "LGE 1",
               "LEAGUE_TWO": "LGE 2"}
