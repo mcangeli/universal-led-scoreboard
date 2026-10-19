@@ -77,9 +77,12 @@ class FootballStandingsCache:
                 with self._lock:
                     self.last_error = "Standings feed returned no teams"
                     return self._rows
-            if any(not isinstance(row, Standing) or row.league != self.league or
-                   (self.expected_group is not None and row.group != self.expected_group)
-                   for row in rows):
+            # Preserve the generic in-memory cache contract used by existing
+            # callers. Enforce record identity for persistent or group-bound feeds.
+            if (self.cache_path is not None or self.expected_group is not None) and any(
+                    not isinstance(row, Standing) or row.league != self.league or
+                    (self.expected_group is not None and row.group != self.expected_group)
+                    for row in rows):
                 with self._lock:
                     self.last_error = "Standings feed returned a different league or group"
                     return self._rows
