@@ -41,7 +41,7 @@ def validate_settings(value):
                nwsl=dict(DEFAULT_SETTINGS['nwsl']) | value.get('nwsl',{}),
                english=dict(DEFAULT_SETTINGS['english']) | value.get('english',{}))
     standings=value['standings']
-    optional_standings = {'leagues', 'mlb_divisions', 'nhl_divisions', 'nhl_wild_cards'}
+    optional_standings = {'leagues', 'mlb_divisions', 'nhl_divisions', 'nhl_wild_cards', 'nba_conferences'}
     if (not set(DEFAULT_SETTINGS['standings']) <= set(standings)
             or set(standings) - set(DEFAULT_SETTINGS['standings']) - optional_standings
             or type(standings['enabled']) is not bool):
@@ -73,6 +73,12 @@ def validate_settings(value):
                 any(not isinstance(name, str) or name not in NHL_WILD_CARD_GROUPS
                     for name in groups)):
             raise ValueError('Invalid NHL wild card selection')
+    if 'nba_conferences' in standings:
+        from .nba_standings_feed import NBA_CONFERENCES
+        groups = standings['nba_conferences']
+        if (not isinstance(groups, list) or any(type(name) is not str or name not in NBA_CONFERENCES for name in groups)
+                or len(groups) != len(set(groups))):
+            raise ValueError('Invalid NBA conference selection')
     for key,low,high in (('page_seconds',3,3600),('refresh_seconds',60,86400)):
         number=standings[key]
         if type(number) not in (int,float) or not low<=number<=high:
