@@ -1557,14 +1557,17 @@ def main():
     from .standings_season_status import StandingsSeasonStatus
     from .standings_season_worker import SeasonCalendarWorker
     from .mlb_season_calendar import fetch_mlb_season_windows
+    from .nhl_season_calendar import fetch_nhl_season_windows
     season_status = StandingsSeasonStatus()
     mlb_season_worker = SeasonCalendarWorker(
         'MLB', fetch_mlb_season_windows, season_status)
+    nhl_season_worker = SeasonCalendarWorker(
+        'NHL', fetch_nhl_season_windows, season_status)
     def standings_season_eligible(competition):
-        # Only MLB has a verified season-calendar adapter at this stage.
-        # Leave other sports' existing behavior unchanged until supported.
         if competition in mlb_standings_caches:
             return season_status.eligible('MLB')
+        if competition in nhl_standings_caches:
+            return season_status.eligible('NHL')
         return True
     standings_rotation = StandingsRotation(
         standings_caches, season_policy=standings_season_eligible)
@@ -1665,6 +1668,10 @@ def main():
                 selected_nhl_groups.append('Eastern_Wild_Card')
             if any(group in ('Central', 'Pacific') for group in selected_nhl_divisions):
                 selected_nhl_groups.append('Western_Wild_Card')
+        if standings_options['enabled'] and selected_nhl_groups:
+            nhl_season_worker.start()
+        else:
+            nhl_season_worker.stop()
         standings_rotation.configure(
             enabled=standings_options['enabled'],
             page_seconds=standings_options['page_seconds'],
@@ -1756,5 +1763,6 @@ def main():
         for worker in nhl_standings_workers.values():
             worker.stop()
         mlb_season_worker.stop()
+        nhl_season_worker.stop()
 if __name__=='__main__':
     main()
