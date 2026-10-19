@@ -583,7 +583,7 @@ function selectSport(name){
  const picker=document.getElementById('sport-picker');
  if(!Array.from(picker.options).some(option=>option.value===name))return;
  const current=document.querySelector('[data-sport-panel]:not([hidden])');
- if(current&&current.dataset.sportPanel!==name&&sportsSettingsDirty&&!confirm('You have unsaved sport settings changes. Switch sports without saving?')){picker.value=current.dataset.sportPanel;return;}
+ if(current&&current.dataset.sportPanel!==name&&sportsSettingsDirty&&!confirm('You have unsaved sport settings changes. Switch sports? Your unsaved changes will remain in the form until you save or reload.')){picker.value=current.dataset.sportPanel;return;}
  picker.value=name;
  document.querySelectorAll('[data-sport-panel]').forEach(panel=>panel.hidden=panel.dataset.sportPanel!==name);
  showSportsView('configure');
