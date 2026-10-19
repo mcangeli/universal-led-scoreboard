@@ -60,22 +60,23 @@ class SoccerScoringAlertTests(unittest.TestCase):
         observe_soccer_match(alerts, match(status="final", goals=(SoccerGoal("g1", "ARS"),)))
         self.assertIsNone(alerts.next_alert(0))
 
-    def test_halftime_cancels_active_goal_announcement(self):
+    def test_halftime_preserves_active_goal_announcement(self):
         alerts = ScoringAlerts(enabled=True, scope="all", seconds=8)
         observe_soccer_match(alerts, match())
         goal = SoccerGoal("g1", "ARS")
         observe_soccer_match(alerts, match(goals=(goal,)))
         self.assertEqual(alerts.next_alert(0).event_id, "g1")
         observe_soccer_match(alerts, match(status="halftime", goals=(goal,)))
-        self.assertIsNone(alerts.next_alert(1))
+        self.assertEqual(alerts.next_alert(1).event_id, "g1")
+        self.assertIsNone(alerts.next_alert(8))
 
-    def test_final_cancels_queued_goal_announcement(self):
+    def test_final_preserves_queued_goal_announcement(self):
         alerts = ScoringAlerts(enabled=True, scope="all")
         observe_soccer_match(alerts, match())
         goal = SoccerGoal("g1", "ARS")
         observe_soccer_match(alerts, match(goals=(goal,)))
         observe_soccer_match(alerts, match(status="final", goals=(goal,)))
-        self.assertIsNone(alerts.next_alert(0))
+        self.assertEqual(alerts.next_alert(0).event_id, "g1")
 
     def test_favorite_scope_uses_scoring_team(self):
         alerts = ScoringAlerts(enabled=True, scope="favorites")
