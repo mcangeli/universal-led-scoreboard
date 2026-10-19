@@ -37,6 +37,23 @@ class ScoreChangeObserverTests(unittest.TestCase):
         observer.observe((game(status="final", home=3),))
         self.assertIsNone(alerts.next_alert(0))
 
+    def test_final_cancels_pending_and_active(self):
+        alerts = ScoringAlerts(enabled=True, scope="all", seconds=5)
+        observer = ScoreChangeObserver(alerts, "nhl", "NHL", "GOAL")
+        observer.observe((game(),))
+        observer.observe((game(home=1),))
+        self.assertIsNotNone(alerts.next_alert(0))
+        observer.observe((game(status="final", home=1),))
+        self.assertIsNone(alerts.next_alert(1))
+
+    def test_postponement_cancels_pending(self):
+        alerts = ScoringAlerts(enabled=True, scope="all", seconds=5)
+        observer = ScoreChangeObserver(alerts, "nfl", "NFL")
+        observer.observe((game(),))
+        observer.observe((game(away=3),))
+        observer.observe((game(status="postponed", away=3),))
+        self.assertIsNone(alerts.next_alert(0))
+
     def test_favorites_scope_respected(self):
         alerts = ScoringAlerts(enabled=True, scope="favorites")
         observer = ScoreChangeObserver(alerts, "nhl", "NHL", "GOAL")
