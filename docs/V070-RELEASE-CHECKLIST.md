@@ -41,3 +41,15 @@ Status: **release candidate, not merged or tagged** (October 18, 2026).
 ## Rollback and safety
 
 Use the dashboard's candidate validation before installation. Preserve the existing `/etc/uls` configuration and `/var/lib/uls` data, and retain a known-good boot card for physical-device changes. Do not treat automated unit tests as proof of physical-driver compatibility or live-feed correctness.
+
+## Final-score handoff acceptance (planned)
+
+- When an eligible live game becomes final, retain a pending final-score presentation until at least one **complete** display slot has actually been shown.
+- Default one appearance; configurable one, two or three appearances under Sports & Rotation.
+- Each finishing game gets its own opportunity, including simultaneous finishes; active games remain eligible and retain priority between presentations.
+- A two-minute threshold is a scheduling/safety bound, **not** permission to silently discard a final that has never appeared.
+- Count completed visible slots, not feed polls or elapsed wall-clock time; handle interruptions and renderer restarts without falsely crediting an appearance.
+- After the required appearances, normal scheduled/final rotation and idle standings rules apply.
+- Add deterministic scheduler regressions for one/multiple finishes, simultaneous finishes, interrupted slots, and the timeout boundary before production rollout.
+
+Status: specification approved; implementation and acceptance tests pending.
