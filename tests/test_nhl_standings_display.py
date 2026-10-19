@@ -7,7 +7,7 @@ from universal_led.standings_rotation import StandingsRotation
 
 
 def row(i, *, group='Atlantic', overtime=2):
-    return Standing('NHL', group, f'T{i}', 20, 12, 6, overtime,
+    return Standing('NHL', group, f'T{i}', 18 + overtime, 12, 6, overtime,
                     points=26, rank=i, abbreviation=f'T{i}')
 
 
