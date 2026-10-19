@@ -1563,7 +1563,7 @@ def main():
             'NBA', fetcher=lambda _league, group=conference: fetch_nba_conference(group),
             refresh_seconds=initial['standings']['refresh_seconds'],
             cache_dir=Path(args.config_dir) / 'standings-cache',
-            cache_key='nba-' + conference.lower())
+            cache_key='nba-' + conference.lower(), expected_group=conference)
         for conference in NBA_CONFERENCES
     }
     nba_standings_workers = {
