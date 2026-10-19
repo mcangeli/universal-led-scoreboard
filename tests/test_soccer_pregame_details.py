@@ -4,6 +4,7 @@ import unittest
 from universal_led.soccer import SoccerMatch, SUPPORTED_LEAGUES
 from universal_led.soccer_feed import parse_scoreboard
 from universal_led.soccer_screens import match_screen
+from universal_led.soccer_pixels import render_soccer_screen
 
 
 class SoccerPregameDetailsTests(unittest.TestCase):
@@ -17,6 +18,16 @@ class SoccerPregameDetailsTests(unittest.TestCase):
                 self.assertIn("8-10-14", screen.line2)
                 self.assertIn("18-7-7", screen.line1)
                 self.assertEqual(screen.footer, "7:30PM")
+
+    def test_full_record_pixels_reach_right_edge_without_clipping(self):
+        game = SoccerMatch("1", "MLS", "ATL", "MIA", 0, 0, "pre",
+                           home_record="8-10-14", away_record="18-7-7")
+        frame = render_soccer_screen(match_screen(game))
+        for top in (8, 16):
+            self.assertTrue(any(frame.pixels[y][x] != (0, 0, 0)
+                                for y in range(top, top + 7) for x in range(0, 18)))
+            self.assertTrue(any(frame.pixels[y][x] != (0, 0, 0)
+                                for y in range(top, top + 7) for x in range(45, 64)))
 
     def test_missing_data_is_not_fabricated(self):
         game = SoccerMatch("1", "NWSL", "ATL", "MIA", 0, 0, "pre")
