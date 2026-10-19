@@ -392,8 +392,19 @@ document.getElementById('reset').onclick=async()=>{
  state[selected.name][selected.key]=clone(defaults[selected.name][selected.key]);
  section(selected.name);markDirty();draw();
 };
+function invalidColorEntry(palette){
+ for(const group of ['scoreboard','teams']){
+  for(const [name,channels] of Object.entries(palette[group]||{})){
+   if(!Array.isArray(channels)||channels.length!==3||channels.some(value=>!Number.isInteger(value)||value<0||value>255))return group+' / '+name;
+  }
+ }
+ return null;
+}
 document.getElementById('save').onclick=async()=>{
- const status=document.getElementById('status');status.textContent='Saving…';
+ const status=document.getElementById('status');
+ const invalid=invalidColorEntry(state);
+ if(invalid){status.textContent='Invalid RGB color in '+invalid+'. Each channel must be a whole number from 0 to 255.';return;}
+ status.textContent='Saving…';
  try{
   const response=await fetch('/api/config',{method:'POST',
    headers:{'Content-Type':'application/json','X-Configurator-Token':token},
