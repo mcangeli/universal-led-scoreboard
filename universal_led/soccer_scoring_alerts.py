@@ -62,7 +62,8 @@ def observe_soccer_match(alerts, match, *, favorite_teams=()):
     # Baseline the full provider snapshot first, then submit exactly one
     # event per newly scored goal. Match new official events by credited team
     # when possible, falling back to stable score-derived identities.
-    alerts.baseline("soccer", match.league, str(match.match_id), events)
+    alerts.baseline("soccer", match.league, str(match.match_id),
+                    tuple(event for event in events if event.event_id in old_ids))
     pending = []
     remaining = list(fresh)
     for team, previous_score, increase in (
@@ -81,12 +82,5 @@ def observe_soccer_match(alerts, match, *, favorite_teams=()):
                     game_id=str(match.match_id),
                     event_id=f"score:{team}:{score}",
                     team_id=str(team), kind="GOAL"))
-    # Baseline already consumed official IDs, so use a unique queue event ID
-    # for the announcement while retaining the provider ID in its identity.
-    announcements = tuple(ScoreEvent(
-        sport=event.sport, league=event.league, game_id=event.game_id,
-        event_id="announce:" + event.event_id, team_id=event.team_id,
-        kind=event.kind, description=event.description,
-    ) for event in pending)
     return alerts.observe("soccer", match.league, str(match.match_id),
-                          announcements, favorite_teams=favorite_teams)
+                          tuple(pending), favorite_teams=favorite_teams)
