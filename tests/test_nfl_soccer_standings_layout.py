@@ -13,8 +13,8 @@ class StandingsLayoutTests(unittest.TestCase):
 
     def test_mls_conference_headings_are_present(self):
         source = inspect.getsource(standings_screen.render_standings)
-        self.assertIn('"Eastern Conference": "MLS EAST"', source)
-        self.assertIn('"Western Conference": "MLS WEST"', source)
+        self.assertIn('"Eastern Conference": "MLS E"', source)
+        self.assertIn('"Western Conference": "MLS W"', source)
 
     def test_soccer_layout_contains_all_four_stat_columns(self):
         source = inspect.getsource(standings_screen.render_standings)
