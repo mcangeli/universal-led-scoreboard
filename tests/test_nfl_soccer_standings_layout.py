@@ -9,7 +9,12 @@ from universal_led.standings import Standing
 class StandingsLayoutTests(unittest.TestCase):
     def test_nfl_rotation_passes_division_name(self):
         source = inspect.getsource(standings_rotation.StandingsRotation.frame_for_slot)
-        self.assertIn("('NHL', 'NBA', 'NFL')", source)
+        self.assertIn("('NHL', 'NBA', 'NFL', 'MLS')", source)
+
+    def test_mls_conference_headings_are_present(self):
+        source = inspect.getsource(standings_screen.render_standings)
+        self.assertIn('"Eastern Conference": "MLS EAST"', source)
+        self.assertIn('"Western Conference": "MLS WEST"', source)
 
     def test_soccer_layout_contains_all_four_stat_columns(self):
         source = inspect.getsource(standings_screen.render_standings)
