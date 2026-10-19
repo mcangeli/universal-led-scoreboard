@@ -4,6 +4,7 @@ from __future__ import annotations
 import time
 from .nhl_runtime import select_games
 from .game_interruptions import InterruptionPolicy, filter_interrupted_games
+from .score_change_observer import ScoreChangeObserver
 from .nhl_visual import NHLVisualScreen
 from .config_store import read_nhl_colors
 
@@ -12,8 +13,9 @@ class ConfiguredNHLRenderer:
     """Read cached feed snapshots; never perform network I/O during render."""
 
     def __init__(self, feed, *, favorite_teams=None, mode="fallback",
-                 rotation_seconds=12, clock=time.monotonic, config_dir=None):
+                 rotation_seconds=12, clock=time.monotonic, config_dir=None, scoring_alerts=None):
         self.feed = feed
+        self.score_observer = ScoreChangeObserver(scoring_alerts, 'nhl', 'NHL', 'GOAL')
         self.interruption_policy = InterruptionPolicy()
         self.external_live_games = False
         self.config_dir = config_dir
@@ -39,7 +41,9 @@ class ConfiguredNHLRenderer:
         self.started = self.clock()
 
     def _eligible_games(self):
-        selected = select_games(self.feed.games(), self.favorite_teams, self.mode)
+        snapshots = self.feed.games()
+        self.score_observer.observe(snapshots, favorite_teams=self.favorite_teams)
+        selected = select_games(snapshots, self.favorite_teams, self.mode)
         return filter_interrupted_games(selected, has_live_games=self.external_live_games,
                                         policy=self.interruption_policy)
 
