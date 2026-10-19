@@ -27,4 +27,17 @@ class AutomaticSportsNews:
                         headlines.extend(provider.items())
                     except (OSError, ValueError):
                         continue
-        # EFL fixtures are part of the English football module, not a separate\n        # renderable sport. Respect its news toggle and enabled competitions.\n        english = settings['sports'].get('english', {})\n        efl = settings['sports'].get('efl', {})\n        leagues = settings.get('english', {}).get('enabled_leagues', ())\n        if (english.get('enabled') and efl.get('news_enabled')\n                and any(name in leagues for name in ('CHAMPIONSHIP', 'LEAGUE_ONE', 'LEAGUE_TWO'))):\n            provider = self.providers.get('efl')\n            if provider is not None:\n                try:\n                    headlines.extend(provider.items())\n                except (OSError, ValueError):\n                    pass\n        return headlines
+        # EFL fixtures are part of the English football module, not a separate
+        # renderable sport. Respect its news toggle and enabled competitions.
+        english = settings['sports'].get('english', {})
+        efl = settings['sports'].get('efl', {})
+        leagues = settings.get('english', {}).get('enabled_leagues', ())
+        if (english.get('enabled') and efl.get('news_enabled')
+                and any(name in leagues for name in ('CHAMPIONSHIP', 'LEAGUE_ONE', 'LEAGUE_TWO'))):
+            provider = self.providers.get('efl')
+            if provider is not None:
+                try:
+                    headlines.extend(provider.items())
+                except (OSError, ValueError):
+                    pass
+        return headlines
