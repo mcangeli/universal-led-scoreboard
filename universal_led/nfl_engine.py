@@ -2,12 +2,14 @@
 import time
 from .nfl_runtime import select_games
 from .game_interruptions import InterruptionPolicy, filter_interrupted_games
+from .score_change_observer import ScoreChangeObserver
 from .nfl_screen import NFLScreen
 
 class ConfiguredNFLRenderer:
     def __init__(self, feed, *, favorite_teams=None, mode="fallback",
-                 rotation_seconds=12, clock=time.monotonic):
+                 rotation_seconds=12, clock=time.monotonic, scoring_alerts=None):
         self.feed = feed
+        self.score_observer = ScoreChangeObserver(scoring_alerts, 'nfl', 'NFL', 'SCORE')
         self.interruption_policy = InterruptionPolicy()
         self.external_live_games = False
         self.clock = clock
@@ -30,7 +32,9 @@ class ConfiguredNFLRenderer:
         self.started = self.clock()
 
     def _eligible_games(self):
-        selected = select_games(self.feed.games(), self.favorite_teams, self.mode)
+        snapshots = self.feed.games()
+        self.score_observer.observe(snapshots, favorite_teams=self.favorite_teams)
+        selected = select_games(snapshots, self.favorite_teams, self.mode)
         return filter_interrupted_games(selected, has_live_games=self.external_live_games,
                                         policy=self.interruption_policy)
 
