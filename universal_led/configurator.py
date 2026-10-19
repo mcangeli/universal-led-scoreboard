@@ -574,6 +574,12 @@ async function saveClockSettings(){
   intervalInput.focus();
   return;
  }
+ const locationInput=document.getElementById('weather-location');
+ if(locationInput.value.trim().length>120){
+  status.textContent='Weather location must be 120 characters or fewer.';
+  locationInput.focus();
+  return;
+ }
  status.textContent='Saving…';
  try{
   const response=await fetch('/api/time-weather',{cache:'no-store'});
