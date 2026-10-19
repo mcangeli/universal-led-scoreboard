@@ -7,7 +7,7 @@ Universal LED Scoreboard is a Raspberry Pi application for a **64×32 RGB LED ma
 - **Sports:** MLB, NHL, NBA, WNBA, NFL, MLS, NWSL and English football (Premier League, Championship, League One and League Two).
 - **Games:** Scheduled, live and final score screens, league-appropriate clocks and game details, favorites and multi-sport rotation.
 - **Priority:** Eligible live games take precedence over final/scheduled games and supplemental content. Final and scheduled games return when no eligible live games remain; standings display in idle slots when no eligible games remain.
-- **Standings and alerts:** Football standings pages and scoring notifications, subject to provider data availability and configuration.
+- **Standings and alerts:** Configurable standings for MLB, NHL, NBA, WNBA, NFL, MLS, NWSL and English football, plus optional scoring notifications. Availability and detail depend on the upstream providers.
 - **Extras:** Configurable news sources, time and weather, team colors, brightness and matrix settings.
 - **Administration:** Browser dashboard, board preview, Wi-Fi management, service controls and preflight-tested software updates.
 
@@ -53,11 +53,11 @@ Open `http://<pi-host>:8080/` on your local network, then sign in with the admin
 
 1. In **Sports & Rotation**, enable leagues, choose favorites and game-selection mode, and set rotation intervals. For English football, choose divisions and clubs.
 2. Under **Display Settings**, adjust colors, matrix settings, time, timezone and weather. OpenWeatherMap requires your own API key; Open-Meteo is also available.
-3. Under **Content & News**, enable sports headlines and add optional RSS/Atom feeds.
+3. Under **Content & News**, enable individual sports headlines, including separate Premier League and EFL feeds, and add optional RSS/Atom feeds. Enable league-specific standings on the relevant league settings pages; global standings timing is under Content & News.
 4. Use **Open Board View** to inspect the 64×32 display in a browser.
 5. Under **System → Software Updates**, check for updates and install a compatible branch or release. Candidate tests run before deployment; installed settings under `/etc/uls` and state under `/var/lib/uls` are preserved.
 
-Live-game priority can suppress other pages while games are underway. When no eligible games remain, standings and optional news can rotate in idle slots.
+Live-game priority suppresses supplemental pages while eligible games are underway. When no eligible games remain, standings and optional news can rotate in idle slots. Scoring alerts can briefly interrupt live games when enabled; soccer goal cards show the updated score and credited scorer when available. Live-event details depend on provider delivery and have not been verified for every sport.
 
 ### Service commands
 
