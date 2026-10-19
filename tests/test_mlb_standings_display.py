@@ -30,6 +30,9 @@ class MLBStandingsDisplayTests(unittest.TestCase):
                                 for yy in range(y, y + 5)
                                 for xx in range(11, 23)))
         self.assertTrue(all(frame.pixels[6][x] != WHITE for x in range(64)))
+        for y in (11, 16, 21, 26, 31):
+            self.assertTrue(all(frame.pixels[y][x] == (0, 0, 0)
+                                for x in range(64)), f'Row {y} must separate teams')
 
     def test_mlb_division_is_single_rotation_page(self):
         rows = tuple(Standing('MLB', 'NL_EAST', str(i), 100,
