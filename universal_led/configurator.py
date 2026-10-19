@@ -1580,11 +1580,21 @@ def main():
         'MLB', fetch_mlb_season_windows, season_status)
     nhl_season_worker = SeasonCalendarWorker(
         'NHL', fetch_nhl_season_windows, season_status)
+    # Opt-in only: without a verified provider URL, preserve existing NBA pages.
+    from .nba_season_provider import fetch_nba_season_windows
+    nba_calendar_url = os.environ.get('ULS_NBA_SEASON_CALENDAR_URL', '').strip()
+    nba_season_worker = (
+        SeasonCalendarWorker('NBA',
+            lambda competition: fetch_nba_season_windows(competition, url=nba_calendar_url),
+            season_status)
+        if nba_calendar_url.startswith('https://') else None)
     def standings_season_eligible(competition):
         if competition in mlb_standings_caches:
             return season_status.eligible('MLB')
         if competition in nhl_standings_caches:
             return season_status.eligible('NHL')
+        if competition in nba_standings_caches and nba_season_worker is not None:
+            return season_status.eligible('NBA')
         return True
     standings_rotation = StandingsRotation(
         standings_caches, season_policy=standings_season_eligible)
@@ -1690,6 +1700,11 @@ def main():
         else:
             nhl_season_worker.stop()
         selected_nba_conferences = standings_options.get('nba_conferences', [])
+        if nba_season_worker is not None:
+            if standings_options['enabled'] and selected_nba_conferences:
+                nba_season_worker.start()
+            else:
+                nba_season_worker.stop()
         standings_rotation.configure(
             enabled=standings_options['enabled'],
             page_seconds=standings_options['page_seconds'],
@@ -1790,5 +1805,7 @@ def main():
             worker.stop()
         mlb_season_worker.stop()
         nhl_season_worker.stop()
+        if nba_season_worker is not None:
+            nba_season_worker.stop()
 if __name__=='__main__':
     main()
