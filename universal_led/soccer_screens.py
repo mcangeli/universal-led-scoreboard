@@ -4,6 +4,8 @@ The existing matrix renderer can consume these lines with its configured fonts.
 Long names are shortened deterministically; no feed data is invented.
 """
 from dataclasses import dataclass
+from datetime import datetime
+from zoneinfo import ZoneInfo
 import re
 
 from .soccer import SoccerGoal, SoccerMatch
@@ -27,14 +29,29 @@ def _fit(value: str, width: int) -> str:
     return value[:max(0, width - 1)] + "~"
 
 
-def match_screen(match: SoccerMatch) -> SoccerScreen:
+def match_screen(match: SoccerMatch, *, timezone: str = 'America/New_York') -> SoccerScreen:
     """Prepare concise lines for a 64x32 game frame."""
+    pregame = match.status.strip().lower() in ("pre", "scheduled")
+    away = _fit(match.away_id, 5)
+    home = _fit(match.home_id, 5)
+    if pregame:
+        away = f"{away} {match.away_record or '--'}"
+        home = f"{home} {match.home_record or '--'}"
+    footer = _match_status(match)
+    if pregame and match.kickoff:
+        try:
+            kickoff = datetime.fromisoformat(match.kickoff.replace("Z", "+00:00"))
+            if kickoff.tzinfo is not None:
+                local = kickoff.astimezone(ZoneInfo(timezone))
+                footer = local.strftime("%-I:%M%p")
+        except (ValueError, KeyError):
+            pass
     return SoccerScreen(
         kind="match",
         header=_fit(match.league, 6),
-        line1=f"{_fit(match.away_id, 5):<5} {match.away_score:>2}",
-        line2=f"{_fit(match.home_id, 5):<5} {match.home_score:>2}",
-        footer=_fit(_match_status(match), 12),
+        line1=_fit(away, 10) if pregame else f"{_fit(match.away_id, 5):<5} {match.away_score:>2}",
+        line2=_fit(home, 10) if pregame else f"{_fit(match.home_id, 5):<5} {match.home_score:>2}",
+        footer=_fit(footer, 12),
     )
 
 
