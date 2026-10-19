@@ -5,6 +5,7 @@ Track scores per queue and fixture to announce the increase without fabricating
 a scorer. Late authoritative details are baselined, not announced twice.
 """
 from weakref import WeakKeyDictionary
+from dataclasses import replace
 
 from .scoring_alerts import ScoreEvent
 from .soccer_rotation import is_live
@@ -20,6 +21,8 @@ def soccer_score_events(match):
             event_id=str(goal.event_id), team_id=str(goal.team_id),
             kind="OWN GOAL" if goal.own_goal else "GOAL",
             description=(goal.scorer or "").strip(),
+            home_team=str(match.home_id), away_team=str(match.away_id),
+            home_score=match.home_score, away_score=match.away_score,
         )
         for goal in match.goals if goal.event_id and goal.team_id
     )
@@ -75,12 +78,14 @@ def observe_soccer_match(alerts, match, *, favorite_teams=()):
                              if event.team_id.upper() == str(team).upper()), None)
             if official is not None:
                 remaining.remove(official)
-                pending.append(official)
+                pending.append(replace(official, home_score=scores[0], away_score=scores[1]))
             else:
                 pending.append(ScoreEvent(
                     sport="soccer", league=match.league,
                     game_id=str(match.match_id),
                     event_id=f"score:{team}:{score}",
-                    team_id=str(team), kind="GOAL"))
+                    team_id=str(team), kind="GOAL",
+                    home_team=str(match.home_id), away_team=str(match.away_id),
+                    home_score=scores[0], away_score=scores[1]))
     return alerts.observe("soccer", match.league, str(match.match_id),
                           tuple(pending), favorite_teams=favorite_teams)
