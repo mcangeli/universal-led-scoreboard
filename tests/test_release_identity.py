@@ -1,6 +1,8 @@
 """Dashboard version reflects the actual installed build and release channel."""
 import unittest
 from unittest.mock import patch
+from tempfile import TemporaryDirectory
+from pathlib import Path
 
 from universal_led import release
 
@@ -13,7 +15,7 @@ class ReleaseIdentityTests(unittest.TestCase):
             if args[0] == 'symbolic-ref':
                 return 'feature/0.7.0-scoring-standings'
             return None
-        with patch.object(release, '_git', side_effect=git):
+        with patch.object(release, 'checkout_branch', return_value=None), patch.object(release, '_git', side_effect=git):
             self.assertEqual(release.display_version(),
                              'v0.7.0 · feature/0.7.0-scoring-standings · abc12345')
 
@@ -30,8 +32,18 @@ class ReleaseIdentityTests(unittest.TestCase):
         with patch.object(release, '_git', side_effect=git):
             self.assertEqual(release.installed_release(), 'main')
 
+    def test_installed_main_branch_works_without_git_subprocess(self):
+        with TemporaryDirectory() as directory:
+            root = Path(directory)
+            (root / '.git').mkdir()
+            (root / '.git' / 'HEAD').write_text('ref: refs/heads/main\\n', encoding='utf-8')
+            with patch.object(release, '__file__', str(root / 'universal_led' / 'release.py')):
+                with patch.object(release, '_git', return_value=None):
+                    self.assertEqual(release.checkout_branch(), 'main')
+                    self.assertEqual(release.installed_release(), 'main')
+
     def test_detached_checkout_without_release_metadata(self):
-        with patch.object(release, '_git', return_value=None):
+        with patch.object(release, 'checkout_branch', return_value=None), patch.object(release, '_git', return_value=None):
             self.assertEqual(release.display_version(), 'v0.7.0 · development')
 
 
