@@ -893,7 +893,7 @@ async function downloadBackup(){
   const response=await fetch('/api/backup/export',{cache:'no-store'});
   if(!response.ok){let error;try{error=(await response.json()).error}catch(_){}throw Error(error||'Backup download failed')}
   const blob=await response.blob(),url=URL.createObjectURL(blob);
-  const link=document.createElement('a');link.href=url;link.download='uls-portable-backup-'+new Date().toISOString().slice(0,10)+'.zip';
+  const link=document.createElement('a');link.href=url;const filename=response.headers.get('Content-Disposition')||'';const match=filename.match(/filename="?([^";]+)"?/i);link.download=match?match[1]:'uls-portable-backup-'+new Date().toISOString().slice(0,10)+'.zip';
   document.body.appendChild(link);link.click();link.remove();setTimeout(()=>URL.revokeObjectURL(url),1000);
   status.textContent='Portable backup downloaded. Matrix and device settings were excluded.';
  }catch(error){status.textContent='Backup failed: '+error.message}
@@ -1165,11 +1165,15 @@ def make_handler(config_dir,token,frame_provider=None,settings_callback=None,fee
                 self.wfile.write(body)
             elif path=='/api/backup/export':
                 from .config_archive import export_portable
+                import socket
+                import re
                 try:
                     body=export_portable(config_dir)
+                    hostname=re.sub(r'[^A-Za-z0-9_-]+','-',socket.gethostname()).strip('-')[:63] or 'scoreboard'
+                    filename='uls-'+hostname+'-portable-backup-'+time.strftime('%Y-%m-%d')+'.zip'
                     self.send_response(200)
                     self.send_header('Content-Type','application/zip')
-                    self.send_header('Content-Disposition','attachment; filename="uls-portable-backup.zip"')
+                    self.send_header('Content-Disposition','attachment; filename="'+filename+'"')
                     self.send_header('Cache-Control','no-store')
                     self.send_header('X-Content-Type-Options','nosniff')
                     self.send_header('Content-Length',str(len(body)))
