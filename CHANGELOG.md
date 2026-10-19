@@ -1,22 +1,25 @@
 # Changelog
 
-## v0.7.0 (release candidate, 2026-10-18)
+## v0.7.0 (release candidate, 2026-10-19)
 
 ### Added
-- Configurable football standings rotation on the 64×32 board, including idle standings pages and news interleaving.
-- Scoring alerts and live-game prioritization regression coverage across the shared scheduler.
-- Cached standings refresh with recovery after transient provider failures.
+- League-specific standings configuration for MLB, NHL, NBA, WNBA, NFL, MLS, NWSL and English football, with idle-page rotation and cached provider refresh.
+- Shared 64×32 scoring-alert cards with centered event labels; soccer goal alerts include current score and scorer when available.
+- Separate Premier League and EFL headline controls. EFL news follows the enabled English football Championship, League One and League Two selections.
+- Configurable delayed, postponed, rescheduled and suspended-game visibility during live-game rotation.
 
 ### Improved
-- MLB R/H/E column spacing and alignment for one- and two-digit statistics across supported layouts.
-- Responsive browser board preview on narrow screens.
-- Standings page sequencing when news occupies alternate idle slots.
+- Live-game precedence over supplemental content, with finals and idle pages returning when no eligible live games remain.
+- Browser board preview, dashboard settings organization and candidate-tested updater logs.
+- MLB R/H/E spacing, standings/news sequencing and automatic-news provider error isolation.
 
-### Validation and outstanding release gates
-- Raspberry Pi 5: user-confirmed **1,311 tests passing, 15 skipped** on October 18, 2026.
-- Additional live → final → idle standings → new-game priority regression added after that confirmed run; pending candidate updater validation.
-- EPL live clock, halftime, second half, stoppage time and final display observed on the test board.
-- Pending: final full-suite run, physical-matrix review of latest alignment, provider integration acceptance, and approval before merging or tagging. This is **not yet a tagged release**.
+### Validation and remaining acceptance
+- Raspberry Pi dashboard updater: **1,503 tests passed, 15 skipped** on October 19, 2026, after EFL news integration. No test failures reported.
+- EPL live clock, halftime, second half, stoppage time and final observed on the physical board.
+- NWSL/WNBA standings controls and Premier League/EFL news switches confirmed working in the dashboard.
+- Centered scoring alert and score/scorer integration covered by automated tests; updated card still awaits live physical-matrix observation. Other sports' scoring-event adapters have not all been verified live.
+- Fresh-install retest intentionally deferred; previously completed clean-install and updater tests remain documented below.
+- **Not merged or tagged.** Final regression after documentation/refactoring and explicit release approval remain pending.
 
 ## v0.5.0 (release candidate, 2026-10-17)
 
