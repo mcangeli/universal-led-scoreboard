@@ -1501,7 +1501,7 @@ def main():
         league: BackgroundFootballStandings(cache)
         for league, cache in standings_caches.items()
     }
-    from .mlb_standings_feed import DIVISION_KEYS, fetch_mlb_group
+    from .mlb_standings_feed import DIVISION_KEYS, WILD_CARD_KEYS, fetch_mlb_group, fetch_mlb_wild_card_group
     mlb_standings_caches = {
         division: FootballStandingsCache(
             'MLB', fetcher=lambda _league, group=division: fetch_mlb_group(group),
@@ -1510,6 +1510,14 @@ def main():
             cache_key='mlb-' + division.lower())
         for division in DIVISION_KEYS.values()
     }
+    mlb_standings_caches.update({
+        group: FootballStandingsCache(
+            'MLB', fetcher=lambda _league, key=group: fetch_mlb_wild_card_group(key),
+            refresh_seconds=initial['standings']['refresh_seconds'],
+            cache_dir=Path(args.config_dir) / 'standings-cache',
+            cache_key='mlb-' + group.lower())
+        for group in WILD_CARD_KEYS
+    })
     mlb_standings_workers = {
         division: BackgroundFootballStandings(cache)
         for division, cache in mlb_standings_caches.items()
@@ -1620,7 +1628,12 @@ def main():
         standings_options = settings['standings']
         selected_standings_leagues = standings_options.get('leagues', english['enabled_leagues'])
         selected_mlb_divisions = standings_options.get('mlb_divisions', [])
-        if standings_options['enabled'] and selected_mlb_divisions:
+        selected_mlb_groups = [*selected_mlb_divisions]
+        if any(group.startswith('AL_') for group in selected_mlb_divisions):
+            selected_mlb_groups.append('AL_WILD_CARD')
+        if any(group.startswith('NL_') for group in selected_mlb_divisions):
+            selected_mlb_groups.append('NL_WILD_CARD')
+        if standings_options['enabled'] and selected_mlb_groups:
             mlb_season_worker.start()
         else:
             mlb_season_worker.stop()
@@ -1628,7 +1641,7 @@ def main():
         standings_rotation.configure(
             enabled=standings_options['enabled'],
             page_seconds=standings_options['page_seconds'],
-            selected_leagues=[*selected_standings_leagues, *selected_mlb_divisions,
+            selected_leagues=[*selected_standings_leagues, *selected_mlb_groups,
                               *selected_nhl_divisions])
         for league, cache in standings_caches.items():
             cache.refresh_seconds = standings_options['refresh_seconds']
@@ -1639,7 +1652,7 @@ def main():
                     nhl_standings_workers[league].stop()
                 continue
             if league in mlb_standings_workers:
-                if standings_options['enabled'] and league in selected_mlb_divisions:
+                if standings_options['enabled'] and league in selected_mlb_groups:
                     mlb_standings_workers[league].start()
                 else:
                     mlb_standings_workers[league].stop()
