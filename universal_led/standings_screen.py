@@ -1,4 +1,4 @@
-"""Compact 64x32 football standings with dedicated 3x5 glyphs."""
+"""Compact 64x32 standings with sport-specific row density."""
 from .display import Framebuffer
 
 GOLD = (239, 195, 95)
@@ -58,7 +58,7 @@ def _tiny_text(frame, value, x, y, color, limit):
 
 
 def render_standings(league, rows, *, offset=0):
-    """Display three 3x5-font rows without glyph collisions."""
+    """Display five MLB rows or three football rows without collisions."""
     if type(offset) is not int or offset < 0:
         raise ValueError("Invalid standings page offset")
     frame = Framebuffer(64, 32)
@@ -73,11 +73,18 @@ def render_standings(league, rows, *, offset=0):
         _tiny_text(frame, "PTS", 49, 1, GOLD, 3)
     for x in range(64):
         frame.pixel(x, 8, DIM)
-    for index, standing in enumerate(tuple(rows)[offset:offset + 3]):
-        y = 11 + index * 7
+    page_size = 5 if is_mlb else 3
+    for index, standing in enumerate(tuple(rows)[offset:offset + page_size]):
+        y = (9 + index * 4) if is_mlb else (11 + index * 7)
         rank = standing.rank if standing.rank is not None else offset + index + 1
-        _tiny_text(frame, str(rank).rjust(2), 1, y, GREEN, 2)
-        _tiny_text(frame, standing.abbreviation or standing.team_id, 15, y, WHITE, 5)
+        if is_mlb:
+            # Five 5-pixel glyph rows cannot fit below an 8-pixel header.
+            # Use one 3-pixel-high rank/team/record line per team.
+            _tiny_text(frame, str(rank), 1, y, GREEN, 1)
+            _tiny_text(frame, standing.abbreviation or standing.team_id, 11, y, WHITE, 3)
+        else:
+            _tiny_text(frame, str(rank).rjust(2), 1, y, GREEN, 2)
+            _tiny_text(frame, standing.abbreviation or standing.team_id, 15, y, WHITE, 5)
         if is_mlb:
             _tiny_text(frame, str(standing.wins)[-2:].rjust(2), 44, y, GOLD, 2)
             _tiny_text(frame, str(standing.losses)[-2:].rjust(2), 56, y, GOLD, 2)
