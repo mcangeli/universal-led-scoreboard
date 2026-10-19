@@ -19,10 +19,11 @@ class SoccerDisplayController:
     Pass monotonic seconds to screen() to avoid wall-clock adjustments.
     """
 
-    def __init__(self, goal_seconds: float = 8.0):
+    def __init__(self, goal_seconds: float = 8.0, *, timezone: str = 'America/New_York'):
         if goal_seconds <= 0:
             raise ValueError("goal_seconds must be positive")
         self.goal_seconds = float(goal_seconds)
+        self.timezone = timezone
         self.tracker = GoalEventTracker()
         self._pending: deque[PendingGoal] = deque()
         self._active: PendingGoal | None = None
@@ -69,4 +70,4 @@ class SoccerDisplayController:
                 self._pending.append(candidate)
         if self._active is not None and (self._active.match.league, self._active.match.match_id) == key:
             return goal_screen(current, self._active.goal)
-        return match_screen(current)
+        return match_screen(current, timezone=self.timezone)
