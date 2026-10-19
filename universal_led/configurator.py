@@ -603,7 +603,12 @@ function refreshSportsRotationSummary(){
 function refreshSportsOverview(){
  if(!settings)return;
  ['mlb','nhl','nba','wnba','nfl','mls','nwsl','english'].forEach(name=>{
-  document.getElementById('sport-state-'+name).textContent=(settings.sports[name].enabled?'Enabled':'Disabled')+' · Configure →';
+  const enabled=settings.sports[name].enabled;
+  const sport=settings[name];
+  const favorites=(sport.favorite_teams||[]).length;
+  const details=[enabled?'Enabled':'Disabled',favorites+' favorite'+(favorites===1?'':'s')];
+  if(name==='english')details.push((sport.enabled_leagues||[]).length+' game division(s)');
+  document.getElementById('sport-state-'+name).textContent=details.join(' · ')+' · Configure →';
  });
 }
 showSportsView('overview');selectSport('mlb');showSportsView('overview');
