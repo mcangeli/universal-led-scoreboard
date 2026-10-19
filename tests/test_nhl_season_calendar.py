@@ -12,6 +12,14 @@ class NHLSeasonCalendarTests(unittest.TestCase):
                                     'end': '2027-04-16T00:00:00Z'}])
         self.assertEqual(windows, parse_nhl_season_windows(payload, today=date(2027, 2, 1)))
 
+    def test_missing_regular_start_uses_provider_season_start(self):
+        payload = {'data': [{'id': 20262027, 'regularSeasonStartDate': None,
+                             'startDate': '2026-09-29T17:00:00',
+                             'regularSeasonEndDate': '2027-04-10T00:00:00'}]}
+        self.assertEqual(parse_nhl_season_windows(payload, today=date(2026, 10, 19)),
+                         [{'phase': 'regular', 'start': '2026-09-29T00:00:00Z',
+                           'end': '2027-04-11T00:00:00Z'}])
+
     def test_invalid_response(self):
         with self.assertRaises(ValueError):
             parse_nhl_season_windows({'data': None})
