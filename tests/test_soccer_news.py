@@ -51,6 +51,34 @@ class SoccerNewsTests(unittest.TestCase):
         settings["sports"]["efl"]["news_enabled"] = False
         self.assertEqual(providers.items(settings), [])
 
+    def test_failed_efl_provider_does_not_hide_other_headlines(self):
+        class Good:
+            def items(self):
+                return ["Premier League headline"]
+
+        class Failed:
+            def items(self):
+                raise OSError("temporary RSS outage")
+
+        settings = {"sports": {k: dict(v) for k, v in DEFAULT_SETTINGS["sports"].items()},
+                    "english": {"enabled_leagues": ["EPL", "CHAMPIONSHIP"]}}
+        settings["sports"]["english"] = {"enabled": True, "news_enabled": True}
+        settings["sports"]["efl"] = {"enabled": False, "news_enabled": True}
+        providers = AutomaticSportsNews(providers={"english": Good(), "efl": Failed()})
+        self.assertEqual(providers.items(settings), ["Premier League headline"])
+
+    def test_efl_news_is_not_duplicated_when_efl_sport_flag_enabled(self):
+        class Stub:
+            def items(self):
+                return ["EFL headline"]
+
+        settings = {"sports": {k: dict(v) for k, v in DEFAULT_SETTINGS["sports"].items()},
+                    "english": {"enabled_leagues": ["LEAGUE_TWO"]}}
+        settings["sports"]["english"] = {"enabled": True, "news_enabled": False}
+        settings["sports"]["efl"] = {"enabled": True, "news_enabled": True}
+        providers = AutomaticSportsNews(providers={"efl": Stub()})
+        self.assertEqual(providers.items(settings), ["EFL headline"])
+
     def test_sport_flags_gate_automatic_soccer_news(self):
         class Stub:
             def __init__(self, league):
