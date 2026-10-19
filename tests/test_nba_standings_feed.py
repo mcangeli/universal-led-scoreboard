@@ -23,6 +23,21 @@ class NBAStandingsFeedTests(unittest.TestCase):
         self.assertEqual(rows[0].played, 50)
         self.assertEqual([r.team_id for r in fetch_nba_conference('Western', fetcher=lambda _: rows)], ['DEN'])
 
+    def test_null_numeric_value_uses_provider_display_value(self):
+        entry = row('ATL', 22, 18, 5)
+        entry['stats'][-1] = {'name': 'gamesBehind', 'value': None,
+                              'displayValue': '3.5'}
+        result = parse_nba_standings({'children': [
+            {'name': 'Eastern Conference', 'standings': {'entries': [entry]}}]})
+        self.assertEqual(result[0].games_back, '3.5')
+
+    def test_invalid_zero_seed_falls_back_to_provider_entry_order(self):
+        entries = [row('BOS', 40, 10, 0), row('ATL', 40, 10, 0)]
+        result = parse_nba_standings({'children': [
+            {'name': 'Eastern Conference', 'standings': {'entries': entries}}]})
+        self.assertEqual([team.rank for team in result], [1, 2])
+        self.assertEqual([team.team_id for team in result], ['BOS', 'ATL'])
+
     def test_missing_provider_data_fails_closed(self):
         with self.assertRaises(ValueError):
             parse_nba_standings({'children': []})
