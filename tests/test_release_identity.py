@@ -36,7 +36,7 @@ class ReleaseIdentityTests(unittest.TestCase):
         with TemporaryDirectory() as directory:
             root = Path(directory)
             (root / '.git').mkdir()
-            (root / '.git' / 'HEAD').write_text('ref: refs/heads/main\\n', encoding='utf-8')
+            (root / '.git' / 'HEAD').write_text('ref: refs/heads/main' + chr(10), encoding='utf-8')
             with patch.object(release, '__file__', str(root / 'universal_led' / 'release.py')):
                 with patch.object(release, '_git', return_value=None):
                     self.assertEqual(release.checkout_branch(), 'main')
