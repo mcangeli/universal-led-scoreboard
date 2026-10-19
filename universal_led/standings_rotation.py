@@ -10,18 +10,24 @@ class StandingsRotation:
     """Read cached standings only; never fetch from the frame loop."""
 
     def __init__(self, caches, *, enabled=False, page_seconds=12,
-                 clock=time.monotonic):
+                 clock=time.monotonic, selected_leagues=None):
         self.caches = dict(caches)
         self.clock = clock
         self.started = clock()
         self._page_identity = None
+        self.selected_leagues = None if selected_leagues is None else frozenset(selected_leagues)
         self.configure(enabled=enabled, page_seconds=page_seconds)
 
-    def configure(self, *, enabled=False, page_seconds=12):
+    def configure(self, *, enabled=False, page_seconds=12, selected_leagues=None):
         if type(enabled) is not bool:
             raise ValueError("Invalid standings enabled flag")
         if type(page_seconds) not in (int, float) or not 3 <= page_seconds <= 3600:
             raise ValueError("Invalid standings page duration")
+        if selected_leagues is not None:
+            if not isinstance(selected_leagues, (list, tuple, set, frozenset)) or any(
+                    not isinstance(name, str) or name not in self.caches for name in selected_leagues):
+                raise ValueError('Invalid standings league selection')
+            self.selected_leagues = frozenset(selected_leagues)
         changed = (getattr(self, 'enabled', None) != enabled or
                    getattr(self, 'page_seconds', None) != page_seconds)
         self.enabled = enabled
@@ -36,6 +42,8 @@ class StandingsRotation:
         # cannot monopolize the display for several minutes.
         by_league = []
         for league, cache in self.caches.items():
+            if self.selected_leagues is not None and league not in self.selected_leagues:
+                continue
             rows = cache.rows()
             if not rows:
                 continue
