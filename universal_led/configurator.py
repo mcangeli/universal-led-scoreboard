@@ -188,7 +188,8 @@ async function saveStandingsSettings(){
    refresh_seconds:Number(document.getElementById('standings-refresh-seconds').value),
    ...(data.standings?.leagues!==undefined?{leagues:data.standings.leagues}:{}),
    ...(data.standings?.mlb_divisions!==undefined?{mlb_divisions:data.standings.mlb_divisions}:{}),
-   ...(data.standings?.nhl_divisions!==undefined?{nhl_divisions:data.standings.nhl_divisions}:{})
+   ...(data.standings?.nhl_divisions!==undefined?{nhl_divisions:data.standings.nhl_divisions}:{}),
+   ...(data.standings?.nhl_wild_cards!==undefined?{nhl_wild_cards:data.standings.nhl_wild_cards}:{})
   };
   const saved=await fetch('/api/settings',{method:'POST',
    headers:{'Content-Type':'application/json','X-Configurator-Token':token},
@@ -1646,11 +1647,16 @@ def main():
         else:
             mlb_season_worker.stop()
         selected_nhl_divisions = standings_options.get('nhl_divisions', [])
+        # Explicit wild card preferences override legacy automatic inclusion.
+        # Existing installations retain their previous selection behavior.
         selected_nhl_groups = [*selected_nhl_divisions]
-        if any(group in ('Atlantic', 'Metropolitan') for group in selected_nhl_divisions):
-            selected_nhl_groups.append('Eastern_Wild_Card')
-        if any(group in ('Central', 'Pacific') for group in selected_nhl_divisions):
-            selected_nhl_groups.append('Western_Wild_Card')
+        if 'nhl_wild_cards' in standings_options:
+            selected_nhl_groups.extend(standings_options['nhl_wild_cards'])
+        else:
+            if any(group in ('Atlantic', 'Metropolitan') for group in selected_nhl_divisions):
+                selected_nhl_groups.append('Eastern_Wild_Card')
+            if any(group in ('Central', 'Pacific') for group in selected_nhl_divisions):
+                selected_nhl_groups.append('Western_Wild_Card')
         standings_rotation.configure(
             enabled=standings_options['enabled'],
             page_seconds=standings_options['page_seconds'],
