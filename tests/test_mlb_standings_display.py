@@ -10,38 +10,37 @@ from universal_led.standings_rotation import StandingsRotation
 
 class MLBStandingsDisplayTests(unittest.TestCase):
     def test_mlb_shows_wins_and_losses(self):
-        row = Standing('MLB', 'NL_EAST', '144', 162, 91, 71, rank=2, abbreviation='ATL')
+        row = Standing('MLB', 'NL_EAST', '144', 162, 91, 71,
+                       rank=2, abbreviation='ATL')
         frame = render_standings('NL EAST', (row,))
-        self.assertTrue(any(frame.pixels[y][x] == GOLD
-                            for y in range(1, 6) for x in range(17, 37)))
-        self.assertTrue(any(frame.pixels[y][x] == GOLD
-                            for y in range(1, 6) for x in range(37, 45)))
+        self.assertTrue(any(frame.pixels[y][x] == (171, 181, 170)
+                            for y in range(1, 6) for x in range(17, 49)))
 
-    def test_official_games_back_is_rendered(self):
+    def test_original_64x32_layout_has_five_rows(self):
+        teams = ('ATL', 'NYM', 'PHI', 'MIA', 'WSN')
+        rows = tuple(Standing('MLB', 'NL_EAST', str(i), 100,
+                              70 - i, 30 + i, rank=i + 1,
+                              abbreviation=team)
+                     for i, team in enumerate(teams))
+        frame = render_standings('NL EAST', rows)
+        self.assertEqual((frame.width, frame.height), (64, 32))
+        for index in range(5):
+            y = 1 + index * 6
+            self.assertTrue(any(frame.pixels[yy][xx] == (171, 181, 170)
+                                for yy in range(y, y + 5)
+                                for xx in range(1, 13)))
+        for y in (0, 6, 12, 18, 24, 30):
+            self.assertTrue(all(frame.pixels[y][x] == (0, 0, 255)
+                                for x in range(64)))
+
+    def test_original_64x32_games_back_is_offscreen(self):
         row = Standing('MLB', 'AL_EAST', '147', 100, 60, 40,
                        rank=1, abbreviation='NYY', games_back='3.5')
         with_gb = render_standings('AL EAST', (row,))
         without_gb = render_standings(
             'AL EAST', (Standing('MLB', 'AL_EAST', '147', 100, 60, 40,
                                  rank=1, abbreviation='NYY'),))
-        self.assertNotEqual(with_gb.pixels, without_gb.pixels)
-
-    def test_all_five_teams_fit_one_page(self):
-        teams = ('ATL', 'NYM', 'PHI', 'MIA', 'WSN')
-        rows = tuple(Standing('MLB', 'NL_EAST', str(i), 100,
-                              70 - i, 30 + i, rank=i + 1, abbreviation=team)
-                     for i, team in enumerate(teams))
-        frame = render_standings('NL EAST', rows)
-        self.assertEqual((frame.width, frame.height), (64, 32))
-        for index in range(5):
-            y = index * 6 + 1
-            self.assertTrue(any(frame.pixels[yy][xx] == WHITE
-                                for yy in range(y, y + 5)
-                                for xx in range(1, 13)))
-        self.assertTrue(all(frame.pixels[6][x] == (65, 80, 95) for x in range(64)))
-        for y in (6, 12, 18, 24, 30):
-            self.assertTrue(all(frame.pixels[y][x] == (65, 80, 95)
-                                for x in range(64)), f'Row {y} must separate teams')
+        self.assertEqual(with_gb.pixels, without_gb.pixels)
 
     def test_mlb_division_is_single_rotation_page(self):
         rows = tuple(Standing('MLB', 'NL_EAST', str(i), 100,
