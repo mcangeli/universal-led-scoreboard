@@ -25,7 +25,7 @@ class ReleaseIdentityTests(unittest.TestCase):
     def test_detached_checkout_at_main_head(self):
         def git(*args):
             if args[0] == 'branch':
-                return 'origin/main\\norigin/feature/0.7.0-scoring-standings'
+                return 'origin/main\norigin/feature/0.7.0-scoring-standings'
             return None
         with patch.object(release, '_git', side_effect=git):
             self.assertEqual(release.installed_release(), 'main')
