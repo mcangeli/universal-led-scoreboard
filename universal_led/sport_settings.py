@@ -41,8 +41,15 @@ def validate_settings(value):
                nwsl=dict(DEFAULT_SETTINGS['nwsl']) | value.get('nwsl',{}),
                english=dict(DEFAULT_SETTINGS['english']) | value.get('english',{}))
     standings=value['standings']
-    if set(standings)!=set(DEFAULT_SETTINGS['standings']) or type(standings['enabled']) is not bool:
+    if (set(standings) not in (set(DEFAULT_SETTINGS['standings']), set(DEFAULT_SETTINGS['standings']) | {'leagues'})
+            or type(standings['enabled']) is not bool):
         raise ValueError('Invalid standings settings')
+    if 'leagues' in standings:
+        from .english_football import COMPETITIONS
+        leagues = standings['leagues']
+        if (not isinstance(leagues, list) or len(leagues) != len(set(leagues)) or
+                any(not isinstance(name, str) or name not in COMPETITIONS for name in leagues)):
+            raise ValueError('Invalid standings league selection')
     for key,low,high in (('page_seconds',3,3600),('refresh_seconds',60,86400)):
         number=standings[key]
         if type(number) not in (int,float) or not low<=number<=high:
