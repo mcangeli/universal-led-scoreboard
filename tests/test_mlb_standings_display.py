@@ -4,7 +4,8 @@ import unittest
 
 from universal_led.football_standings_runtime import FootballStandingsCache
 from universal_led.standings import Standing
-from universal_led.standings_screen import render_standings, GOLD
+from universal_led.standings_screen import render_standings, GOLD, WHITE
+from universal_led.standings_rotation import StandingsRotation
 
 
 class MLBStandingsDisplayTests(unittest.TestCase):
@@ -12,9 +13,33 @@ class MLBStandingsDisplayTests(unittest.TestCase):
         row = Standing('MLB', 'NL_EAST', '144', 162, 91, 71, rank=2, abbreviation='ATL')
         frame = render_standings('NL EAST', (row,))
         self.assertTrue(any(frame.pixels[y][x] == GOLD
-                            for y in range(11, 16) for x in range(44, 52)))
+                            for y in range(7, 12) for x in range(44, 52)))
         self.assertTrue(any(frame.pixels[y][x] == GOLD
-                            for y in range(11, 16) for x in range(56, 64)))
+                            for y in range(7, 12) for x in range(56, 64)))
+
+    def test_all_five_teams_fit_one_page(self):
+        teams = ('ATL', 'NYM', 'PHI', 'MIA', 'WSN')
+        rows = tuple(Standing('MLB', 'NL_EAST', str(i), 100,
+                              70 - i, 30 + i, rank=i + 1, abbreviation=team)
+                     for i, team in enumerate(teams))
+        frame = render_standings('NL EAST', rows)
+        self.assertEqual((frame.width, frame.height), (64, 32))
+        for index in range(5):
+            y = 7 + index * 5
+            self.assertTrue(any(frame.pixels[yy][xx] == WHITE
+                                for yy in range(y, y + 5)
+                                for xx in range(11, 23)))
+        self.assertTrue(all(frame.pixels[6][x] != WHITE for x in range(64)))
+
+    def test_mlb_division_is_single_rotation_page(self):
+        rows = tuple(Standing('MLB', 'NL_EAST', str(i), 100,
+                              70 - i, 30 + i, rank=i + 1, abbreviation='ATL')
+                     for i in range(5))
+        class Cache:
+            def rows(self):
+                return rows
+        rotation = StandingsRotation({'NL_EAST': Cache()}, enabled=True)
+        self.assertEqual(len(rotation._pages()), 1)
 
     def test_division_caches_do_not_collide(self):
         row = Standing('MLB', 'NL_EAST', '144', 162, 91, 71, rank=2, abbreviation='ATL')
