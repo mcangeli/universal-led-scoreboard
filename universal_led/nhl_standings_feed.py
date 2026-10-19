@@ -41,3 +41,26 @@ def parse_nhl_standings(payload):
             played=played, wins=wins, losses=losses, draws=overtime_losses,
             points=points, rank=rank))
     return tuple(rows)
+
+
+NHL_STANDINGS_URL = "https://api-web.nhle.com/v1/standings/now"
+NHL_DIVISIONS = ("Atlantic", "Metropolitan", "Central", "Pacific")
+
+
+def fetch_nhl_standings(_league="NHL", *, opener=None, timeout=12):
+    """Fetch NHL official standings for a background cache worker only."""
+    import json
+    from urllib.request import urlopen
+
+    if opener is None:
+        opener = urlopen
+    with opener(NHL_STANDINGS_URL, timeout=timeout) as response:
+        payload = json.load(response)
+    return parse_nhl_standings(payload)
+
+
+def fetch_nhl_division(division, *, fetcher=fetch_nhl_standings):
+    """Provide one division to a persistent standings cache."""
+    if division not in NHL_DIVISIONS:
+        raise ValueError("Unknown NHL division")
+    return tuple(row for row in fetcher("NHL") if row.group == division)
