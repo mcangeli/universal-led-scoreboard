@@ -110,7 +110,7 @@ section h2{font-size:clamp(21px,1.6vw,26px);line-height:1.25;margin:0 0 18px}
 const token=__TOKEN__;
 async function logout(){await fetch('/logout',{method:'POST',headers:{'X-Configurator-Token':token}});location.href='/login'}
 let state=null,saved=null,dirty=false,selectedTeam='ATL',selected=null,settings=null;
-function showPage(name){if(!document.querySelector('[data-page="'+name+'"]'))return;if(name!=='sports'&&sportsSettingsDirty&&!confirm('You have unsaved sport settings changes. Leave this page without saving?'))return;document.querySelectorAll('.nav-item').forEach(button=>{const active=button.getAttribute('onclick')==="showPage('"+name+"')";button.classList.toggle('active',active);if(active)button.setAttribute('aria-current','page');else button.removeAttribute('aria-current');});document.querySelectorAll('[data-page]').forEach(el=>el.hidden=el.dataset.page!==name);if(name==='news'){loadNewsSources();loadAutomaticNews();loadNewsTiming();loadScoringAlerts();loadGameInterruptions();loadStandingsSettings()}if(name==='display'){loadClockSettings();loadCountdown();}if(name==='dashboard'||name==='system')refreshStatus();if(name==='system'){refreshSystem();checkSoftwareUpdate();}if(name==='matrix-settings'){loadMatrixSettings();refreshMatrixStatus();}if(name==='wifi'){refreshWifi();refreshWifiProfiles();refreshRecoveryReadiness();scanWifi()}}
+function showPage(name){if(!document.querySelector('[data-page="'+name+'"]'))return;if(name!=='sports'&&sportsSettingsDirty&&!confirm('You have unsaved sport settings changes. Leave this page without saving?'))return;if(name!=='news'&&newsSourcesDirty&&!confirm('You have unsaved news source changes. Leave this page without saving?'))return;document.querySelectorAll('.nav-item').forEach(button=>{const active=button.getAttribute('onclick')==="showPage('"+name+"')";button.classList.toggle('active',active);if(active)button.setAttribute('aria-current','page');else button.removeAttribute('aria-current');});document.querySelectorAll('[data-page]').forEach(el=>el.hidden=el.dataset.page!==name);if(name==='news'){if(!newsSourcesDirty)loadNewsSources();loadAutomaticNews();loadNewsTiming();loadScoringAlerts();loadGameInterruptions();loadStandingsSettings()}if(name==='display'){loadClockSettings();loadCountdown();}if(name==='dashboard'||name==='system')refreshStatus();if(name==='system'){refreshSystem();checkSoftwareUpdate();}if(name==='matrix-settings'){loadMatrixSettings();refreshMatrixStatus();}if(name==='wifi'){refreshWifi();refreshWifiProfiles();refreshRecoveryReadiness();scanWifi()}}
 async function refreshMatrixStatus(){
  const el=document.getElementById('matrix-service-state');
  try{const response=await fetch('/api/matrix-status',{cache:'no-store'});const result=await response.json();
@@ -280,10 +280,11 @@ async function saveNewsTiming(){
  const result=await saved.json();if(!saved.ok)throw Error(result.error||'Save failed');settings=result.settings;status.textContent='News timing saved.'}
  catch(err){status.textContent=err.message}
 }
-let newsSources=[];
+let newsSources=[],newsSourcesSaved=[],newsSourcesDirty=false;
+function markNewsSourcesDirty(){newsSourcesDirty=JSON.stringify(newsSources)!==JSON.stringify(newsSourcesSaved);document.getElementById('news-status').textContent=newsSourcesDirty?'Unsaved news source changes. Save before leaving.':'';}
 async function loadNewsSources(){
  const status=document.getElementById('news-status');
- try{const response=await fetch('/api/news-sources',{cache:'no-store'});if(!response.ok)throw Error('Unable to load news sources');newsSources=(await response.json()).sources;renderNewsSources();status.textContent='';}
+ try{const response=await fetch('/api/news-sources',{cache:'no-store'});if(!response.ok)throw Error('Unable to load news sources');newsSources=(await response.json()).sources;newsSourcesSaved=clone(newsSources);newsSourcesDirty=false;renderNewsSources();status.textContent='';}
  catch(err){status.textContent=err.message}
 }
 function renderNewsSources(){
@@ -294,18 +295,18 @@ function renderNewsSources(){
    const wrapper=document.createElement('label');wrapper.textContent=label+' ';
    const input=document.createElement('input');input.type=type;input.value=source[key];input.setAttribute('aria-label',label+' for source '+(index+1));
    if(type==='number'){input.min='60';input.max='86400';input.step='1'}
-   input.oninput=()=>{source[key]=type==='number'?Number(input.value):input.value};
+   input.oninput=()=>{source[key]=type==='number'?Number(input.value):input.value;markNewsSourcesDirty()};
    wrapper.append(input);row.append(wrapper);
   });
   const enabled=document.createElement('label');enabled.textContent='Enabled ';
-  const checkbox=document.createElement('input');checkbox.type='checkbox';checkbox.checked=source.enabled;checkbox.onchange=()=>{source.enabled=checkbox.checked};enabled.append(checkbox);row.append(enabled);
-  const remove=document.createElement('button');remove.type='button';remove.textContent='Remove';remove.onclick=()=>{newsSources.splice(index,1);renderNewsSources()};row.append(remove);target.append(row);
+  const checkbox=document.createElement('input');checkbox.type='checkbox';checkbox.checked=source.enabled;checkbox.onchange=()=>{source.enabled=checkbox.checked;markNewsSourcesDirty()};enabled.append(checkbox);row.append(enabled);
+  const remove=document.createElement('button');remove.type='button';remove.textContent='Remove';remove.onclick=()=>{newsSources.splice(index,1);renderNewsSources();markNewsSourcesDirty()};row.append(remove);target.append(row);
  });
 }
-function addNewsSource(){if(newsSources.length>=20){document.getElementById('news-status').textContent='Maximum 20 sources';return}newsSources.push({name:'',url:'',category:'news',enabled:true,refresh_seconds:900});renderNewsSources()}
+function addNewsSource(){if(newsSources.length>=20){document.getElementById('news-status').textContent='Maximum 20 sources';return}newsSources.push({name:'',url:'',category:'news',enabled:true,refresh_seconds:900});renderNewsSources();markNewsSourcesDirty()}
 async function saveNewsSources(){
  const status=document.getElementById('news-status');status.textContent='Saving…';
- try{const response=await fetch('/api/news-sources',{method:'POST',headers:{'Content-Type':'application/json','X-Configurator-Token':token},body:JSON.stringify({sources:newsSources})});const result=await response.json();if(!response.ok)throw Error(result.error||'Save failed');newsSources=result.settings.sources;renderNewsSources();status.textContent='News sources saved.'}
+ try{const response=await fetch('/api/news-sources',{method:'POST',headers:{'Content-Type':'application/json','X-Configurator-Token':token},body:JSON.stringify({sources:newsSources})});const result=await response.json();if(!response.ok)throw Error(result.error||'Save failed');newsSources=result.settings.sources;newsSourcesSaved=clone(newsSources);newsSourcesDirty=false;renderNewsSources();status.textContent='News sources saved.'}
  catch(err){status.textContent=err.message}
 }
 const clone=value=>JSON.parse(JSON.stringify(value));
