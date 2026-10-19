@@ -1697,6 +1697,12 @@ def main():
                               *selected_nhl_groups, *selected_nba_conferences])
         for league, cache in standings_caches.items():
             cache.refresh_seconds = standings_options['refresh_seconds']
+            if league in nba_standings_workers:
+                if standings_options['enabled'] and league in selected_nba_conferences:
+                    nba_standings_workers[league].start()
+                else:
+                    nba_standings_workers[league].stop()
+                continue
             if league in nhl_standings_workers:
                 if standings_options['enabled'] and league in selected_nhl_groups:
                     nhl_standings_workers[league].start()
@@ -1779,6 +1785,8 @@ def main():
         for worker in mlb_standings_workers.values():
             worker.stop()
         for worker in nhl_standings_workers.values():
+            worker.stop()
+        for worker in nba_standings_workers.values():
             worker.stop()
         mlb_season_worker.stop()
         nhl_season_worker.stop()
