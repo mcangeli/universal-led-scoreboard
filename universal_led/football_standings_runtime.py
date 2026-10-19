@@ -1,16 +1,23 @@
 """Thread-safe, cached standings refresh with no network work during rendering."""
 import threading
 import time
+import json
+import os
+from dataclasses import asdict
+from pathlib import Path
+
+from .standings import Standing
 
 from .football_standings_feed import fetch_football_standings
 
 
 class FootballStandingsCache:
     def __init__(self, league, *, fetcher=fetch_football_standings,
-                 refresh_seconds=900, clock=time.monotonic):
+                 refresh_seconds=900, clock=time.monotonic, cache_dir=None):
         if type(refresh_seconds) not in (int, float) or not 60 <= refresh_seconds <= 86400:
             raise ValueError("Invalid standings refresh interval")
         self.league = league
+        self.cache_path = (Path(cache_dir) / (league.lower() + ".json")) if cache_dir is not None else None
         self.fetcher = fetcher
         self.refresh_seconds = refresh_seconds
         self.clock = clock
@@ -20,6 +27,32 @@ class FootballStandingsCache:
         self.last_attempt = None
         self.last_success = None
         self.last_error = None
+        self._load_disk()
+
+    def _load_disk(self):
+        if self.cache_path is None:
+            return
+        try:
+            payload = json.loads(self.cache_path.read_text(encoding="utf-8"))
+            if payload.get("league") != self.league:
+                return
+            rows = tuple(Standing(**item) for item in payload["rows"])
+            if rows and all(row.league == self.league for row in rows):
+                self._rows = rows
+        except (OSError, ValueError, TypeError, KeyError):
+            return
+
+    def _save_disk(self, rows):
+        if self.cache_path is None or not rows:
+            return
+        try:
+            self.cache_path.parent.mkdir(parents=True, exist_ok=True)
+            temp = self.cache_path.with_suffix(".tmp")
+            temp.write_text(json.dumps({"league": self.league, "rows": [asdict(row) for row in rows]}),
+                            encoding="utf-8")
+            os.replace(temp, self.cache_path)
+        except OSError:
+            return
 
     def refresh(self, *, force=False):
         with self._refresh_lock:
@@ -35,6 +68,15 @@ class FootballStandingsCache:
                 with self._lock:
                     self.last_error = str(exc)
                     return self._rows
+            if not rows:
+                with self._lock:
+                    self.last_error = "Standings feed returned no teams"
+                    return self._rows
+            if any(row.league != self.league for row in rows):
+                with self._lock:
+                    self.last_error = "Standings feed returned a different league"
+                    return self._rows
+            self._save_disk(rows)
             with self._lock:
                 self._rows = rows
                 self.last_success = self.clock()
