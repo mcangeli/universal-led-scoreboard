@@ -731,7 +731,10 @@ function markSportsSettingsDirty(event){
 document.querySelector('[data-page="sports"]').addEventListener('input',markSportsSettingsDirty);
 document.querySelector('[data-page="sports"]').addEventListener('change',markSportsSettingsDirty);
 async function saveSportSettings(source){
- const status=document.getElementById('settings-status');status.textContent='Saving…';
+ const status=document.getElementById('settings-status');
+ const saveButton=document.getElementById('save-settings');
+ if(saveButton.disabled)return;
+ status.textContent='Saving…';
  const next=clone(settings);
  if(source==='sports'){
   next.mlb.favorite_teams=getFavoriteTeams();
@@ -785,13 +788,19 @@ async function saveSportSettings(source){
  if(!updateLiveShare()){status.textContent='Fix the MLB live screen percentages before saving.';return;}
  next.mlb.live_classic_percent=Number(document.getElementById('live-classic').value);
  next.mlb.live_matchup_percent=Number(document.getElementById('live-matchup').value)}
+ saveButton.disabled=true;
  try{
   const response=await fetch('/api/settings',{method:'POST',headers:{'Content-Type':'application/json','X-Configurator-Token':token},body:JSON.stringify(next)});
-  const result=await response.json();if(!response.ok)throw Error(result.error||'Save failed');
+  let result;
+  try{result=await response.json()}catch(_){throw Error('Server returned an unreadable response (HTTP '+response.status+'). Check configurator logs.');}
+  if(!response.ok)throw Error('Server rejected sport settings (HTTP '+response.status+'): '+(result.error||'Save failed'));
   settings=result.settings;
-  await loadSettings();draw();await refreshStatus();
-  sportsSettingsDirty=false;status.textContent='Saved and applied to configurator preview.';
- }catch(err){status.textContent=err.message}
+  sportsSettingsDirty=false;
+  status.textContent='Sport settings saved.';
+  try{await loadSettings();draw();await refreshStatus();status.textContent='Saved and applied to configurator preview.';}
+  catch(refreshError){status.textContent='Settings saved, but the dashboard could not refresh: '+refreshError.message;}
+ }catch(err){status.textContent='Settings not confirmed saved: '+(err instanceof TypeError?'Network error. Check connection and retry.':err.message);}
+ finally{saveButton.disabled=false;}
 }
 document.getElementById('save-settings').onclick=()=>saveSportSettings('sports');
 let updateAvailable=false;
