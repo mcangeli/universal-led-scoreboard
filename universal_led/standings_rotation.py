@@ -10,8 +10,9 @@ class StandingsRotation:
     """Read cached standings only; never fetch from the frame loop."""
 
     def __init__(self, caches, *, enabled=False, page_seconds=12,
-                 clock=time.monotonic, selected_leagues=None):
+                 clock=time.monotonic, selected_leagues=None, season_policy=None):
         self.caches = dict(caches)
+        self.season_policy = season_policy
         self.clock = clock
         self.started = clock()
         self._page_identity = None
@@ -42,6 +43,10 @@ class StandingsRotation:
         # the configured slot duration instead of each consuming a full slot.
         competitions = []
         for league, cache in self.caches.items():
+            # The policy is a cached, local-only decision. Never perform
+            # schedule/API lookups in the display loop.
+            if self.season_policy is not None and not self.season_policy(league):
+                continue
             if self.selected_leagues is not None and league not in self.selected_leagues:
                 continue
             rows = cache.rows()
