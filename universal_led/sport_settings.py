@@ -43,7 +43,11 @@ def validate_settings(value):
     standings=value['standings']
     if (set(standings) not in (set(DEFAULT_SETTINGS['standings']), set(DEFAULT_SETTINGS['standings']) | {'leagues'},
                                    set(DEFAULT_SETTINGS['standings']) | {'mlb_divisions'},
-                                   set(DEFAULT_SETTINGS['standings']) | {'leagues', 'mlb_divisions'})
+                                   set(DEFAULT_SETTINGS['standings']) | {'leagues', 'mlb_divisions'},
+                                   set(DEFAULT_SETTINGS['standings']) | {'nhl_divisions'},
+                                   set(DEFAULT_SETTINGS['standings']) | {'leagues', 'nhl_divisions'},
+                                   set(DEFAULT_SETTINGS['standings']) | {'mlb_divisions', 'nhl_divisions'},
+                                   set(DEFAULT_SETTINGS['standings']) | {'leagues', 'mlb_divisions', 'nhl_divisions'})
             or type(standings['enabled']) is not bool):
         raise ValueError('Invalid standings settings')
     if 'leagues' in standings:
@@ -59,6 +63,13 @@ def validate_settings(value):
                 any(not isinstance(name, str) or name not in DIVISION_KEYS.values()
                     for name in divisions)):
             raise ValueError('Invalid MLB standings division selection')
+    if 'nhl_divisions' in standings:
+        from .nhl_standings_feed import NHL_DIVISIONS
+        divisions = standings['nhl_divisions']
+        if (not isinstance(divisions, list) or len(divisions) != len(set(divisions)) or
+                any(not isinstance(name, str) or name not in NHL_DIVISIONS
+                    for name in divisions)):
+            raise ValueError('Invalid NHL standings division selection')
     for key,low,high in (('page_seconds',3,3600),('refresh_seconds',60,86400)):
         number=standings[key]
         if type(number) not in (int,float) or not low<=number<=high:
