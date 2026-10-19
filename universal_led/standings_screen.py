@@ -59,34 +59,33 @@ def _tiny_text(frame, value, x, y, color, limit):
 
 
 def _render_mlb_division(frame, league, rows, offset):
-    """Adapt original MLB-LED-Scoreboard 64x32 three-column standings.
+    """MLB-LED-Scoreboard wide standings renderer, adapted to Framebuffer.
 
-    Five six-pixel rows: team, win-loss record, official games back.
-    Division is identified by the original six-segment footer.
+    Source: standings/src/mlb_led_scoreboard_standings/renderer.py
+    Coordinates: coordinates/w64h32.example.json. On 64x32 the original
+    games-back column starts at x=64 and is intentionally not visible.
     """
     division = league.upper().replace("_", " ")
+    # Original standings.al.divider / standings.nl.divider colors.
+    divider = (255, 0, 0) if division.startswith("AL") else (0, 0, 255)
+    team_color = (171, 181, 170)
+    stat_color = (171, 181, 170)
+    # Original __render_static_wide_standings: start=0, offset=6,
+    # divider x=13, name x=1, record centered at x=31.
     for x in range(64):
-        frame.pixel(x, 0, DIM)
-    for y in range(30):
-        frame.pixel(13, y, DIM)
+        frame.pixel(x, 0, divider)
+    for y in range(31):
+        frame.pixel(13, y, divider)
     for index, standing in enumerate(tuple(rows)[offset:offset + 5]):
-        y = index * 6 + 1
-        _tiny_text(frame, standing.abbreviation or standing.team_id, 1, y, WHITE, 3)
-        record = f'{standing.wins}-{standing.losses}'
-        _tiny_text(frame, record, 17, y, GOLD, 7)
-        gb = standing.games_back if standing.games_back is not None else '-'
-        _tiny_text(frame, gb[-5:], 63 - len(gb[-5:]) * 4, y, GOLD, 5)
+        baseline = 6 + index * 6
         for x in range(64):
-            frame.pixel(x, y + 5, DIM)
-    segments = {'AL WEST': 0, 'AL CENTRAL': 1, 'AL EAST': 2,
-                'NL WEST': 3, 'NL CENTRAL': 4, 'NL EAST': 5}
-    selected = segments.get(division)
-    for x in range(64):
-        frame.pixel(x, 31, DIM if x % 11 != 10 else (0, 0, 0))
-    if selected is not None:
-        start = selected * 11 if selected < 5 else 55
-        for x in range(start, min(start + 9, 64)):
-            frame.pixel(x, 31, GREEN)
+            frame.pixel(x, baseline, divider)
+        _tiny_text(frame, standing.abbreviation or standing.team_id,
+                   1, baseline - 5, team_color, 3)
+        record = f"{standing.wins:>3}-{standing.losses:<3}"
+        # Original center_text_position(record, x=31, font_width=4).
+        record_x = 31 - (len(record) * 4) // 2
+        _tiny_text(frame, record, record_x, baseline - 5, stat_color, 7)
 
 
 def render_standings(league, rows, *, offset=0):
