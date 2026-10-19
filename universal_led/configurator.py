@@ -1505,7 +1505,8 @@ def main():
         division: FootballStandingsCache(
             'MLB', fetcher=lambda _league, group=division: fetch_mlb_group(group),
             refresh_seconds=initial['standings']['refresh_seconds'],
-            cache_dir=None)
+            cache_dir=Path(args.config_dir) / 'standings-cache',
+            cache_key='mlb-' + division.lower())
         for division in DIVISION_KEYS.values()
     }
     mlb_standings_workers = {
