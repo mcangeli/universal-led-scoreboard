@@ -1421,14 +1421,21 @@ def main():
     from .nfl_engine import ConfiguredNFLRenderer
     nfl_feed = BackgroundNFLFeed(NFLFeed())
     nfl_renderer = ConfiguredNFLRenderer(nfl_feed, scoring_alerts=scoring_alerts)
+    # Track game completion on background refresh, independent of which
+    # sport is currently displayed. The handoff remains opt-in until the
+    # live-rotation policy and exact-game renderers are fully integrated.
+    from .final_score_handoff import FinalScoreHandoff
+    final_handoff = FinalScoreHandoff()
+    def observe_finals(sport, games):
+        final_handoff.observe(sport, games, id_getter=lambda game: game.game_id)
     # Observe score changes as feeds refresh, even when another sport owns the display.
-    nhl_feed.on_games = lambda games: nhl_renderer.score_observer.observe(games, favorite_teams=nhl_renderer.favorite_teams)
+    nhl_feed.on_games = lambda games: (nhl_renderer.score_observer.observe(games, favorite_teams=nhl_renderer.favorite_teams), observe_finals('nhl', games))
     nfl_feed.on_games = lambda games: nfl_renderer.score_observer.observe(games, favorite_teams=nfl_renderer.favorite_teams)
     from .mlb_score_alerts import MLBRunObserver
     mlb_run_observer = MLBRunObserver(scoring_alerts, lambda: renderer.settings()['mlb']['favorite_teams'])
     feed.on_games = mlb_run_observer.observe
-    nba_feed.on_games = nba_renderer._observe_lead_changes
-    wnba_feed.on_games = wnba_renderer._observe_lead_changes
+    nba_feed.on_games = lambda games: (nba_renderer._observe_lead_changes(games), observe_finals('nba', games))
+    wnba_feed.on_games = lambda games: (wnba_renderer._observe_lead_changes(games), observe_finals('wnba', games))
     from .soccer_data import SoccerFeed, fetch_scores
     from .soccer_runtime import BackgroundSoccerFeed
     from .soccer_engine import ConfiguredSoccerRenderer
