@@ -1592,7 +1592,8 @@ def main():
         if competition in mlb_standings_caches:
             return season_status.eligible('MLB')
         if competition in nhl_standings_caches:
-            return season_status.eligible('NHL')
+            return (season_status.eligible('NHL') and
+                    any(row.played > 0 for row in nhl_standings_caches[competition].rows()))
         if competition in nba_standings_caches and nba_season_worker is not None:
             return season_status.eligible('NBA')
         return True
