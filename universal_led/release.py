@@ -21,12 +21,27 @@ def installed_commit():
     return _git('rev-parse', '--short=8', 'HEAD')
 
 
+def checkout_branch():
+    """Read the installed branch without invoking Git as the web service user.
+
+    The dashboard can run under a different UID from the checkout owner,
+    causing Git safe.directory checks to reject ordinary Git commands.
+    """
+    head = Path(__file__).resolve().parent.parent / '.git' / 'HEAD'
+    try:
+        value = head.read_text(encoding='utf-8').strip()
+    except (OSError, UnicodeError):
+        return None
+    prefix = 'ref: refs/heads/'
+    return value[len(prefix):] if value.startswith(prefix) else None
+
+
 def installed_release():
     """Identify exact tagged releases, otherwise show the development channel."""
     tag = _git('describe', '--tags', '--exact-match')
     if tag:
         return tag
-    branch = _git('symbolic-ref', '--quiet', '--short', 'HEAD')
+    branch = checkout_branch() or _git('symbolic-ref', '--quiet', '--short', 'HEAD')
     if branch and branch != 'HEAD':
         return branch
     # Updater installations can be detached; a matching remote branch is
