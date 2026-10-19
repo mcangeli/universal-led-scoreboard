@@ -13,11 +13,13 @@ from .football_standings_feed import fetch_football_standings
 
 class FootballStandingsCache:
     def __init__(self, league, *, fetcher=fetch_football_standings,
-                 refresh_seconds=900, clock=time.monotonic, cache_dir=None):
+                 refresh_seconds=900, clock=time.monotonic, cache_dir=None,
+                 cache_key=None):
         if type(refresh_seconds) not in (int, float) or not 60 <= refresh_seconds <= 86400:
             raise ValueError("Invalid standings refresh interval")
         self.league = league
-        self.cache_path = (Path(cache_dir) / (league.lower() + ".json")) if cache_dir is not None else None
+        self.cache_key = cache_key or league
+        self.cache_path = (Path(cache_dir) / (self.cache_key.lower() + ".json")) if cache_dir is not None else None
         self.fetcher = fetcher
         self.refresh_seconds = refresh_seconds
         self.clock = clock
@@ -34,7 +36,7 @@ class FootballStandingsCache:
             return
         try:
             payload = json.loads(self.cache_path.read_text(encoding="utf-8"))
-            if payload.get("league") != self.league:
+            if payload.get("league") != self.league or payload.get("cache_key", self.league) != self.cache_key:
                 return
             rows = tuple(Standing(**item) for item in payload["rows"])
             if rows and all(row.league == self.league for row in rows):
@@ -48,7 +50,7 @@ class FootballStandingsCache:
         try:
             self.cache_path.parent.mkdir(parents=True, exist_ok=True)
             temp = self.cache_path.with_suffix(".tmp")
-            temp.write_text(json.dumps({"league": self.league, "rows": [asdict(row) for row in rows]}),
+            temp.write_text(json.dumps({"league": self.league, "cache_key": self.cache_key, "rows": [asdict(row) for row in rows]}),
                             encoding="utf-8")
             os.replace(temp, self.cache_path)
         except OSError:
