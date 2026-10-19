@@ -44,7 +44,12 @@ class NHLStandingsFeedTests(unittest.TestCase):
             calls.append((url, timeout))
             return Response(json.dumps(payload).encode())
         rows = fetch_nhl_standings(opener=opener)
-        self.assertEqual(calls, [(NHL_STANDINGS_URL, 12)])
+        self.assertEqual(len(calls), 1)
+        request, timeout = calls[0]
+        self.assertEqual(request.full_url, NHL_STANDINGS_URL)
+        self.assertEqual(timeout, 12)
+        self.assertEqual(request.get_header('Accept'), 'application/json')
+        self.assertIn('UniversalLEDScoreboard', request.get_header('User-agent'))
         self.assertEqual([row.group for row in rows], ['Atlantic', 'Pacific'])
         self.assertEqual([row.team_id for row in
                           fetch_nhl_division('Atlantic', fetcher=lambda _: rows)],
