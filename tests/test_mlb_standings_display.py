@@ -13,9 +13,9 @@ class MLBStandingsDisplayTests(unittest.TestCase):
         row = Standing('MLB', 'NL_EAST', '144', 162, 91, 71, rank=2, abbreviation='ATL')
         frame = render_standings('NL EAST', (row,))
         self.assertTrue(any(frame.pixels[y][x] == GOLD
-                            for y in range(7, 12) for x in range(44, 52)))
+                            for y in range(0, 5) for x in range(38, 46)))
         self.assertTrue(any(frame.pixels[y][x] == GOLD
-                            for y in range(7, 12) for x in range(56, 64)))
+                            for y in range(0, 5) for x in range(51, 59)))
 
     def test_all_five_teams_fit_one_page(self):
         teams = ('ATL', 'NYM', 'PHI', 'MIA', 'WSN')
@@ -25,12 +25,12 @@ class MLBStandingsDisplayTests(unittest.TestCase):
         frame = render_standings('NL EAST', rows)
         self.assertEqual((frame.width, frame.height), (64, 32))
         for index in range(5):
-            y = 7 + index * 5
+            y = index * 6
             self.assertTrue(any(frame.pixels[yy][xx] == WHITE
                                 for yy in range(y, y + 5)
-                                for xx in range(11, 23)))
-        self.assertTrue(all(frame.pixels[6][x] != WHITE for x in range(64)))
-        for y in (11, 16, 21, 26, 31):
+                                for xx in range(9, 21)))
+        self.assertTrue(all(frame.pixels[5][x] == (0, 0, 0) for x in range(64)))
+        for y in (5, 11, 17, 23, 29):
             self.assertTrue(all(frame.pixels[y][x] == (0, 0, 0)
                                 for x in range(64)), f'Row {y} must separate teams')
 
