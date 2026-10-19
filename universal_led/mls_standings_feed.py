@@ -35,6 +35,8 @@ def parse_mls_standings(payload):
                     points=points, goal_difference=difference, rank=rank))
             except (KeyError, ValueError, TypeError):
                 continue
+    if not rows:
+        raise ValueError("MLS standings response contained no recognized conference entries")
     return tuple(rows)
 
 
