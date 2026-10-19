@@ -41,7 +41,9 @@ def validate_settings(value):
                nwsl=dict(DEFAULT_SETTINGS['nwsl']) | value.get('nwsl',{}),
                english=dict(DEFAULT_SETTINGS['english']) | value.get('english',{}))
     standings=value['standings']
-    if (set(standings) not in (set(DEFAULT_SETTINGS['standings']), set(DEFAULT_SETTINGS['standings']) | {'leagues'})
+    if (set(standings) not in (set(DEFAULT_SETTINGS['standings']), set(DEFAULT_SETTINGS['standings']) | {'leagues'},
+                                   set(DEFAULT_SETTINGS['standings']) | {'mlb_divisions'},
+                                   set(DEFAULT_SETTINGS['standings']) | {'leagues', 'mlb_divisions'})
             or type(standings['enabled']) is not bool):
         raise ValueError('Invalid standings settings')
     if 'leagues' in standings:
@@ -50,6 +52,13 @@ def validate_settings(value):
         if (not isinstance(leagues, list) or len(leagues) != len(set(leagues)) or
                 any(not isinstance(name, str) or name not in COMPETITIONS for name in leagues)):
             raise ValueError('Invalid standings league selection')
+    if 'mlb_divisions' in standings:
+        from .mlb_standings_feed import DIVISION_KEYS
+        divisions = standings['mlb_divisions']
+        if (not isinstance(divisions, list) or len(divisions) != len(set(divisions)) or
+                any(not isinstance(name, str) or name not in DIVISION_KEYS.values()
+                    for name in divisions)):
+            raise ValueError('Invalid MLB standings division selection')
     for key,low,high in (('page_seconds',3,3600),('refresh_seconds',60,86400)):
         number=standings[key]
         if type(number) not in (int,float) or not low<=number<=high:
