@@ -1573,14 +1573,16 @@ def main():
             refresh_seconds=english['refresh_seconds'],
             timezone_name=time_preferences['timezone'])
         standings_options = settings['standings']
+        selected_standings_leagues = standings_options.get('leagues', english['enabled_leagues'])
         standings_rotation.configure(
-            enabled=standings_options['enabled'] and settings['sports']['english']['enabled'],
+            enabled=standings_options['enabled'],
             page_seconds=standings_options['page_seconds'],
-            selected_leagues=standings_options.get('leagues', english['enabled_leagues']))
+            selected_leagues=selected_standings_leagues)
         for league, cache in standings_caches.items():
             cache.refresh_seconds = standings_options['refresh_seconds']
-            if (settings['sports']['english']['enabled'] and
-                    league in english['enabled_leagues']):
+            # Standings are a separate content feed, not dependent on
+            # whether English football game screens are enabled.
+            if standings_options['enabled'] and league in selected_standings_leagues:
                 standings_workers[league].start()
             else:
                 standings_workers[league].stop()
