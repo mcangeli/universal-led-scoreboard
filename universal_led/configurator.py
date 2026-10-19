@@ -1149,6 +1149,16 @@ load().catch(err=>document.getElementById('status').textContent=err.message);
 loadSettings().catch(err=>document.getElementById('settings-status').textContent=err.message);
 </script></body></html>'''
 
+def dashboard_feed_status(status, *, unix_time=False, wall_now=None, monotonic_now=None):
+    """Return a display-safe feed snapshot without altering worker timestamps."""
+    result=dict(status)
+    stamp=result.get('last_success')
+    if stamp is not None and not unix_time:
+        wall_now=time.time() if wall_now is None else wall_now
+        monotonic_now=time.monotonic() if monotonic_now is None else monotonic_now
+        result['last_success']=wall_now-(monotonic_now-stamp)
+    return result
+
 def make_handler(config_dir,token,frame_provider=None,settings_callback=None,feed_status=None,board_provider=None,countdown_status=None,standings_status=None,rotation_status=None,sports_feed_status=None):
     started=time.monotonic()
     sessions=Sessions(config_dir)
@@ -2009,10 +2019,7 @@ def main():
         # Non-MLB workers expose monotonic timestamps for scheduling.
         # Translate them to wall-clock seconds only for dashboard reporting.
         def dashboard_status(worker, *, unix_time=False):
-            status=dict(worker.status())
-            if not unix_time and status.get('last_success') is not None:
-                status['last_success']=time.time()-(time.monotonic()-status['last_success'])
-            return status
+            return dashboard_feed_status(worker.status(),unix_time=unix_time)
         feeds={'mlb':feed,'nhl':nhl_feed,'nba':nba_feed,'wnba':wnba_feed,
                'nfl':nfl_feed,'mls':soccer_workers['mls'],'nwsl':soccer_workers['nwsl']}
         result={name:dashboard_status(worker,unix_time=name=='mlb') for name,worker in feeds.items()}
