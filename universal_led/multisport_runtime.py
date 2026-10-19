@@ -11,7 +11,7 @@ from .scoring_alert_screen import render_scoring_alert
 class MultiSportRenderer:
     """Route cached frames without network access; retain legacy single-sport mode."""
 
-    def __init__(self, mlb_renderer, nhl_renderer, active_sport="mlb", clock=time.monotonic, news=None, settings_getter=None, nba_renderer=None, wnba_renderer=None, nfl_renderer=None, mls_renderer=None, nwsl_renderer=None, english_renderer=None, scoring_alerts=None, alert_renderer=None, standings_rotation=None, final_handoff=None, timezone_getter=None):
+    def __init__(self, mlb_renderer, nhl_renderer, active_sport="mlb", clock=time.monotonic, news=None, settings_getter=None, nba_renderer=None, wnba_renderer=None, nfl_renderer=None, mls_renderer=None, nwsl_renderer=None, english_renderer=None, scoring_alerts=None, alert_renderer=None, standings_rotation=None, final_handoff=None, timezone_getter=None, soccer_standings_caches=None):
         self.mlb = mlb_renderer
         self.nhl = nhl_renderer
         self.nba = nba_renderer
@@ -22,6 +22,8 @@ class MultiSportRenderer:
         self.english = english_renderer
         self.scoring_alerts = scoring_alerts
         self.standings_rotation = standings_rotation
+        self.soccer_standings_caches = (dict(soccer_standings_caches) if soccer_standings_caches is not None else
+                                        dict(getattr(standings_rotation, 'caches', {}) or {}))
         self.timezone_getter = timezone_getter
         self._connect_soccer_standings()
         self.final_handoff = final_handoff
@@ -43,7 +45,7 @@ class MultiSportRenderer:
 
     def _connect_soccer_standings(self):
         """Reuse the exact caches already owned by the idle standings rotation."""
-        caches = getattr(self.standings_rotation, 'caches', None)
+        caches = self.soccer_standings_caches
         if not caches:
             return
         if self.english is not None:
@@ -55,9 +57,14 @@ class MultiSportRenderer:
             if callable(attach) and league in caches:
                 attach(caches[league])
 
+    def set_soccer_standings_caches(self, caches):
+        """Attach independently refreshed caches even with standings pages off."""
+        self.soccer_standings_caches = dict(caches or {})
+        self._connect_soccer_standings()
+
     def soccer_pregame_diagnostics(self):
         """Explain absent records without fetching during frame rendering."""
-        caches = getattr(self.standings_rotation, 'caches', {}) or {}
+        caches = self.soccer_standings_caches
         result = {}
         for league in ('EPL', 'CHAMPIONSHIP', 'LEAGUE_ONE', 'LEAGUE_TWO', 'MLS', 'NWSL'):
             cache = caches.get(league)
