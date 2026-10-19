@@ -64,6 +64,12 @@ class ConfiguredNHLRenderer:
         slot = int(max(0, self.clock() - self.started) // self.rotation_seconds)
         return games[slot % len(games)]
 
+    def frame_for_game(self, game):
+        """Render an exact cached NHL game for a final-score handoff."""
+        colors = read_nhl_colors(self.config_dir) if self.config_dir is not None else None
+        return NHLVisualScreen(game, timezone_name=self.timezone_name,
+                               time_format=self.time_format, team_colors=colors).render()
+
     def frame(self):
         game = self.game()
         # Read saved colors at render time so dashboard edits take effect without
