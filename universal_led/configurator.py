@@ -1367,9 +1367,9 @@ def main():
     from .nhl_engine import ConfiguredNHLRenderer
     from .multisport_runtime import MultiSportRenderer
     nhl_feed = BackgroundNHLFeed(NHLFeed())
-    nhl_renderer = ConfiguredNHLRenderer(nhl_feed, config_dir=args.config_dir)
     from .scoring_alerts import ScoringAlerts
     scoring_alerts = ScoringAlerts()
+    nhl_renderer = ConfiguredNHLRenderer(nhl_feed, config_dir=args.config_dir, scoring_alerts=scoring_alerts)
     from .nba_feed import NBAFeed
     from .nba_runtime import BackgroundNBAFeed
     from .nba_engine import ConfiguredNBARenderer
@@ -1383,7 +1383,7 @@ def main():
     from .nfl_runtime import BackgroundNFLFeed
     from .nfl_engine import ConfiguredNFLRenderer
     nfl_feed = BackgroundNFLFeed(NFLFeed())
-    nfl_renderer = ConfiguredNFLRenderer(nfl_feed)
+    nfl_renderer = ConfiguredNFLRenderer(nfl_feed, scoring_alerts=scoring_alerts)
     from .soccer_data import SoccerFeed, fetch_scores
     from .soccer_runtime import BackgroundSoccerFeed
     from .soccer_engine import ConfiguredSoccerRenderer
