@@ -121,3 +121,54 @@
 ### Planned
 - NBA, NFL, NHL, MLS and EFL modules.
 - Further plugin ecosystem and release stabilization.
+
+## Archived release-candidate verification notes (moved from README)
+
+These notes preserve historical candidate observations; some statuses have since changed. Refer to newer entries above for current release acceptance.
+
+## v0.6.0 English football release-candidate verification
+
+- Branch: `feature/0.6.0-english-football`; **not yet merged, tagged or deployed to production**.
+- Four divisions: Premier League, Championship, League One and League Two, with ESPN-backed fixtures, scores, club IDs, favorites, shared 64×32 layout and combined live-first rotation.
+- English football is disabled by default. Goal enrichment polls ESPN match summaries **only for live fixtures** in the background; failures preserve scores and no network access occurs during frame rendering.
+- Historical ESPN summary samples on October 17, 2026 yielded 11/11 stable goal IDs, 11/11 team IDs and match minutes, and 7/11 identified scorers. **Live ESPN goal delivery has not yet been verified**.
+- Before production promotion, complete simulated lifecycle acceptance, a full regression run, a live-match observation, and Pi 3 upgrade/rollback health checks. See [v0.6.0 release checklist](docs/V060-RELEASE-CHECKLIST.md).
+
+## v0.5.0 soccer release-candidate verification
+
+- Branch: `feature/0.5.0-soccer`; not yet merged or tagged.
+- Raspberry Pi 5 software updater: **1,018 tests, 15 skipped, no failures** (October 17, 2026), as reported from the device.
+- MLS and NWSL share a compact 64×32 pixel layout with period/clock, stoppage-time, halftime, goal announcements, favorites, and live-game priority. The browser emulator has been visually reviewed.
+- ESPN-style feed parsing and combined-league behavior have automated fixture coverage; real-time provider responses and goal transitions still require live observation.
+- Final acceptance: check real MLS and NWSL feed responses and identifiers, both leagues enabled together, no-live supplemental rotation, service restart/health, and physical-matrix appearance where hardware is available. See [v0.5.0 release checklist](docs/V050-SOCCER-RELEASE-CHECKLIST.md).
+
+## v0.4.5 release-candidate verification
+
+- Feature branch: `feature/0.4.5-dashboard-polish`, not yet tagged or merged.
+- Raspberry Pi 3: **857 tests passed, 15 skipped** (October 17, 2026), including isolated rollback and fresh-install regression coverage.
+- Dashboard update, remote branch discovery, release-family filtering, matrix enable/disable, and rejection of an older unsafe branch confirmed on the Pi 3.
+- Raspberry Pi 5: clean Raspberry Pi OS Trixie installation in emulator mode succeeded; board display remained operational after reboot.
+- Automated rollback uses isolated command stubs; a real post-deployment failure and restoration have not been demonstrated.
+- Remaining acceptance: clean physical-driver install, any outstanding Wi-Fi/operational checks, license review, and release decision.
+
+## v0.4.0 NFL verification
+
+Configure NFL under Sports & Rotation. Enable NFL headlines separately under Content & News. The NFL feed currently targets the local game day, so Sunday's matchups may not appear on Friday. NFL RSS parsing, configuration, and game rendering are covered by regression tests. Live NFL headlines and game transitions still require physical-matrix observation.
+
+## v0.4.0 verification
+
+- Raspberry Pi 3 on Raspberry Pi OS Trixie, 64×32 RGB LED matrix.
+- Full regression suite: **780 tests, 15 skipped, no failures** (October 16, 2026).
+- Both system services active, with the published framebuffer reported fresh by `ulsctl health`.
+- NFL scheduled, live and final rendering, favorites, rotation and automatic news are covered by automated tests. Physical NFL live-game transitions and live RSS headline delivery remain follow-up observations.
+
+## v0.3.0 verification
+
+- Production Raspberry Pi 3 on Raspberry Pi OS Trixie, 64×32 RGB LED matrix.
+- Full regression suite: **752 tests, 15 skipped, no failures** (October 16, 2026).
+- `uls-web.service` and `uls-matrix.service` enabled and running automatically after reboot.
+- Configurator responding on port 8080; physical MLB/NHL and universal news rotation verified previously, with NBA/WNBA display and configuration confirmed for v0.3.0.
+- NHL pregame records are visible on the board; NBA/WNBA pregame records appear when available from the feed.
+- NHL score feed retains last good data on transient errors and uses the configured timezone for the game-day date.
+- NBA/WNBA news controls and RSS parsing are covered by tests; live headline delivery remains to be checked.
+
