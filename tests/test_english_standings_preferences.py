@@ -39,7 +39,7 @@ class EnglishStandingsPreferencesTests(unittest.TestCase):
         self.assertIn("selected_leagues=[*selected_standings_leagues, *selected_mlb_groups,", source)
         self.assertIn("if settings['sports']['nba']['enabled'] else []", source)
         self.assertIn("*selected_nhl_groups, *selected_nba_conferences,", source)
-        self.assertIn("*selected_nfl_divisions, *selected_mls_conferences])", source)
+        self.assertIn("*selected_nfl_divisions, *selected_mls_conferences, *selected_single_tables])", source)
         self.assertIn("if needs_pregame_records or needs_standings_page:", source)
 
 
