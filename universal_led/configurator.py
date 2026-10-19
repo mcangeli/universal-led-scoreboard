@@ -649,6 +649,7 @@ async function loadSettings(){
  document.querySelectorAll('#mlb-standings-divisions input').forEach(el=>el.checked=(settings.standings.mlb_divisions||[]).includes(el.value));
  document.querySelectorAll('#nfl-standings-divisions input').forEach(el=>el.checked=(settings.standings.nfl_divisions||[]).includes(el.value));
   document.querySelectorAll('#mls-standings-conferences input').forEach(el=>el.checked=(settings.standings.mls_conferences||[]).includes(el.value));
+  for(const league of ['nwsl','wnba'])document.getElementById(league+'-standings-enabled').checked=settings.standings[league]===true;
  document.querySelectorAll('#nba-standings-conferences input').forEach(el=>el.checked=(settings.standings.nba_conferences||[]).includes(el.value));
  document.querySelectorAll('#nhl-standings-divisions input').forEach(el=>el.checked=(settings.standings.nhl_divisions||[]).includes(el.value));
  const nhlWildCards=settings.standings.nhl_wild_cards??[
@@ -726,6 +727,7 @@ async function saveSportSettings(source){
   next.standings.mlb_divisions=Array.from(document.querySelectorAll('#mlb-standings-divisions input:checked'),el=>el.value);
   next.standings.nfl_divisions=Array.from(document.querySelectorAll('#nfl-standings-divisions input:checked'),el=>el.value);
    next.standings.mls_conferences=Array.from(document.querySelectorAll('#mls-standings-conferences input:checked'),el=>el.value);
+   for(const league of ['nwsl','wnba'])next.standings[league]=document.getElementById(league+'-standings-enabled').checked;
   next.standings.nba_conferences=Array.from(document.querySelectorAll('#nba-standings-conferences input:checked'),el=>el.value);
   next.standings.nhl_divisions=Array.from(document.querySelectorAll('#nhl-standings-divisions input:checked'),el=>el.value);
   next.standings.nhl_wild_cards=Array.from(document.querySelectorAll('#nhl-standings-wild-cards input:checked'),el=>el.value);
@@ -1607,6 +1609,23 @@ def main():
         for conference, cache in mls_standings_caches.items()
     }
     standings_caches.update(mls_standings_caches)
+    from .nwsl_standings_feed import fetch_nwsl_standings
+    from .wnba_standings_feed import fetch_wnba_standings
+    single_table_caches = {
+        league: FootballStandingsCache(
+            league, fetcher=fetcher,
+            refresh_seconds=initial['standings']['refresh_seconds'],
+            cache_dir=Path(args.config_dir) / 'standings-cache',
+            cache_key=league.lower() + '-standings',
+            expected_group=league)
+        for league, fetcher in (('NWSL', fetch_nwsl_standings),
+                                ('WNBA', fetch_wnba_standings))
+    }
+    single_table_workers = {
+        league: BackgroundFootballStandings(cache)
+        for league, cache in single_table_caches.items()
+    }
+    standings_caches.update(single_table_caches)
     from .standings_season_status import StandingsSeasonStatus
     from .standings_season_worker import SeasonCalendarWorker
     from .mlb_season_calendar import fetch_mlb_season_windows
@@ -1630,6 +1649,8 @@ def main():
         if competition in nhl_standings_caches:
             return (season_status.eligible('NHL') and
                     any(row.played > 0 for row in nhl_standings_caches[competition].rows()))
+        if competition in single_table_caches:
+            return any(row.played > 0 for row in single_table_caches[competition].rows())
         if competition in mls_standings_caches:
             return any(row.played > 0 for row in mls_standings_caches[competition].rows())
         if competition in nfl_standings_caches:
@@ -1759,14 +1780,25 @@ def main():
                                   if settings['sports']['nfl']['enabled'] else [])
         selected_mls_conferences = (standings_options.get('mls_conferences', [])
                                     if settings['sports']['mls']['enabled'] else [])
+        selected_single_tables = [
+            league for league in ('NWSL', 'WNBA')
+            if standings_options.get(league.lower(), False)
+            and settings['sports'][league.lower()]['enabled']
+        ]
         standings_rotation.configure(
             enabled=standings_options['enabled'],
             page_seconds=standings_options['page_seconds'],
             selected_leagues=[*selected_standings_leagues, *selected_mlb_groups,
                               *selected_nhl_groups, *selected_nba_conferences,
-                              *selected_nfl_divisions, *selected_mls_conferences])
+                              *selected_nfl_divisions, *selected_mls_conferences, *selected_single_tables])
         for league, cache in standings_caches.items():
             cache.refresh_seconds = standings_options['refresh_seconds']
+            if league in single_table_workers:
+                if standings_options['enabled'] and league in selected_single_tables:
+                    single_table_workers[league].start()
+                else:
+                    single_table_workers[league].stop()
+                continue
             if league in mls_standings_workers:
                 if standings_options['enabled'] and league in selected_mls_conferences:
                     mls_standings_workers[league].start()
@@ -1872,6 +1904,8 @@ def main():
         for worker in nfl_standings_workers.values():
             worker.stop()
         for worker in mls_standings_workers.values():
+            worker.stop()
+        for worker in single_table_workers.values():
             worker.stop()
         mlb_season_worker.stop()
         nhl_season_worker.stop()
