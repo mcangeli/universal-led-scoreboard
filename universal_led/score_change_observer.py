@@ -17,6 +17,9 @@ class ScoreChangeObserver:
     def _should_announce(self, game):
         return True
 
+    def _score_steps(self, key, team, old, new):
+        return (new,) if new > old else ()
+
     def observe(self, games, *, favorite_teams=()):
         if self.alerts is None:
             return ()
@@ -38,13 +41,13 @@ class ScoreChangeObserver:
                 continue
             events = tuple(
                 ScoreEvent(self.sport, self.league, key,
-                           f"score:{team}:{new}", team, self.kind,
+                           f"score:{team}:{step}", team, self.kind,
                            home_team=game.home, away_team=game.away,
                            home_score=scores[1], away_score=scores[0])
                 for team, old, new in (
                     (game.away, previous[0], scores[0]),
                     (game.home, previous[1], scores[1]))
-                if new > old
+                for step in self._score_steps(key, team, old, new)
             )
             emitted.extend(self.alerts.observe(
                 self.sport, self.league, key, events,
@@ -61,6 +64,16 @@ class NHLGoalObserver(ScoreChangeObserver):
 
     def __init__(self, alerts):
         super().__init__(alerts, sport="nhl", league="NHL", kind="GOAL")
+        self._high_water = {}
+
+    def _score_steps(self, key, team, old, new):
+        # A downward provider correction must not replay an old goal when
+        # the corrected score subsequently climbs back to its earlier value.
+        identity = (key, team)
+        high = max(old, self._high_water.get(identity, old))
+        self._high_water[identity] = max(high, new)
+        return range(high + 1, new + 1)
+
 
     def _should_announce(self, game):
         # Intermission and shootout scoreboard changes are not live-play goals.
