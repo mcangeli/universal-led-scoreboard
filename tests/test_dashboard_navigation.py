@@ -7,7 +7,7 @@ class DashboardNavigationTests(unittest.TestCase):
     def test_every_sidebar_destination_has_a_page(self):
         import re
         html=configurator.HTML
-        pages=set(re.findall(r'data-page="([^"]+)"',html))
+        pages=set(re.findall(r'<(?:section|div)[^>]*\bdata-page="([a-z-]+)"',html))
         destinations=set(re.findall(r'class="nav-item"[^>]*onclick="showPage\(\'([^\']+)\'\)"',html))
         self.assertTrue(destinations)
         self.assertEqual(destinations,pages)
