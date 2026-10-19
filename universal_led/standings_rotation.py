@@ -56,7 +56,8 @@ class StandingsRotation:
                 if any(row.rank is None for row in group_rows):
                     continue
                 ordered = order_standings(group_rows)
-                for offset in range(0, len(ordered), 3):
+                page_size = 5 if ordered[0].league == "MLB" else 3
+                for offset in range(0, len(ordered), page_size):
                     league_pages.append((league, ordered, offset))
             if league_pages:
                 by_league.append(league_pages)
