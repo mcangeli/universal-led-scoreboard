@@ -87,6 +87,11 @@ class ConfiguredNBARenderer:
             games = live
         return games[int(max(0, self.clock() - self.started) // self.rotation_seconds) % len(games)]
 
+    def frame_for_game(self, game):
+        """Render an exact cached NBA/WNBA game, bypassing live selection."""
+        return NBAScreen(game, timezone_name=self.timezone_name,
+                         time_format=self.time_format).render()
+
     def frame(self):
         return NBAScreen(self.game(), timezone_name=self.timezone_name,
                          time_format=self.time_format).render()
