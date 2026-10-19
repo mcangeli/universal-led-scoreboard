@@ -187,7 +187,8 @@ async function saveStandingsSettings(){
    page_seconds:Number(document.getElementById('standings-page-seconds').value),
    refresh_seconds:Number(document.getElementById('standings-refresh-seconds').value),
    ...(data.standings?.leagues!==undefined?{leagues:data.standings.leagues}:{}),
-   ...(data.standings?.mlb_divisions!==undefined?{mlb_divisions:data.standings.mlb_divisions}:{})
+   ...(data.standings?.mlb_divisions!==undefined?{mlb_divisions:data.standings.mlb_divisions}:{}),
+   ...(data.standings?.nhl_divisions!==undefined?{nhl_divisions:data.standings.nhl_divisions}:{})
   };
   const saved=await fetch('/api/settings',{method:'POST',
    headers:{'Content-Type':'application/json','X-Configurator-Token':token},
@@ -1513,7 +1514,21 @@ def main():
         division: BackgroundFootballStandings(cache)
         for division, cache in mlb_standings_caches.items()
     }
+    from .nhl_standings_feed import NHL_DIVISIONS, fetch_nhl_division
+    nhl_standings_caches = {
+        division: FootballStandingsCache(
+            'NHL', fetcher=lambda _league, group=division: fetch_nhl_division(group),
+            refresh_seconds=initial['standings']['refresh_seconds'],
+            cache_dir=Path(args.config_dir) / 'standings-cache',
+            cache_key='nhl-' + division.lower())
+        for division in NHL_DIVISIONS
+    }
+    nhl_standings_workers = {
+        division: BackgroundFootballStandings(cache)
+        for division, cache in nhl_standings_caches.items()
+    }
     standings_caches.update(mlb_standings_caches)
+    standings_caches.update(nhl_standings_caches)
     standings_rotation = StandingsRotation(standings_caches)
     renderer.news = None  # Universal news is owned by the shared board scheduler.
     board = MultiSportRenderer(renderer, nhl_renderer, news=news, settings_getter=renderer.settings, nba_renderer=nba_renderer, wnba_renderer=wnba_renderer, nfl_renderer=nfl_renderer, mls_renderer=soccer_renderers['mls'], nwsl_renderer=soccer_renderers['nwsl'], english_renderer=english_renderer, scoring_alerts=scoring_alerts, standings_rotation=standings_rotation)
@@ -1592,12 +1607,20 @@ def main():
         standings_options = settings['standings']
         selected_standings_leagues = standings_options.get('leagues', english['enabled_leagues'])
         selected_mlb_divisions = standings_options.get('mlb_divisions', [])
+        selected_nhl_divisions = standings_options.get('nhl_divisions', [])
         standings_rotation.configure(
             enabled=standings_options['enabled'],
             page_seconds=standings_options['page_seconds'],
-            selected_leagues=[*selected_standings_leagues, *selected_mlb_divisions])
+            selected_leagues=[*selected_standings_leagues, *selected_mlb_divisions,
+                              *selected_nhl_divisions])
         for league, cache in standings_caches.items():
             cache.refresh_seconds = standings_options['refresh_seconds']
+            if league in nhl_standings_workers:
+                if standings_options['enabled'] and league in selected_nhl_divisions:
+                    nhl_standings_workers[league].start()
+                else:
+                    nhl_standings_workers[league].stop()
+                continue
             if league in mlb_standings_workers:
                 if standings_options['enabled'] and league in selected_mlb_divisions:
                     mlb_standings_workers[league].start()
@@ -1672,6 +1695,8 @@ def main():
         for worker in standings_workers.values():
             worker.stop()
         for worker in mlb_standings_workers.values():
+            worker.stop()
+        for worker in nhl_standings_workers.values():
             worker.stop()
 if __name__=='__main__':
     main()
