@@ -55,6 +55,24 @@ class MultiSportRenderer:
             if callable(attach) and league in caches:
                 attach(caches[league])
 
+    def soccer_pregame_diagnostics(self):
+        """Explain absent records without fetching during frame rendering."""
+        caches = getattr(self.standings_rotation, 'caches', {}) or {}
+        result = {}
+        for league in ('EPL', 'CHAMPIONSHIP', 'LEAGUE_ONE', 'LEAGUE_TWO', 'MLS', 'NWSL'):
+            cache = caches.get(league)
+            if cache is None:
+                result[league] = {'state': 'no_cache', 'teams': 0}
+                continue
+            rows = cache.rows()
+            status = cache.status() if callable(getattr(cache, 'status', None)) else {}
+            result[league] = {
+                'state': 'ready' if rows else ('error' if status.get('error') else 'empty'),
+                'teams': len(rows),
+                'error': status.get('error'),
+            }
+        return result
+
     def _sync_soccer_timezone(self):
         """Apply the configured timezone to all soccer pregame screens."""
         if self.timezone_getter is None:
