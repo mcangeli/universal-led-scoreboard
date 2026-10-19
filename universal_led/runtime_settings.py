@@ -57,13 +57,14 @@ class ConfiguredMLBRenderer:
 
     def _selection(self):
         """Keep game and pregame page on the same rotation clock."""
-        settings=self.settings()['mlb']
+        current=self.settings()
+        settings=current['mlb']
         all_games=self.feed.games()
-        policy=InterruptionPolicy(**self.settings().get('game_interruptions', {}))
+        policy=InterruptionPolicy(**current.get('game_interruptions', {}))
         all_games=filter_interrupted_games(all_games, has_live_games=getattr(self, 'external_live_games', False),
                                            policy=policy)
         favorites=set(settings.get('favorite_teams',settings.get('favorite_team',['ATL'])))
-        selected=select_games(all_games,settings.get('favorite_teams',settings.get('favorite_team',['ATL'])),settings['mode'])
+        selected=select_games(all_games,list(favorites),settings['mode'])
         favorite_live=[g for g in all_games if g.status=='live' and (g.away in favorites or g.home in favorites)]
         all_live=[g for g in all_games if g.status=='live']
         mode=settings['mode']
