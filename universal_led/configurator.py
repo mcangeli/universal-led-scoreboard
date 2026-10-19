@@ -1522,7 +1522,7 @@ def main():
         division: BackgroundFootballStandings(cache)
         for division, cache in mlb_standings_caches.items()
     }
-    from .nhl_standings_feed import NHL_DIVISIONS, fetch_nhl_division
+    from .nhl_standings_feed import NHL_DIVISIONS, NHL_WILD_CARD_GROUPS, fetch_nhl_division, fetch_nhl_wild_card
     nhl_standings_caches = {
         division: FootballStandingsCache(
             'NHL', fetcher=lambda _league, group=division: fetch_nhl_division(group),
@@ -1531,6 +1531,14 @@ def main():
             cache_key='nhl-' + division.lower())
         for division in NHL_DIVISIONS
     }
+    nhl_standings_caches.update({
+        group: FootballStandingsCache(
+            'NHL', fetcher=lambda _league, key=group: fetch_nhl_wild_card(key),
+            refresh_seconds=initial['standings']['refresh_seconds'],
+            cache_dir=Path(args.config_dir) / 'standings-cache',
+            cache_key='nhl-' + group.lower())
+        for group in NHL_WILD_CARD_GROUPS
+    })
     nhl_standings_workers = {
         division: BackgroundFootballStandings(cache)
         for division, cache in nhl_standings_caches.items()
@@ -1638,15 +1646,20 @@ def main():
         else:
             mlb_season_worker.stop()
         selected_nhl_divisions = standings_options.get('nhl_divisions', [])
+        selected_nhl_groups = [*selected_nhl_divisions]
+        if any(group in ('Atlantic', 'Metropolitan') for group in selected_nhl_divisions):
+            selected_nhl_groups.append('Eastern_Wild_Card')
+        if any(group in ('Central', 'Pacific') for group in selected_nhl_divisions):
+            selected_nhl_groups.append('Western_Wild_Card')
         standings_rotation.configure(
             enabled=standings_options['enabled'],
             page_seconds=standings_options['page_seconds'],
             selected_leagues=[*selected_standings_leagues, *selected_mlb_groups,
-                              *selected_nhl_divisions])
+                              *selected_nhl_groups])
         for league, cache in standings_caches.items():
             cache.refresh_seconds = standings_options['refresh_seconds']
             if league in nhl_standings_workers:
-                if standings_options['enabled'] and league in selected_nhl_divisions:
+                if standings_options['enabled'] and league in selected_nhl_groups:
                     nhl_standings_workers[league].start()
                 else:
                     nhl_standings_workers[league].stop()
