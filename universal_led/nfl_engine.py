@@ -33,7 +33,6 @@ class ConfiguredNFLRenderer:
 
     def _eligible_games(self):
         snapshots = self.feed.games()
-        self.score_observer.observe(snapshots, favorite_teams=self.favorite_teams)
         selected = select_games(snapshots, self.favorite_teams, self.mode)
         return filter_interrupted_games(selected, has_live_games=self.external_live_games,
                                         policy=self.interruption_policy)
