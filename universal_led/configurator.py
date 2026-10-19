@@ -20,8 +20,8 @@ from .auth import Sessions, verify_password, configure_cli
 from .release import display_version
 from .matrix_settings import load_matrix_settings, validate_matrix_settings, matrix_service_label
 
-LOGIN_HTML='''<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Scoreboard Login</title><style>body{font:16px system-ui;background:#0c1624;color:#e9eef5;max-width:400px;margin:12vh auto;padding:24px}form{background:#18283b;border:1px solid #34445b;border-radius:12px;padding:24px}input,button{box-sizing:border-box;width:100%;padding:12px;margin:8px 0;border-radius:6px}button{background:#d7b46d;border:0;font-weight:bold;cursor:pointer}
-</style></head><body><form method="post" action="/login"><h2>Universal LED Scoreboard</h2><p>Administrator login</p><label>Password<input name="password" type="password" autocomplete="current-password" required></label><button type="submit">Sign In</button><p>Use HTTPS before accessing outside a trusted LAN.</p></form></body></html>'''
+LOGIN_HTML='''<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Scoreboard Login</title><style>body{font:16px system-ui;background:#0c1624;color:#e9eef5;max-width:400px;margin:12vh auto;padding:24px}form{background:#18283b;border:1px solid #34445b;border-radius:12px;padding:24px}input,button{box-sizing:border-box;width:100%;padding:12px;margin:8px 0;border-radius:6px}button{background:#d7b46d;border:0;font-weight:bold;cursor:pointer}.login-error{padding:12px;border:1px solid #d98989;border-radius:8px;background:#49262b;color:#fff0f0}input{background:#f8fafc;color:#111827;border:1px solid #a6b4c5}input:focus-visible,button:focus-visible{outline:3px solid #e8c985;outline-offset:2px}
+</style></head><body><form method="post" action="/login"><h2>Universal LED Scoreboard</h2><p>Administrator login</p>__LOGIN_ERROR__<label>Password<input name="password" type="password" autocomplete="current-password" required></label><button type="submit">Sign In</button><p>Use HTTPS before accessing outside a trusted LAN.</p></form></body></html>'''
 
 HTML='''<!doctype html><html lang="en"><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
@@ -1026,8 +1026,8 @@ def make_handler(config_dir,token,frame_provider=None,settings_callback=None,fee
             return item.value if item else ''
         def authenticated(self):
             return sessions.valid(self.session_token())
-        def send_login(self):
-            body=LOGIN_HTML.encode()
+        def send_login(self, error=False):
+            body=LOGIN_HTML.replace("__LOGIN_ERROR__", '<p role="alert" class="login-error">Incorrect password. Please try again.</p>' if error else "").encode()
             self.send_response(200)
             self.send_header('Content-Type','text/html; charset=utf-8')
             self.send_header('Cache-Control','no-store')
@@ -1068,7 +1068,10 @@ def make_handler(config_dir,token,frame_provider=None,settings_callback=None,fee
             if not self.authenticated():
                 if path=='/':
                     self.send_response(303);self.send_header('Location','/login');self.end_headers()
-                else:self.send_json(401,{'error':'Authentication required'})
+                elif path.startswith('/api/'):
+                    self.send_json(401,{'error':'Authentication required'})
+                else:
+                    self.send_response(303);self.send_header('Location','/login');self.end_headers()
                 return
             if path=='/':
                 body=HTML.replace('__TOKEN__',json.dumps(token)).replace('__PREVIEW_VERSION__',display_version()).encode()
@@ -1187,7 +1190,7 @@ def make_handler(config_dir,token,frame_provider=None,settings_callback=None,fee
                 password=parse_qs(self.rfile.read(size).decode('utf-8',errors='replace')).get('password',[''])[0]
                 if not verify_password(config_dir,password):
                     time.sleep(0.5)
-                    self.send_json(401,{'error':'Invalid credentials'});return
+                    self.send_login(error=True);return
                 session=sessions.create()
                 self.send_response(303)
                 self.send_header('Set-Cookie','uls_session='+session+'; HttpOnly; SameSite=Strict; Path=/; Max-Age=28800')
