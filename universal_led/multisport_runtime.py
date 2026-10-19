@@ -11,7 +11,7 @@ from .scoring_alert_screen import render_scoring_alert
 class MultiSportRenderer:
     """Route cached frames without network access; retain legacy single-sport mode."""
 
-    def __init__(self, mlb_renderer, nhl_renderer, active_sport="mlb", clock=time.monotonic, news=None, settings_getter=None, nba_renderer=None, wnba_renderer=None, nfl_renderer=None, mls_renderer=None, nwsl_renderer=None, english_renderer=None, scoring_alerts=None, alert_renderer=None, standings_rotation=None):
+    def __init__(self, mlb_renderer, nhl_renderer, active_sport="mlb", clock=time.monotonic, news=None, settings_getter=None, nba_renderer=None, wnba_renderer=None, nfl_renderer=None, mls_renderer=None, nwsl_renderer=None, english_renderer=None, scoring_alerts=None, alert_renderer=None, standings_rotation=None, final_handoff=None):
         self.mlb = mlb_renderer
         self.nhl = nhl_renderer
         self.nba = nba_renderer
@@ -22,6 +22,8 @@ class MultiSportRenderer:
         self.english = english_renderer
         self.scoring_alerts = scoring_alerts
         self.standings_rotation = standings_rotation
+        self.final_handoff = final_handoff
+        self._final_slot = None
         self.alert_renderer = (alert_renderer if alert_renderer is not None
                                else render_scoring_alert if scoring_alerts is not None
                                else None)
@@ -149,6 +151,27 @@ class MultiSportRenderer:
             event = self.scoring_alerts.next_alert(self.clock())
             if event is not None:
                 return self.alert_renderer(event)
+        # Final handoffs use a dedicated game renderer contract. Never render
+        # an unrelated live game as a final or count repeated frame refreshes
+        # as separate display slots.
+        if self.final_handoff is not None:
+            handoff = self.final_handoff.next()
+            if handoff is not None:
+                (final_sport, _), final_game = handoff
+                with self._lock:
+                    eligible = final_sport in self._enabled
+                    duration = self._interval
+                adapter = self._renderer(final_sport) if eligible else None
+                draw = getattr(adapter, "frame_for_game", None)
+                if callable(draw):
+                    now = self.clock()
+                    if self._final_slot is None or self._final_slot[0] != (final_sport, str(getattr(final_game, "game_id", ""))):
+                        self._final_slot = ((final_sport, str(getattr(final_game, "game_id", ""))), now)
+                    if now - self._final_slot[1] >= duration:
+                        self.final_handoff.displayed()
+                        self._final_slot = None
+                    else:
+                        return draw(final_game)
         sport = self._selected()
         renderer = self._renderer(sport)
         # Standings are optional idle pages, never interruptions. They may
