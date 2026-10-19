@@ -38,35 +38,28 @@ class StandingsRotation:
     def _pages(self):
         if not self.enabled:
             return ()
-        # Interleave competitions by page so a full 20-team league table
-        # cannot monopolize the display for several minutes.
-        by_league = []
+        # One logical slot per competition/division. Its internal pages share
+        # the configured slot duration instead of each consuming a full slot.
+        competitions = []
         for league, cache in self.caches.items():
             if self.selected_leagues is not None and league not in self.selected_leagues:
                 continue
             rows = cache.rows()
             if not rows:
                 continue
-            league_pages = []
             groups = {}
             for row in rows:
                 groups.setdefault(row.group, []).append(row)
             for group_rows in groups.values():
-                # Official ranks are authoritative; never guess standings.
                 if any(row.rank is None for row in group_rows):
                     continue
                 ordered = order_standings(group_rows)
                 page_size = 5 if ordered[0].league == "MLB" else 3
-                for offset in range(0, len(ordered), page_size):
-                    league_pages.append((league, ordered, offset))
-            if league_pages:
-                by_league.append(league_pages)
-        pages = []
-        for index in range(max(map(len, by_league), default=0)):
-            for league_pages in by_league:
-                if index < len(league_pages):
-                    pages.append(league_pages[index])
-        return tuple(pages)
+                pages = tuple((league, ordered, offset)
+                              for offset in range(0, len(ordered), page_size))
+                if pages:
+                    competitions.append(pages)
+        return tuple(competitions)
 
     def has_pages(self):
         return bool(self._pages())
@@ -82,16 +75,21 @@ class StandingsRotation:
         pages = self._pages()
         if not pages:
             return Framebuffer(64, 32)
-        # A refresh can add or remove pages mid-slot. Keep the currently
-        # displayed league/page stable until the next scheduled transition.
-        identities = [(league, rows[offset].group, offset)
-                      for league, rows, offset in pages]
-        if self._page_identity is not None and self._page_slot == slot and self._page_identity in identities:
+        # A slot belongs to one league. Advance through its sections within
+        # that same slot (e.g. 20 seconds / 5 sections = 4 seconds each).
+        identities = [(group[0][0], group[0][1][0].group) for group in pages]
+        if (self._page_identity is not None and self._page_slot == slot
+                and self._page_identity in identities):
             index = identities.index(self._page_identity)
         else:
             index = slot % len(pages)
         self._page_identity = identities[index]
         self._page_slot = slot
-        league, rows, offset = pages[index]
+        league_pages = pages[index]
+        elapsed = max(0, self.clock() - self.started)
+        within_slot = elapsed % self.page_seconds
+        section = min(len(league_pages) - 1,
+                      int(within_slot * len(league_pages) / self.page_seconds))
+        league, rows, offset = league_pages[section]
         label = rows[0].group.replace('_', ' ') if rows[0].league == 'MLB' else league
         return render_standings(label, rows, offset=offset)
