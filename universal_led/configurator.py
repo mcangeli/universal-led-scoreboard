@@ -370,11 +370,14 @@ document.getElementById('preview-team').onchange=event=>{selectedTeam=event.targ
 document.getElementById('edit-team').onchange=event=>{selectedTeam=event.target.value;document.getElementById('preview-team').value=selectedTeam;selected=null;section('teams');draw()};
 document.getElementById('mlb-save-color').onclick=async()=>{
  const code=document.getElementById('edit-team').value,status=document.getElementById('mlb-color-status');
+ const color=clone(state.teams[code]);
+ const invalid=invalidColorEntry({teams:{[code]:color}});
+ if(invalid){status.textContent='Invalid MLB RGB color for '+code+'. Each channel must be a whole number from 0 to 255.';return;}
  status.textContent='Saving…';
  try{
-  const response=await fetch('/api/mlb-colors',{method:'POST',headers:{'Content-Type':'application/json','X-Configurator-Token':token},body:JSON.stringify({[code]:state.teams[code]})});
+  const response=await fetch('/api/mlb-colors',{method:'POST',headers:{'Content-Type':'application/json','X-Configurator-Token':token},body:JSON.stringify({[code]:color})});
   const result=await response.json();if(!response.ok)throw Error(result.error||'Save failed');
-  saved.teams[code]=clone(state.teams[code]);markDirty();status.textContent='Saved MLB '+code+' color.';
+  saved.teams[code]=color;markDirty();status.textContent='Saved MLB '+code+' color.';
  }catch(err){status.textContent=err.message}
 };
 document.getElementById('mlb-reset-color').onclick=async()=>{
@@ -461,9 +464,13 @@ document.getElementById('nhl-reset-color').onclick=()=>{
  document.getElementById('nhl-color-status').textContent='Default restored in editor. Save to apply.';
 };
 document.getElementById('nhl-save-color').onclick=async()=>{
- const code=document.getElementById('nhl-edit-team').value,status=document.getElementById('nhl-color-status');status.textContent='Saving…';
+ const code=document.getElementById('nhl-edit-team').value,status=document.getElementById('nhl-color-status');
+ const color=[...(nhlColors[code]||[])];
+ const invalid=invalidColorEntry({teams:{[code]:color}});
+ if(invalid){status.textContent='Invalid NHL RGB color for '+code+'. Each channel must be a whole number from 0 to 255.';return;}
+ status.textContent='Saving…';
  try{
-  const response=await fetch('/api/nhl-colors',{method:'POST',headers:{'Content-Type':'application/json','X-Configurator-Token':token},body:JSON.stringify({[code]:nhlColors[code]})});
+  const response=await fetch('/api/nhl-colors',{method:'POST',headers:{'Content-Type':'application/json','X-Configurator-Token':token},body:JSON.stringify({[code]:color})});
   const result=await response.json();if(!response.ok)throw Error(result.error||'Save failed');
   status.textContent='Saved NHL '+code+' color. Restart the matrix after renderer support is installed.';
  }catch(err){status.textContent=err.message}
