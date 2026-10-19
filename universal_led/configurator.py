@@ -720,6 +720,14 @@ function updateLiveShare(){
 }
 document.getElementById('live-classic').addEventListener('input',updateLiveShare);
 document.getElementById('live-matchup').addEventListener('input',updateLiveShare);
+let sportsSettingsDirty=false;
+function markSportsSettingsDirty(event){
+ if(!event.target.closest('#sports-configure'))return;
+ sportsSettingsDirty=true;
+ document.getElementById('settings-status').textContent='Unsaved sport settings changes';
+}
+document.querySelector('[data-page="sports"]').addEventListener('input',markSportsSettingsDirty);
+document.querySelector('[data-page="sports"]').addEventListener('change',markSportsSettingsDirty);
 async function saveSportSettings(source){
  const status=document.getElementById('settings-status');status.textContent='Saving…';
  const next=clone(settings);
@@ -778,8 +786,9 @@ async function saveSportSettings(source){
  try{
   const response=await fetch('/api/settings',{method:'POST',headers:{'Content-Type':'application/json','X-Configurator-Token':token},body:JSON.stringify(next)});
   const result=await response.json();if(!response.ok)throw Error(result.error||'Save failed');
-  settings=result.settings;status.textContent='Saved and applied to configurator preview.';
+  settings=result.settings;
   await loadSettings();draw();await refreshStatus();
+  sportsSettingsDirty=false;status.textContent='Saved and applied to configurator preview.';
  }catch(err){status.textContent=err.message}
 }
 document.getElementById('save-settings').onclick=()=>saveSportSettings('sports');
