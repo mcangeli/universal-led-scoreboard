@@ -551,7 +551,15 @@ async function loadClockSettings(){
  }catch(err){status.textContent=err.message}
 }
 async function saveClockSettings(){
- const status=document.getElementById('clock-status');status.textContent='Saving…';
+ const status=document.getElementById('clock-status');
+ const intervalInput=document.getElementById('clock-interval');
+ const interval=Number(intervalInput.value);
+ if(intervalInput.value.trim()===''||!Number.isInteger(interval)||interval<1||interval>20){
+  status.textContent='Clock rotation interval must be a whole number from 1 to 20.';
+  intervalInput.focus();
+  return;
+ }
+ status.textContent='Saving…';
  try{
   const response=await fetch('/api/time-weather',{cache:'no-store'});
   if(!response.ok)throw Error('Unable to load time settings');
@@ -559,7 +567,7 @@ async function saveClockSettings(){
   data.clock_enabled=document.getElementById('clock-enabled').checked;
   data.timezone=document.getElementById('clock-timezone').value.trim();
   data.time_format=document.getElementById('clock-format').value;
-  data.rotation_interval=Number(document.getElementById('clock-interval').value);
+  data.rotation_interval=interval;
   data.weather_enabled=document.getElementById('weather-enabled').checked;
   data.weather_provider=document.getElementById('weather-provider').value;
   data.location=document.getElementById('weather-location').value.trim();
