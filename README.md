@@ -1,131 +1,107 @@
 # Universal LED Scoreboard
 
-Universal LED Scoreboard turns a Raspberry Pi and a compact RGB LED matrix into a configurable sports scoreboard, clock, weather display and news ticker. It combines classic score layouts with a browser-based configurator and a live 64×32 board preview, so most everyday changes do not require editing Python or JSON.
+Universal LED Scoreboard is a Raspberry Pi application for a **64×32 RGB LED matrix**, combining live sports scores, standings, a clock, weather and news in one configurable display. A password-protected web dashboard controls the board, while a browser preview works without physical matrix hardware.
 
-The project supports MLB, NHL, NBA, WNBA, NFL, MLS and NWSL. **English football (Premier League, Championship, League One and League Two)** is implemented on the v0.6.0 release-candidate branch, pending live-match acceptance. The legacy EFL sport identifier is not enabled.
+## Features
 
-## What it does
+- **Sports:** MLB, NHL, NBA, WNBA, NFL, MLS, NWSL and English football (Premier League, Championship, League One and League Two).
+- **Games:** Scheduled, live and final score screens, league-appropriate clocks and game details, favorites and multi-sport rotation.
+- **Priority:** Eligible live games take precedence over final/scheduled games and supplemental content. Final and scheduled games return when no eligible live games remain; standings display in idle slots when no eligible games remain.
+- **Standings and alerts:** Football standings pages and scoring notifications, subject to provider data availability and configuration.
+- **Extras:** Configurable news sources, time and weather, team colors, brightness and matrix settings.
+- **Administration:** Browser dashboard, board preview, Wi-Fi management, service controls and preflight-tested software updates.
 
-- Displays MLB games with classic scoreboard, live matchup and previous-play views.
-- Displays NHL games on 64×32 classic and visual layouts, including scheduled, live, intermission, overtime, shootout, final and postponed status indicators. Scheduled-game screens show team records when available.
-- Displays NBA and WNBA scheduled, live and final games with pregame tipoff times and team records when supplied by the feed.
-- Lets you select favorite teams across MLB, NHL, NBA, WNBA, NFL, MLS, NWSL and English football, configure game selection modes, and rotate enabled sports.
-- Gives **live games in enabled sports** priority over scheduled games, final scores, clock, weather and news. Favorite-only mode limits eligible games to configured teams; fallback/all modes include other live games. Supplemental screens return when the last eligible live game ends.
-- Shows an optional clock with a timezone dropdown and 12/24-hour formats.
-- Shows optional weather with colored pixel-art icons, temperature and forecast high/low. Choose Open-Meteo or OpenWeatherMap; OpenWeatherMap requires your own API key.
-- Uses a shared universal news renderer for automatic MLB, NHL, NBA, WNBA, NFL, MLS and NWSL headlines plus administrator-configured RSS/Atom sources; sources are interleaved rather than separated by sport.
-- Provides a password-protected web configurator for sports, display colors, time/weather, news, Wi-Fi and board preview.
-- Includes Wi-Fi connection and recovery functionality for supported Raspberry Pi installations.
+## Requirements
 
-The current screen layouts target a **64×32 RGB LED matrix**. You can use the browser emulator before connecting a physical matrix.
+- Raspberry Pi Zero 2 W, Pi 3, Pi 4 or Pi 5; hardware and performance may vary by model.
+- **Raspberry Pi OS Lite 64-bit Trixie**. Bookworm is not supported.
+- For physical output: compatible 64×32 HUB75 RGB matrix, separate appropriate power supply and supported RGB matrix HAT/interface.
+- Network access for sports data, weather, news and dashboard administration.
 
-## Hardware and software
+The browser-only emulator does not require a matrix or HAT. Do not connect or disconnect matrix wiring while powered.
 
-Development targets Raspberry Pi 5, with Raspberry Pi 3 as a production target. The hardware targets include Pi Zero 2 W, Pi 3, Pi 4 and Pi 5. **Raspberry Pi OS Trixie 64-bit is required**; Bookworm is not supported. The physical matrix and dashboard have been validated on the production Raspberry Pi 3; compatibility and performance on other models still require device-specific verification. Performance and hardware-driver behavior may vary by model.
+## Installation
 
-For a physical board you need a compatible 64×32 RGB LED matrix, appropriate power supply, and an RGB matrix interface/HAT supported by the `rpi-rgb-led-matrix` driver. **The web emulator does not require matrix hardware.** Hardware wiring and service setup depend on the interface used.
+The supported system installation uses `scripts/install-system.sh` and installs `uls-web.service` and `uls-matrix.service`. The legacy `scripts/install.sh` creates a different user-level service and **is not** the supported clean-install path.
 
-## Installation status
+Start with a fresh Raspberry Pi OS Trixie image, configure SSH/networking and install Git:
 
-**v0.4.5 release candidate builds on the validated MLB, NHL, NBA, WNBA and NFL baseline.** The validated production installation runs two **system-level** services (`uls-web.service` and `uls-matrix.service`) from `/opt/uls/app`. The older `scripts/install.sh` installs a separate user-level preview service and **must not be used as the clean-install procedure for the current system layout**.
+```bash
+sudo apt update
+sudo apt install -y git
+git clone https://github.com/mcangeli/universal-led-scoreboard.git
+cd universal-led-scoreboard
+```
 
-The system installer has been validated from a clean Raspberry Pi OS Trixie image on a Raspberry Pi 5 in emulator mode, including dashboard display after reboot. Dashboard updates and physical matrix operation have been validated separately on the Raspberry Pi 3. The v0.4.0 regression suite passed on the production Pi (780 tests, 15 skipped); v0.3.0 passed 752 tests with 15 skipped; the prior v0.2.0 baseline passed 717 tests with 15 skipped. Both system services started automatically after a full reboot during v0.2.0 verification. MLB, NHL and news rotation were visually confirmed on the physical matrix; NBA and WNBA screens were subsequently confirmed on the physical matrix for v0.3.0. Dashboard-initiated updates have since been verified on the Raspberry Pi 3. See [Installation and first-run guide](docs/INSTALLATION.md) and [v0.4.5 release checklist](docs/FOUNDATION-RELEASE-CHECKLIST.md). Preserve a known-good boot card during hardware experiments.
+For a physical 64×32 matrix with a compatible Adafruit HAT mapping:
 
-### Updating an existing system installation
+```bash
+bash scripts/install-system.sh --mode physical
+```
 
-Use **System → Software Updates** in the web dashboard to check for updates, select a compatible release branch, and install. Candidate tests run before deployment, with progress and failures shown in the browser. Unsafe older or divergent branch switches are rejected. Use `sudo ulsctl health` and `sudo ulsctl status` only for recovery or diagnostics.
+For browser-only use:
 
-The updater validates the candidate test suite before installation, synchronizes the installed `ulsctl` command, restarts the web service, and applies the saved physical-matrix enabled state. Configuration under `/etc/uls` and data under `/var/lib/uls` are preserved.
+```bash
+bash scripts/install-system.sh --mode emulator
+```
 
-**Security:** The configurator uses HTTP on the LAN. Do not expose port 8080 to the public internet without HTTPS and appropriate access controls.
+The installer prompts for an administrator password (minimum 12 characters), runs validation and provisions the services. Physical-mode defaults, including mapping and GPIO timing, must be checked against your hardware. For branch-specific testing, consult the installer options and [installation guide](docs/INSTALLATION.md); use a stable release for production deployments.
 
-## Configure and use
+Open `http://<pi-host>:8080/` on your local network, then sign in with the administrator credentials created during setup.
 
-After signing in, start with the sport and team rotation settings, including separate MLS, NWSL and English Football controls. English football supports choosing divisions and selecting favorite clubs by stable ESPN club ID; its default state is disabled. Add your favorite team abbreviations (for example `ATL`), choose which games to display, and adjust rotation timing. When an eligible game is live, the board prioritizes live-game screens across enabled sports and suppresses supplemental pages. In favorite-only mode, only configured teams qualify; fallback/all modes allow other live matchups. Normal rotation resumes after the final eligible live game ends.
+## Configure and operate
 
-Under **Display Settings → Time & Weather**, enable the clock, choose a timezone and time format, and optionally enable weather. Enter a city or US ZIP code and choose Fahrenheit or Celsius. Open-Meteo is the default provider; for OpenWeatherMap, select it and enter your API key in the dedicated field. The key is stored separately from ordinary settings. Weather requests run in the background and use a cache, so brief network interruptions need not blank the board.
+1. In **Sports & Rotation**, enable leagues, choose favorites and game-selection mode, and set rotation intervals. For English football, choose divisions and clubs.
+2. Under **Display Settings**, adjust colors, matrix settings, time, timezone and weather. OpenWeatherMap requires your own API key; Open-Meteo is also available.
+3. Under **Content & News**, enable sports headlines and add optional RSS/Atom feeds.
+4. Use **Open Board View** to inspect the 64×32 display in a browser.
+5. Under **System → Software Updates**, check for updates and install a compatible branch or release. Candidate tests run before deployment; installed settings under `/etc/uls` and state under `/var/lib/uls` are preserved.
 
-Use the news settings to enable automatic sport-specific headlines, including MLS and NWSL, or add RSS/Atom feeds. Use the color controls to customize the scoreboard palette. **Open Board View** provides a convenient 64×32 preview without hardware.
+Live-game priority can suppress other pages while games are underway. When no eligible games remain, standings and optional news can rotate in idle slots.
 
-## Service management and testing
-
-For the current system installation:
+### Service commands
 
 ```bash
 sudo ulsctl status
-sudo ulsctl restart
-sudo ulsctl logs
 sudo ulsctl health
+sudo ulsctl logs
+sudo ulsctl restart
 ```
 
-The physical worker shows an approximately 30-second startup splash before normal frames. The health command verifies both services, the HTTP endpoint, and freshness of the published framebuffer. Clean-image emulator installation has been validated on the Raspberry Pi 5; fresh-image physical-driver installation and compatibility on additional Raspberry Pi models still need independent validation.
+The physical matrix shows a startup splash before normal frames. If the display appears blank immediately after boot, allow startup to finish and then check health and logs.
 
-From a development checkout:
+### Development tests
 
 ```bash
 python3 -m unittest discover -s tests -p 'test_*.py'
 python3 -m universal_led --output splash.ppm
 ```
 
-## Troubleshooting
+## Troubleshooting and security
 
-- **Cannot sign in:** Check credentials and permissions in the deployed configuration directory (`/etc/uls` for the system installation).
-- **Cannot open the configurator:** Check that the process or service is running, verify the Pi's IP address and confirm port 8080 is reachable from your LAN.
-- **Weather does not appear:** Check that weather is enabled, the location is valid and the selected provider is configured. OpenWeatherMap requires a working API key. Background data may take a moment to load.
-- **A screen is not appearing:** An eligible live game intentionally suppresses supplemental pages and non-live games. Check the sport's favorite/fallback/all selection mode and enabled sports. Normal rotation resumes when the last eligible live game ends.
-- **Service does not start:** Run `sudo ulsctl logs` and `sudo ulsctl status` for the system installation.
-- **Changes are not visible in the browser:** Refresh the page after restarting the service.
+- **Dashboard unreachable:** Confirm the Pi's IP address, network connection and `uls-web.service` status. The default dashboard port is 8080.
+- **No sports pages:** Check enabled leagues, favorites, game-selection mode and live-game priority.
+- **No weather/news:** Verify the provider, location, feed configuration and network connectivity.
+- **Matrix not displaying:** Check physical-matrix enablement, mapping, power and `sudo ulsctl logs`.
+- **Update failed:** Read the updater's preflight log; a failed candidate validation should leave the running installation unchanged.
 
-## v0.6.0 English football release-candidate verification
+The web configurator uses HTTP on the local network. **Do not expose port 8080 directly to the internet** without HTTPS and appropriate access controls.
 
-- Branch: `feature/0.6.0-english-football`; **not yet merged, tagged or deployed to production**.
-- Four divisions: Premier League, Championship, League One and League Two, with ESPN-backed fixtures, scores, club IDs, favorites, shared 64×32 layout and combined live-first rotation.
-- English football is disabled by default. Goal enrichment polls ESPN match summaries **only for live fixtures** in the background; failures preserve scores and no network access occurs during frame rendering.
-- Historical ESPN summary samples on October 17, 2026 yielded 11/11 stable goal IDs, 11/11 team IDs and match minutes, and 7/11 identified scorers. **Live ESPN goal delivery has not yet been verified**.
-- Before production promotion, complete simulated lifecycle acceptance, a full regression run, a live-match observation, and Pi 3 upgrade/rollback health checks. See [v0.6.0 release checklist](docs/V060-RELEASE-CHECKLIST.md).
+For more detailed setup and recovery instructions, see [Installation and first-run guide](docs/INSTALLATION.md), [Hardware support](docs/HARDWARE-SUPPORT.md), and [Dashboard updater](docs/DASHBOARD-UPDATER.md).
 
-## v0.5.0 soccer release-candidate verification
+## Original projects and credits
 
-- Branch: `feature/0.5.0-soccer`; not yet merged or tagged.
-- Raspberry Pi 5 software updater: **1,018 tests, 15 skipped, no failures** (October 17, 2026), as reported from the device.
-- MLS and NWSL share a compact 64×32 pixel layout with period/clock, stoppage-time, halftime, goal announcements, favorites, and live-game priority. The browser emulator has been visually reviewed.
-- ESPN-style feed parsing and combined-league behavior have automated fixture coverage; real-time provider responses and goal transitions still require live observation.
-- Final acceptance: check real MLS and NWSL feed responses and identifiers, both leagues enabled together, no-live supplemental rotation, service restart/health, and physical-matrix appearance where hardware is available. See [v0.5.0 release checklist](docs/V050-SOCCER-RELEASE-CHECKLIST.md).
+Universal LED Scoreboard draws inspiration and foundational design ideas from these open-source scoreboard projects. They remain independent projects; their original authors deserve credit:
 
-## v0.4.5 release-candidate verification
+- [MLB LED Scoreboard](https://github.com/MLB-LED-Scoreboard/mlb-led-scoreboard)
+- [NBA LED Scoreboard](https://github.com/m0ranwad/nba-led-scoreboard)
+- [NFL LED Scoreboard](https://github.com/mikemountain/nfl-led-scoreboard)
+- [MLS LED Scoreboard](https://github.com/alexanderthebadatcoding/mls-led-scoreboard)
+- [NHL LED Scoreboard](https://github.com/falkyre/nhl-led-scoreboard)
+- [rpi-rgb-led-matrix hardware driver](https://github.com/hzeller/rpi-rgb-led-matrix)
 
-- Feature branch: `feature/0.4.5-dashboard-polish`, not yet tagged or merged.
-- Raspberry Pi 3: **857 tests passed, 15 skipped** (October 17, 2026), including isolated rollback and fresh-install regression coverage.
-- Dashboard update, remote branch discovery, release-family filtering, matrix enable/disable, and rejection of an older unsafe branch confirmed on the Pi 3.
-- Raspberry Pi 5: clean Raspberry Pi OS Trixie installation in emulator mode succeeded; board display remained operational after reboot.
-- Automated rollback uses isolated command stubs; a real post-deployment failure and restoration have not been demonstrated.
-- Remaining acceptance: clean physical-driver install, any outstanding Wi-Fi/operational checks, license review, and release decision.
+See [LICENSE](LICENSE) for this repository's license. Reused code, artwork, logos and data feeds may have additional licensing or attribution requirements.
 
-## v0.4.0 NFL verification
+## Releases and history
 
-Configure NFL under Sports & Rotation. Enable NFL headlines separately under Content & News. The NFL feed currently targets the local game day, so Sunday's matchups may not appear on Friday. NFL RSS parsing, configuration, and game rendering are covered by regression tests. Live NFL headlines and game transitions still require physical-matrix observation.
-
-## v0.4.0 verification
-
-- Raspberry Pi 3 on Raspberry Pi OS Trixie, 64×32 RGB LED matrix.
-- Full regression suite: **780 tests, 15 skipped, no failures** (October 16, 2026).
-- Both system services active, with the published framebuffer reported fresh by `ulsctl health`.
-- NFL scheduled, live and final rendering, favorites, rotation and automatic news are covered by automated tests. Physical NFL live-game transitions and live RSS headline delivery remain follow-up observations.
-
-## v0.3.0 verification
-
-- Production Raspberry Pi 3 on Raspberry Pi OS Trixie, 64×32 RGB LED matrix.
-- Full regression suite: **752 tests, 15 skipped, no failures** (October 16, 2026).
-- `uls-web.service` and `uls-matrix.service` enabled and running automatically after reboot.
-- Configurator responding on port 8080; physical MLB/NHL and universal news rotation verified previously, with NBA/WNBA display and configuration confirmed for v0.3.0.
-- NHL pregame records are visible on the board; NBA/WNBA pregame records appear when available from the feed.
-- NHL score feed retains last good data on transient errors and uses the configured timezone for the game-day date.
-- NBA/WNBA news controls and RSS parsing are covered by tests; live headline delivery remains to be checked.
-
-See [Changelog](CHANGELOG.md) for release details.
-
-## Project status and credits
-
-The codebase is under active development. MLB, NHL, NBA, WNBA, NFL, MLS and NWSL modules, clock, weather, universal news and the native configurator are implemented on this branch. EFL remains future work. The original projects informing this effort include [MLB LED Scoreboard](https://github.com/MLB-LED-Scoreboard/mlb-led-scoreboard), [NBA LED Scoreboard](https://github.com/m0ranwad/nba-led-scoreboard), [NFL LED Scoreboard](https://github.com/mikemountain/nfl-led-scoreboard), [MLS LED Scoreboard](https://github.com/alexanderthebadatcoding/mls-led-scoreboard) and [NHL LED Scoreboard](https://github.com/falkyre/nhl-led-scoreboard).
-
-Review the licenses of any reused source code, images, logos and third-party feeds before redistribution. The MLB LED Scoreboard foundation is GPLv3.
+Version-specific features, acceptance results, test counts, release status and historical notes belong in the [Changelog](CHANGELOG.md), not this README.
