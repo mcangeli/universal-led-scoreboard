@@ -29,17 +29,17 @@ class StandingsScreenTests(unittest.TestCase):
 
     def test_long_league_heading_stays_clear_of_points_header(self):
         frame = render_standings("CHAMPIONSHIP", [])
-        self.assertTrue(any(pixel != (0, 0, 0) for pixel in frame.pixels[0][44:61]))
+        self.assertTrue(any(pixel != (0, 0, 0) for pixel in frame.pixels[1][49:61]))
         self.assertTrue(all(frame.pixels[y][x] == (0, 0, 0)
-                            for y in range(0, 7) for x in range(41, 44)))
+                            for y in range(1, 6) for x in range(40, 49)))
 
     def test_points_are_right_aligned(self):
         short = render_standings("EPL", [row("ARS", 1, 9)])
         long = render_standings("EPL", [row("ARS", 1, 100)])
         self.assertTrue(all(short.pixels[y][x] == (0, 0, 0)
-                            for y in range(10, 17) for x in range(43, 55)))
+                            for y in range(11, 16) for x in range(49, 57)))
         self.assertTrue(any(long.pixels[y][x] != (0, 0, 0)
-                            for y in range(10, 17) for x in range(43, 48)))
+                            for y in range(11, 16) for x in range(49, 52)))
 
     def test_invalid_page_offset_rejected(self):
         with self.assertRaises(ValueError):
