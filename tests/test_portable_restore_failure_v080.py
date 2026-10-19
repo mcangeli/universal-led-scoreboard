@@ -20,7 +20,6 @@ class PortableRestoreFailureTests(unittest.TestCase):
             original = {name: (dst / name).read_bytes() for name in
                         ("teams.json", "scoreboard.json", "matrix.json")}
             payload = export_portable(src)
-            import universal_led.config_archive as archive_module
             import os
             actual_replace = os.replace
             calls = []
@@ -31,7 +30,7 @@ class PortableRestoreFailureTests(unittest.TestCase):
                     raise OSError("simulated second section write failure")
                 return actual_replace(src_path, dst_path)
 
-            with patch.object(archive_module.os, "replace", side_effect=fail_second_replace):
+            with patch("os.replace", side_effect=fail_second_replace):
                 with self.assertRaisesRegex(OSError, "simulated"):
                     restore_portable(payload, dst, ["teams", "scoreboard"])
             for name, before in original.items():
