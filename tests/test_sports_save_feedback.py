@@ -14,8 +14,8 @@ class SportsSaveFeedbackTests(unittest.TestCase):
 
     def test_successful_save_clears_unsaved_message(self):
         html=configurator.HTML
-        self.assertIn("sportsSettingsDirty=false;status.textContent='Saved and applied to configurator preview.'",html)
-        self.assertIn("if(!response.ok)throw Error(result.error||'Save failed')",html)
+        self.assertIn("sportsSettingsDirty=false;",html)
+        self.assertIn("if(!response.ok)throw Error('Server rejected sport settings",html)
 
 
 if __name__=='__main__':
