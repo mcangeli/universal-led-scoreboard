@@ -14,7 +14,7 @@ class GameModeHelpTests(unittest.TestCase):
         html=configurator.HTML
         self.assertIn('function refreshGameSelectionHelp()',html)
         self.assertIn('if(event.target.matches(',html)
-        self.assertIn('refreshGameSelectionHelp();\n refreshSportsOverview()',html)
+        self.assertIn('refreshGameSelectionHelp();refreshEnglishCoverageSummary();\n refreshSportsOverview()',html)
 
     def test_all_modes_have_distinct_explanations(self):
         html=configurator.HTML
