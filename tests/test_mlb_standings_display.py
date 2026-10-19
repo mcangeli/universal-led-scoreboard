@@ -44,6 +44,14 @@ class MLBStandingsDisplayTests(unittest.TestCase):
         self.assertTrue(any(with_gb.pixels[y][x] == (171, 181, 170)
                             for y in range(1, 6) for x in range(48, 64)))
 
+    def test_half_game_decimal_point_is_visible(self):
+        row = Standing('MLB', 'NL_EAST', '144', 100, 60, 40,
+                       rank=2, abbreviation='ATL', games_back='4.5')
+        frame = render_standings('NL EAST', (row,))
+        # Right-aligned 4.5 starts at x=52; period occupies x=56..58.
+        self.assertEqual(frame.pixels[5][57], (171, 181, 170))
+        self.assertEqual(frame.pixels[4][57], (0, 0, 0))
+
     def test_hyphen_stays_aligned_for_three_digit_records(self):
         rows = tuple(Standing('MLB', 'AL_EAST', str(i), 160,
                               wins, 160 - wins, rank=i + 1,
