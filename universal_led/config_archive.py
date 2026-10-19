@@ -56,3 +56,64 @@ def export_portable(directory: str | Path) -> bytes:
         for name, data in sorted(entries.items()):
             archive.writestr(name, data)
     return buffer.getvalue()
+
+
+MAX_ARCHIVE_BYTES = 8 * 1024 * 1024
+
+
+def inspect_portable(archive_bytes: bytes, destination: str | Path) -> dict:
+    """Validate an archive and preview differences; never write to destination.
+
+    An archive containing any non-allowlisted file, including hardware settings,
+    is rejected instead of quietly discarding the unexpected entry.
+    """
+    if not isinstance(archive_bytes, bytes) or len(archive_bytes) > MAX_ARCHIVE_BYTES:
+        raise ValueError("Invalid or oversized configuration archive")
+    try:
+        with zipfile.ZipFile(io.BytesIO(archive_bytes)) as archive:
+            members = archive.infolist()
+            names = [member.filename for member in members]
+            if len(names) != len(set(names)):
+                raise ValueError("Duplicate archive members")
+            allowed = {"manifest.json"} | {section + ".json" for section in PORTABLE_SECTIONS}
+            if "manifest.json" not in names or set(names) - allowed:
+                raise ValueError("Archive contains unknown or device-specific files")
+            if any(member.is_dir() or member.file_size > MAX_SECTION_BYTES or
+                   member.flag_bits & 0x1 for member in members):
+                raise ValueError("Unsupported archive member")
+            manifest = json.loads(archive.read("manifest.json"))
+            if not isinstance(manifest, dict) or manifest.get("format_version") != FORMAT_VERSION or (
+                manifest.get("kind") != "portable-application-settings"
+            ):
+                raise ValueError("Unsupported portable archive format")
+            sections = manifest.get("sections")
+            if not isinstance(sections, dict) or set(sections) != set(names) - {"manifest.json"}:
+                raise ValueError("Archive manifest does not match contents")
+            destination_root = Path(destination)
+            preview = {}
+            for name in sorted(sections):
+                info = sections[name]
+                data = archive.read(name)
+                if not isinstance(info, dict) or info.get("bytes") != len(data) or (
+                    info.get("sha256") != hashlib.sha256(data).hexdigest()
+                ):
+                    raise ValueError("Archive checksum mismatch: " + name)
+                value = json.loads(data)
+                if not isinstance(value, dict):
+                    raise ValueError("Invalid configuration section: " + name)
+                target = destination_root / name
+                if target.is_symlink():
+                    raise ValueError("Destination configuration is symlinked: " + name)
+                current = json.loads(target.read_text(encoding="utf-8")) if target.is_file() else None
+                preview[name.removesuffix(".json")] = {
+                    "action": "unchanged" if current == value else ("replace" if current is not None else "add"),
+                    "exists_on_destination": current is not None,
+                }
+            return {
+                "format_version": FORMAT_VERSION,
+                "sections": preview,
+                "hardware_preserved": True,
+                "applied": False,
+            }
+    except (zipfile.BadZipFile, UnicodeDecodeError, KeyError, TypeError, json.JSONDecodeError) as exc:
+        raise ValueError("Invalid configuration archive") from exc
