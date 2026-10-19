@@ -20,8 +20,8 @@ from .auth import Sessions, verify_password, configure_cli
 from .release import display_version
 from .matrix_settings import load_matrix_settings, validate_matrix_settings, matrix_service_label
 
-LOGIN_HTML='''<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Scoreboard Login</title><style>body{font:16px system-ui;background:#0c1624;color:#e9eef5;max-width:400px;margin:12vh auto;padding:24px}form{background:#18283b;border:1px solid #34445b;border-radius:12px;padding:24px}input,button{box-sizing:border-box;width:100%;padding:12px;margin:8px 0;border-radius:6px}button{background:#d7b46d;border:0;font-weight:bold;cursor:pointer}
-</style></head><body><form method="post" action="/login"><h2>Universal LED Scoreboard</h2><p>Administrator login</p><label>Password<input name="password" type="password" autocomplete="current-password" required></label><button type="submit">Sign In</button><p>Use HTTPS before accessing outside a trusted LAN.</p></form></body></html>'''
+LOGIN_HTML='''<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Scoreboard Login</title><style>body{font:16px system-ui;background:#0c1624;color:#e9eef5;max-width:400px;margin:12vh auto;padding:24px}form{background:#18283b;border:1px solid #34445b;border-radius:12px;padding:24px}input,button{box-sizing:border-box;width:100%;padding:12px;margin:8px 0;border-radius:6px}button{background:#d7b46d;border:0;font-weight:bold;cursor:pointer}.login-error{padding:12px;border:1px solid #d98989;border-radius:8px;background:#49262b;color:#fff0f0}input{background:#f8fafc;color:#111827;border:1px solid #a6b4c5}input:focus-visible,button:focus-visible{outline:3px solid #e8c985;outline-offset:2px}
+</style></head><body><form method="post" action="/login"><h2>Universal LED Scoreboard</h2><p>Administrator login</p>__LOGIN_ERROR__<label>Password<input name="password" type="password" autocomplete="current-password" required></label><button type="submit">Sign In</button><p>Use HTTPS before accessing outside a trusted LAN.</p></form></body></html>'''
 
 HTML='''<!doctype html><html lang="en"><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
@@ -87,30 +87,30 @@ section h2{font-size:clamp(21px,1.6vw,26px);line-height:1.25;margin:0 0 18px}
 .rotation-summary{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:12px}.rotation-summary .item{display:block;line-height:1.65}
 </style></head><body>
 <header><div><div class="eyebrow">UNIVERSAL LED SCOREBOARD</div><h1>Scoreboard Configurator</h1><span class="muted">__PREVIEW_VERSION__</span></div><span class="header-note">64 × 32 Display Manager</span></header>
-<div class="shell"><aside><div class="side-title">DISPLAY</div><nav aria-label="Configurator navigation"><button class="nav-item" type="button" onclick="showPage('dashboard')">◫ Dashboard</button> <button class="nav-item" type="button" onclick="showPage('sports')">⚾ Sports</button> <button class="nav-item" type="button" onclick="showPage('display')">▦ Display</button> <button class="nav-item" type="button" onclick="showPage('colors')">◉ Colors</button> <button class="nav-item" type="button" onclick="showPage('news')">▤ Content &amp; News</button> <button class="nav-item" type="button" onclick="showPage('wifi')">◈ Wi-Fi</button> <button class="nav-item" type="button" onclick="showPage('matrix-settings')">▦ Matrix Hardware</button> <button class="nav-item" type="button" onclick="showPage('system')">⚙ System</button></nav><div class="sidebar-footer"><a class="board-button" href="/board" target="_blank" rel="noopener">Open Board View ↗</a><button type="button" class="signout" onclick="logout()">Sign Out</button></div></aside><main><section data-page="dashboard" class="dashboard-page"><div class="page-heading"><div><p class="page-kicker">Board overview</p><h2>Dashboard</h2><p class="muted">Your current display configuration and feed health at a glance.</p></div></div><div class="dashboard-grid"><div class="dashboard-tile dashboard-tile-primary"><h3>Active Configuration</h3><p id="summary">Loading settings…</p></div><div class="dashboard-tile dashboard-tile-primary"><h3>Current Game</h3><p id="current-game" class="muted">Waiting for game information…</p></div><div class="dashboard-tile"><h3>MLB Feed <span id="feed-indicator" class="status-dot" aria-hidden="true"></span></h3><p id="feed-status" class="muted" role="status">MLB feed loading…</p></div><div class="dashboard-tile"><h3>Feed Refresh</h3><p id="last-refresh" class="muted">Last feed update: pending</p></div></div><div class="dashboard-actions"><div><h3>Scoreboard controls</h3><p class="muted">Board view updates independently every second. Restarting shows the startup splash without rebooting the Pi.</p></div><button type="button" id="restart-scoreboard" onclick="restartScoreboard()">Restart Scoreboard</button></div><p id="restart-status" class="muted" role="status" aria-live="polite"></p></section><section data-page="sports" hidden><h2>Sports &amp; Rotation</h2><p class="muted">Manage active leagues, configure favorites, and review per-sport timing without scrolling through every team.</p><div class="sports-subnav" role="group" aria-label="Sports configuration views"><button type="button" data-sports-view="overview" onclick="showSportsView('overview')">Overview</button><button type="button" data-sports-view="configure" onclick="showSportsView('configure')">Configure Sport</button><button type="button" data-sports-view="rotation" onclick="showSportsView('rotation')">Rotation</button></div><div id="sports-overview" class="sports-view"><h3>Available sports</h3><div class="sports-overview-grid"><button type="button" class="sport-choice" onclick="selectSport('mlb')"><strong>MLB</strong><span id="sport-state-mlb">Configure →</span></button><button type="button" class="sport-choice" onclick="selectSport('nhl')"><strong>NHL</strong><span id="sport-state-nhl">Configure →</span></button><button type="button" class="sport-choice" onclick="selectSport('nba')"><strong>NBA</strong><span id="sport-state-nba">Configure →</span></button><button type="button" class="sport-choice" onclick="selectSport('wnba')"><strong>WNBA</strong><span id="sport-state-wnba">Configure →</span></button><button type="button" class="sport-choice" onclick="selectSport('nfl')"><strong>NFL</strong><span id="sport-state-nfl">Configure →</span></button><button type="button" class="sport-choice" onclick="selectSport('mls')"><strong>MLS</strong><span id="sport-state-mls">Configure →</span></button><button type="button" class="sport-choice" onclick="selectSport('nwsl')"><strong>NWSL</strong><span id="sport-state-nwsl">Configure →</span></button><button type="button" class="sport-choice" onclick="selectSport('english')"><strong>English Football</strong><span id="sport-state-english">Configure →</span></button></div><p class="muted">Choose a sport to edit its settings. Enable and disable sports within Configure Sport.</p></div><div id="sports-configure" class="sports-view" hidden><label for="sport-picker">Sport to configure</label> <select id="sport-picker" onchange="selectSport(this.value)"><option value="mlb">MLB</option><option value="nhl">NHL</option><option value="nba">NBA</option><option value="wnba">WNBA</option><option value="nfl">NFL</option><option value="mls">MLS</option><option value="nwsl">NWSL</option><option value="english">English Football</option></select><div class="sport-config-panel" data-sport-panel="mlb" hidden><fieldset class="favorite-fieldset"><legend>MLB configuration</legend><p><label><input type="checkbox" id="mlb-enabled"> Enable MLB</label></p><h3>Favorite MLB teams</h3><p class="muted">Select one or more teams. Games featuring any favorite will be included.</p><div id="favorite-teams" class="favorite-team-grid"><label><input type="checkbox" value="ARI"> Arizona Diamondbacks</label><label><input type="checkbox" value="ATL"> Atlanta Braves</label><label><input type="checkbox" value="BAL"> Baltimore Orioles</label><label><input type="checkbox" value="BOS"> Boston Red Sox</label><label><input type="checkbox" value="CHC"> Chicago Cubs</label><label><input type="checkbox" value="CWS"> Chicago White Sox</label><label><input type="checkbox" value="CIN"> Cincinnati Reds</label><label><input type="checkbox" value="CLE"> Cleveland Guardians</label><label><input type="checkbox" value="COL"> Colorado Rockies</label><label><input type="checkbox" value="DET"> Detroit Tigers</label><label><input type="checkbox" value="HOU"> Houston Astros</label><label><input type="checkbox" value="KCR"> Kansas City Royals</label><label><input type="checkbox" value="LAA"> Los Angeles Angels</label><label><input type="checkbox" value="LAD"> Los Angeles Dodgers</label><label><input type="checkbox" value="MIA"> Miami Marlins</label><label><input type="checkbox" value="MIL"> Milwaukee Brewers</label><label><input type="checkbox" value="MIN"> Minnesota Twins</label><label><input type="checkbox" value="NYM"> New York Mets</label><label><input type="checkbox" value="NYY"> New York Yankees</label><label><input type="checkbox" value="OAK"> Athletics</label><label><input type="checkbox" value="PHI"> Philadelphia Phillies</label><label><input type="checkbox" value="PIT"> Pittsburgh Pirates</label><label><input type="checkbox" value="SDP"> San Diego Padres</label><label><input type="checkbox" value="SFG"> San Francisco Giants</label><label><input type="checkbox" value="SEA"> Seattle Mariners</label><label><input type="checkbox" value="STL"> St. Louis Cardinals</label><label><input type="checkbox" value="TBR"> Tampa Bay Rays</label><label><input type="checkbox" value="TEX"> Texas Rangers</label><label><input type="checkbox" value="TOR"> Toronto Blue Jays</label><label><input type="checkbox" value="WSN"> Washington Nationals</label></div><p id="favorite-summary" class="muted" aria-live="polite"></p><p><label>MLB game selection <select id="mode"><option value="favorite">Favorites only</option><option value="fallback">Favorites, otherwise all</option><option value="all">All games</option></select></label></p><p><label>MLB rotation seconds <input id="rotation" type="number" min="1" max="3600" value="12"></label> <label>MLB feed refresh seconds <input id="refresh" type="number" min="1" max="3600" value="60"></label></p><h3>MLB live screen rotation</h3><p class="muted">Percent of each live game interval. Last Play uses the remaining time. Classic must be at least 1%.</p><p><label>Classic % <input id="live-classic" type="number" min="1" max="100" step="1" value="50"></label> <label>Matchup % <input id="live-matchup" type="number" min="0" max="99" step="1" value="25"></label></p><p id="live-play-share" class="muted" aria-live="polite">Last Play: 25%</p></fieldset></div><div class="sport-config-panel" data-sport-panel="nhl" hidden><fieldset class="favorite-fieldset"><legend>NHL configuration</legend>
+<div class="shell"><aside><div class="side-title">DISPLAY</div><nav aria-label="Configurator navigation"><button class="nav-item" type="button" onclick="showPage('dashboard')">◫ Dashboard</button> <button class="nav-item" type="button" onclick="showPage('sports')">⚾ Sports</button> <button class="nav-item" type="button" onclick="showPage('display')">▦ Display</button> <button class="nav-item" type="button" onclick="showPage('colors')">◉ Colors</button> <button class="nav-item" type="button" onclick="showPage('news')">▤ Content &amp; News</button> <button class="nav-item" type="button" onclick="showPage('wifi')">◈ Wi-Fi</button> <button class="nav-item" type="button" onclick="showPage('matrix-settings')">▦ Matrix Hardware</button> <button class="nav-item" type="button" onclick="showPage('system')">⚙ System</button></nav><div class="sidebar-footer"><a class="board-button" href="/board" target="_blank" rel="noopener">Open Board View ↗</a><button type="button" class="signout" onclick="logout()">Sign Out</button></div></aside><main><section data-page="dashboard" class="dashboard-page"><div class="page-heading"><div><p class="page-kicker">Board overview</p><h2>Dashboard</h2><p class="muted">Your current display configuration and feed health at a glance.</p></div></div><div class="dashboard-grid"><div class="dashboard-tile dashboard-tile-primary"><h3>Active Configuration</h3><p id="summary">Loading settings…</p></div><div class="dashboard-tile dashboard-tile-primary"><h3>Current Game</h3><p id="current-game" class="muted">Waiting for game information…</p></div><div class="dashboard-tile"><h3>MLB Feed <span id="feed-indicator" class="status-dot" aria-hidden="true"></span></h3><p id="feed-status" class="muted" role="status">MLB feed loading…</p></div><div class="dashboard-tile"><h3>Feed Refresh</h3><p id="last-refresh" class="muted">Last feed update: pending</p></div></div><div class="dashboard-actions"><div><h3>Scoreboard controls</h3><p class="muted">Board view updates independently every second. Restarting shows the startup splash without rebooting the Pi.</p></div><button type="button" id="restart-scoreboard" onclick="restartScoreboard()">Restart Scoreboard</button></div><p id="restart-status" class="muted" role="status" aria-live="polite"></p></section><section data-page="sports" hidden><h2>Sports &amp; Rotation</h2><p class="muted">Manage active leagues, configure favorites, and review per-sport timing without scrolling through every team.</p><div class="sports-subnav" role="group" aria-label="Sports configuration views"><button type="button" data-sports-view="overview" onclick="showSportsView('overview')">Overview</button><button type="button" data-sports-view="configure" onclick="showSportsView('configure')">Configure Sport</button><button type="button" data-sports-view="rotation" onclick="showSportsView('rotation')">Rotation</button></div><div id="sports-overview" class="sports-view"><h3>Available sports</h3><div class="sports-overview-grid"><button type="button" class="sport-choice" onclick="selectSport('mlb')"><strong>MLB</strong><span id="sport-state-mlb">Configure →</span></button><button type="button" class="sport-choice" onclick="selectSport('nhl')"><strong>NHL</strong><span id="sport-state-nhl">Configure →</span></button><button type="button" class="sport-choice" onclick="selectSport('nba')"><strong>NBA</strong><span id="sport-state-nba">Configure →</span></button><button type="button" class="sport-choice" onclick="selectSport('wnba')"><strong>WNBA</strong><span id="sport-state-wnba">Configure →</span></button><button type="button" class="sport-choice" onclick="selectSport('nfl')"><strong>NFL</strong><span id="sport-state-nfl">Configure →</span></button><button type="button" class="sport-choice" onclick="selectSport('mls')"><strong>MLS</strong><span id="sport-state-mls">Configure →</span></button><button type="button" class="sport-choice" onclick="selectSport('nwsl')"><strong>NWSL</strong><span id="sport-state-nwsl">Configure →</span></button><button type="button" class="sport-choice" onclick="selectSport('english')"><strong>English Football</strong><span id="sport-state-english">Configure →</span></button></div><p class="muted">Choose a sport to edit its settings. Enable and disable sports within Configure Sport.</p></div><div id="sports-configure" class="sports-view" hidden><label for="sport-picker">Sport to configure</label> <select id="sport-picker" onchange="selectSport(this.value)"><option value="mlb">MLB</option><option value="nhl">NHL</option><option value="nba">NBA</option><option value="wnba">WNBA</option><option value="nfl">NFL</option><option value="mls">MLS</option><option value="nwsl">NWSL</option><option value="english">English Football</option></select><div class="sport-config-panel" data-sport-panel="mlb" hidden><fieldset class="favorite-fieldset"><legend>MLB configuration</legend><p><label><input type="checkbox" id="mlb-enabled"> Enable MLB</label></p><h3>MLB standings divisions</h3><p class="muted">Select divisions for standings pages. Independent of MLB game coverage; requires Standings Pages enabled under Content/News.</p><div id="mlb-standings-divisions" class="favorite-team-grid"><label><input type="checkbox" value="AL_EAST"> AL East</label><label><input type="checkbox" value="AL_CENTRAL"> AL Central</label><label><input type="checkbox" value="AL_WEST"> AL West</label><label><input type="checkbox" value="NL_EAST"> NL East</label><label><input type="checkbox" value="NL_CENTRAL"> NL Central</label><label><input type="checkbox" value="NL_WEST"> NL West</label></div><h3>Favorite MLB teams</h3><p class="muted">Select one or more teams. Games featuring any favorite will be included.</p><div id="favorite-teams" class="favorite-team-grid"><label><input type="checkbox" value="ARI"> Arizona Diamondbacks</label><label><input type="checkbox" value="ATL"> Atlanta Braves</label><label><input type="checkbox" value="BAL"> Baltimore Orioles</label><label><input type="checkbox" value="BOS"> Boston Red Sox</label><label><input type="checkbox" value="CHC"> Chicago Cubs</label><label><input type="checkbox" value="CWS"> Chicago White Sox</label><label><input type="checkbox" value="CIN"> Cincinnati Reds</label><label><input type="checkbox" value="CLE"> Cleveland Guardians</label><label><input type="checkbox" value="COL"> Colorado Rockies</label><label><input type="checkbox" value="DET"> Detroit Tigers</label><label><input type="checkbox" value="HOU"> Houston Astros</label><label><input type="checkbox" value="KCR"> Kansas City Royals</label><label><input type="checkbox" value="LAA"> Los Angeles Angels</label><label><input type="checkbox" value="LAD"> Los Angeles Dodgers</label><label><input type="checkbox" value="MIA"> Miami Marlins</label><label><input type="checkbox" value="MIL"> Milwaukee Brewers</label><label><input type="checkbox" value="MIN"> Minnesota Twins</label><label><input type="checkbox" value="NYM"> New York Mets</label><label><input type="checkbox" value="NYY"> New York Yankees</label><label><input type="checkbox" value="OAK"> Athletics</label><label><input type="checkbox" value="PHI"> Philadelphia Phillies</label><label><input type="checkbox" value="PIT"> Pittsburgh Pirates</label><label><input type="checkbox" value="SDP"> San Diego Padres</label><label><input type="checkbox" value="SFG"> San Francisco Giants</label><label><input type="checkbox" value="SEA"> Seattle Mariners</label><label><input type="checkbox" value="STL"> St. Louis Cardinals</label><label><input type="checkbox" value="TBR"> Tampa Bay Rays</label><label><input type="checkbox" value="TEX"> Texas Rangers</label><label><input type="checkbox" value="TOR"> Toronto Blue Jays</label><label><input type="checkbox" value="WSN"> Washington Nationals</label></div><p id="favorite-summary" class="muted" aria-live="polite"></p><p><label>MLB game selection <select id="mode"><option value="favorite">Favorites only</option><option value="fallback">Favorites, otherwise all</option><option value="all">All games</option></select></label></p><p><label>MLB rotation seconds <input id="rotation" type="number" min="1" max="3600" value="12"></label> <label>MLB feed refresh seconds <input id="refresh" type="number" min="1" max="3600" value="60"></label></p><h3>MLB live screen rotation</h3><p class="muted">Percent of each live game interval. Last Play uses the remaining time. Classic must be at least 1%.</p><p><label>Classic % <input id="live-classic" type="number" min="1" max="100" step="1" value="50"></label> <label>Matchup % <input id="live-matchup" type="number" min="0" max="99" step="1" value="25"></label></p><p id="live-play-share" class="muted" aria-live="polite">Last Play: 25%</p></fieldset></div><div class="sport-config-panel" data-sport-panel="nhl" hidden><fieldset class="favorite-fieldset"><legend>NHL configuration</legend>
 <p><label><input type="checkbox" id="nhl-enabled"> Enable NHL</label></p>
-<h3>Favorite NHL teams</h3><p class="muted">Select one or more teams, just like MLB.</p><p><button type="button" onclick="setNHLFavorites(NHL_TEAMS.map(team=>team[0]))">Select all</button> <button type="button" onclick="setNHLFavorites([])">Clear all</button></p><div id="nhl-teams" class="favorite-team-grid"><label><input type="checkbox" value="ANA"> Anaheim Ducks</label><label><input type="checkbox" value="BOS"> Boston Bruins</label><label><input type="checkbox" value="BUF"> Buffalo Sabres</label><label><input type="checkbox" value="CGY"> Calgary Flames</label><label><input type="checkbox" value="CAR"> Carolina Hurricanes</label><label><input type="checkbox" value="CHI"> Chicago Blackhawks</label><label><input type="checkbox" value="COL"> Colorado Avalanche</label><label><input type="checkbox" value="CBJ"> Columbus Blue Jackets</label><label><input type="checkbox" value="DAL"> Dallas Stars</label><label><input type="checkbox" value="DET"> Detroit Red Wings</label><label><input type="checkbox" value="EDM"> Edmonton Oilers</label><label><input type="checkbox" value="FLA"> Florida Panthers</label><label><input type="checkbox" value="LAK"> Los Angeles Kings</label><label><input type="checkbox" value="MIN"> Minnesota Wild</label><label><input type="checkbox" value="MTL"> Montréal Canadiens</label><label><input type="checkbox" value="NSH"> Nashville Predators</label><label><input type="checkbox" value="NJD"> New Jersey Devils</label><label><input type="checkbox" value="NYI"> New York Islanders</label><label><input type="checkbox" value="NYR"> New York Rangers</label><label><input type="checkbox" value="OTT"> Ottawa Senators</label><label><input type="checkbox" value="PHI"> Philadelphia Flyers</label><label><input type="checkbox" value="PIT"> Pittsburgh Penguins</label><label><input type="checkbox" value="SJS"> San Jose Sharks</label><label><input type="checkbox" value="SEA"> Seattle Kraken</label><label><input type="checkbox" value="STL"> St. Louis Blues</label><label><input type="checkbox" value="TBL"> Tampa Bay Lightning</label><label><input type="checkbox" value="TOR"> Toronto Maple Leafs</label><label><input type="checkbox" value="UTA"> Utah Mammoth</label><label><input type="checkbox" value="VAN"> Vancouver Canucks</label><label><input type="checkbox" value="VGK"> Vegas Golden Knights</label><label><input type="checkbox" value="WSH"> Washington Capitals</label><label><input type="checkbox" value="WPG"> Winnipeg Jets</label></div><p id="nhl-favorite-summary" class="muted" aria-live="polite"></p>
+<h3>NHL standings</h3><p class="muted">Select divisions and Wild Card races for idle-time standings. Enable standings globally under Content/News.</p><div id="nhl-standings-divisions" class="favorite-team-grid"><label><input type="checkbox" value="Atlantic"> Atlantic</label><label><input type="checkbox" value="Metropolitan"> Metropolitan</label><label><input type="checkbox" value="Central"> Central</label><label><input type="checkbox" value="Pacific"> Pacific</label></div><h3>NHL Wild Card standings</h3><p class="muted">Choose conference Wild Card tables independently. Each displays the five leading contenders.</p><div id="nhl-standings-wild-cards" class="favorite-team-grid"><label><input type="checkbox" value="Eastern_Wild_Card"> Eastern Conference</label><label><input type="checkbox" value="Western_Wild_Card"> Western Conference</label></div><h3>Favorite NHL teams</h3><p class="muted">Select one or more teams, just like MLB.</p><p><button type="button" onclick="setNHLFavorites(NHL_TEAMS.map(team=>team[0]))">Select all</button> <button type="button" onclick="setNHLFavorites([])">Clear all</button></p><div id="nhl-teams" class="favorite-team-grid"><label><input type="checkbox" value="ANA"> Anaheim Ducks</label><label><input type="checkbox" value="BOS"> Boston Bruins</label><label><input type="checkbox" value="BUF"> Buffalo Sabres</label><label><input type="checkbox" value="CGY"> Calgary Flames</label><label><input type="checkbox" value="CAR"> Carolina Hurricanes</label><label><input type="checkbox" value="CHI"> Chicago Blackhawks</label><label><input type="checkbox" value="COL"> Colorado Avalanche</label><label><input type="checkbox" value="CBJ"> Columbus Blue Jackets</label><label><input type="checkbox" value="DAL"> Dallas Stars</label><label><input type="checkbox" value="DET"> Detroit Red Wings</label><label><input type="checkbox" value="EDM"> Edmonton Oilers</label><label><input type="checkbox" value="FLA"> Florida Panthers</label><label><input type="checkbox" value="LAK"> Los Angeles Kings</label><label><input type="checkbox" value="MIN"> Minnesota Wild</label><label><input type="checkbox" value="MTL"> Montréal Canadiens</label><label><input type="checkbox" value="NSH"> Nashville Predators</label><label><input type="checkbox" value="NJD"> New Jersey Devils</label><label><input type="checkbox" value="NYI"> New York Islanders</label><label><input type="checkbox" value="NYR"> New York Rangers</label><label><input type="checkbox" value="OTT"> Ottawa Senators</label><label><input type="checkbox" value="PHI"> Philadelphia Flyers</label><label><input type="checkbox" value="PIT"> Pittsburgh Penguins</label><label><input type="checkbox" value="SJS"> San Jose Sharks</label><label><input type="checkbox" value="SEA"> Seattle Kraken</label><label><input type="checkbox" value="STL"> St. Louis Blues</label><label><input type="checkbox" value="TBL"> Tampa Bay Lightning</label><label><input type="checkbox" value="TOR"> Toronto Maple Leafs</label><label><input type="checkbox" value="UTA"> Utah Mammoth</label><label><input type="checkbox" value="VAN"> Vancouver Canucks</label><label><input type="checkbox" value="VGK"> Vegas Golden Knights</label><label><input type="checkbox" value="WSH"> Washington Capitals</label><label><input type="checkbox" value="WPG"> Winnipeg Jets</label></div><p id="nhl-favorite-summary" class="muted" aria-live="polite"></p>
 <p><label>NHL game selection <select id="nhl-mode"><option value="favorite">Favorites only</option><option value="fallback">Favorites, otherwise all</option><option value="all">All games</option></select></label></p>
 <p><label>NHL rotation seconds <input id="nhl-rotation" type="number" min="5" max="3600" value="12"></label>
 <label>NHL feed refresh seconds <input id="nhl-refresh" type="number" min="5" max="3600" value="60"></label></p>
-</fieldset></div><div class="sport-config-panel" data-sport-panel="nba" hidden><fieldset class="favorite-fieldset"><legend>NBA configuration</legend><p><label><input type="checkbox" id="nba-enabled"> Enable NBA</label></p><h3>Favorite NBA teams</h3><div id="nba-teams" class="favorite-team-grid"><label><input type="checkbox" value="ATL"> Atlanta Hawks</label><label><input type="checkbox" value="BOS"> Boston Celtics</label><label><input type="checkbox" value="BKN"> Brooklyn Nets</label><label><input type="checkbox" value="CHA"> Charlotte Hornets</label><label><input type="checkbox" value="CHI"> Chicago Bulls</label><label><input type="checkbox" value="CLE"> Cleveland Cavaliers</label><label><input type="checkbox" value="DAL"> Dallas Mavericks</label><label><input type="checkbox" value="DEN"> Denver Nuggets</label><label><input type="checkbox" value="DET"> Detroit Pistons</label><label><input type="checkbox" value="GSW"> Golden State Warriors</label><label><input type="checkbox" value="HOU"> Houston Rockets</label><label><input type="checkbox" value="IND"> Indiana Pacers</label><label><input type="checkbox" value="LAC"> LA Clippers</label><label><input type="checkbox" value="LAL"> Los Angeles Lakers</label><label><input type="checkbox" value="MEM"> Memphis Grizzlies</label><label><input type="checkbox" value="MIA"> Miami Heat</label><label><input type="checkbox" value="MIL"> Milwaukee Bucks</label><label><input type="checkbox" value="MIN"> Minnesota Timberwolves</label><label><input type="checkbox" value="NOP"> New Orleans Pelicans</label><label><input type="checkbox" value="NYK"> New York Knicks</label><label><input type="checkbox" value="OKC"> Oklahoma City Thunder</label><label><input type="checkbox" value="ORL"> Orlando Magic</label><label><input type="checkbox" value="PHI"> Philadelphia 76ers</label><label><input type="checkbox" value="PHX"> Phoenix Suns</label><label><input type="checkbox" value="POR"> Portland Trail Blazers</label><label><input type="checkbox" value="SAC"> Sacramento Kings</label><label><input type="checkbox" value="SAS"> San Antonio Spurs</label><label><input type="checkbox" value="TOR"> Toronto Raptors</label><label><input type="checkbox" value="UTA"> Utah Jazz</label><label><input type="checkbox" value="WSH"> Washington Wizards</label></div><p><label>NBA game selection <select id="nba-mode"><option value="favorite">Favorites only</option><option value="fallback">Favorites, otherwise all</option><option value="all">All games</option></select></label></p><p><label>NBA rotation seconds <input id="nba-rotation" type="number" min="5" max="3600" value="12"></label> <label>NBA feed refresh seconds <input id="nba-refresh" type="number" min="5" max="3600" value="60"></label></p></fieldset></div><div class="sport-config-panel" data-sport-panel="wnba" hidden><fieldset class="favorite-fieldset"><legend>WNBA configuration</legend><p><label><input type="checkbox" id="wnba-enabled"> Enable WNBA</label></p><h3>Favorite WNBA teams</h3><div id="wnba-teams" class="favorite-team-grid"><label><input type="checkbox" value="ATL"> Atlanta Dream</label><label><input type="checkbox" value="CHI"> Chicago Sky</label><label><input type="checkbox" value="CON"> Connecticut Sun</label><label><input type="checkbox" value="DAL"> Dallas Wings</label><label><input type="checkbox" value="GSV"> Golden State Valkyries</label><label><input type="checkbox" value="IND"> Indiana Fever</label><label><input type="checkbox" value="LVA"> Las Vegas Aces</label><label><input type="checkbox" value="LAS"> Los Angeles Sparks</label><label><input type="checkbox" value="MIN"> Minnesota Lynx</label><label><input type="checkbox" value="NYL"> New York Liberty</label><label><input type="checkbox" value="PHX"> Phoenix Mercury</label><label><input type="checkbox" value="SEA"> Seattle Storm</label><label><input type="checkbox" value="WAS"> Washington Mystics</label><label><input type="checkbox" value="POR"> Portland Fire</label><label><input type="checkbox" value="TOR"> Toronto Tempo</label></div><p><label>WNBA game selection <select id="wnba-mode"><option value="favorite">Favorites only</option><option value="fallback">Favorites, otherwise all</option><option value="all">All games</option></select></label></p><p><label>WNBA rotation seconds <input id="wnba-rotation" type="number" min="5" max="3600" value="12"></label> <label>WNBA feed refresh seconds <input id="wnba-refresh" type="number" min="5" max="3600" value="60"></label></p></fieldset></div><div class="sport-config-panel" data-sport-panel="nfl" hidden><fieldset class="favorite-fieldset"><legend>NFL configuration</legend>
+</fieldset></div><div class="sport-config-panel" data-sport-panel="nba" hidden><fieldset class="favorite-fieldset"><legend>NBA configuration</legend><p><label><input type="checkbox" id="nba-enabled"> Enable NBA</label></p><h3>NBA conference standings</h3><p class="muted">Select idle-time conference tables. Global standings controls are under Content/News.</p><div id="nba-standings-conferences" class="favorite-team-grid"><label><input type="checkbox" value="Eastern"> Eastern Conference</label><label><input type="checkbox" value="Western"> Western Conference</label></div><h3>Favorite NBA teams</h3><div id="nba-teams" class="favorite-team-grid"><label><input type="checkbox" value="ATL"> Atlanta Hawks</label><label><input type="checkbox" value="BOS"> Boston Celtics</label><label><input type="checkbox" value="BKN"> Brooklyn Nets</label><label><input type="checkbox" value="CHA"> Charlotte Hornets</label><label><input type="checkbox" value="CHI"> Chicago Bulls</label><label><input type="checkbox" value="CLE"> Cleveland Cavaliers</label><label><input type="checkbox" value="DAL"> Dallas Mavericks</label><label><input type="checkbox" value="DEN"> Denver Nuggets</label><label><input type="checkbox" value="DET"> Detroit Pistons</label><label><input type="checkbox" value="GSW"> Golden State Warriors</label><label><input type="checkbox" value="HOU"> Houston Rockets</label><label><input type="checkbox" value="IND"> Indiana Pacers</label><label><input type="checkbox" value="LAC"> LA Clippers</label><label><input type="checkbox" value="LAL"> Los Angeles Lakers</label><label><input type="checkbox" value="MEM"> Memphis Grizzlies</label><label><input type="checkbox" value="MIA"> Miami Heat</label><label><input type="checkbox" value="MIL"> Milwaukee Bucks</label><label><input type="checkbox" value="MIN"> Minnesota Timberwolves</label><label><input type="checkbox" value="NOP"> New Orleans Pelicans</label><label><input type="checkbox" value="NYK"> New York Knicks</label><label><input type="checkbox" value="OKC"> Oklahoma City Thunder</label><label><input type="checkbox" value="ORL"> Orlando Magic</label><label><input type="checkbox" value="PHI"> Philadelphia 76ers</label><label><input type="checkbox" value="PHX"> Phoenix Suns</label><label><input type="checkbox" value="POR"> Portland Trail Blazers</label><label><input type="checkbox" value="SAC"> Sacramento Kings</label><label><input type="checkbox" value="SAS"> San Antonio Spurs</label><label><input type="checkbox" value="TOR"> Toronto Raptors</label><label><input type="checkbox" value="UTA"> Utah Jazz</label><label><input type="checkbox" value="WSH"> Washington Wizards</label></div><p><label>NBA game selection <select id="nba-mode"><option value="favorite">Favorites only</option><option value="fallback">Favorites, otherwise all</option><option value="all">All games</option></select></label></p><p><label>NBA rotation seconds <input id="nba-rotation" type="number" min="5" max="3600" value="12"></label> <label>NBA feed refresh seconds <input id="nba-refresh" type="number" min="5" max="3600" value="60"></label></p></fieldset></div><div class="sport-config-panel" data-sport-panel="wnba" hidden><fieldset class="favorite-fieldset"><legend>WNBA configuration</legend><p><label><input type="checkbox" id="wnba-enabled"> Enable WNBA</label></p><p><label><input type="checkbox" id="wnba-standings-enabled"> Show WNBA standings when idle</label></p><h3>Favorite WNBA teams</h3><div id="wnba-teams" class="favorite-team-grid"><label><input type="checkbox" value="ATL"> Atlanta Dream</label><label><input type="checkbox" value="CHI"> Chicago Sky</label><label><input type="checkbox" value="CON"> Connecticut Sun</label><label><input type="checkbox" value="DAL"> Dallas Wings</label><label><input type="checkbox" value="GSV"> Golden State Valkyries</label><label><input type="checkbox" value="IND"> Indiana Fever</label><label><input type="checkbox" value="LVA"> Las Vegas Aces</label><label><input type="checkbox" value="LAS"> Los Angeles Sparks</label><label><input type="checkbox" value="MIN"> Minnesota Lynx</label><label><input type="checkbox" value="NYL"> New York Liberty</label><label><input type="checkbox" value="PHX"> Phoenix Mercury</label><label><input type="checkbox" value="SEA"> Seattle Storm</label><label><input type="checkbox" value="WAS"> Washington Mystics</label><label><input type="checkbox" value="POR"> Portland Fire</label><label><input type="checkbox" value="TOR"> Toronto Tempo</label></div><p><label>WNBA game selection <select id="wnba-mode"><option value="favorite">Favorites only</option><option value="fallback">Favorites, otherwise all</option><option value="all">All games</option></select></label></p><p><label>WNBA rotation seconds <input id="wnba-rotation" type="number" min="5" max="3600" value="12"></label> <label>WNBA feed refresh seconds <input id="wnba-refresh" type="number" min="5" max="3600" value="60"></label></p></fieldset></div><div class="sport-config-panel" data-sport-panel="nfl" hidden><fieldset class="favorite-fieldset"><legend>NFL configuration</legend>
 <p><label><input type="checkbox" id="nfl-enabled"> Enable NFL</label></p>
-<h3>Favorite NFL teams</h3>
+<h3>NFL division standings</h3><p class="muted">Choose divisions for idle-time standings. Enable Standings Pages under Content &amp; News.</p><div id="nfl-standings-divisions" class="favorite-team-grid"><label><input type="checkbox" value="AFC East"> AFC East</label><label><input type="checkbox" value="AFC North"> AFC North</label><label><input type="checkbox" value="AFC South"> AFC South</label><label><input type="checkbox" value="AFC West"> AFC West</label><label><input type="checkbox" value="NFC East"> NFC East</label><label><input type="checkbox" value="NFC North"> NFC North</label><label><input type="checkbox" value="NFC South"> NFC South</label><label><input type="checkbox" value="NFC West"> NFC West</label></div><h3>Favorite NFL teams</h3>
 <div id="nfl-teams" class="favorite-team-grid"></div>
 <p><label>NFL game selection <select id="nfl-mode"><option value="favorite">Favorites only</option><option value="fallback">Favorites, otherwise all</option><option value="all">All games</option></select></label></p>
 <p><label>NFL rotation seconds <input id="nfl-rotation" type="number" min="5" max="3600" value="12"></label>
-<label>NFL feed refresh seconds <input id="nfl-refresh" type="number" min="5" max="3600" value="60"></label></p></fieldset></div><div class="sport-config-panel" data-sport-panel="mls" hidden><fieldset class="favorite-fieldset"><legend>MLS configuration</legend><p><label><input type="checkbox" id="mls-enabled"> Enable MLS</label></p><h3>Favorite MLS teams</h3><p class="muted">Select one or more teams. Games featuring your favorites are prioritized.</p><div id="mls-teams" class="favorite-team-grid"></div><p><label>Game selection <select id="mls-mode"><option value="favorite">Favorites only</option><option value="fallback">Favorites, otherwise all</option><option value="all">All matches</option></select></label></p><p><label>Data source <select id="mls-provider"><option value="league_first">League first, ESPN fallback</option><option value="espn_only">ESPN only</option><option value="league_only">League only (requires native endpoint)</option></select></label></p><p><label>Rotation seconds <input id="mls-rotation" type="number" min="5" max="3600" value="12"></label><label>Refresh seconds <input id="mls-refresh" type="number" min="5" max="3600" value="60"></label></p></fieldset></div><div class="sport-config-panel" data-sport-panel="nwsl" hidden><fieldset class="favorite-fieldset"><legend>NWSL configuration</legend><p><label><input type="checkbox" id="nwsl-enabled"> Enable NWSL</label></p><h3>Favorite NWSL teams</h3><p class="muted">Select one or more teams. Games featuring your favorites are prioritized.</p><div id="nwsl-teams" class="favorite-team-grid"></div><p><label>Game selection <select id="nwsl-mode"><option value="favorite">Favorites only</option><option value="fallback">Favorites, otherwise all</option><option value="all">All matches</option></select></label></p><p><label>Data source <select id="nwsl-provider"><option value="league_first">League first, ESPN fallback</option><option value="espn_only">ESPN only</option><option value="league_only">League only (requires native endpoint)</option></select></label></p><p><label>Rotation seconds <input id="nwsl-rotation" type="number" min="5" max="3600" value="12"></label><label>Refresh seconds <input id="nwsl-refresh" type="number" min="5" max="3600" value="60"></label></p></fieldset></div><div class="sport-config-panel" data-sport-panel="english" hidden><fieldset class="favorite-fieldset"><legend>English football configuration</legend><p><label><input type="checkbox" id="english-enabled"> Enable English football</label></p><h3>Divisions</h3><div id="english-leagues" class="favorite-team-grid"><label><input type="checkbox" value="EPL"> Premier League</label><label><input type="checkbox" value="CHAMPIONSHIP"> Championship</label><label><input type="checkbox" value="LEAGUE_ONE"> League One</label><label><input type="checkbox" value="LEAGUE_TWO"> League Two</label></div><h3>Favorite clubs</h3><p><label>Search clubs <input id="english-team-search" type="search" placeholder="Search all four divisions" oninput="filterEnglishClubs()"></label></p><div id="english-teams" class="favorite-team-grid"></div><p id="english-team-status" class="muted">Loading club directory…</p><p><label>Game selection <select id="english-mode"><option value="favorite">Favorites only</option><option value="fallback">Favorites, otherwise all</option><option value="all">All matches</option></select></label></p><p><label>Rotation seconds <input id="english-rotation" type="number" min="5" max="3600" value="12"></label><label>Refresh seconds <input id="english-refresh" type="number" min="5" max="3600" value="60"></label></p><p class="muted">ESPN is the current data source. Club favorites remain selected when a club changes division.</p></fieldset></div><div id="sports-rotation" class="sports-view" hidden><h3>Rotation behavior</h3><p>Each sport currently has its own game rotation and feed refresh timing. Use Configure Sport to adjust those values for the selected league.</p><div class="rotation-summary" id="sports-rotation-summary"></div><p class="muted">Shared clock, weather, and countdown rotation settings remain under Display. A separate global rotation priority control is not supported by the current configuration schema.</p></div><div class="sports-savebar"><button id="save-settings">Save Sport Settings</button><span id="settings-status" role="status" aria-live="polite"></span></div></section><section data-page="display" hidden><h2>Shared Display Settings</h2><fieldset class="favorite-fieldset"><legend>Time &amp; Weather</legend><label><input id="clock-enabled" type="checkbox"> Enable clock rotation</label><label>Time zone <select id="clock-timezone"><option value="America/New_York">Eastern (ET)</option><option value="America/Chicago">Central (CT)</option><option value="America/Denver">Mountain (MT)</option><option value="America/Phoenix">Arizona (MST, no DST)</option><option value="America/Los_Angeles">Pacific (PT)</option><option value="America/Anchorage">Alaska (AKT)</option><option value="Pacific/Honolulu">Hawaii (HST)</option><option value="UTC">UTC</option><option value="Europe/London">London (UK)</option><option value="Europe/Paris">Central Europe</option><option value="Asia/Tokyo">Japan</option><option value="Australia/Sydney">Sydney</option></select></label><label>Time format <select id="clock-format"><option value="12h">12-hour</option><option value="24h">24-hour</option></select></label><label>Clock every N non-live slots <input id="clock-interval" type="number" min="1" max="20" value="5"></label><label><input id="weather-enabled" type="checkbox"> Enable weather display</label><label>Weather location <input id="weather-location" type="text" placeholder="City or ZIP"></label><label>Temperature unit <select id="weather-unit"><option value="fahrenheit">Fahrenheit</option><option value="celsius">Celsius</option></select></label><label>Weather provider <select id="weather-provider"><option value="open-meteo">Open-Meteo (no key)</option><option value="openweathermap">OpenWeatherMap (API key)</option></select></label><label>OpenWeatherMap API key <input id="weather-key" type="password" autocomplete="new-password" placeholder="Leave blank to keep saved key"></label><button type="button" onclick="saveClockSettings()">Save Time &amp; Weather</button><p id="clock-status" role="status"></p></fieldset><fieldset class="favorite-fieldset"><legend>Season Opening Countdown</legend><p class="muted">Optional shared countdown. Enter an opening date with its timezone offset, such as 2027-03-25T13:00:00-04:00. Disabled until configured.</p><p><label><input id="countdown-enabled" type="checkbox"> Enable countdown</label></p><p><label>Sport <select id="countdown-sport"><option value="mlb">MLB</option><option value="nba">NBA</option><option value="nfl">NFL</option><option value="nhl">NHL</option><option value="mls">MLS</option><option value="efl">EFL</option></select></label> <label>Season <input id="countdown-season" type="text" placeholder="2027"></label></p><p><label>Date source <select id="countdown-source"><option value="manual">Manual date</option><option value="automatic">Automatic MLB schedule</option></select></label></p><p><label>Opening date/time (ISO with timezone) <input id="countdown-opening" type="text" placeholder="2027-03-25T13:00:00-04:00"></label></p><p><label>Target <select id="countdown-target"><option value="league">League opening</option><option value="favorite">Favorite team opening</option></select></label> <label>Team code <input id="countdown-team" type="text" placeholder="ATL"></label></p><p><label>Display <select id="countdown-window"><option value="offseason">Offseason only</option><option value="within_days">Within N days</option><option value="always">Always when no live game</option></select></label> <label>Days <input id="countdown-days" type="number" min="1" max="366" value="30"></label></p><button type="button" onclick="saveCountdown()">Save Countdown</button><p id="countdown-status" role="status" aria-live="polite"></p><p id="countdown-feed-status" class="muted" role="status" aria-live="polite">Schedule status not checked.</p><button type="button" onclick="refreshCountdownStatus()">Check Schedule Status</button></fieldset></section><section data-page="wifi" hidden><h2>Wi-Fi & Hotspot</h2><p id="wifi-recovery-readiness" class="muted" role="status">Checking recovery protection…</p><p id="wifi-info">Loading…</p><h4>Saved Wi-Fi connections</h4><div id="wifi-profiles" class="grid"><p class="muted">Loading saved profiles…</p></div><button type="button" onclick="refreshWifi()">Refresh Wi-Fi</button> <button type="button" onclick="scanWifi()">Scan Networks</button><p id="wifi-scan-status" class="muted" role="status" aria-live="polite">Click Scan Networks to list nearby access points.</p><div id="wifi-networks" class="grid"></div><div id="wifi-selection" hidden><h4>Selected network: <span id="wifi-selected-name"></span></h4><p id="wifi-selected-security"></p><label>Network password <input id="wifi-password" type="password" autocomplete="off" minlength="8" maxlength="63"></label><p id="wifi-connect-note" class="muted">Network switching requires the privileged helper and recovery worker. Keep Ethernet connected during initial testing.</p><button type="button" onclick="connectWifi()">Connect Wi-Fi</button><p id="wifi-connect-result" role="status"></p></div><h4>Hotspot Settings</h4><p class="muted">Change the password for Universal-LED-Setup. Changes take effect the next time the hotspot starts.</p><label>New hotspot password <input id="hotspot-password" type="password" minlength="8" maxlength="63" autocomplete="new-password"></label> <label>Confirm password <input id="hotspot-confirm" type="password" minlength="8" maxlength="63" autocomplete="new-password"></label> <button type="button" onclick="saveHotspotPassword()">Save Hotspot Password</button><p id="hotspot-result" role="status"></p></section><section data-page="matrix-settings" hidden><h2>Physical Matrix Settings</h2><p class="muted">Hardware changes require restarting only uls-matrix.service. Saving does not restart the hardware automatically.</p><div class="grid"><label class="item"><input type="checkbox" id="matrix-enabled"> Enable physical matrix output</label><label class="item">Brightness (1–100%) <input type="number" id="matrix-brightness" min="1" max="100" value="40"></label><label class="item">GPIO slowdown (0–10) <input type="number" id="matrix-slowdown" min="0" max="10" value="4"></label><label class="item">Hardware mapping <select id="matrix-mapping"><option value="adafruit-hat">Adafruit HAT</option><option value="adafruit-hat-pwm">Adafruit HAT PWM</option><option value="regular">Regular</option><option value="compute-module">Compute Module</option></select></label><label class="item">Frame poll interval (seconds) <input type="number" id="matrix-interval" min="0.05" max="10" step="0.05" value="0.2"></label></div><p><button type="button" onclick="saveMatrixSettings()">Save Matrix Settings</button> <button type="button" onclick="applyMatrixSettings()">Apply Saved Settings</button></p><p id="matrix-service-state" class="muted" role="status">Checking matrix service…</p><p id="matrix-settings-status" role="status" aria-live="polite"></p></section><section data-page="system" hidden><h2>System</h2><h3>Software Updates</h3><p id="update-status" class="muted" role="status">Update status not checked.</p><label for="update-branch">Release branch</label> <select id="update-branch" onchange="updateBranchChanged()"><option value="">Check for branches…</option></select><label><input type="checkbox" id="update-show-all" onchange="renderUpdateBranches()"> Show all branches (including older releases)</label> <button type="button" onclick="checkSoftwareUpdate()">Check for Updates</button> <button type="button" id="install-update" onclick="installSoftwareUpdate()" disabled>Install Update</button><pre id="update-log" style="white-space:pre-wrap;overflow-wrap:anywhere;max-height:220px;overflow:auto"></pre><p id="system-info">Checking server information…</p><div id="pi-info" class="grid"><p class="muted">Loading Raspberry Pi diagnostics…</p></div><p class="muted">Service status is read-only. Hardware output and remote service controls are not enabled.</p></section><div data-page="colors" hidden><section><h2>64 × 32 Live Preview</h2><canvas id="matrix" width="64" height="32"></canvas>
+<label>NFL feed refresh seconds <input id="nfl-refresh" type="number" min="5" max="3600" value="60"></label></p></fieldset></div><div class="sport-config-panel" data-sport-panel="mls" hidden><fieldset class="favorite-fieldset"><legend>MLS configuration</legend><p><label><input type="checkbox" id="mls-enabled"> Enable MLS</label></p><h3>MLS standings conferences</h3><p class="muted">Select conferences for idle-time standings. Enable Standings Pages under Content &amp; News.</p><div id="mls-standings-conferences" class="favorite-team-grid"><label><input type="checkbox" value="Eastern Conference"> Eastern Conference</label><label><input type="checkbox" value="Western Conference"> Western Conference</label></div><h3>Favorite MLS teams</h3><p class="muted">Select one or more teams. Games featuring your favorites are prioritized.</p><div id="mls-teams" class="favorite-team-grid"></div><p><label>Game selection <select id="mls-mode"><option value="favorite">Favorites only</option><option value="fallback">Favorites, otherwise all</option><option value="all">All matches</option></select></label></p><p><label>Data source <select id="mls-provider"><option value="league_first">League first, ESPN fallback</option><option value="espn_only">ESPN only</option><option value="league_only">League only (requires native endpoint)</option></select></label></p><p><label>Rotation seconds <input id="mls-rotation" type="number" min="5" max="3600" value="12"></label><label>Refresh seconds <input id="mls-refresh" type="number" min="5" max="3600" value="60"></label></p></fieldset></div><div class="sport-config-panel" data-sport-panel="nwsl" hidden><fieldset class="favorite-fieldset"><legend>NWSL configuration</legend><p><label><input type="checkbox" id="nwsl-enabled"> Enable NWSL</label></p><p><label><input type="checkbox" id="nwsl-standings-enabled"> Show NWSL standings when idle</label></p><h3>Favorite NWSL teams</h3><p class="muted">Select one or more teams. Games featuring your favorites are prioritized.</p><div id="nwsl-teams" class="favorite-team-grid"></div><p><label>Game selection <select id="nwsl-mode"><option value="favorite">Favorites only</option><option value="fallback">Favorites, otherwise all</option><option value="all">All matches</option></select></label></p><p><label>Data source <select id="nwsl-provider"><option value="league_first">League first, ESPN fallback</option><option value="espn_only">ESPN only</option><option value="league_only">League only (requires native endpoint)</option></select></label></p><p><label>Rotation seconds <input id="nwsl-rotation" type="number" min="5" max="3600" value="12"></label><label>Refresh seconds <input id="nwsl-refresh" type="number" min="5" max="3600" value="60"></label></p></fieldset></div><div class="sport-config-panel" data-sport-panel="english" hidden><fieldset class="favorite-fieldset"><legend>English football configuration</legend><p><label><input type="checkbox" id="english-enabled"> Enable English football</label></p><h3>Divisions</h3><div id="english-leagues" class="favorite-team-grid"><label><input type="checkbox" value="EPL"> Premier League</label><label><input type="checkbox" value="CHAMPIONSHIP"> Championship</label><label><input type="checkbox" value="LEAGUE_ONE"> League One</label><label><input type="checkbox" value="LEAGUE_TWO"> League Two</label></div><h3>Standings pages</h3><p class="muted">Choose which English divisions appear in idle-time standings. Game coverage is controlled separately above.</p><div id="english-standings-leagues" class="favorite-team-grid"><label><input type="checkbox" value="EPL"> Premier League</label><label><input type="checkbox" value="CHAMPIONSHIP"> Championship</label><label><input type="checkbox" value="LEAGUE_ONE"> League One</label><label><input type="checkbox" value="LEAGUE_TWO"> League Two</label></div><h3>Favorite clubs</h3><p><label>Search clubs <input id="english-team-search" type="search" placeholder="Search all four divisions" oninput="filterEnglishClubs()"></label></p><div id="english-teams" class="favorite-team-grid"></div><p id="english-team-status" class="muted">Loading club directory…</p><p><label>Game selection <select id="english-mode"><option value="favorite">Favorites only</option><option value="fallback">Favorites, otherwise all</option><option value="all">All matches</option></select></label></p><p><label>Rotation seconds <input id="english-rotation" type="number" min="5" max="3600" value="12"></label><label>Refresh seconds <input id="english-refresh" type="number" min="5" max="3600" value="60"></label></p><p class="muted">ESPN is the current data source. Club favorites remain selected when a club changes division.</p></fieldset></div><div id="sports-rotation" class="sports-view" hidden><h3>Rotation behavior</h3><p>Each sport currently has its own game rotation and feed refresh timing. Use Configure Sport to adjust those values for the selected league.</p><div class="rotation-summary" id="sports-rotation-summary"></div><p class="muted">Shared clock, weather, and countdown rotation settings remain under Display. A separate global rotation priority control is not supported by the current configuration schema.</p></div><div class="sports-savebar"><button id="save-settings">Save Sport Settings</button><span id="settings-status" role="status" aria-live="polite"></span></div></section><section data-page="display" hidden><h2>Shared Display Settings</h2><fieldset class="favorite-fieldset"><legend>Time &amp; Weather</legend><label><input id="clock-enabled" type="checkbox"> Enable clock rotation</label><label>Time zone <select id="clock-timezone"><option value="America/New_York">Eastern (ET)</option><option value="America/Chicago">Central (CT)</option><option value="America/Denver">Mountain (MT)</option><option value="America/Phoenix">Arizona (MST, no DST)</option><option value="America/Los_Angeles">Pacific (PT)</option><option value="America/Anchorage">Alaska (AKT)</option><option value="Pacific/Honolulu">Hawaii (HST)</option><option value="UTC">UTC</option><option value="Europe/London">London (UK)</option><option value="Europe/Paris">Central Europe</option><option value="Asia/Tokyo">Japan</option><option value="Australia/Sydney">Sydney</option></select></label><label>Time format <select id="clock-format"><option value="12h">12-hour</option><option value="24h">24-hour</option></select></label><label>Clock every N non-live slots <input id="clock-interval" type="number" min="1" max="20" value="5"></label><label><input id="weather-enabled" type="checkbox"> Enable weather display</label><label>Weather location <input id="weather-location" type="text" placeholder="City or ZIP"></label><label>Temperature unit <select id="weather-unit"><option value="fahrenheit">Fahrenheit</option><option value="celsius">Celsius</option></select></label><label>Weather provider <select id="weather-provider"><option value="open-meteo">Open-Meteo (no key)</option><option value="openweathermap">OpenWeatherMap (API key)</option></select></label><label>OpenWeatherMap API key <input id="weather-key" type="password" autocomplete="new-password" placeholder="Leave blank to keep saved key"></label><button type="button" onclick="saveClockSettings()">Save Time &amp; Weather</button><p id="clock-status" role="status"></p></fieldset><fieldset class="favorite-fieldset"><legend>Season Opening Countdown</legend><p class="muted">Optional shared countdown. Enter an opening date with its timezone offset, such as 2027-03-25T13:00:00-04:00. Disabled until configured.</p><p><label><input id="countdown-enabled" type="checkbox"> Enable countdown</label></p><p><label>Sport <select id="countdown-sport"><option value="mlb">MLB</option><option value="nba">NBA</option><option value="nfl">NFL</option><option value="nhl">NHL</option><option value="mls">MLS</option><option value="efl">EFL</option></select></label> <label>Season <input id="countdown-season" type="text" placeholder="2027"></label></p><p><label>Date source <select id="countdown-source"><option value="manual">Manual date</option><option value="automatic">Automatic MLB schedule</option></select></label></p><p><label>Opening date/time (ISO with timezone) <input id="countdown-opening" type="text" placeholder="2027-03-25T13:00:00-04:00"></label></p><p><label>Target <select id="countdown-target"><option value="league">League opening</option><option value="favorite">Favorite team opening</option></select></label> <label>Team code <input id="countdown-team" type="text" placeholder="ATL"></label></p><p><label>Display <select id="countdown-window"><option value="offseason">Offseason only</option><option value="within_days">Within N days</option><option value="always">Always when no live game</option></select></label> <label>Days <input id="countdown-days" type="number" min="1" max="366" value="30"></label></p><button type="button" onclick="saveCountdown()">Save Countdown</button><p id="countdown-status" role="status" aria-live="polite"></p><p id="countdown-feed-status" class="muted" role="status" aria-live="polite">Schedule status not checked.</p><button type="button" onclick="refreshCountdownStatus()">Check Schedule Status</button></fieldset></section><section data-page="wifi" hidden><h2>Wi-Fi & Hotspot</h2><p id="wifi-recovery-readiness" class="muted" role="status">Checking recovery protection…</p><p id="wifi-info">Loading…</p><h4>Saved Wi-Fi connections</h4><div id="wifi-profiles" class="grid"><p class="muted">Loading saved profiles…</p></div><button type="button" onclick="refreshWifi()">Refresh Wi-Fi</button> <button type="button" onclick="scanWifi()">Scan Networks</button><p id="wifi-scan-status" class="muted" role="status" aria-live="polite">Click Scan Networks to list nearby access points.</p><div id="wifi-networks" class="grid"></div><div id="wifi-selection" hidden><h4>Selected network: <span id="wifi-selected-name"></span></h4><p id="wifi-selected-security"></p><label>Network password <input id="wifi-password" type="password" autocomplete="off" minlength="8" maxlength="63"></label><p id="wifi-connect-note" class="muted">Network switching requires the privileged helper and recovery worker. Keep Ethernet connected during initial testing.</p><button type="button" onclick="connectWifi()">Connect Wi-Fi</button><p id="wifi-connect-result" role="status"></p></div><h4>Hotspot Settings</h4><p class="muted">Change the password for Universal-LED-Setup. Changes take effect the next time the hotspot starts.</p><label>New hotspot password <input id="hotspot-password" type="password" minlength="8" maxlength="63" autocomplete="new-password"></label> <label>Confirm password <input id="hotspot-confirm" type="password" minlength="8" maxlength="63" autocomplete="new-password"></label> <button type="button" onclick="saveHotspotPassword()">Save Hotspot Password</button><p id="hotspot-result" role="status"></p></section><section data-page="matrix-settings" hidden><h2>Physical Matrix Settings</h2><p class="muted">Hardware changes require restarting only uls-matrix.service. Saving does not restart the hardware automatically.</p><div class="grid"><label class="item"><input type="checkbox" id="matrix-enabled"> Enable physical matrix output</label><label class="item">Brightness (1–100%) <input type="number" id="matrix-brightness" min="1" max="100" value="40"></label><label class="item">GPIO slowdown (0–10) <input type="number" id="matrix-slowdown" min="0" max="10" value="4"></label><label class="item">Hardware mapping <select id="matrix-mapping"><option value="adafruit-hat">Adafruit HAT</option><option value="adafruit-hat-pwm">Adafruit HAT PWM</option><option value="regular">Regular</option><option value="compute-module">Compute Module</option></select></label><label class="item">Frame poll interval (seconds) <input type="number" id="matrix-interval" min="0.05" max="10" step="0.05" value="0.2"></label></div><p><button type="button" onclick="saveMatrixSettings()">Save Matrix Settings</button> <button type="button" onclick="applyMatrixSettings()">Apply Saved Settings</button></p><p id="matrix-service-state" class="muted" role="status">Checking matrix service…</p><p id="matrix-settings-status" role="status" aria-live="polite"></p></section><section data-page="system" hidden><h2>System</h2><h3>Software Updates</h3><p id="update-status" class="muted" role="status">Update status not checked.</p><label for="update-branch">Release branch</label> <select id="update-branch" onchange="updateBranchChanged()"><option value="">Check for branches…</option></select><label><input type="checkbox" id="update-show-all" onchange="renderUpdateBranches()"> Show all branches (including older releases)</label> <button type="button" onclick="checkSoftwareUpdate()">Check for Updates</button> <button type="button" id="install-update" onclick="installSoftwareUpdate()" disabled>Install Update</button><button type="button" id="copy-update-log" onclick="copyUpdateLog()">Copy Log</button><pre id="update-log" style="white-space:pre-wrap;overflow-wrap:anywhere;max-height:220px;overflow:auto"></pre><p id="system-info">Checking server information…</p><div id="pi-info" class="grid"><p class="muted">Loading Raspberry Pi diagnostics…</p></div><p class="muted">Service status is read-only. Hardware output and remote service controls are not enabled.</p></section><div data-page="colors" hidden><section><h2>64 × 32 Live Preview</h2><canvas id="matrix" width="64" height="32"></canvas>
 <p class="muted">Changes preview immediately. Saving is optional.</p><label for="preview-team">Preview favorite team: </label><select id="preview-team"></select><span id="dirty" role="status">All changes saved</span></section>
 <section><h2>Scoreboard Colors</h2><p class="muted">General display text, accents, separators and status colors.</p><div id="scoreboard" class="grid"></div></section>
 <section><h2>NHL Team Colors</h2><p class="muted">NHL colors are stored separately from MLB. Use the same RGB editor for both sports.</p><label for="nhl-edit-team">NHL team to edit</label> <select id="nhl-edit-team"></select><div id="nhl-color-editor" class="grid"></div><button type="button" id="nhl-save-color">Save NHL Color</button> <button type="button" id="nhl-reset-color">Reset NHL Color</button> <span id="nhl-color-status" role="status"></span></section>
 <section><h2>MLB Team Colors</h2><p class="muted">Edit one team at a time, using the same compact controls as NHL. All other team colors remain unchanged.</p><label for="edit-team">MLB team to edit</label> <select id="edit-team"></select><div id="teams" class="grid"></div><button id="mlb-save-color" type="button">Save MLB Color</button> <button id="mlb-reset-color" type="button">Reset MLB Color</button> <span id="mlb-color-status" role="status"></span></section>
 <section><button id="save">Save Color Settings</button> <button id="cancel" type="button">Cancel Changes</button> <button id="reset" type="button">Reset Selected Color</button> <span id="status" role="status"></span>
-<p class="muted">Available on your trusted LAN. Backups are created before overwriting existing files.</p></section></div><div data-page="news" hidden><section><h2>Content &amp; News Sources</h2><p class="muted">Configure RSS or Atom feeds for future ticker use. Automatic and custom feeds display during available news rotation slots.</p><fieldset class="favorite-fieldset"><legend>Automatic Sports News</legend><p class="muted">Enable headlines separately for each sport. News appears during non-live rotation slots when that sport is enabled.</p><label><input type="checkbox" id="mlb-news-enabled"> MLB official headlines</label> <label><input type="checkbox" id="nhl-news-enabled"> NHL headlines</label> <label><input type="checkbox" id="nba-news-enabled"> NBA headlines</label> <label><input type="checkbox" id="wnba-news-enabled"> WNBA headlines</label> <label><input type="checkbox" id="nfl-news-enabled"> NFL headlines</label> <label><input type="checkbox" id="mls-news-enabled"> MLS headlines</label> <label><input type="checkbox" id="nwsl-news-enabled"> NWSL headlines</label> <button type="button" onclick="saveAutomaticNews()">Save Automatic News</button><p id="auto-news-status" role="status"></p></fieldset><fieldset class="favorite-fieldset"><legend>News Display Timing</legend><label>Show news every N non-live slots <input id="news-interval" type="number" min="1" max="20"></label> <label>Headline duration (seconds) <input id="news-duration" type="number" min="3" max="120"></label> <label>Scroll speed (characters/second) <input id="news-speed" type="number" min="1" max="15"></label> <button type="button" onclick="saveNewsTiming()">Save News Timing</button><p id="news-timing-status" role="status"></p></fieldset><h3>Additional Custom Feeds</h3><div id="news-sources"></div><button type="button" id="news-add" onclick="addNewsSource()">Add Source</button> <button type="button" onclick="saveNewsSources()">Save News Sources</button> <p id="news-status" role="status"></p></section></div></main></div>
+<p class="muted">Available on your trusted LAN. Backups are created before overwriting existing files.</p></section></div><div data-page="news" hidden><section><h2>Content &amp; News Sources</h2><p class="muted">Configure RSS or Atom feeds for future ticker use. Automatic and custom feeds display during available news rotation slots.</p><fieldset class="favorite-fieldset"><legend>Automatic Sports News</legend><p class="muted">Enable headlines separately for each sport. News appears during non-live rotation slots when that sport is enabled.</p><label><input type="checkbox" id="mlb-news-enabled"> MLB official headlines</label> <label><input type="checkbox" id="nhl-news-enabled"> NHL headlines</label> <label><input type="checkbox" id="nba-news-enabled"> NBA headlines</label> <label><input type="checkbox" id="wnba-news-enabled"> WNBA headlines</label> <label><input type="checkbox" id="nfl-news-enabled"> NFL headlines</label> <label><input type="checkbox" id="mls-news-enabled"> MLS headlines</label> <label><input type="checkbox" id="nwsl-news-enabled"> NWSL headlines</label> <label><input type="checkbox" id="english-news-enabled"> Premier League headlines</label> <label><input type="checkbox" id="efl-news-enabled"> EFL Championship, League One &amp; League Two headlines</label> <button type="button" onclick="saveAutomaticNews()">Save Automatic News</button><p id="auto-news-status" role="status"></p></fieldset><fieldset class="favorite-fieldset"><legend>News Display Timing</legend><label>Show news every N non-live slots <input id="news-interval" type="number" min="1" max="20"></label> <label>Headline duration (seconds) <input id="news-duration" type="number" min="3" max="120"></label> <label>Scroll speed (characters/second) <input id="news-speed" type="number" min="1" max="15"></label> <button type="button" onclick="saveNewsTiming()">Save News Timing</button><p id="news-timing-status" role="status"></p></fieldset><fieldset class="favorite-fieldset"><legend>Scoring Alerts</legend><p>Briefly interrupt the board for confirmed scoring events from supported sports. Availability depends on each sport's event feed; favorite-team selections control priority and filtering.</p><label><input type="checkbox" id="scoring-alerts-enabled"> Enable scoring alerts</label><label>Announce scoring events for <select id="scoring-alerts-scope"><option value="favorites">Favorite teams only</option><option value="all">All enabled games</option></select></label><label>Alert duration (seconds) <input id="scoring-alerts-seconds" type="number" min="1" max="60" step="1"></label><button type="button" onclick="saveScoringAlerts()">Save Scoring Alerts</button><p id="scoring-alerts-status" role="status"></p></fieldset><fieldset class="favorite-fieldset"><legend>Game Delays &amp; Schedule Changes</legend><p>Choose when interrupted games appear. Live games remain the default priority.</p><label>Delayed games <select id="interruption-delayed"><option value="when_no_live">Show when no games are live</option><option value="hide">Hide</option><option value="always">Always show</option></select></label><label>Postponed games <select id="interruption-postponed"><option value="when_no_live">Show when no games are live</option><option value="hide">Hide</option><option value="always">Always show</option></select></label><label>Rescheduled games <select id="interruption-rescheduled"><option value="when_no_live">Show when no games are live</option><option value="hide">Hide</option><option value="always">Always show</option></select></label><label>Suspended games <select id="interruption-suspended"><option value="when_no_live">Show when no games are live</option><option value="hide">Hide</option><option value="always">Always show</option></select></label><button type="button" onclick="saveGameInterruptions()">Save Game Status Preferences</button><p id="game-interruptions-status" role="status"></p></fieldset><fieldset class="favorite-fieldset"><legend>Standings Pages</legend><p class="muted">Show cached standings only when no eligible games are available. Currently English football standings are supported; additional sport and division controls are being developed. Scoring alerts and live games always take priority.</p><p><label><input type="checkbox" id="standings-enabled"> Enable standings pages</label></p><div class="grid"><label>Page duration (seconds) <input type="number" id="standings-page-seconds" min="3" max="3600" step="1" value="12"></label><label>Refresh interval (seconds) <input type="number" id="standings-refresh-seconds" min="60" max="86400" step="1" value="900"></label></div><p><button type="button" onclick="saveStandingsSettings()">Save Standings Preferences</button></p><p id="standings-status" role="status"></p></fieldset><h3>Additional Custom Feeds</h3><div id="news-sources"></div><button type="button" id="news-add" onclick="addNewsSource()">Add Source</button> <button type="button" onclick="saveNewsSources()">Save News Sources</button> <p id="news-status" role="status"></p></section></div></main></div>
 <script>
 const token=__TOKEN__;
 async function logout(){await fetch('/logout',{method:'POST',headers:{'X-Configurator-Token':token}});location.href='/login'}
 let state=null,saved=null,dirty=false,selectedTeam='ATL',selected=null,settings=null;
-function showPage(name){document.querySelectorAll('.nav-item').forEach(button=>button.classList.toggle('active',button.getAttribute('onclick')==="showPage('"+name+"')"));document.querySelectorAll('[data-page]').forEach(el=>el.hidden=el.dataset.page!==name);if(name==='news'){loadNewsSources();loadAutomaticNews();loadNewsTiming()}if(name==='display'){loadClockSettings();loadCountdown();}if(name==='dashboard'||name==='system')refreshStatus();if(name==='system'){refreshSystem();checkSoftwareUpdate();}if(name==='matrix-settings'){loadMatrixSettings();refreshMatrixStatus();}if(name==='wifi'){refreshWifi();refreshWifiProfiles();refreshRecoveryReadiness();scanWifi()}}
+function showPage(name){document.querySelectorAll('.nav-item').forEach(button=>button.classList.toggle('active',button.getAttribute('onclick')==="showPage('"+name+"')"));document.querySelectorAll('[data-page]').forEach(el=>el.hidden=el.dataset.page!==name);if(name==='news'){loadNewsSources();loadAutomaticNews();loadNewsTiming();loadScoringAlerts();loadGameInterruptions();loadStandingsSettings()}if(name==='display'){loadClockSettings();loadCountdown();}if(name==='dashboard'||name==='system')refreshStatus();if(name==='system'){refreshSystem();checkSoftwareUpdate();}if(name==='matrix-settings'){loadMatrixSettings();refreshMatrixStatus();}if(name==='wifi'){refreshWifi();refreshWifiProfiles();refreshRecoveryReadiness();scanWifi()}}
 async function refreshMatrixStatus(){
  const el=document.getElementById('matrix-service-state');
  try{const response=await fetch('/api/matrix-status',{cache:'no-store'});const result=await response.json();
@@ -153,15 +153,120 @@ async function saveMatrixSettings(){
 }
 async function loadAutomaticNews(){
  const status=document.getElementById('auto-news-status');
- try{const response=await fetch('/api/settings',{cache:'no-store'});if(!response.ok)throw Error('Unable to load sports settings');const data=await response.json();document.getElementById('mlb-news-enabled').checked=data.sports.mlb.news_enabled;document.getElementById('nhl-news-enabled').checked=data.sports.nhl.news_enabled;document.getElementById('nba-news-enabled').checked=data.sports.nba.news_enabled;document.getElementById('wnba-news-enabled').checked=data.sports.wnba.news_enabled;document.getElementById('nfl-news-enabled').checked=data.sports.nfl.news_enabled;document.getElementById('mls-news-enabled').checked=data.sports.mls.news_enabled;document.getElementById('nwsl-news-enabled').checked=data.sports.nwsl.news_enabled;status.textContent=''}
+ try{const response=await fetch('/api/settings',{cache:'no-store'});if(!response.ok)throw Error('Unable to load sports settings');const data=await response.json();document.getElementById('mlb-news-enabled').checked=data.sports.mlb.news_enabled;document.getElementById('nhl-news-enabled').checked=data.sports.nhl.news_enabled;document.getElementById('nba-news-enabled').checked=data.sports.nba.news_enabled;document.getElementById('wnba-news-enabled').checked=data.sports.wnba.news_enabled;document.getElementById('nfl-news-enabled').checked=data.sports.nfl.news_enabled;document.getElementById('mls-news-enabled').checked=data.sports.mls.news_enabled;document.getElementById('nwsl-news-enabled').checked=data.sports.nwsl.news_enabled;document.getElementById('english-news-enabled').checked=data.sports.english.news_enabled;document.getElementById('efl-news-enabled').checked=data.sports.efl.news_enabled;status.textContent=''}
  catch(err){status.textContent=err.message}
 }
 async function saveAutomaticNews(){
  const status=document.getElementById('auto-news-status');status.textContent='Saving…';
- try{const response=await fetch('/api/settings',{cache:'no-store'});if(!response.ok)throw Error('Unable to load sports settings');const data=await response.json();data.sports.mlb.news_enabled=document.getElementById('mlb-news-enabled').checked;data.sports.nhl.news_enabled=document.getElementById('nhl-news-enabled').checked;data.sports.nba.news_enabled=document.getElementById('nba-news-enabled').checked;data.sports.wnba.news_enabled=document.getElementById('wnba-news-enabled').checked;data.sports.nfl.news_enabled=document.getElementById('nfl-news-enabled').checked;data.sports.mls.news_enabled=document.getElementById('mls-news-enabled').checked;data.sports.nwsl.news_enabled=document.getElementById('nwsl-news-enabled').checked;
+ try{const response=await fetch('/api/settings',{cache:'no-store'});if(!response.ok)throw Error('Unable to load sports settings');const data=await response.json();data.sports.mlb.news_enabled=document.getElementById('mlb-news-enabled').checked;data.sports.nhl.news_enabled=document.getElementById('nhl-news-enabled').checked;data.sports.nba.news_enabled=document.getElementById('nba-news-enabled').checked;data.sports.wnba.news_enabled=document.getElementById('wnba-news-enabled').checked;data.sports.nfl.news_enabled=document.getElementById('nfl-news-enabled').checked;data.sports.mls.news_enabled=document.getElementById('mls-news-enabled').checked;data.sports.nwsl.news_enabled=document.getElementById('nwsl-news-enabled').checked;data.sports.english.news_enabled=document.getElementById('english-news-enabled').checked;data.sports.efl.news_enabled=document.getElementById('efl-news-enabled').checked;
  const saved=await fetch('/api/settings',{method:'POST',headers:{'Content-Type':'application/json','X-Configurator-Token':token},body:JSON.stringify(data)});
  const result=await saved.json();if(!saved.ok)throw Error(result.error||'Save failed');settings=result.settings;status.textContent='Automatic sports news preferences saved.'}
  catch(err){status.textContent=err.message}
+}
+async function loadStandingsSettings(){
+ const status=document.getElementById('standings-status');
+ try{
+  const response=await fetch('/api/settings',{cache:'no-store'});
+  if(!response.ok)throw Error('Unable to load standings settings');
+  const data=await response.json(), options=data.standings||{};
+  document.getElementById('standings-enabled').checked=options.enabled===true;
+  document.getElementById('standings-page-seconds').value=options.page_seconds??12;
+  document.getElementById('standings-refresh-seconds').value=options.refresh_seconds??900;
+  status.textContent='';
+ }catch(error){status.textContent=error.message}
+}
+async function saveStandingsSettings(){
+ const status=document.getElementById('standings-status');
+ status.textContent='Saving…';
+ try{
+  const response=await fetch('/api/settings',{cache:'no-store'});
+  if(!response.ok)throw Error('Unable to load settings');
+  const data=await response.json();
+  data.standings={
+   enabled:document.getElementById('standings-enabled').checked,
+   page_seconds:Number(document.getElementById('standings-page-seconds').value),
+   refresh_seconds:Number(document.getElementById('standings-refresh-seconds').value),
+   ...(data.standings?.leagues!==undefined?{leagues:data.standings.leagues}:{}),
+   ...(data.standings?.mlb_divisions!==undefined?{mlb_divisions:data.standings.mlb_divisions}:{}),
+   ...(data.standings?.nhl_divisions!==undefined?{nhl_divisions:data.standings.nhl_divisions}:{}),
+   ...(data.standings?.nhl_wild_cards!==undefined?{nhl_wild_cards:data.standings.nhl_wild_cards}:{}),
+   ...(data.standings?.nba_conferences!==undefined?{nba_conferences:data.standings.nba_conferences}:{}),
+   ...(data.standings?.nfl_divisions!==undefined?{nfl_divisions:data.standings.nfl_divisions}:{}),
+    ...(data.standings?.mls_conferences!==undefined?{mls_conferences:data.standings.mls_conferences}:{}),
+    nwsl:data.standings?.nwsl===true,
+    wnba:data.standings?.wnba===true
+  };
+  const saved=await fetch('/api/settings',{method:'POST',
+   headers:{'Content-Type':'application/json','X-Configurator-Token':token},
+   body:JSON.stringify(data)});
+  const result=await saved.json();
+  if(!saved.ok)throw Error(result.error||'Save failed');
+  settings=result.settings;
+  status.textContent='Standings preferences saved and applied.';
+ }catch(error){status.textContent=error.message}
+}
+async function loadGameInterruptions(){
+ const status=document.getElementById('game-interruptions-status');
+ try{
+  const response=await fetch('/api/settings',{cache:'no-store'});
+  if(!response.ok)throw Error('Unable to load game status preferences');
+  const data=await response.json();
+  const options=data.game_interruptions||{};
+  for(const kind of ['delayed','postponed','rescheduled','suspended'])
+   document.getElementById('interruption-'+kind).value=options[kind]||'when_no_live';
+  status.textContent='';
+ }catch(err){status.textContent=err.message}
+}
+async function saveGameInterruptions(){
+ const status=document.getElementById('game-interruptions-status');
+ status.textContent='Saving…';
+ try{
+  const response=await fetch('/api/settings',{cache:'no-store'});
+  if(!response.ok)throw Error('Unable to load settings');
+  const data=await response.json();
+  data.game_interruptions={};
+  for(const kind of ['delayed','postponed','rescheduled','suspended'])
+   data.game_interruptions[kind]=document.getElementById('interruption-'+kind).value;
+  const saved=await fetch('/api/settings',{method:'POST',headers:{'Content-Type':'application/json','X-Configurator-Token':token},body:JSON.stringify(data)});
+  const result=await saved.json();
+  if(!saved.ok)throw Error(result.error||'Save failed');
+  settings=result.settings;
+  status.textContent='Game status preferences saved.';
+ }catch(err){status.textContent=err.message}
+}
+async function loadScoringAlerts(){
+ const status=document.getElementById('scoring-alerts-status');
+ try{
+  const response=await fetch('/api/settings',{cache:'no-store'});
+  if(!response.ok)throw Error('Unable to load scoring alerts');
+  const data=await response.json();
+  const options=data.scoring_alerts||{enabled:false,scope:'favorites',seconds:8};
+  document.getElementById('scoring-alerts-enabled').checked=options.enabled;
+  document.getElementById('scoring-alerts-scope').value=options.scope;
+  document.getElementById('scoring-alerts-seconds').value=options.seconds;
+  status.textContent='';
+ }catch(err){status.textContent=err.message}
+}
+async function saveScoringAlerts(){
+ const status=document.getElementById('scoring-alerts-status');
+ const seconds=Number(document.getElementById('scoring-alerts-seconds').value);
+ if(!Number.isInteger(seconds)||seconds<1||seconds>60){status.textContent='Duration must be 1 to 60 seconds.';return}
+ status.textContent='Saving…';
+ try{
+  const response=await fetch('/api/settings',{cache:'no-store'});
+  if(!response.ok)throw Error('Unable to load settings');
+  const data=await response.json();
+  data.scoring_alerts={
+   enabled:document.getElementById('scoring-alerts-enabled').checked,
+   scope:document.getElementById('scoring-alerts-scope').value,
+   seconds:seconds
+  };
+  const saved=await fetch('/api/settings',{method:'POST',headers:{'Content-Type':'application/json','X-Configurator-Token':token},body:JSON.stringify(data)});
+  const result=await saved.json();
+  if(!saved.ok)throw Error(result.error||'Save failed');
+  settings=result.settings;
+  status.textContent='Scoring alerts saved. Apply saved settings if prompted.';
+ }catch(err){status.textContent=err.message}
 }
 async function loadNewsTiming(){
  const status=document.getElementById('news-timing-status');
@@ -543,8 +648,20 @@ async function loadSettings(){
  const wnba=settings.wnba;
  const nfl=settings.nfl;
  const english=settings.english;
+ document.querySelectorAll('#mlb-standings-divisions input').forEach(el=>el.checked=(settings.standings.mlb_divisions||[]).includes(el.value));
+ document.querySelectorAll('#nfl-standings-divisions input').forEach(el=>el.checked=(settings.standings.nfl_divisions||[]).includes(el.value));
+  document.querySelectorAll('#mls-standings-conferences input').forEach(el=>el.checked=(settings.standings.mls_conferences||[]).includes(el.value));
+  for(const league of ['nwsl','wnba'])document.getElementById(league+'-standings-enabled').checked=settings.standings[league]===true;
+ document.querySelectorAll('#nba-standings-conferences input').forEach(el=>el.checked=(settings.standings.nba_conferences||[]).includes(el.value));
+ document.querySelectorAll('#nhl-standings-divisions input').forEach(el=>el.checked=(settings.standings.nhl_divisions||[]).includes(el.value));
+ const nhlWildCards=settings.standings.nhl_wild_cards??[
+  ...((settings.standings.nhl_divisions||[]).some(d=>['Atlantic','Metropolitan'].includes(d))?['Eastern_Wild_Card']:[]),
+  ...((settings.standings.nhl_divisions||[]).some(d=>['Central','Pacific'].includes(d))?['Western_Wild_Card']:[])
+ ];
+ document.querySelectorAll('#nhl-standings-wild-cards input').forEach(el=>el.checked=nhlWildCards.includes(el.value));
  document.getElementById('english-enabled').checked=settings.sports.english.enabled;
  document.querySelectorAll('#english-leagues input').forEach(el=>el.checked=english.enabled_leagues.includes(el.value));
+ document.querySelectorAll('#english-standings-leagues input').forEach(el=>el.checked=(settings.standings.leagues??english.enabled_leagues).includes(el.value));
  document.getElementById('english-mode').value=english.mode;
  document.getElementById('english-rotation').value=english.rotation_seconds;
  document.getElementById('english-refresh').value=english.refresh_seconds;
@@ -608,6 +725,14 @@ async function saveSportSettings(source){
   next.sports.nfl.enabled=document.getElementById('nfl-enabled').checked;
   next.sports.english.enabled=document.getElementById('english-enabled').checked;
   next.english.enabled_leagues=Array.from(document.querySelectorAll('#english-leagues input:checked'),el=>el.value);
+  next.standings.leagues=Array.from(document.querySelectorAll('#english-standings-leagues input:checked'),el=>el.value);
+  next.standings.mlb_divisions=Array.from(document.querySelectorAll('#mlb-standings-divisions input:checked'),el=>el.value);
+  next.standings.nfl_divisions=Array.from(document.querySelectorAll('#nfl-standings-divisions input:checked'),el=>el.value);
+   next.standings.mls_conferences=Array.from(document.querySelectorAll('#mls-standings-conferences input:checked'),el=>el.value);
+   for(const league of ['nwsl','wnba'])next.standings[league]=document.getElementById(league+'-standings-enabled').checked;
+  next.standings.nba_conferences=Array.from(document.querySelectorAll('#nba-standings-conferences input:checked'),el=>el.value);
+  next.standings.nhl_divisions=Array.from(document.querySelectorAll('#nhl-standings-divisions input:checked'),el=>el.value);
+  next.standings.nhl_wild_cards=Array.from(document.querySelectorAll('#nhl-standings-wild-cards input:checked'),el=>el.value);
   next.english.favorite_teams=Array.from(document.querySelectorAll('#english-teams input:checked'),el=>el.value);
   next.english.mode=document.getElementById('english-mode').value;
   next.english.rotation_seconds=Number(document.getElementById('english-rotation').value);
@@ -689,12 +814,42 @@ function updateBranchChanged(){
  document.getElementById('install-update').disabled=!updateAvailable;
  document.getElementById('update-status').textContent='Selected branch: '+document.getElementById('update-branch').value+'. Review before installing.';
 }
+async function copyUpdateLog(){
+ const button=document.getElementById('copy-update-log');
+ const value=document.getElementById('update-log').textContent;
+ if(!value)return;
+ try{
+  if(navigator.clipboard&&window.isSecureContext){
+   await navigator.clipboard.writeText(value);
+  }else{
+   const field=document.createElement('textarea');
+   field.value=value;
+   field.style.position='fixed';
+   field.style.left='-9999px';
+   document.body.appendChild(field);
+   field.select();
+   const copied=document.execCommand('copy');
+   field.remove();
+   if(!copied)throw new Error('Clipboard unavailable');
+  }
+  button.textContent='Copied!';
+ }catch(error){
+  button.textContent='Copy failed';
+ }
+}
 async function refreshUpdateProgress(){
  try{
   const response=await fetch('/api/update/progress',{cache:'no-store'});
   if(!response.ok)return;
   const data=await response.json();
-  document.getElementById('update-log').textContent=(data.status||'not started')+'\\n'+(data.log||'');
+  const logElement=document.getElementById('update-log');
+  const nextText=(data.status||'not started')+'\\n'+(data.log||'');
+  if(logElement.textContent!==nextText){
+   const pinned=logElement.scrollTop+logElement.clientHeight>=logElement.scrollHeight-24;
+   const oldScroll=logElement.scrollTop;
+   logElement.textContent=nextText;
+   logElement.scrollTop=pinned?logElement.scrollHeight:oldScroll;
+  }
   if(data.status==='running')document.getElementById('install-update').disabled=true;
   if(data.status==='completed'||data.status==='failed')document.getElementById('update-status').textContent='Last update: '+data.status+'. Review log below.';
  }catch(error){}
@@ -887,7 +1042,7 @@ load().catch(err=>document.getElementById('status').textContent=err.message);
 loadSettings().catch(err=>document.getElementById('settings-status').textContent=err.message);
 </script></body></html>'''
 
-def make_handler(config_dir,token,frame_provider=None,settings_callback=None,feed_status=None,board_provider=None,countdown_status=None):
+def make_handler(config_dir,token,frame_provider=None,settings_callback=None,feed_status=None,board_provider=None,countdown_status=None,standings_status=None):
     started=time.monotonic()
     sessions=Sessions(config_dir)
     class Handler(BaseHTTPRequestHandler):
@@ -900,8 +1055,8 @@ def make_handler(config_dir,token,frame_provider=None,settings_callback=None,fee
             return item.value if item else ''
         def authenticated(self):
             return sessions.valid(self.session_token())
-        def send_login(self):
-            body=LOGIN_HTML.encode()
+        def send_login(self, error=False):
+            body=LOGIN_HTML.replace("__LOGIN_ERROR__", '<p role="alert" class="login-error">Incorrect password. Please try again.</p>' if error else "").encode()
             self.send_response(200)
             self.send_header('Content-Type','text/html; charset=utf-8')
             self.send_header('Cache-Control','no-store')
@@ -936,13 +1091,16 @@ def make_handler(config_dir,token,frame_provider=None,settings_callback=None,fee
                     self.send_json(503, {'error': 'Board emulator not configured'})
                 else:
                     frame = board_provider()
-                    self.send_json(200, {'width': frame.width, 'height': frame.height,
-                                         'pixels': [pixel for row in frame.pixels for pixel in row]})
+                    from .web_preview import frame_payload
+                    self.send_json(200, frame_payload(frame))
                 return
             if not self.authenticated():
                 if path=='/':
                     self.send_response(303);self.send_header('Location','/login');self.end_headers()
-                else:self.send_json(401,{'error':'Authentication required'})
+                elif path.startswith('/api/'):
+                    self.send_json(401,{'error':'Authentication required'})
+                else:
+                    self.send_response(303);self.send_header('Location','/login');self.end_headers()
                 return
             if path=='/':
                 body=HTML.replace('__TOKEN__',json.dumps(token)).replace('__PREVIEW_VERSION__',display_version()).encode()
@@ -1021,10 +1179,22 @@ def make_handler(config_dir,token,frame_provider=None,settings_callback=None,fee
                 root=Path('/var/lib/uls/update')
                 try:
                     state=(root/'status').read_text(encoding='utf-8').strip()
-                    log=(root/'latest.log').read_text(encoding='utf-8')[-12000:]
+                    # Keep complete updater output available in the dashboard. Cap at
+                    # 2 MiB to avoid unbounded response sizes on broken installs.
+                    log_path=root/'latest.log'
+                    with log_path.open('rb') as stream:
+                        log=stream.read(2 * 1024 * 1024 + 1)
+                    if len(log)>2 * 1024 * 1024:
+                        log=log[:2 * 1024 * 1024]+b'\\n[Log exceeds 2 MiB; view complete file over SSH.]'
+                    log=log.decode('utf-8', errors='replace')
                 except OSError:
                     state,log='not started',''
                 self.send_json(200,{'status':state,'log':log})
+            elif path=='/api/standings/diagnostics':
+                if standings_status is None:
+                    self.send_json(503,{'error':'Standings diagnostics not connected to running service'})
+                else:
+                    self.send_json(200,{'leagues':standings_status()})
             elif path=='/api/system':
                 from .system_diagnostics import system_status
                 self.send_json(200,system_status())
@@ -1054,7 +1224,7 @@ def make_handler(config_dir,token,frame_provider=None,settings_callback=None,fee
                 password=parse_qs(self.rfile.read(size).decode('utf-8',errors='replace')).get('password',[''])[0]
                 if not verify_password(config_dir,password):
                     time.sleep(0.5)
-                    self.send_json(401,{'error':'Invalid credentials'});return
+                    self.send_login(error=True);return
                 session=sessions.create()
                 self.send_response(303)
                 self.send_header('Set-Cookie','uls_session='+session+'; HttpOnly; SameSite=Strict; Path=/; Max-Age=28800')
@@ -1271,21 +1441,43 @@ def main():
     from .nhl_engine import ConfiguredNHLRenderer
     from .multisport_runtime import MultiSportRenderer
     nhl_feed = BackgroundNHLFeed(NHLFeed())
-    nhl_renderer = ConfiguredNHLRenderer(nhl_feed, config_dir=args.config_dir)
+    from .scoring_alerts import ScoringAlerts
+    scoring_alerts = ScoringAlerts()
+    nhl_renderer = ConfiguredNHLRenderer(nhl_feed, config_dir=args.config_dir, scoring_alerts=scoring_alerts)
     from .nba_feed import NBAFeed
     from .nba_runtime import BackgroundNBAFeed
     from .nba_engine import ConfiguredNBARenderer
     nba_feed = BackgroundNBAFeed(NBAFeed())
-    nba_renderer = ConfiguredNBARenderer(nba_feed)
+    nba_renderer = ConfiguredNBARenderer(nba_feed, scoring_alerts=scoring_alerts, league='NBA')
     from .wnba_feed import WNBAFeed
     from .wnba_engine import ConfiguredWNBARenderer
     wnba_feed = BackgroundNBAFeed(WNBAFeed())
-    wnba_renderer = ConfiguredWNBARenderer(wnba_feed)
+    wnba_renderer = ConfiguredWNBARenderer(wnba_feed, scoring_alerts=scoring_alerts, league='WNBA')
     from .nfl_feed import NFLFeed
     from .nfl_runtime import BackgroundNFLFeed
     from .nfl_engine import ConfiguredNFLRenderer
     nfl_feed = BackgroundNFLFeed(NFLFeed())
-    nfl_renderer = ConfiguredNFLRenderer(nfl_feed)
+    nfl_renderer = ConfiguredNFLRenderer(nfl_feed, scoring_alerts=scoring_alerts)
+    # Track game completion on background refresh, independent of which
+    # sport is currently displayed. The handoff remains opt-in until the
+    # live-rotation policy and exact-game renderers are fully integrated.
+    from .final_score_handoff import FinalScoreHandoff
+    final_handoff = FinalScoreHandoff()
+    def observe_finals(sport, games):
+        final_handoff.observe(sport, games, id_getter=lambda game: game.game_id)
+    # Observe score changes as feeds refresh, even when another sport owns the display.
+    nhl_feed.on_games = lambda games: (nhl_renderer.score_observer.observe(games, favorite_teams=nhl_renderer.favorite_teams), observe_finals('nhl', games))
+    nfl_feed.on_games = lambda games: nfl_renderer.score_observer.observe(games, favorite_teams=nfl_renderer.favorite_teams)
+    from .mlb_score_alerts import MLBRunObserver
+    mlb_run_observer = MLBRunObserver(scoring_alerts, lambda: renderer.settings()['mlb']['favorite_teams'])
+    feed.on_games = mlb_run_observer.observe
+    from .score_change_observer import ScoreChangeObserver
+    nba_score_observer = ScoreChangeObserver(scoring_alerts, 'nba', 'NBA', 'SCORE')
+    wnba_score_observer = ScoreChangeObserver(scoring_alerts, 'wnba', 'WNBA', 'SCORE')
+    nba_feed.on_games = lambda games: (nba_score_observer.observe(games, favorite_teams=nba_renderer.favorite_teams),
+                                       nba_renderer._observe_lead_changes(games), observe_finals('nba', games))
+    wnba_feed.on_games = lambda games: (wnba_score_observer.observe(games, favorite_teams=wnba_renderer.favorite_teams),
+                                        wnba_renderer._observe_lead_changes(games), observe_finals('wnba', games))
     from .soccer_data import SoccerFeed, fetch_scores
     from .soccer_runtime import BackgroundSoccerFeed
     from .soccer_engine import ConfiguredSoccerRenderer
@@ -1294,6 +1486,8 @@ def main():
     from .soccer_native_http import NativeLeagueProvider
     # Native URLs are opt-in until the league-specific API contract is verified.
     # ESPN remains a safe fallback without requiring credentials.
+    # One shared queue for every soccer league. Opt-in settings are introduced
+    # separately; disabled by default so existing installations are unchanged.
     soccer_workers = {}
     soccer_renderers = {}
     for league in ('MLS', 'NWSL'):
@@ -1304,7 +1498,7 @@ def main():
         fallback = lambda day, name=league: parse_scoreboard(fetch_scores(name, day), name)
         router = SoccerProviderRouter(league, primary=primary, fallback=fallback)
         soccer_feed = SoccerFeed(league, provider=router)
-        soccer_renderer = ConfiguredSoccerRenderer(soccer_feed, league=league)
+        soccer_renderer = ConfiguredSoccerRenderer(soccer_feed, league=league, scoring_alerts=scoring_alerts)
         soccer_worker = BackgroundSoccerFeed(soccer_feed, on_match=soccer_renderer.update)
         soccer_workers[key] = soccer_worker
         soccer_renderers[key] = soccer_renderer
@@ -1313,17 +1507,173 @@ def main():
     from .english_goals import EnglishGoalEnricher
     english_goal_enricher = EnglishGoalEnricher()
     english_feeds = {league: SoccerFeed(league, enrich=english_goal_enricher) for league in COMPETITIONS}
-    english_renderer = EnglishFootballRenderer(english_feeds)
+    english_renderer = EnglishFootballRenderer(english_feeds, scoring_alerts=scoring_alerts)
     english_workers = {
         league: BackgroundSoccerFeed(english_feeds[league], on_match=english_renderer.update)
         for league in COMPETITIONS
     }
+    from .football_standings_runtime import FootballStandingsCache, BackgroundFootballStandings
+    from .standings_rotation import StandingsRotation
+    standings_caches = {
+        league: FootballStandingsCache(league, refresh_seconds=initial['standings']['refresh_seconds'],
+                                     cache_dir=Path(args.config_dir) / 'standings-cache')
+        for league in COMPETITIONS
+    }
+    standings_workers = {
+        league: BackgroundFootballStandings(cache)
+        for league, cache in standings_caches.items()
+    }
+    from .mlb_standings_feed import DIVISION_KEYS, WILD_CARD_KEYS, fetch_mlb_group, fetch_mlb_wild_card_group
+    mlb_standings_caches = {
+        division: FootballStandingsCache(
+            'MLB', fetcher=lambda _league, group=division: fetch_mlb_group(group),
+            refresh_seconds=initial['standings']['refresh_seconds'],
+            cache_dir=Path(args.config_dir) / 'standings-cache',
+            cache_key='mlb-' + division.lower())
+        for division in DIVISION_KEYS.values()
+    }
+    mlb_standings_caches.update({
+        group: FootballStandingsCache(
+            'MLB', fetcher=lambda _league, key=group: fetch_mlb_wild_card_group(key),
+            refresh_seconds=initial['standings']['refresh_seconds'],
+            cache_dir=Path(args.config_dir) / 'standings-cache',
+            cache_key='mlb-' + group.lower())
+        for group in WILD_CARD_KEYS
+    })
+    mlb_standings_workers = {
+        division: BackgroundFootballStandings(cache)
+        for division, cache in mlb_standings_caches.items()
+    }
+    from .nhl_standings_feed import NHL_DIVISIONS, NHL_WILD_CARD_GROUPS, fetch_nhl_division, fetch_nhl_wild_card
+    nhl_standings_caches = {
+        division: FootballStandingsCache(
+            'NHL', fetcher=lambda _league, group=division: fetch_nhl_division(group),
+            refresh_seconds=initial['standings']['refresh_seconds'],
+            cache_dir=Path(args.config_dir) / 'standings-cache',
+            cache_key='nhl-' + division.lower())
+        for division in NHL_DIVISIONS
+    }
+    nhl_standings_caches.update({
+        group: FootballStandingsCache(
+            'NHL', fetcher=lambda _league, key=group: fetch_nhl_wild_card(key),
+            refresh_seconds=initial['standings']['refresh_seconds'],
+            cache_dir=Path(args.config_dir) / 'standings-cache',
+            cache_key='nhl-' + group.lower())
+        for group in NHL_WILD_CARD_GROUPS
+    })
+    nhl_standings_workers = {
+        division: BackgroundFootballStandings(cache)
+        for division, cache in nhl_standings_caches.items()
+    }
+    standings_caches.update(mlb_standings_caches)
+    standings_caches.update(nhl_standings_caches)
+    from .nba_standings_feed import NBA_CONFERENCES, fetch_nba_conference
+    nba_standings_caches = {
+        conference: FootballStandingsCache(
+            'NBA', fetcher=lambda _league, group=conference: fetch_nba_conference(group),
+            refresh_seconds=initial['standings']['refresh_seconds'],
+            cache_dir=Path(args.config_dir) / 'standings-cache',
+            cache_key='nba-' + conference.lower(), expected_group=conference)
+        for conference in NBA_CONFERENCES
+    }
+    nba_standings_workers = {
+        conference: BackgroundFootballStandings(cache)
+        for conference, cache in nba_standings_caches.items()
+    }
+    standings_caches.update(nba_standings_caches)
+    from .nfl_standings_feed import NFL_DIVISIONS, fetch_nfl_division
+    nfl_standings_caches = {
+        division: FootballStandingsCache(
+            'NFL', fetcher=lambda _league, group=division: fetch_nfl_division(group),
+            refresh_seconds=initial['standings']['refresh_seconds'],
+            cache_dir=Path(args.config_dir) / 'standings-cache',
+            cache_key='nfl-' + division.lower().replace(' ', '-'),
+            expected_group=division)
+        for division in NFL_DIVISIONS
+    }
+    nfl_standings_workers = {
+        division: BackgroundFootballStandings(cache)
+        for division, cache in nfl_standings_caches.items()
+    }
+    standings_caches.update(nfl_standings_caches)
+    from .mls_standings_feed import MLS_CONFERENCES, fetch_mls_conference
+    mls_standings_caches = {
+        conference: FootballStandingsCache(
+            'MLS', fetcher=lambda _league, group=conference: fetch_mls_conference(group),
+            refresh_seconds=initial['standings']['refresh_seconds'],
+            cache_dir=Path(args.config_dir) / 'standings-cache',
+            cache_key='mls-' + conference.lower().replace(' ', '-'),
+            expected_group=conference)
+        for conference in MLS_CONFERENCES
+    }
+    mls_standings_workers = {
+        conference: BackgroundFootballStandings(cache)
+        for conference, cache in mls_standings_caches.items()
+    }
+    standings_caches.update(mls_standings_caches)
+    from .nwsl_standings_feed import fetch_nwsl_standings
+    from .wnba_standings_feed import fetch_wnba_standings
+    single_table_caches = {
+        league: FootballStandingsCache(
+            league, fetcher=fetcher,
+            refresh_seconds=initial['standings']['refresh_seconds'],
+            cache_dir=Path(args.config_dir) / 'standings-cache',
+            cache_key=league.lower() + '-standings',
+            expected_group=league)
+        for league, fetcher in (('NWSL', fetch_nwsl_standings),
+                                ('WNBA', fetch_wnba_standings))
+    }
+    single_table_workers = {
+        league: BackgroundFootballStandings(cache)
+        for league, cache in single_table_caches.items()
+    }
+    standings_caches.update(single_table_caches)
+    from .standings_season_status import StandingsSeasonStatus
+    from .standings_season_worker import SeasonCalendarWorker
+    from .mlb_season_calendar import fetch_mlb_season_windows
+    from .nhl_season_calendar import fetch_nhl_season_windows
+    season_status = StandingsSeasonStatus()
+    mlb_season_worker = SeasonCalendarWorker(
+        'MLB', fetch_mlb_season_windows, season_status)
+    nhl_season_worker = SeasonCalendarWorker(
+        'NHL', fetch_nhl_season_windows, season_status)
+    # Opt-in only: without a verified provider URL, preserve existing NBA pages.
+    from .nba_season_provider import fetch_nba_season_windows
+    nba_calendar_url = os.environ.get('ULS_NBA_SEASON_CALENDAR_URL', '').strip()
+    nba_season_worker = (
+        SeasonCalendarWorker('NBA',
+            lambda competition: fetch_nba_season_windows(competition, url=nba_calendar_url),
+            season_status)
+        if nba_calendar_url.startswith('https://') else None)
+    def standings_season_eligible(competition):
+        if competition in mlb_standings_caches:
+            return season_status.eligible('MLB')
+        if competition in nhl_standings_caches:
+            return (season_status.eligible('NHL') and
+                    any(row.played > 0 for row in nhl_standings_caches[competition].rows()))
+        if competition in single_table_caches:
+            return any(row.played > 0 for row in single_table_caches[competition].rows())
+        if competition in mls_standings_caches:
+            return any(row.played > 0 for row in mls_standings_caches[competition].rows())
+        if competition in nfl_standings_caches:
+            return any(row.played > 0 for row in nfl_standings_caches[competition].rows())
+        if competition in nba_standings_caches and nba_season_worker is not None:
+            return season_status.eligible('NBA')
+        return True
+    standings_rotation = StandingsRotation(
+        standings_caches, season_policy=standings_season_eligible)
     renderer.news = None  # Universal news is owned by the shared board scheduler.
-    board = MultiSportRenderer(renderer, nhl_renderer, news=news, settings_getter=renderer.settings, nba_renderer=nba_renderer, wnba_renderer=wnba_renderer, nfl_renderer=nfl_renderer, mls_renderer=soccer_renderers['mls'], nwsl_renderer=soccer_renderers['nwsl'], english_renderer=english_renderer)
+    board = MultiSportRenderer(renderer, nhl_renderer, news=news, settings_getter=renderer.settings, nba_renderer=nba_renderer, wnba_renderer=wnba_renderer, nfl_renderer=nfl_renderer, mls_renderer=soccer_renderers['mls'], nwsl_renderer=soccer_renderers['nwsl'], english_renderer=english_renderer, scoring_alerts=scoring_alerts, standings_rotation=standings_rotation)
     # Apply persisted sport choice on service startup, not just after web saves.
     def game():
         return board.game()
     def apply_settings(settings):
+        from .game_interruptions import InterruptionPolicy
+        interruption_policy = InterruptionPolicy(**settings['game_interruptions'])
+        for sport_renderer in (*soccer_renderers.values(), english_renderer,
+                               nhl_renderer, nba_renderer, wnba_renderer, nfl_renderer):
+            sport_renderer.interruption_policy = interruption_policy
+        scoring_alerts.configure(**settings['scoring_alerts'])
         renderer.apply(settings)
         feed.feed.refresh_seconds=settings['mlb']['refresh_seconds']
         from .time_weather_settings import load_time_weather
@@ -1386,11 +1736,117 @@ def main():
             enabled_leagues=english['enabled_leagues'],
             refresh_seconds=english['refresh_seconds'],
             timezone_name=time_preferences['timezone'])
+        standings_options = settings['standings']
+        # A disabled sport/league must not appear in standings rotation.
+        english_enabled = settings['sports']['english']['enabled']
+        selected_standings_leagues = [
+            league for league in standings_options.get('leagues', english['enabled_leagues'])
+            if english_enabled and league in english['enabled_leagues']]
+
+        selected_mlb_divisions = (standings_options.get('mlb_divisions', [])
+                                  if settings['sports']['mlb']['enabled'] else [])
+        selected_mlb_groups = [*selected_mlb_divisions]
+        if any(group.startswith('AL_') for group in selected_mlb_divisions):
+            selected_mlb_groups.append('AL_WILD_CARD')
+        if any(group.startswith('NL_') for group in selected_mlb_divisions):
+            selected_mlb_groups.append('NL_WILD_CARD')
+        if standings_options['enabled'] and selected_mlb_groups:
+            mlb_season_worker.start()
+        else:
+            mlb_season_worker.stop()
+        selected_nhl_divisions = (standings_options.get('nhl_divisions', [])
+                                  if settings['sports']['nhl']['enabled'] else [])
+        # Explicit wild card preferences override legacy automatic inclusion.
+        # Existing installations retain their previous selection behavior.
+        selected_nhl_groups = [*selected_nhl_divisions]
+        if 'nhl_wild_cards' in standings_options:
+            if settings['sports']['nhl']['enabled']:
+                selected_nhl_groups.extend(standings_options['nhl_wild_cards'])
+        else:
+            if any(group in ('Atlantic', 'Metropolitan') for group in selected_nhl_divisions):
+                selected_nhl_groups.append('Eastern_Wild_Card')
+            if any(group in ('Central', 'Pacific') for group in selected_nhl_divisions):
+                selected_nhl_groups.append('Western_Wild_Card')
+        if standings_options['enabled'] and selected_nhl_groups:
+            nhl_season_worker.start()
+        else:
+            nhl_season_worker.stop()
+        selected_nba_conferences = (standings_options.get('nba_conferences', [])
+                                    if settings['sports']['nba']['enabled'] else [])
+        if nba_season_worker is not None:
+            if standings_options['enabled'] and selected_nba_conferences:
+                nba_season_worker.start()
+            else:
+                nba_season_worker.stop()
+        selected_nfl_divisions = (standings_options.get('nfl_divisions', [])
+                                  if settings['sports']['nfl']['enabled'] else [])
+        selected_mls_conferences = (standings_options.get('mls_conferences', [])
+                                    if settings['sports']['mls']['enabled'] else [])
+        selected_single_tables = [
+            league for league in ('NWSL', 'WNBA')
+            if standings_options.get(league.lower(), False)
+            and settings['sports'][league.lower()]['enabled']
+        ]
+        standings_rotation.configure(
+            enabled=standings_options['enabled'],
+            page_seconds=standings_options['page_seconds'],
+            selected_leagues=[*selected_standings_leagues, *selected_mlb_groups,
+                              *selected_nhl_groups, *selected_nba_conferences,
+                              *selected_nfl_divisions, *selected_mls_conferences, *selected_single_tables])
+        for league, cache in standings_caches.items():
+            cache.refresh_seconds = standings_options['refresh_seconds']
+            if league in single_table_workers:
+                if standings_options['enabled'] and league in selected_single_tables:
+                    single_table_workers[league].start()
+                else:
+                    single_table_workers[league].stop()
+                continue
+            if league in mls_standings_workers:
+                if standings_options['enabled'] and league in selected_mls_conferences:
+                    mls_standings_workers[league].start()
+                else:
+                    mls_standings_workers[league].stop()
+                continue
+            if league in nfl_standings_workers:
+                if standings_options['enabled'] and league in selected_nfl_divisions:
+                    nfl_standings_workers[league].start()
+                else:
+                    nfl_standings_workers[league].stop()
+                continue
+            if league in nba_standings_workers:
+                if standings_options['enabled'] and league in selected_nba_conferences:
+                    nba_standings_workers[league].start()
+                else:
+                    nba_standings_workers[league].stop()
+                continue
+            if league in nhl_standings_workers:
+                if standings_options['enabled'] and league in selected_nhl_groups:
+                    nhl_standings_workers[league].start()
+                else:
+                    nhl_standings_workers[league].stop()
+                continue
+            if league in mlb_standings_workers:
+                if standings_options['enabled'] and league in selected_mlb_groups:
+                    mlb_standings_workers[league].start()
+                else:
+                    mlb_standings_workers[league].stop()
+                continue
+            # Pregame and standings data are both limited to enabled leagues.
+            needs_pregame_records = (settings['sports']['english']['enabled'] and
+                                     league in english['enabled_leagues'])
+            needs_standings_page = (standings_options['enabled'] and english_enabled and
+                                    league in selected_standings_leagues)
+            if needs_pregame_records or needs_standings_page:
+                standings_workers[league].start()
+            else:
+                standings_workers[league].stop()
         enabled = [sport for sport in ('mlb', 'nhl', 'nba', 'wnba', 'nfl', 'mls', 'nwsl', 'english') if settings['sports'][sport]['enabled']]
         renderer.set_supplemental_stride(len(enabled))
         board.configure_rotation(enabled, interval=settings['mlb']['rotation_seconds'],
                                  preferred=settings['active_sport'])
     apply_settings(initial)
+    def standings_status():
+        return board.soccer_pregame_diagnostics()
     def feed_status():
         return feed.status()
     def countdown_status():
@@ -1422,7 +1878,7 @@ def main():
     frame_thread = threading.Thread(target=publish_frames, daemon=True, name='frame-publisher')
     frame_thread.start()
     try:
-        with ThreadingHTTPServer((args.host,args.port),make_handler(args.config_dir,token,game,apply_settings,feed_status,board.frame,countdown_status)) as server:
+        with ThreadingHTTPServer((args.host,args.port),make_handler(args.config_dir,token,game,apply_settings,feed_status,board.frame,countdown_status,standings_status)) as server:
             print(f'Configurator listening on {args.host}:{args.port}',flush=True)
             server.serve_forever()
     finally:
@@ -1439,5 +1895,23 @@ def main():
             worker.stop()
         for worker in english_workers.values():
             worker.stop()
+        for worker in standings_workers.values():
+            worker.stop()
+        for worker in mlb_standings_workers.values():
+            worker.stop()
+        for worker in nhl_standings_workers.values():
+            worker.stop()
+        for worker in nba_standings_workers.values():
+            worker.stop()
+        for worker in nfl_standings_workers.values():
+            worker.stop()
+        for worker in mls_standings_workers.values():
+            worker.stop()
+        for worker in single_table_workers.values():
+            worker.stop()
+        mlb_season_worker.stop()
+        nhl_season_worker.stop()
+        if nba_season_worker is not None:
+            nba_season_worker.stop()
 if __name__=='__main__':
     main()

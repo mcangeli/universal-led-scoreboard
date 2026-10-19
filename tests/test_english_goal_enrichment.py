@@ -56,6 +56,27 @@ class EnglishGoalEnrichmentTests(unittest.TestCase):
         recovered = enricher(match())
         self.assertEqual(tracker.observe(recovered), ())
 
+    def test_empty_summary_does_not_erase_scoreboard_goal(self):
+        from dataclasses import replace
+        from universal_led.soccer import SoccerGoal
+        enricher = EnglishGoalEnricher(fetcher=lambda *args: {"keyEvents": []})
+        observed = replace(match(), goals=(SoccerGoal("scoreboard-1", "ARS"),))
+        self.assertEqual(enricher(observed).goals[0].event_id, "scoreboard-1")
+        self.assertEqual(enricher(match()).goals[0].event_id, "scoreboard-1")
+
+    def test_late_summary_enriches_without_losing_prior_goal(self):
+        from dataclasses import replace
+        from universal_led.soccer import SoccerGoal
+        responses = [{"keyEvents": []}, {"keyEvents": [
+            {"id": "summary-2", "scoringPlay": True,
+             "team": {"abbreviation": "CHE"}}]}]
+        enricher = EnglishGoalEnricher(fetcher=lambda *args: responses.pop(0))
+        observed = replace(match(), goals=(SoccerGoal("scoreboard-1", "ARS"),))
+        enricher(observed)
+        enriched = enricher(match())
+        self.assertEqual({g.event_id for g in enriched.goals},
+                         {"scoreboard-1", "summary-2"})
+
     def test_goal_cache_isolated_per_match(self):
         enricher = EnglishGoalEnricher(fetcher=lambda *args: {
             "keyEvents": [{"id": "g1", "scoringPlay": True}]})

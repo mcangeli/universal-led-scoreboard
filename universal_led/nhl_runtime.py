@@ -15,8 +15,9 @@ def select_games(games, team=None, mode="fallback"):
 
 
 class BackgroundNHLFeed:
-    def __init__(self, feed, day_provider=None, timezone_name="America/New_York"):
+    def __init__(self, feed, day_provider=None, timezone_name="America/New_York", on_games=None):
         self.feed = feed
+        self.on_games = on_games
         self.timezone_name = timezone_name
         ZoneInfo(timezone_name)
         self.day_provider = day_provider or self._local_day
@@ -31,7 +32,10 @@ class BackgroundNHLFeed:
         self.timezone_name = timezone_name
 
     def refresh_once(self):
-        return self.feed.refresh(self.day_provider())
+        games = self.feed.refresh(self.day_provider())
+        if self.on_games is not None and self.feed.status().get("state") != "error":
+            self.on_games(games)
+        return games
 
     def _run(self):
         while not self._stop.is_set():

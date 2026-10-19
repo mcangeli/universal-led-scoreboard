@@ -1,6 +1,8 @@
-# Dashboard software updater design (v0.1.0)
+# Dashboard software updater: architecture and historical design notes
 
-## User experience
+**Status for v0.7.0:** The dashboard updater is implemented and has repeatedly passed candidate preflight checks on the development board. It preserves settings in `/etc/uls` and persistent state in `/var/lib/uls`; a candidate failing regression tests is rejected before installation. The branch picker supports selecting the installed branch and showing older branches on request, with compatibility checks protecting against unsafe switches. This document also retains early design requirements below, some of which describe proposed behavior rather than current implementation. For verified release acceptance, see [CHANGELOG](../CHANGELOG.md).
+
+## Original design: user experience
 
 A **Software Updates** section in System and a compact Dashboard status display:
 - Installed commit and branch.

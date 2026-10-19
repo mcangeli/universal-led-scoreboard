@@ -36,22 +36,22 @@ class MLBClassicV9Screen:
     def render(self) -> Framebuffer:
         g = self.game
         fb = Framebuffer(64,32)
-        # Each numeric column has 8px: x=40..46, 48..54, 56..62.
+        # Each numeric column has 8px: x=36..42, 46..52, 56..62.
         # Headers centered on the same right edges as their values.
-        for letter,right in zip('RHE',(46,54,62)):
-            small(fb,letter,right-2,1,GOLD)
+        for letter,right in zip('RHE',(40,50,60)):
+            small(fb,letter,right-1,1,GOLD)
         for y,team,stats in (
             (8,g.away,(g.away_runs,g.away_hits,g.away_errors)),
             (18,g.home,(g.home_runs,g.home_hits,g.home_errors))):
             fb.text(team,1,y-1,TEAM_COLORS.get(team,WHITE))
-            for right,value in zip((46,54,62),stats):
+            for right,value in zip((40,50,60),stats):
                 if value >= 100:
                     for x in (right-6,right-2):
                         fb.pixel(x,y+1,RED)
                         fb.pixel(x,y+3,RED)
                 else:
                     digits=str(value)
-                    small(fb,digits,right-(len(digits)*4-1),y,WHITE)
+                    small(fb,digits,right-1 if len(digits)==1 else right-3,y,WHITE)
         for x in range(64):
             fb.pixel(x,25,(28,37,48))
         if g.status == 'pregame':

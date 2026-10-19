@@ -22,8 +22,9 @@ def select_games(games: list[BaseballGame], team: str | list[str] | None = 'ATL'
 
 class BackgroundMLBFeed:
     """Only the worker calls the network. Browser requests read cached snapshots."""
-    def __init__(self, feed: MLBFeed, fetch_live=None):
+    def __init__(self, feed: MLBFeed, fetch_live=None, on_games=None):
         self.feed = feed
+        self.on_games = on_games
         self.fetch_live = fetch_live or self._fetch_live
         self.live_error: str | None = None
         self._stop = threading.Event()
@@ -56,6 +57,8 @@ class BackgroundMLBFeed:
                 live_errors.append(f'{game.game_pk}: {exc}')
                 enriched.append(game)
         games=enriched
+        if self.on_games is not None and self.feed.last_error is None:
+            self.on_games(games)
         now = time.time()
         with self._lock:
             self._games = games

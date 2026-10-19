@@ -31,6 +31,29 @@ class PregameSlotTests(unittest.TestCase):
                     game,actual=self.renderer._selection()
                 self.assertEqual((game.away,actual),(away,page))
 
+    def test_legacy_settings_without_interruptions_remain_supported(self):
+        self.renderer.feed.games=lambda:[BaseballGame(status='delayed')]
+        with patch('universal_led.runtime_settings.time.monotonic',return_value=100):
+            game,page=self.renderer._selection()
+        self.assertEqual(game.status,'delayed')
+        self.assertEqual(page,0)
+
+    def test_missing_external_live_flag_defaults_to_false(self):
+        self.renderer.feed.games=lambda:[BaseballGame(status='postponed')]
+        self.assertFalse(hasattr(self.renderer,'external_live_games'))
+        self.assertEqual(self.renderer._selection()[0].status,'postponed')
+
+    def test_cross_sport_live_suppresses_delayed_mlb(self):
+        self.renderer.feed.games=lambda:[BaseballGame(status='delayed'),
+                                          BaseballGame(away='MIL',home='LAD',status='final')]
+        self.renderer.external_live_games=True
+        self.assertEqual(self.renderer._selection()[0].status,'final')
+
+    def test_hide_policy_removes_postponed_mlb(self):
+        self.renderer._settings['game_interruptions']={'postponed':'hide'}
+        self.renderer.feed.games=lambda:[BaseballGame(status='postponed')]
+        self.assertIsNone(self.renderer._selection()[0])
+
     def test_live_game_does_not_rotate_pregame_pages(self):
         self.renderer.feed.games=lambda:[BaseballGame(status='live')]
         for now in (100,104,108):

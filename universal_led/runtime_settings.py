@@ -4,6 +4,7 @@ import time
 from pathlib import Path
 from .sport_settings import load_settings, validate_settings
 from .mlb_runtime import select_games
+from .game_interruptions import InterruptionPolicy, filter_interrupted_games
 from .mlb_palette_v11 import MLBPaletteScreen
 from .mlb_live_details import MLBLiveDetailsScreen
 from .mlb_previous_play import MLBPreviousPlayScreen
@@ -26,6 +27,7 @@ class ConfiguredMLBRenderer:
         self.news=news
         self.weather=weather
         self.opening_feed=MLBOpeningDayFeed()
+        self.external_live_games = False
         self._lock=threading.Lock()
         self._started=time.monotonic()
         self._supplemental_stride=1
@@ -55,10 +57,14 @@ class ConfiguredMLBRenderer:
 
     def _selection(self):
         """Keep game and pregame page on the same rotation clock."""
-        settings=self.settings()['mlb']
+        current=self.settings()
+        settings=current['mlb']
         all_games=self.feed.games()
+        policy=InterruptionPolicy(**current.get('game_interruptions', {}))
+        all_games=filter_interrupted_games(all_games, has_live_games=getattr(self, 'external_live_games', False),
+                                           policy=policy)
         favorites=set(settings.get('favorite_teams',settings.get('favorite_team',['ATL'])))
-        selected=select_games(all_games,settings.get('favorite_teams',settings.get('favorite_team',['ATL'])),settings['mode'])
+        selected=select_games(all_games,list(favorites),settings['mode'])
         favorite_live=[g for g in all_games if g.status=='live' and (g.away in favorites or g.home in favorites)]
         all_live=[g for g in all_games if g.status=='live']
         mode=settings['mode']
@@ -102,7 +108,9 @@ class ConfiguredMLBRenderer:
         return game,page
 
     def has_games(self):
-        return bool(self.feed.games())
+        policy=InterruptionPolicy(**self.settings().get('game_interruptions', {}))
+        return bool(filter_interrupted_games(self.feed.games(),
+                    has_live_games=getattr(self, 'external_live_games', False), policy=policy))
 
     def has_live_games(self):
         """Check the cached MLB schedule, not just the current rotation slot.

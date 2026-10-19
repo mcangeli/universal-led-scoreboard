@@ -19,13 +19,20 @@ DEFAULT_SETTINGS={
     'nwsl':{'favorite_teams':[],'mode':'fallback','refresh_seconds':60,'rotation_seconds':12,'provider':'league_first'},
     'english':{'favorite_teams':[],'mode':'fallback','refresh_seconds':60,'rotation_seconds':12,
                'enabled_leagues':['EPL','CHAMPIONSHIP','LEAGUE_ONE','LEAGUE_TWO']},
-    'news':{'rotation_interval':5,'headline_seconds':12,'scroll_chars_per_second':3}
+    'news':{'rotation_interval':5,'headline_seconds':12,'scroll_chars_per_second':3},
+    'scoring_alerts':{'enabled':False,'scope':'favorites','seconds':8},
+    'standings':{'enabled':False,'page_seconds':12,'refresh_seconds':900},
+    'game_interruptions':{'delayed':'when_no_live','postponed':'when_no_live',
+                          'rescheduled':'when_no_live','suspended':'when_no_live'}
 }
 
 def validate_settings(value):
-    if not isinstance(value,dict) or not (set(DEFAULT_SETTINGS)-{'news','nhl','nba','wnba','nfl','mls','nwsl','english'} <= set(value) <= set(DEFAULT_SETTINGS)):
+    if not isinstance(value,dict) or not (set(DEFAULT_SETTINGS)-{'news','nhl','nba','wnba','nfl','mls','nwsl','english','scoring_alerts','game_interruptions','standings'} <= set(value) <= set(DEFAULT_SETTINGS)):
         raise ValueError('Settings require version, active_sport, sports and mlb')
-    value=dict(value,news=dict(DEFAULT_SETTINGS['news']) | value.get('news',{}),
+    value=dict(value,game_interruptions=dict(DEFAULT_SETTINGS['game_interruptions']) | value.get('game_interruptions',{}),
+               scoring_alerts=dict(DEFAULT_SETTINGS['scoring_alerts']) | value.get('scoring_alerts',{}),
+               standings=dict(DEFAULT_SETTINGS['standings']) | value.get('standings',{}),
+               news=dict(DEFAULT_SETTINGS['news']) | value.get('news',{}),
                nhl=dict(DEFAULT_SETTINGS['nhl']) | value.get('nhl',{}),
                nba=dict(DEFAULT_SETTINGS['nba']) | value.get('nba',{}),
                wnba=dict(DEFAULT_SETTINGS['wnba']) | value.get('wnba',{}),
@@ -33,6 +40,73 @@ def validate_settings(value):
                mls=dict(DEFAULT_SETTINGS['mls']) | value.get('mls',{}),
                nwsl=dict(DEFAULT_SETTINGS['nwsl']) | value.get('nwsl',{}),
                english=dict(DEFAULT_SETTINGS['english']) | value.get('english',{}))
+    standings=value['standings']
+    optional_standings = {'leagues', 'mlb_divisions', 'nhl_divisions', 'nhl_wild_cards', 'nba_conferences', 'nfl_divisions', 'mls_conferences', 'nwsl', 'wnba'}
+    if (not set(DEFAULT_SETTINGS['standings']) <= set(standings)
+            or set(standings) - set(DEFAULT_SETTINGS['standings']) - optional_standings
+            or type(standings['enabled']) is not bool):
+        raise ValueError('Invalid standings settings')
+    if 'leagues' in standings:
+        from .english_football import COMPETITIONS
+        leagues = standings['leagues']
+        if (not isinstance(leagues, list) or len(leagues) != len(set(leagues)) or
+                any(not isinstance(name, str) or name not in COMPETITIONS for name in leagues)):
+            raise ValueError('Invalid standings league selection')
+    if 'mlb_divisions' in standings:
+        from .mlb_standings_feed import DIVISION_KEYS
+        divisions = standings['mlb_divisions']
+        if (not isinstance(divisions, list) or len(divisions) != len(set(divisions)) or
+                any(not isinstance(name, str) or name not in DIVISION_KEYS.values()
+                    for name in divisions)):
+            raise ValueError('Invalid MLB standings division selection')
+    if 'nhl_divisions' in standings:
+        from .nhl_standings_feed import NHL_DIVISIONS
+        divisions = standings['nhl_divisions']
+        if (not isinstance(divisions, list) or len(divisions) != len(set(divisions)) or
+                any(not isinstance(name, str) or name not in NHL_DIVISIONS
+                    for name in divisions)):
+            raise ValueError('Invalid NHL standings division selection')
+    if 'nhl_wild_cards' in standings:
+        from .nhl_standings_feed import NHL_WILD_CARD_GROUPS
+        groups = standings['nhl_wild_cards']
+        if (not isinstance(groups, list) or len(groups) != len(set(groups)) or
+                any(not isinstance(name, str) or name not in NHL_WILD_CARD_GROUPS
+                    for name in groups)):
+            raise ValueError('Invalid NHL wild card selection')
+    if 'nba_conferences' in standings:
+        from .nba_standings_feed import NBA_CONFERENCES
+        groups = standings['nba_conferences']
+        if (not isinstance(groups, list) or any(type(name) is not str or name not in NBA_CONFERENCES for name in groups)
+                or len(groups) != len(set(groups))):
+            raise ValueError('Invalid NBA conference selection')
+    if 'nfl_divisions' in standings:
+        from .nfl_standings_feed import NFL_DIVISIONS
+        groups = standings['nfl_divisions']
+        if (not isinstance(groups, list) or len(groups) != len(set(groups)) or
+                any(type(name) is not str or name not in NFL_DIVISIONS for name in groups)):
+            raise ValueError('Invalid NFL standings division selection')
+    if any(type(standings[key]) is not bool for key in ('nwsl', 'wnba') if key in standings):
+        raise ValueError('Invalid single-table standings selection')
+    if 'mls_conferences' in standings:
+        from .mls_standings_feed import MLS_CONFERENCES
+        groups = standings['mls_conferences']
+        if (not isinstance(groups, list) or len(groups) != len(set(groups)) or
+                any(type(name) is not str or name not in MLS_CONFERENCES for name in groups)):
+            raise ValueError('Invalid MLS conference selection')
+    for key,low,high in (('page_seconds',3,3600),('refresh_seconds',60,86400)):
+        number=standings[key]
+        if type(number) not in (int,float) or not low<=number<=high:
+            raise ValueError('Invalid standings '+key)
+    interruption_options=value['game_interruptions']
+    if set(interruption_options)!=set(DEFAULT_SETTINGS['game_interruptions']):
+        raise ValueError('Invalid game interruption settings')
+    from .game_interruptions import InterruptionPolicy
+    InterruptionPolicy(**interruption_options)
+    alert_options=value['scoring_alerts']
+    if set(alert_options)!=set(DEFAULT_SETTINGS['scoring_alerts']):
+        raise ValueError('Invalid scoring alert settings')
+    from .scoring_alerts import ScoringAlerts
+    ScoringAlerts(**alert_options)
     if set(value['news'])!=set(DEFAULT_SETTINGS['news']):
         raise ValueError('Invalid news rotation settings')
     for key,minimum,maximum in (('rotation_interval',1,20),('headline_seconds',3,120),('scroll_chars_per_second',1,15)):
@@ -165,7 +239,6 @@ def validate_settings(value):
     if not isinstance(mlb,dict):
         raise ValueError('Invalid MLB settings')
     # Older settings.json files predate the live-page split. Preserve them.
-    legacy_keys=set(DEFAULT_SETTINGS['mlb'])-{'live_classic_percent','live_matchup_percent'}
     current_keys=set(DEFAULT_SETTINGS['mlb'])
     allowed_legacy=(current_keys-{'favorite_teams'})|{'favorite_team'}
     if set(mlb) not in (current_keys,current_keys-{'live_classic_percent','live_matchup_percent'},

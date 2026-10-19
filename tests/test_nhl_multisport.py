@@ -22,6 +22,33 @@ class MultiSportTests(unittest.TestCase):
         self.nhl = FakeRenderer("NHL")
         self.router = MultiSportRenderer(self.mlb, self.nhl)
 
+    def test_live_other_sport_sets_soccer_interruption_context(self):
+        from types import SimpleNamespace
+        soccer = FakeRenderer("MLS")
+        soccer.external_live_games = False
+        soccer.has_games = lambda: True
+        soccer.has_live_games = lambda: False
+        self.router.mls = soccer
+        self.router.configure_rotation(("nhl", "mls"), interval=12, preferred="mls")
+        self.nhl.game = lambda: SimpleNamespace(status="live")
+        self.assertEqual(self.router.frame(), "NHL")
+        self.assertTrue(soccer.external_live_games)
+
+    def test_soccer_interruption_context_clears_after_final(self):
+        from types import SimpleNamespace
+        state = {"status": "live"}
+        soccer = FakeRenderer("MLS")
+        soccer.external_live_games = False
+        soccer.has_games = lambda: True
+        soccer.has_live_games = lambda: False
+        self.router.mls = soccer
+        self.router.configure_rotation(("nhl", "mls"), interval=12, preferred="mls")
+        self.nhl.game = lambda: SimpleNamespace(status=state["status"])
+        self.router.frame()
+        state["status"] = "final"
+        self.router.frame()
+        self.assertFalse(soccer.external_live_games)
+
     def test_default_is_mlb(self):
         self.assertEqual(self.router.active_sport, "mlb")
         self.assertEqual(self.router.frame(), "MLB")

@@ -54,7 +54,7 @@ SMALL={
 'Y':('101','101','010','010','010'),
 'S':('111','100','111','001','111'),
 'O':('111','101','101','101','111'),
-':':('000','110','000','110','000'),
+':':('000','010','000','010','000'),
 ' ':('000',)*5,
 "'":('010','010','000','000','000'),
 }
@@ -123,16 +123,18 @@ class MLBClassicScreen:
         fb=Framebuffer(64,32)
         # Compact R/H/E grid on the right, teams on the left.
         small(fb,'MLB',1,1,GOLD)
-        small(fb,'RHE',43,1,GOLD)
-        fb.text(g.away.upper(),1,8,WHITE)
-        fb.text(g.home.upper(),1,18,GREEN)
-        for y,values in ((9,(g.away_runs,g.away_hits,g.away_errors)),
-                         (19,(g.home_runs,g.home_hits,g.home_errors))):
-            for x,value in zip((42,50,58),values):
-                # Two-digit values stay within each column, using a 3px font.
-                digits=str(value)
-                if len(digits)>2: digits='99'
-                small(fb,digits,x-(4 if len(digits)==2 else 0),y)
+        # Separate 7px-wide columns; right-align values with room for 2 digits.
+        for x, label in zip((41, 49, 57), 'RHE'):
+            small(fb, label, x + 2, 1, GOLD)
+        fb.text(g.away.upper(), 1, 8, WHITE)
+        fb.text(g.home.upper(), 1, 18, GREEN)
+        for y, values in ((9, (g.away_runs, g.away_hits, g.away_errors)),
+                          (19, (g.home_runs, g.home_hits, g.home_errors))):
+            for x, value in zip((41, 49, 57), values):
+                digits = str(value)
+                if len(digits) > 2:
+                    digits = '99'
+                small(fb, digits, x + (4 if len(digits) == 1 else 0), y)
         if g.status=='live':
             small(fb,str(g.inning),1,27,GOLD)
             # Inning direction and outs: single pixels are legible on 64x32.

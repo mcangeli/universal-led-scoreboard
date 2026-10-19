@@ -1,0 +1,54 @@
+"""NHL official Stats API season windows for background standings gating."""
+import json
+from datetime import date, timedelta
+from urllib.request import Request, urlopen
+
+API = 'https://api.nhle.com/stats/rest/en/season?limit=-1'
+
+
+def parse_nhl_season_windows(payload, *, today=None):
+    """Select provider season bounds; missing regular start uses season start.
+
+    The standings gate additionally requires played regular-season games, so
+    the broader preseason-inclusive start cannot activate empty standings.
+    """
+    if not isinstance(payload, dict) or not isinstance(payload.get('data'), list):
+        raise ValueError('Invalid NHL seasons response')
+    today = today or date.today()
+    windows = []
+    for season in payload['data']:
+        if not isinstance(season, dict):
+            continue
+        season_id = season.get('id')
+        if type(season_id) is not int or season_id not in (
+                (today.year - 1) * 10000 + today.year,
+                today.year * 10000 + today.year + 1):
+            continue
+        first = season.get('regularSeasonStartDate') or season.get('startDate')
+        last = season.get('regularSeasonEndDate')
+        if not isinstance(first, str) or not isinstance(last, str):
+            continue
+        try:
+            start = date.fromisoformat(first[:10])
+            end = date.fromisoformat(last[:10]) + timedelta(days=1)
+        except ValueError:
+            continue
+        if end <= start:
+            continue
+        windows.append({'phase': 'regular', 'start': start.isoformat() + 'T00:00:00Z',
+                        'end': end.isoformat() + 'T00:00:00Z'})
+    if not windows:
+        candidates = [item for item in payload['data'] if isinstance(item, dict) and str(item.get('id', '')).startswith(str(today.year))]
+        fields = [{key: item.get(key) for key in ('id', 'regularSeasonStartDate', 'regularSeasonEndDate', 'startDate', 'endDate')} for item in candidates[:3]]
+        raise ValueError('NHL seasons response has no verified regular-season dates; current-year season fields: ' + repr(fields))
+    return windows
+
+
+def fetch_nhl_season_windows(_competition, *, opener=None, timeout=8):
+    if opener is None:
+        opener = urlopen
+    with opener(Request(API, headers={
+        'User-Agent': 'Mozilla/5.0 (compatible; UniversalLEDScoreboard/0.7; +https://github.com/mcangeli/universal-led-scoreboard)',
+        'Accept': 'application/json',
+    }), timeout=timeout) as response:
+        return parse_nhl_season_windows(json.load(response))

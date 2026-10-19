@@ -1,6 +1,6 @@
 """Time-bounded goal announcements for the soccer display rotation."""
 from collections import deque
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 
 from .soccer import GoalEventTracker, SoccerGoal, SoccerMatch
 from .soccer_screens import SoccerScreen, goal_screen, match_screen
@@ -19,17 +19,18 @@ class SoccerDisplayController:
     Pass monotonic seconds to screen() to avoid wall-clock adjustments.
     """
 
-    def __init__(self, goal_seconds: float = 8.0):
+    def __init__(self, goal_seconds: float = 8.0, *, timezone: str = 'America/New_York'):
         if goal_seconds <= 0:
             raise ValueError("goal_seconds must be positive")
         self.goal_seconds = float(goal_seconds)
+        self.timezone = timezone
         self.tracker = GoalEventTracker()
         self._pending: deque[PendingGoal] = deque()
         self._active: PendingGoal | None = None
         self._expires: float | None = None
         self._latest: dict[tuple[str, str], SoccerMatch] = {}
 
-    def update(self, match: SoccerMatch) -> None:
+    def update(self, match: SoccerMatch, *, announce=True) -> None:
         key = (match.league, match.match_id)
         self._latest[key] = match
         # Goals only merit a celebration while play is underway. Late feed
@@ -38,7 +39,11 @@ class SoccerDisplayController:
         new_events = self.tracker.observe(match)
         # Halftime keeps the match in the live rotation, but feed corrections
         # during the break must not trigger a new goal celebration.
-        if is_live(match) and match.status.strip().lower() != "halftime":
+        if not announce:
+            self._pending.clear()
+            self._active = None
+            self._expires = None
+        if announce and is_live(match) and match.status.strip().lower() != "halftime":
             for goal in new_events:
                 self._pending.append(PendingGoal(match, goal))
         else:
@@ -52,6 +57,13 @@ class SoccerDisplayController:
         """Return a goal screen while active, otherwise the latest match screen."""
         key = (match.league, match.match_id)
         current = self._latest.get(key, match)
+        # Feed updates may precede standings enrichment. Preserve goal state
+        # but use cached pregame records from the selected render snapshot.
+        if current.status == match.status and current.status.strip().lower() in ('pre', 'scheduled'):
+            current = replace(current,
+                              home_record=match.home_record or current.home_record,
+                              away_record=match.away_record or current.away_record,
+                              kickoff=match.kickoff or current.kickoff)
         if self._active is not None and self._expires is not None and now >= self._expires:
             self._active = None
             self._expires = None
@@ -65,4 +77,4 @@ class SoccerDisplayController:
                 self._pending.append(candidate)
         if self._active is not None and (self._active.match.league, self._active.match.match_id) == key:
             return goal_screen(current, self._active.goal)
-        return match_screen(current)
+        return match_screen(current, timezone=self.timezone)

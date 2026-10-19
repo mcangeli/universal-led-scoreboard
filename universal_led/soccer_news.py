@@ -1,4 +1,4 @@
-"""Cached MLS and NWSL headlines through the shared RSS reader.
+"""Cached soccer headlines through the shared RSS reader.
 
 Google News RSS searches provide league-specific coverage without requiring
 an API key. Feed failures are isolated from the game display.
@@ -10,6 +10,8 @@ from .news_feeds import MultiSourceNewsFeed, NewsSource
 LEAGUE_QUERIES = {
     "mls": '"Major League Soccer" OR MLS soccer',
     "nwsl": '"National Women\'s Soccer League" OR NWSL',
+    "english": '"English Premier League" OR "Premier League" football',
+    "efl": '"EFL Championship" OR "EFL League One" OR "EFL League Two" OR "English Football League"',
 }
 
 

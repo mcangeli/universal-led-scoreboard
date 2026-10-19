@@ -24,6 +24,7 @@ def parse_scoreboard(payload: Mapping, league: str) -> tuple[SoccerMatch, ...]:
         if not isinstance(competition, Mapping):
             continue
         teams = {}
+        records = {}
         for entry in competition.get("competitors", []) or []:
             if not isinstance(entry, Mapping):
                 continue
@@ -31,6 +32,7 @@ def parse_scoreboard(payload: Mapping, league: str) -> tuple[SoccerMatch, ...]:
             if side in ("home", "away"):
                 team = entry.get("team") or {}
                 teams[side] = (_team_id(team), _score(entry.get("score")))
+                records[side] = _team_record(entry)
         if "home" not in teams or "away" not in teams or not teams["home"][0] or not teams["away"][0]:
             continue
         status = event.get("status") or {}
@@ -94,6 +96,9 @@ def parse_scoreboard(payload: Mapping, league: str) -> tuple[SoccerMatch, ...]:
             period=_match_period(status, competition),
             home_club_key=_english_club_key(competition, "home") if league in ("EPL", "CHAMPIONSHIP", "LEAGUE_ONE", "LEAGUE_TWO") else None,
             away_club_key=_english_club_key(competition, "away") if league in ("EPL", "CHAMPIONSHIP", "LEAGUE_ONE", "LEAGUE_TWO") else None,
+            kickoff=event.get("date") or competition.get("date"),
+            home_record=records.get("home"),
+            away_record=records.get("away"),
         ))
     return tuple(matches)
 
@@ -161,4 +166,19 @@ def _english_club_key(competition, side):
             if isinstance(team, Mapping) and team.get("id") is not None:
                 value = str(team["id"]).strip()
                 return f"espn:{value}" if value else None
+    return None
+
+
+def _team_record(entry):
+    """Keep provider-supplied W-D-L only; never manufacture standings."""
+    records = entry.get("records") or []
+    for record in records:
+        if not isinstance(record, Mapping):
+            continue
+        stats = {str(s.get("name", "")).lower(): s.get("value") for s in record.get("stats", []) if isinstance(s, Mapping)}
+        if all(k in stats for k in ("wins", "ties", "losses")):
+            try:
+                return f'{int(stats["wins"])}-{int(stats["ties"])}-{int(stats["losses"])}'
+            except (ValueError, TypeError):
+                pass
     return None

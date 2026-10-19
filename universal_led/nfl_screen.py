@@ -22,7 +22,7 @@ def status_text(game: FootballGame, timezone_name="America/New_York", time_forma
         local = game.start_utc.astimezone(ZoneInfo(timezone_name))
         if time_format == "24h":
             return local.strftime("%H:%M %Z")
-        return local.strftime("%I:%M%p").lstrip("0") + " " + local.tzname()
+        return local.strftime("%I:%M %p").lstrip("0") + " " + local.tzname()
     if game.status == "final":
         return "FINAL" + (" OT" if game.period and game.period > 4 else "")
     if game.status == "live":
@@ -72,6 +72,14 @@ class NFLScreen:
                 down = f"{self.game.down}D{self.game.distance}"
                 small(fb, down, 62 - 4 * len(down), 27, TEAM)
                 label = label[:max(0, (60 - 4 * len(down)) // 4)]
-        small(fb, label[:15], 2, 27,
-              RED if self.game.status == "postponed" else GOLD)
+        if pregame and self.game.start_utc is not None and " " in label:
+            kickoff, zone = label.rsplit(" ", 1)
+            if len(kickoff) * 4 + 2 <= 48 and len(zone) * 4 <= 14:
+                small(fb, kickoff, 2, 27, GOLD)
+                small(fb, zone, 62 - 4 * len(zone), 27, DIM)
+            else:
+                small(fb, label[:15], 2, 27, GOLD)
+        else:
+            small(fb, label[:15], 2, 27,
+                  RED if self.game.status == "postponed" else GOLD)
         return fb
