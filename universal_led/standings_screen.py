@@ -65,7 +65,12 @@ def render_standings(league, rows, *, offset=0):
     labels = {"CHAMPIONSHIP": "CHAMP", "LEAGUE_ONE": "LGE 1",
               "LEAGUE_TWO": "LGE 2"}
     _tiny_text(frame, labels.get(league, league), 1, 1, GOLD, 9)
-    _tiny_text(frame, "PTS", 49, 1, GOLD, 3)
+    is_mlb = bool(rows) and rows[0].league == "MLB"
+    if is_mlb:
+        _tiny_text(frame, "W", 48, 1, GOLD, 1)
+        _tiny_text(frame, "L", 60, 1, GOLD, 1)
+    else:
+        _tiny_text(frame, "PTS", 49, 1, GOLD, 3)
     for x in range(64):
         frame.pixel(x, 8, DIM)
     for index, standing in enumerate(tuple(rows)[offset:offset + 3]):
@@ -73,7 +78,10 @@ def render_standings(league, rows, *, offset=0):
         rank = standing.rank if standing.rank is not None else offset + index + 1
         _tiny_text(frame, str(rank).rjust(2), 1, y, GREEN, 2)
         _tiny_text(frame, standing.abbreviation or standing.team_id, 15, y, WHITE, 5)
-        if standing.points is not None:
+        if is_mlb:
+            _tiny_text(frame, str(standing.wins)[-2:].rjust(2), 44, y, GOLD, 2)
+            _tiny_text(frame, str(standing.losses)[-2:].rjust(2), 56, y, GOLD, 2)
+        elif standing.points is not None:
             points = str(standing.points)[-3:]
             _tiny_text(frame, points.rjust(3), 49, y, GOLD, 3)
     return frame
