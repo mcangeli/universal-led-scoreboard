@@ -960,7 +960,7 @@ async function refreshStatus(){
     const live=Array.isArray(rotation.live_sports)&&rotation.live_sports.includes(sport.id);
     const detail=document.createElement('p');
     const activity=!sport.enabled?'Disabled':active?'Currently selected':live?'Live game available':'Enabled';
-    detail.textContent=activity+' | Rotation: '+sport.rotation_seconds+'s | Feed: '+sport.feed_state;
+    detail.textContent=activity+' | Rotation: '+sport.rotation_seconds+'s | Feed: '+sport.feed_state+(sport.feed_games===null?'':' | Games: '+sport.feed_games)+(sport.feed_error?' | Error: '+sport.feed_error:'');
     if(active){card.style.borderColor='#d7b46d';card.setAttribute('aria-label',sport.label+' currently selected');}
     card.append(heading,detail);sportGrid.append(card);
    }
@@ -1141,7 +1141,7 @@ load().catch(err=>document.getElementById('status').textContent=err.message);
 loadSettings().catch(err=>document.getElementById('settings-status').textContent=err.message);
 </script></body></html>'''
 
-def make_handler(config_dir,token,frame_provider=None,settings_callback=None,feed_status=None,board_provider=None,countdown_status=None,standings_status=None,rotation_status=None):
+def make_handler(config_dir,token,frame_provider=None,settings_callback=None,feed_status=None,board_provider=None,countdown_status=None,standings_status=None,rotation_status=None,sports_feed_status=None):
     started=time.monotonic()
     sessions=Sessions(config_dir)
     class Handler(BaseHTTPRequestHandler):
@@ -1324,9 +1324,12 @@ def make_handler(config_dir,token,frame_provider=None,settings_callback=None,fee
                 from .sport_settings import load_settings
                 settings=load_settings(config_dir)
                 labels={'mlb':'MLB','nhl':'NHL','nba':'NBA','wnba':'WNBA','nfl':'NFL','mls':'MLS','nwsl':'NWSL','english':'English Football'}
+                feed_states=sports_feed_status() if sports_feed_status else {}
                 sports=[{'id':name,'label':label,'enabled':settings['sports'][name]['enabled'],
                          'rotation_seconds':settings[name]['rotation_seconds'],
-                         'feed_state':feed.get('state','unavailable') if name=='mlb' else 'unavailable'}
+                         'feed_state':feed_states.get(name,{}).get('state','unavailable'),
+                         'feed_games':feed_states.get(name,{}).get('games'),
+                         'feed_error':feed_states.get(name,{}).get('error')}
                         for name,label in labels.items()]
                 self.send_json(200,{'application':'Universal LED Scoreboard','uptime_seconds':int(time.monotonic()-started),'board':{'width':64,'height':32,'backend':'emulator'},'feed':feed,'current_game':current,'sports':sports,'rotation':rotation_status() if rotation_status else {'selected_sport':None,'priority':'unavailable','live_sports':[]}})
             elif path=='/api/feed':
@@ -1992,6 +1995,16 @@ def main():
         return board.soccer_pregame_diagnostics()
     def feed_status():
         return feed.status()
+    def sports_feed_status():
+        feeds={'mlb':feed,'nhl':nhl_feed,'nba':nba_feed,'wnba':wnba_feed,
+               'nfl':nfl_feed,'mls':soccer_workers['mls'],'nwsl':soccer_workers['nwsl']}
+        result={name:worker.status() for name,worker in feeds.items()}
+        league_states=[worker.status() for worker in english_workers.values()]
+        errors=[entry.get('error') for entry in league_states if entry.get('error')]
+        result['english']={'state':'error' if errors else 'running' if any(entry.get('state')=='running' for entry in league_states) else 'starting',
+                           'games':sum(entry.get('games',0) for entry in league_states),
+                           'error':'; '.join(str(error) for error in errors) if errors else None}
+        return result
     def countdown_status():
         from .season_countdown_settings import load
         settings = load(args.config_dir)
@@ -2021,7 +2034,7 @@ def main():
     frame_thread = threading.Thread(target=publish_frames, daemon=True, name='frame-publisher')
     frame_thread.start()
     try:
-        with ThreadingHTTPServer((args.host,args.port),make_handler(args.config_dir,token,game,apply_settings,feed_status,board.frame,countdown_status,standings_status,lambda: {'selected_sport':board._selected(), 'live_sports':list(board._live_sports()), 'priority':'live' if board._live_sports() else 'normal'})) as server:
+        with ThreadingHTTPServer((args.host,args.port),make_handler(args.config_dir,token,game,apply_settings,feed_status,board.frame,countdown_status,standings_status,lambda: {'selected_sport':board._selected(), 'live_sports':list(board._live_sports()), 'priority':'live' if board._live_sports() else 'normal'},sports_feed_status)) as server:
             print(f'Configurator listening on {args.host}:{args.port}',flush=True)
             server.serve_forever()
     finally:
