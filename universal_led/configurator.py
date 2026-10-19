@@ -606,11 +606,15 @@ function refreshGameSelectionHelp(){
   const select=document.getElementById(id);
   const help=document.getElementById(id+'-help');
   if(!select||!help)continue;
-  help.textContent=explanations[select.value]||'';
+  const sport=id==='mode'?'mlb':id.slice(0,-5);
+  const favoritesSelector=sport==='mlb'?'#favorite-teams input:checked':'#'+sport+'-teams input:checked';
+  const favorites=document.querySelectorAll(favoritesSelector).length;
+  const warning=favorites===0&&select.value==='favorite'?' No favorites selected, so this mode will have no matching games.':'';
+  help.textContent=(explanations[select.value]||'')+warning;
  }
 }
 document.querySelector('[data-page="sports"]').addEventListener('change',event=>{
- if(event.target.matches('#mode,#nhl-mode,#nba-mode,#wnba-mode,#nfl-mode,#mls-mode,#nwsl-mode,#english-mode'))refreshGameSelectionHelp();
+ if(event.target.matches('#mode,#nhl-mode,#nba-mode,#wnba-mode,#nfl-mode,#mls-mode,#nwsl-mode,#english-mode')||event.target.closest('#favorite-teams,#nhl-teams,#nba-teams,#wnba-teams,#nfl-teams,#mls-teams,#nwsl-teams,#english-teams'))refreshGameSelectionHelp();
 });
 function refreshSportsOverview(){
  if(!settings)return;
@@ -823,7 +827,7 @@ async function saveSportSettings(source){
   next.nhl.mode=document.getElementById('nhl-mode').value;
   next.nhl.rotation_seconds=Number(document.getElementById('nhl-rotation').value);
   next.nhl.refresh_seconds=Number(document.getElementById('nhl-refresh').value);
-  if(!next.mlb.favorite_teams.length){status.textContent='Select at least one favorite team.';return;}
+  if(!next.mlb.favorite_teams.length){status.textContent='MLB requires at least one favorite team, even when MLB is disabled.';document.querySelector('#favorite-teams input')?.focus();return;}
   next.mlb.mode=document.getElementById('mode').value;
  next.mlb.rotation_seconds=Number(document.getElementById('rotation').value);
  next.mlb.refresh_seconds=Number(document.getElementById('refresh').value);
