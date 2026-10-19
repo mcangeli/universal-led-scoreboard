@@ -47,3 +47,14 @@ class ScoreChangeObserver:
                 self.sport, self.league, key, events,
                 favorite_teams=favorite_teams))
         return tuple(emitted)
+
+
+class NHLGoalObserver(ScoreChangeObserver):
+    """Observe NHL live score changes as team goals, without inventing scorers.
+
+    A first snapshot establishes the baseline; subsequent increases during live
+    play generate GOAL alerts through the shared deduplicating queue.
+    """
+
+    def __init__(self, alerts):
+        super().__init__(alerts, sport="nhl", league="NHL", kind="GOAL")
