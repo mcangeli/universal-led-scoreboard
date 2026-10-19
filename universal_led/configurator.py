@@ -730,10 +730,27 @@ function markSportsSettingsDirty(event){
 }
 document.querySelector('[data-page="sports"]').addEventListener('input',markSportsSettingsDirty);
 document.querySelector('[data-page="sports"]').addEventListener('change',markSportsSettingsDirty);
+function validateSportTiming(){
+ for(const sport of ['mlb','nhl','nba','wnba','nfl','mls','nwsl','english']){
+  for(const field of ['rotation','refresh']){
+   const id=sport==='mlb'?field:sport+'-'+field;
+   const input=document.getElementById(id);
+   const value=Number(input.value);
+   const minimum=sport==='mlb'?1:5;
+   if(input.value.trim()===''||!Number.isFinite(value)||value<minimum||value>3600){
+    input.focus();
+    return sport.toUpperCase()+' '+field+' seconds must be between '+minimum+' and 3600.';
+   }
+  }
+ }
+ return null;
+}
 async function saveSportSettings(source){
  const status=document.getElementById('settings-status');
  const saveButton=document.getElementById('save-settings');
  if(saveButton.disabled)return;
+ const timingError=validateSportTiming();
+ if(timingError){status.textContent=timingError;return;}
  status.textContent='Saving…';
  const next=clone(settings);
  if(source==='sports'){
