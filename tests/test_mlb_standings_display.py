@@ -13,9 +13,18 @@ class MLBStandingsDisplayTests(unittest.TestCase):
         row = Standing('MLB', 'NL_EAST', '144', 162, 91, 71, rank=2, abbreviation='ATL')
         frame = render_standings('NL EAST', (row,))
         self.assertTrue(any(frame.pixels[y][x] == GOLD
-                            for y in range(1, 6) for x in range(31, 43)))
+                            for y in range(1, 6) for x in range(17, 37)))
         self.assertTrue(any(frame.pixels[y][x] == GOLD
-                            for y in range(1, 6) for x in range(47, 59)))
+                            for y in range(1, 6) for x in range(37, 45)))
+
+    def test_official_games_back_is_rendered(self):
+        row = Standing('MLB', 'AL_EAST', '147', 100, 60, 40,
+                       rank=1, abbreviation='NYY', games_back='3.5')
+        with_gb = render_standings('AL EAST', (row,))
+        without_gb = render_standings(
+            'AL EAST', (Standing('MLB', 'AL_EAST', '147', 100, 60, 40,
+                                 rank=1, abbreviation='NYY'),))
+        self.assertNotEqual(with_gb.pixels, without_gb.pixels)
 
     def test_all_five_teams_fit_one_page(self):
         teams = ('ATL', 'NYM', 'PHI', 'MIA', 'WSN')
