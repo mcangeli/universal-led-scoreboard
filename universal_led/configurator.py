@@ -1673,8 +1673,14 @@ def main():
             refresh_seconds=english['refresh_seconds'],
             timezone_name=time_preferences['timezone'])
         standings_options = settings['standings']
-        selected_standings_leagues = standings_options.get('leagues', english['enabled_leagues'])
-        selected_mlb_divisions = standings_options.get('mlb_divisions', [])
+        # A disabled sport/league must not appear in standings rotation.
+        english_enabled = settings['sports']['english']['enabled']
+        selected_standings_leagues = [
+            league for league in standings_options.get('leagues', english['enabled_leagues'])
+            if english_enabled and league in english['enabled_leagues']]
+
+        selected_mlb_divisions = (standings_options.get('mlb_divisions', [])
+                                  if settings['sports']['mlb']['enabled'] else [])
         selected_mlb_groups = [*selected_mlb_divisions]
         if any(group.startswith('AL_') for group in selected_mlb_divisions):
             selected_mlb_groups.append('AL_WILD_CARD')
@@ -1684,12 +1690,14 @@ def main():
             mlb_season_worker.start()
         else:
             mlb_season_worker.stop()
-        selected_nhl_divisions = standings_options.get('nhl_divisions', [])
+        selected_nhl_divisions = (standings_options.get('nhl_divisions', [])
+                                  if settings['sports']['nhl']['enabled'] else [])
         # Explicit wild card preferences override legacy automatic inclusion.
         # Existing installations retain their previous selection behavior.
         selected_nhl_groups = [*selected_nhl_divisions]
         if 'nhl_wild_cards' in standings_options:
-            selected_nhl_groups.extend(standings_options['nhl_wild_cards'])
+            if settings['sports']['nhl']['enabled']:
+                selected_nhl_groups.extend(standings_options['nhl_wild_cards'])
         else:
             if any(group in ('Atlantic', 'Metropolitan') for group in selected_nhl_divisions):
                 selected_nhl_groups.append('Eastern_Wild_Card')
@@ -1699,7 +1707,8 @@ def main():
             nhl_season_worker.start()
         else:
             nhl_season_worker.stop()
-        selected_nba_conferences = standings_options.get('nba_conferences', [])
+        selected_nba_conferences = (standings_options.get('nba_conferences', [])
+                                    if settings['sports']['nba']['enabled'] else [])
         if nba_season_worker is not None:
             if standings_options['enabled'] and selected_nba_conferences:
                 nba_season_worker.start()
@@ -1730,11 +1739,10 @@ def main():
                 else:
                     mlb_standings_workers[league].stop()
                 continue
-            # Standings are a separate content feed, not dependent on
-            # whether English football game screens are enabled.
+            # Pregame and standings data are both limited to enabled leagues.
             needs_pregame_records = (settings['sports']['english']['enabled'] and
                                      league in english['enabled_leagues'])
-            needs_standings_page = (standings_options['enabled'] and
+            needs_standings_page = (standings_options['enabled'] and english_enabled and
                                     league in selected_standings_leagues)
             if needs_pregame_records or needs_standings_page:
                 standings_workers[league].start()
