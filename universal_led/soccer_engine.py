@@ -11,7 +11,7 @@ from .game_interruptions import InterruptionPolicy
 
 class ConfiguredSoccerRenderer:
     def __init__(self, feed, *, league, favorite_teams=(), mode="fallback",
-                 rotation_seconds=12, goal_seconds=8, clock=time.monotonic, scoring_alerts=None):
+                 rotation_seconds=12, goal_seconds=8, clock=time.monotonic, scoring_alerts=None, timezone='America/New_York'):
         if league not in SUPPORTED_LEAGUES:
             raise ValueError("Unsupported soccer league")
         self.feed = feed
@@ -20,7 +20,7 @@ class ConfiguredSoccerRenderer:
         self.scoring_alerts = scoring_alerts
         self.interruption_policy = InterruptionPolicy()
         self.external_live_games = False
-        self.display = SoccerDisplayController(goal_seconds)
+        self.display = SoccerDisplayController(goal_seconds, timezone=timezone)
         self.configure(favorite_teams=favorite_teams, mode=mode, rotation_seconds=rotation_seconds)
 
     def configure(self, *, favorite_teams=(), mode="fallback", rotation_seconds=12):
