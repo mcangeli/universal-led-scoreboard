@@ -92,5 +92,5 @@ class StandingsRotation:
         self._page_identity = identities[index]
         self._page_slot = slot
         league, rows, offset = pages[index]
-        label = rows[0].group if league == 'MLB' else league
+        label = rows[0].group.replace('_', ' ') if rows[0].league == 'MLB' else league
         return render_standings(label, rows, offset=offset)
