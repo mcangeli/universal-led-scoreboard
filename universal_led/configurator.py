@@ -1013,7 +1013,7 @@ load().catch(err=>document.getElementById('status').textContent=err.message);
 loadSettings().catch(err=>document.getElementById('settings-status').textContent=err.message);
 </script></body></html>'''
 
-def make_handler(config_dir,token,frame_provider=None,settings_callback=None,feed_status=None,board_provider=None,countdown_status=None):
+def make_handler(config_dir,token,frame_provider=None,settings_callback=None,feed_status=None,board_provider=None,countdown_status=None,standings_status=None):
     started=time.monotonic()
     sessions=Sessions(config_dir)
     class Handler(BaseHTTPRequestHandler):
@@ -1161,6 +1161,11 @@ def make_handler(config_dir,token,frame_provider=None,settings_callback=None,fee
                 except OSError:
                     state,log='not started',''
                 self.send_json(200,{'status':state,'log':log})
+            elif path=='/api/standings/diagnostics':
+                if standings_status is None:
+                    self.send_json(503,{'error':'Standings diagnostics not connected to running service'})
+                else:
+                    self.send_json(200,{'leagues':standings_status()})
             elif path=='/api/system':
                 from .system_diagnostics import system_status
                 self.send_json(200,system_status())
