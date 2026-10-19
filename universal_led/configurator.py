@@ -390,10 +390,19 @@ document.getElementById('mlb-reset-color').onclick=async()=>{
 };
 document.getElementById('cancel').onclick=()=>{state=clone(saved);selected=null;section('scoreboard');section('teams');markDirty();draw();document.getElementById('status').textContent='Unsaved changes discarded.'};
 document.getElementById('reset').onclick=async()=>{
- if(!selected){document.getElementById('status').textContent='Select a color first.';return}
- const response=await fetch('/api/defaults');const defaults=await response.json();
- state[selected.name][selected.key]=clone(defaults[selected.name][selected.key]);
- section(selected.name);markDirty();draw();
+ const status=document.getElementById('status');
+ if(!selected){status.textContent='Select a color first.';return;}
+ const target={...selected};
+ try{
+  const response=await fetch('/api/defaults');
+  if(!response.ok)throw Error('Unable to load default colors (HTTP '+response.status+').');
+  const defaults=await response.json();
+  const color=defaults[target.name]?.[target.key];
+  if(!Array.isArray(color)||color.length!==3)throw Error('No default color found for '+target.key+'.');
+  state[target.name][target.key]=clone(color);
+  section(target.name);markDirty();draw();
+  status.textContent='Default restored for '+target.key+' in editor. Save to apply.';
+ }catch(err){status.textContent='Could not reset color: '+err.message;}
 };
 function invalidColorEntry(palette){
  for(const group of ['scoreboard','teams']){
