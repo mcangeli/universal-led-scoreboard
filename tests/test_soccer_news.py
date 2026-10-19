@@ -40,8 +40,16 @@ class SoccerNewsTests(unittest.TestCase):
         settings = {"sports": {k: dict(v) for k, v in DEFAULT_SETTINGS["sports"].items()}}
         providers = AutomaticSportsNews(providers={"efl": Stub()})
         self.assertEqual(providers.items(settings), [])
-        settings["sports"]["efl"] = {"enabled": True, "news_enabled": True}
+        settings["sports"]["efl"] = {"enabled": False, "news_enabled": True}
+        settings["sports"]["english"] = {"enabled": True, "news_enabled": False}
+        settings["english"] = {"enabled_leagues": ["CHAMPIONSHIP", "LEAGUE_ONE"]}
         self.assertEqual(providers.items(settings), ["EFL headline"])
+        settings["english"]["enabled_leagues"] = ["EPL"]
+        self.assertEqual(providers.items(settings), [])
+        settings["english"]["enabled_leagues"] = ["LEAGUE_TWO"]
+        self.assertEqual(providers.items(settings), ["EFL headline"])
+        settings["sports"]["efl"]["news_enabled"] = False
+        self.assertEqual(providers.items(settings), [])
 
     def test_sport_flags_gate_automatic_soccer_news(self):
         class Stub:
