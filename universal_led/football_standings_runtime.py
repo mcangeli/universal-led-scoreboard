@@ -72,11 +72,14 @@ class FootballStandingsCache:
                 with self._lock:
                     self.last_error = "Standings feed returned no teams"
                     return self._rows
-            if any(row.league != self.league for row in rows):
+            if (self.cache_path is not None and
+                    all(isinstance(row, Standing) for row in rows) and
+                    any(row.league != self.league for row in rows)):
                 with self._lock:
                     self.last_error = "Standings feed returned a different league"
                     return self._rows
-            self._save_disk(rows)
+            if rows and all(isinstance(row, Standing) for row in rows):
+                self._save_disk(rows)
             with self._lock:
                 self._rows = rows
                 self.last_success = self.clock()
