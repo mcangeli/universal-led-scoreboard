@@ -30,6 +30,9 @@ class SoccerMatch:
     period: Optional[int] = None
     home_club_key: Optional[str] = None
     away_club_key: Optional[str] = None
+    kickoff: Optional[str] = None
+    home_record: Optional[str] = None
+    away_record: Optional[str] = None
 
 
 SUPPORTED_LEAGUES = frozenset(("MLS", "NWSL", "EPL", "CHAMPIONSHIP", "LEAGUE_ONE", "LEAGUE_TWO"))
