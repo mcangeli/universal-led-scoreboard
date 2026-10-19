@@ -7,14 +7,16 @@ from .soccer_scoring_alerts import observe_soccer_match
 from .soccer_pixels import render_soccer_screen
 from .soccer_rotation import eligible_matches, prioritize_live, is_live
 from .game_interruptions import InterruptionPolicy
+from .soccer_pregame import with_cached_records
 
 
 class ConfiguredSoccerRenderer:
     def __init__(self, feed, *, league, favorite_teams=(), mode="fallback",
-                 rotation_seconds=12, goal_seconds=8, clock=time.monotonic, scoring_alerts=None, timezone='America/New_York'):
+                 rotation_seconds=12, goal_seconds=8, clock=time.monotonic, scoring_alerts=None, timezone='America/New_York', standings_cache=None):
         if league not in SUPPORTED_LEAGUES:
             raise ValueError("Unsupported soccer league")
         self.feed = feed
+        self.standings_cache = standings_cache
         self.league = league
         self.clock = clock
         self.scoring_alerts = scoring_alerts
@@ -34,11 +36,17 @@ class ConfiguredSoccerRenderer:
         self.started = self.clock()
 
     def _games(self):
-        games = tuple(game for game in self.feed.games() if game.league == self.league)
+        rows = self.standings_cache.rows() if self.standings_cache is not None else ()
+        games = tuple(with_cached_records(game, rows) for game in self.feed.games()
+                      if game.league == self.league)
         mode = "favorites" if self.mode == "favorite" else self.mode
         return eligible_matches(games, favorites=self.favorite_teams, mode=mode,
                                 interruption_policy=self.interruption_policy,
                                 has_live_games=self.external_live_games or any(is_live(g) for g in games))
+
+    def set_standings_cache(self, cache):
+        """Use an already-refreshed standings snapshot; never fetch in frame()."""
+        self.standings_cache = cache
 
     def has_games(self):
         return bool(self._games())
