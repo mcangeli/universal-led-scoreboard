@@ -38,6 +38,13 @@ def parse_mls_standings(payload):
     return tuple(rows)
 
 
+def fetch_mls_conference(conference, *, fetcher=None):
+    if conference not in MLS_CONFERENCES:
+        raise ValueError("Unknown MLS conference")
+    rows = (fetcher or fetch_mls_standings)("MLS")
+    return tuple(row for row in rows if row.group == conference)
+
+
 def fetch_mls_standings(_league="MLS", *, opener=None, timeout=12):
     request = Request(MLS_STANDINGS_URL, headers={
         "User-Agent": "UniversalLEDScoreboard/0.7",
