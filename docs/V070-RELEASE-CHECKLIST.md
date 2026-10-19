@@ -19,8 +19,9 @@ Status: **release candidate, not merged or tagged** (October 18, 2026).
 - [x] Standings outage and recovery covered by deterministic regression tests.
 - [x] Live → final → idle standings → new eligible game priority covered by deterministic regression tests.
 - [ ] Confirm standings pages against actual provider responses on the device.
+- [ ] Observe a real scoring event and alert on the production Pi 3; no live score event has yet been confirmed.
 - [x] Visual review of latest MLB R/H/E alignment and board layouts reported satisfactory on October 18, 2026; physical-matrix-specific confirmation is not separately established.
-- [ ] Verify clean install or upgrade on production-target Pi 3, with settings and data retained.
+- [x] Production-target Pi 3: user reports successful candidate update installation and all sports enabled (October 18, 2026). Configuration retention and ongoing physical display behavior still require observation.
 - [ ] Check licenses/attributions and changelog/README accuracy.
 - [x] Updater candidate preflight: 1,312 tests passed, 15 skipped, user-confirmed October 18, 2026 (prior to documentation-only commits).
 - [ ] Merge into main and tag v0.7.0 **only after explicit approval**.
