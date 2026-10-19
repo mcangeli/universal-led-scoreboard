@@ -7,6 +7,7 @@ must label this field OTL, never draws.
 from __future__ import annotations
 
 from .standings import Standing
+from urllib.request import Request
 
 
 def parse_nhl_standings(payload):
@@ -54,7 +55,10 @@ def fetch_nhl_standings(_league="NHL", *, opener=None, timeout=12):
 
     if opener is None:
         opener = urlopen
-    with opener(NHL_STANDINGS_URL, timeout=timeout) as response:
+    with opener(Request(NHL_STANDINGS_URL, headers={
+        'User-Agent': 'Mozilla/5.0 (compatible; UniversalLEDScoreboard/0.7; +https://github.com/mcangeli/universal-led-scoreboard)',
+        'Accept': 'application/json',
+    }), timeout=timeout) as response:
         payload = json.load(response)
     return parse_nhl_standings(payload)
 
