@@ -7,26 +7,27 @@ from pathlib import Path
 
 from universal_led import configurator
 from universal_led.config_archive import export_portable, restore_portable
+from universal_led.sport_settings import DEFAULT_SETTINGS
 
 
 class RestoreWorkflowTests(unittest.TestCase):
     def test_restore_selected_section_preserves_hardware_and_other_sections(self):
         with tempfile.TemporaryDirectory() as source, tempfile.TemporaryDirectory() as destination:
             src,dst=Path(source),Path(destination)
-            (src/'settings.json').write_text('{"version":1}')
-            (src/'teams.json').write_text('{"ATL":{"primary":"#123456"}}')
+            (src/'settings.json').write_text(json.dumps(DEFAULT_SETTINGS))
+            (src/'teams.json').write_text('{}')
             (dst/'matrix.json').write_text('{"enabled":false}')
-            (dst/'teams.json').write_text('{"ATL":{"primary":"#abcdef"}}')
+            (dst/'teams.json').write_text('{}')
             result=restore_portable(export_portable(src),dst,['settings'])
             self.assertEqual(result['sections'],['settings'])
-            self.assertEqual(json.loads((dst/'settings.json').read_text()),{'version':1})
+            self.assertEqual(json.loads((dst/'settings.json').read_text()),DEFAULT_SETTINGS)
             self.assertEqual(json.loads((dst/'matrix.json').read_text()),{'enabled':False})
-            self.assertIn('#abcdef',(dst/'teams.json').read_text())
+            self.assertEqual((dst/'teams.json').read_text(),'{}')
             self.assertTrue(Path(result['recovery_directory']).is_dir())
 
     def test_unapproved_restore_section_is_rejected(self):
         with tempfile.TemporaryDirectory() as source, tempfile.TemporaryDirectory() as destination:
-            (Path(source)/'settings.json').write_text('{"version":1}')
+            (Path(source)/'settings.json').write_text(json.dumps(DEFAULT_SETTINGS))
             with self.assertRaises(ValueError):
                 restore_portable(export_portable(source),destination,['matrix'])
             self.assertFalse((Path(destination)/'matrix.json').exists())
