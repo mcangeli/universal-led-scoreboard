@@ -149,6 +149,23 @@ def _render_nba_conference(frame, league, rows, offset):
         _tiny_text(frame, (standing.games_back or '-').strip()[:4], 48, y, GREEN, 4)
 
 
+def _render_nfl_division(frame, league, rows, offset):
+    """NFL 64x32 division standings: W, L and ties are separate."""
+    parts = league.split()
+    heading = (parts[0] + " " + parts[-1][:1]) if len(parts) == 2 else league[:5]
+    _tiny_text(frame, heading, 0, 1, GOLD, 5)
+    for label, x in (("W", 25), ("L", 38), ("T", 51)):
+        _tiny_text(frame, label, x, 1, GOLD, 1)
+    for x in range(64):
+        frame.pixel(x, 8, DIM)
+    for index, standing in enumerate(tuple(rows)[offset:offset + 3]):
+        y = 11 + index * 7
+        _tiny_text(frame, standing.abbreviation or standing.team_id, 0, y, WHITE, 3)
+        for value, x in ((standing.wins, 22), (standing.losses, 35),
+                         (standing.draws, 48)):
+            _tiny_text(frame, str(value)[-2:].rjust(2), x, y, WHITE, 2)
+
+
 def render_standings(league, rows, *, offset=0):
     """Display five MLB rows or three football rows without collisions."""
     if type(offset) is not int or offset < 0:
@@ -159,6 +176,9 @@ def render_standings(league, rows, *, offset=0):
         return frame
     if rows and rows[0].league == "NHL":
         _render_nhl_division(frame, league, rows, offset)
+        return frame
+    if rows and rows[0].league == "NFL":
+        _render_nfl_division(frame, league, rows, offset)
         return frame
     if rows and rows[0].league == "NBA":
         _render_nba_conference(frame, league, rows, offset)
