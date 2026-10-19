@@ -59,24 +59,33 @@ def _tiny_text(frame, value, x, y, color, limit):
 
 
 def _render_mlb_division(frame, league, rows, offset):
-    """Five complete 3x5 rows with a blank scanline, like the original board.
+    """Port the original MLB-LED-Scoreboard 64x32 standings geometry.
 
-    A 32-pixel matrix cannot hold a six-pixel title plus five legible
-    five-pixel rows and gaps. Use the original board's bottom division
-    indicator instead of an oversized header.
+    Original coordinates: six-pixel row pitch, team x=1, vertical divider
+    x=13, record x=31, height=30, bottom division indicator.
+    The narrow center gutter adds an explicit division abbreviation.
     """
+    division = league.upper().replace("_", " ")
+    codes = {'AL EAST': 'ALE', 'AL CENTRAL': 'ALC', 'AL WEST': 'ALW',
+             'NL EAST': 'NLE', 'NL CENTRAL': 'NLC', 'NL WEST': 'NLW'}
+    for x in range(64):
+        frame.pixel(x, 0, DIM)
+    for y in range(30):
+        frame.pixel(13, y, DIM)
     for index, standing in enumerate(tuple(rows)[offset:offset + 5]):
-        y = index * 6
-        rank = standing.rank if standing.rank is not None else offset + index + 1
-        _tiny_text(frame, str(rank)[-1:], 1, y, GREEN, 1)
-        _tiny_text(frame, standing.abbreviation or standing.team_id, 9, y, WHITE, 3)
-        _tiny_text(frame, str(standing.wins)[-2:].rjust(2), 38, y, GOLD, 2)
-        _tiny_text(frame, "-", 46, y, DIM, 1)
-        _tiny_text(frame, str(standing.losses)[-2:].rjust(2), 51, y, GOLD, 2)
-    # Six segments: AL west/central/east, NL west/central/east.
+        y = index * 6 + 1
+        _tiny_text(frame, standing.abbreviation or standing.team_id, 1, y, WHITE, 3)
+        # Explicit league/division code, not just a cryptic bottom marker.
+        if index == 0:
+            _tiny_text(frame, codes.get(division, 'MLB'), 16, y, GREEN, 3)
+        _tiny_text(frame, str(standing.wins)[-3:], 31, y, GOLD, 3)
+        _tiny_text(frame, "-", 43, y, DIM, 1)
+        _tiny_text(frame, str(standing.losses)[-3:], 47, y, GOLD, 3)
+        for x in range(64):
+            frame.pixel(x, y + 5, DIM)
     segments = {'AL WEST': 0, 'AL CENTRAL': 1, 'AL EAST': 2,
                 'NL WEST': 3, 'NL CENTRAL': 4, 'NL EAST': 5}
-    selected = segments.get(league.upper().replace('_', ' '))
+    selected = segments.get(division)
     for x in range(64):
         frame.pixel(x, 31, DIM if x % 11 != 10 else (0, 0, 0))
     if selected is not None:
