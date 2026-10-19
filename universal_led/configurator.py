@@ -653,7 +653,6 @@ async function loadSettings(){
  document.querySelectorAll('#mlb-standings-divisions input').forEach(el=>el.checked=(settings.standings.mlb_divisions||[]).includes(el.value));
  document.querySelectorAll('#nfl-standings-divisions input').forEach(el=>el.checked=(settings.standings.nfl_divisions||[]).includes(el.value));
   document.querySelectorAll('#mls-standings-conferences input').forEach(el=>el.checked=(settings.standings.mls_conferences||[]).includes(el.value));
-  for(const league of [])document.getElementById(league+'-standings-enabled').checked=settings.standings[league]===true;
  document.querySelectorAll('#nba-standings-conferences input').forEach(el=>el.checked=(settings.standings.nba_conferences||[]).includes(el.value));
  document.querySelectorAll('#nhl-standings-divisions input').forEach(el=>el.checked=(settings.standings.nhl_divisions||[]).includes(el.value));
  const nhlWildCards=settings.standings.nhl_wild_cards??[
