@@ -1,7 +1,7 @@
 """NHL official Stats API season windows for background standings gating."""
 import json
 from datetime import date, timedelta
-from urllib.request import urlopen
+from urllib.request import Request, urlopen
 
 API = 'https://api.nhle.com/stats/rest/en/season?limit=-1'
 
@@ -41,5 +41,8 @@ def parse_nhl_season_windows(payload, *, today=None):
 def fetch_nhl_season_windows(_competition, *, opener=None, timeout=8):
     if opener is None:
         opener = urlopen
-    with opener(API, timeout=timeout) as response:
+    with opener(Request(API, headers={
+        'User-Agent': 'Mozilla/5.0 (compatible; UniversalLEDScoreboard/0.7; +https://github.com/mcangeli/universal-led-scoreboard)',
+        'Accept': 'application/json',
+    }), timeout=timeout) as response:
         return parse_nhl_season_windows(json.load(response))
