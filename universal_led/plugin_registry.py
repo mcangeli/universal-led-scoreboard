@@ -77,3 +77,36 @@ def read_registry(path: str | Path) -> dict[str, dict]:
             raise ManifestError("invalid plugin registry fields")
         result[key] = dict(value)
     return result
+
+
+def set_plugin_enabled(path: str | Path, plugin_id: str, enabled: bool) -> dict:
+    """Atomically change an installed plugin's enabled flag.
+
+    Only an existing registry entry can be modified; no plugin code is loaded.
+    """
+    import os
+    import tempfile
+
+    if type(enabled) is not bool:
+        raise ManifestError("enabled must be a boolean")
+    registry = Path(path)
+    if registry.is_symlink() or not registry.is_file():
+        raise ManifestError("plugin registry must be a real file")
+    entries = read_registry(registry)
+    if plugin_id not in entries:
+        raise ManifestError("plugin is not installed")
+    updated = dict(entries[plugin_id])
+    updated["enabled"] = enabled
+    entries[plugin_id] = updated
+    fd, temp_path = tempfile.mkstemp(prefix=".uls-registry-", dir=registry.parent)
+    try:
+        with os.fdopen(fd, "w", encoding="utf-8") as handle:
+            json.dump(entries, handle, indent=2, sort_keys=True)
+            handle.write("\n")
+            handle.flush()
+            os.fsync(handle.fileno())
+        os.replace(temp_path, registry)
+    finally:
+        if os.path.exists(temp_path):
+            os.unlink(temp_path)
+    return updated
