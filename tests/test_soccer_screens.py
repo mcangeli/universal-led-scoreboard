@@ -45,13 +45,26 @@ class SoccerScreenTests(unittest.TestCase):
         self.assertEqual(match_screen(game).footer, "HT")
 
     def test_interrupted_match_keeps_league_and_score(self):
-        for league in ("MLS", "NWSL", "EPL", "CHAMPIONSHIP"):
+        for league in ("MLS", "NWSL", "EPL", "CHAMPIONSHIP", "LEAGUE_ONE", "LEAGUE_TWO"):
             with self.subTest(league=league):
                 game = SoccerMatch("m1", league, "ATL", "MIA", 2, 1, "rain_delay")
                 screen = match_screen(game)
-                self.assertEqual(screen.header, league[:5] + "~" if len(league) > 6 else league)
+                self.assertEqual(screen.header, {"CHAMPIONSHIP": "EFL CH", "LEAGUE_ONE": "EFL L1", "LEAGUE_TWO": "EFL L2"}.get(league, league))
                 self.assertEqual(screen.footer, "DELAYED")
                 self.assertIn("2", screen.line2)
+
+    def test_english_division_headings_preserve_pregame_records_and_kickoff(self):
+        for league, heading in (("EPL", "EPL"), ("CHAMPIONSHIP", "EFL CH"),
+                                ("LEAGUE_ONE", "EFL L1"), ("LEAGUE_TWO", "EFL L2")):
+            with self.subTest(league=league):
+                game = SoccerMatch("m1", league, "FLE", "CNL", 0, 0, "pre",
+                                   away_record="3-5-3", home_record="4-3-4",
+                                   kickoff="2026-10-20T18:45:00Z")
+                screen = match_screen(game, timezone="America/New_York")
+                self.assertEqual(screen.header, heading)
+                self.assertEqual(screen.line1, "CNL 4-3-4")
+                self.assertEqual(screen.line2, "FLE 3-5-3")
+                self.assertEqual(screen.footer, "2:45PM")
 
     def test_interruption_aliases_use_readable_status(self):
         for raw, expected in (("ppd", "POSTPONED"), ("rescheduled", "RESCHEDULED"),
