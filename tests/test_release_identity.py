@@ -29,7 +29,7 @@ class ReleaseIdentityTests(unittest.TestCase):
             if args[0] == 'branch':
                 return 'origin/main\norigin/feature/0.7.0-scoring-standings'
             return None
-        with patch.object(release, '_git', side_effect=git):
+        with patch.object(release, 'checkout_branch', return_value=None), patch.object(release, '_git', side_effect=git):
             self.assertEqual(release.installed_release(), 'main')
 
     def test_installed_main_branch_works_without_git_subprocess(self):
