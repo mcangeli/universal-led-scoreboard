@@ -38,7 +38,7 @@ This is the authoritative v0.8.0 acceptance checklist. Earlier version-specific 
 - [x] Pi 3 and Pi 5 operational smoke checks: Board View updating, enabled leagues/favorites retained, Wi-Fi scan shows nearby networks and identifies current connection (user confirmed October 20, 2026). Pi 5 persistent updater log/status also verified. No network change was performed.
 - [ ] Confirm live-event-specific behaviors not yet physically observed; deterministic tests do not substitute for provider and hardware verification.
 - [ ] Confirm post-deployment rollback/recovery behavior with a safe supervised plan; preflight rejection is not equivalent to tested post-install rollback.
-- [ ] Repeat full regression suite after final code changes and record the installed commit.
+- [x] Pi 5 full regression suite: **1,652 tests passed, 15 skipped** after release-identity fixture isolation fixes (October 20, 2026). Branch commit at time of run: `21c0f1fe2353a27a97613f9af57285d5d9254f5c` (user reported test count; commit inferred from latest pushed test fix, not independently reported from device). Re-run only if subsequent production or test code changes warrant it.
 - [ ] Obtain explicit release approval **before** merging into main or tagging v0.8.0.
 
 ## Recommended final smoke procedure
