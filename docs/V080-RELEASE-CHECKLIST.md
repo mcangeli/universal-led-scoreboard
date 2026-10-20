@@ -1,6 +1,6 @@
 # v0.8.0 Unified Dashboard Release Checklist
 
-**Status:** feature-branch release candidate; **not merged or tagged**. Updated October 20, 2026.
+**Status:** release-candidate exceptions accepted by user; feature branch **not merged or tagged**. Updated October 20, 2026.
 
 This is the authoritative v0.8.0 acceptance checklist. Earlier version-specific checklists are historical records and do not automatically certify this release.
 
@@ -42,6 +42,21 @@ This is the authoritative v0.8.0 acceptance checklist. Earlier version-specific 
 - [ ] Obtain explicit release approval **before** merging into main or tagging v0.8.0.
 
 **Decision needed:** Whether the outstanding physical fresh-install and real rollback exercises are mandatory for v0.8.0 GA or will be accepted as documented limitations with a follow-up validation milestone. No approval has been assumed.
+
+## Release-candidate exception acceptance (October 20, 2026)
+
+**User decision:** Approved preparing and shipping a **v0.8.0 release candidate with documented limitations**. This is not approval to represent the build as fully validated general availability, nor explicit authorization to merge into `main` or create the final `v0.8.0` tag.
+
+Accepted deferrals and exceptions:
+
+- A clean physical-mode Raspberry Pi OS Trixie installation on a spare SD card, including RGB driver compilation, startup splash, HAT mapping and reboot persistence, has **not** been performed for this candidate. The existing Pi 3 physical installation and Pi 5 emulator are operational; do not reinstall them to close this gate.
+- A real post-deployment failure/rollback has **not** been exercised on a running installation. Preflight rejection and isolated rollback simulation have passed, but are not equivalent to a live rollback.
+- Live-event-specific behavior is only partially observed; deterministic tests and prior match observations are available but do not cover all sports, statuses and provider combinations.
+- Third-party code, embedded fonts/sprites, branding and external provider permission questions remain unresolved as described in [THIRD-PARTY-ATTRIBUTION.md](THIRD-PARTY-ATTRIBUTION.md). Endpoint disclosures and user-discretion notices in [DATA-SOURCES.md](DATA-SOURCES.md) do **not** grant access or redistribution rights. These are **open distribution risks**, not resolved licensing checks.
+
+**Technical baseline:** Pi 5 full suite 1,652 passing tests (15 skipped), plus successful Pi 3/Pi 5 operational smoke checks and backup portability. Subsequent changes through this acceptance have been documentation-only; a new full suite is required if executable code changes.
+
+**Release labeling:** Describe any artifact as `v0.8.0 release candidate` with the limitations above. Do not claim a fully verified hardware install, provider authorization, or complete third-party provenance clearance. Final tag/merge remains a separate explicit decision.
 
 ## Recommended final smoke procedure
 
