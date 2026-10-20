@@ -196,7 +196,7 @@ class MultiSportTests(unittest.TestCase):
         self.router.set_bullpen_slots((slot,))
         now[0] += 12  # Enter the plugin slot after rotation starts.
         for _ in range(5):
-            self.assertEqual(self.router.frame(), "MLB")
+            self.assertEqual(self.router.frame(), "NHL")
         self.assertEqual(slot.calls, 3)
         self.assertEqual(self.router._bullpen_failures[0], 3)
         # Reconfiguration explicitly clears the quarantine.
