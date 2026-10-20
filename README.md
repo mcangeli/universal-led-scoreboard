@@ -28,7 +28,7 @@ The browser-only emulator does not require a matrix or HAT. Do not connect or di
 
 ## Installation
 
-The supported system installation uses `scripts/install-system.sh` and installs `uls-web.service` and `uls-matrix.service`. The legacy `scripts/install.sh` creates a different user-level service and **is not** the supported clean-install path.
+The supported installation uses `scripts/install-system.sh` and provisions `uls-web.service` and `uls-matrix.service`.
 
 Start with a fresh Raspberry Pi OS Trixie image, configure SSH/networking and install Git:
 
@@ -112,6 +112,3 @@ See [LICENSE](LICENSE) for this repository's license. Reused code, artwork, logo
 
 Version-specific features, acceptance results, test counts, release status and historical notes belong in the [Changelog](CHANGELOG.md), not this README.
 
-## v0.8.0 release status
-
-The current unified-dashboard candidate remains on `feature/0.8.0-unified-dashboard`; it has **not** been merged or tagged. See the [v0.8.0 release checklist](docs/V080-RELEASE-CHECKLIST.md) for verified Pi 3/Pi 5 evidence and outstanding hardware/recovery checks, and the [third-party attribution audit](docs/THIRD-PARTY-ATTRIBUTION.md) for licensing work still required. Passing automated tests is not a substitute for physical-device or redistribution acceptance.
