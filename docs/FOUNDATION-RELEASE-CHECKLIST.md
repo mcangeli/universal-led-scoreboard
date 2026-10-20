@@ -1,5 +1,8 @@
 # Universal LED Scoreboard v0.4.5 release acceptance
 
+> **Historical checklist:** This file records v0.4.5 foundation acceptance, not current v0.8.0 sign-off. For the current candidate use [v0.8.0 release checklist](V080-RELEASE-CHECKLIST.md).
+
+
 Status: feature branch candidate, not merged or tagged.
 
 ## Verified on Raspberry Pi 3, Trixie, 64×32 matrix
