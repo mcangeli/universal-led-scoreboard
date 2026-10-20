@@ -11,6 +11,12 @@ Universal LED Scoreboard is a Raspberry Pi application for a **64×32 RGB LED ma
 - **Extras:** Configurable news sources, time and weather, team colors, brightness and matrix settings.
 - **Administration:** Browser dashboard, board preview, Wi-Fi management, service controls and preflight-tested software updates.
 
+## Third-party data sources
+
+ULS uses external sports, weather, and news endpoints. **These endpoints can change or stop working without notice**, and their availability does not imply permission for every type of use. Users enable and access third-party services **at their own discretion and responsibility**, subject to each provider's current terms, licensing, attribution, and rate limits. ULS is unofficial and is not endorsed by the leagues or providers.
+
+See the [current endpoint inventory and detailed usage notice](docs/DATA-SOURCES.md), including the specific URLs used by each supported sport.
+
 ## Requirements
 
 - Raspberry Pi Zero 2 W, Pi 3, Pi 4 or Pi 5; hardware and performance may vary by model.
