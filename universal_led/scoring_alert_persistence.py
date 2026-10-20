@@ -22,8 +22,11 @@ class ScoringAlertPersistence:
                                   epoch=self.epoch())
 
     def save(self):
-        with self._save_lock:
-            self.store.save(self.alerts, monotonic=self.monotonic(), epoch=self.epoch())
+        # Always acquire queue lock before disk lock, including transition callbacks.
+        # This avoids a save/activation lock inversion across worker threads.
+        with self.alerts._lock:
+            with self._save_lock:
+                self.store.save(self.alerts, monotonic=self.monotonic(), epoch=self.epoch())
 
     def _save_transition(self):
         try:
