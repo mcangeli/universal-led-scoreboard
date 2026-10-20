@@ -15,7 +15,7 @@ Both paths must produce a valid 64×32 frame, work in the browser preview withou
 
 ```text
 example-plugin/
-  plugin.json
+  uls-plugin.json
   example_plugin/
     __init__.py
     screen.py
@@ -24,7 +24,7 @@ example-plugin/
   README.md
 ```
 
-Proposed manifest (field names and validation are subject to implementation):
+Current validated manifest format (plugin execution is not yet available):
 
 ```json
 {
@@ -32,9 +32,9 @@ Proposed manifest (field names and validation are subject to implementation):
   "name": "Example Screen",
   "version": "0.1.0",
   "api_version": "1",
-  "entrypoint": "example_plugin.screen:ExampleScreen",
-  "display": {"width": 64, "height": 32},
-  "settings_schema": "settings.schema.json"
+  "entry_point": "example_plugin.screen:ExampleScreen",
+  "capabilities": ["screen"],
+  "description": "Example 64x32 screen"
 }
 ```
 
@@ -47,7 +47,7 @@ Proposed manifest (field names and validation are subject to implementation):
 5. Render a frame for the 64×32 preview or physical matrix.
 6. Stop cleanly, preserve settings, and report errors without crashing other screens.
 
-The final Python class signatures must be copied from the implemented interface, not inferred from this design document.
+The manifest format is implemented in `universal_led/plugin_manifest.py`. The Python execution interface remains to be defined; do not assume the example class is loadable yet.
 
 ## Adapting an existing Bullpen plugin
 
