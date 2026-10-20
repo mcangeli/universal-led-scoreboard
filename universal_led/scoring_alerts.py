@@ -28,6 +28,8 @@ class ScoreEvent:
 
 
 class ScoringAlerts:
+    MAX_PENDING = 16
+
     """Queue confirmed events; favorites win priority without losing others.
 
     observe() is called with the complete current event snapshot for a game.
@@ -90,6 +92,12 @@ class ScoringAlerts:
                 self._pending.insert(index, (True, event))
             else:
                 self._pending.append((False, event))
+            # Bound the backlog to avoid showing very old scores after a
+            # burst across leagues. Evict oldest nonfavorite first.
+            if len(self._pending) > self.MAX_PENDING:
+                index = next((i for i, (favorite, _) in enumerate(self._pending)
+                              if not favorite), 0)
+                del self._pending[index]
         return accepted
 
     def baseline(self, sport, league, game_id, events):
