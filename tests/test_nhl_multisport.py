@@ -111,6 +111,56 @@ class MultiSportTests(unittest.TestCase):
         # must preserve that selection rather than choosing another sport.
         self.assertEqual(self.router.frame(), "MLB")
 
+    def test_bullpen_suppressed_by_live_nba(self):
+        from types import SimpleNamespace
+
+        class Slot:
+            def __init__(self):
+                self.calls = 0
+
+            def frame(self, **kwargs):
+                self.calls += 1
+                return "BULLPEN"
+
+        now = [12]
+        self.router.clock = lambda: now[0]
+        nba = FakeRenderer("NBA")
+        nba.has_live_games = lambda: True
+        nba.game = lambda: SimpleNamespace(status="live")
+        self.router.nba = nba
+        self.router.configure_rotation(("mlb", "nhl", "nba"), interval=12)
+        self.mlb.game = lambda: SimpleNamespace(status="scheduled")
+        self.nhl.game = lambda: SimpleNamespace(status="final")
+        slot = Slot()
+        self.router.set_bullpen_slots((slot,))
+        self.assertEqual(self.router.frame(), "NBA")
+        self.assertEqual(slot.calls, 0)
+
+    def test_bullpen_suppressed_by_live_english_football(self):
+        from types import SimpleNamespace
+
+        class Slot:
+            def __init__(self):
+                self.calls = 0
+
+            def frame(self, **kwargs):
+                self.calls += 1
+                return "BULLPEN"
+
+        now = [12]
+        self.router.clock = lambda: now[0]
+        english = FakeRenderer("ENGLISH")
+        english.has_live_games = lambda: True
+        english.game = lambda: SimpleNamespace(status="live")
+        self.router.english = english
+        self.router.configure_rotation(("mlb", "nhl", "english"), interval=12)
+        self.mlb.game = lambda: SimpleNamespace(status="scheduled")
+        self.nhl.game = lambda: SimpleNamespace(status="final")
+        slot = Slot()
+        self.router.set_bullpen_slots((slot,))
+        self.assertEqual(self.router.frame(), "ENGLISH")
+        self.assertEqual(slot.calls, 0)
+
     def test_default_is_mlb(self):
         self.assertEqual(self.router.active_sport, "mlb")
         self.assertEqual(self.router.frame(), "MLB")
