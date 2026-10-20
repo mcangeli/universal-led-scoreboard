@@ -36,6 +36,7 @@ class ScoringAlertTests(unittest.TestCase):
         self.assertIsNone(alerts.next_alert(11))
 
     def test_basketball_lead_change_respects_favorite_scope(self):
+        from universal_led.score_change_observer import BasketballMomentObserver
         from dataclasses import replace
         from universal_led.nba_data import BasketballGame
         from universal_led.nba_engine import ConfiguredNBARenderer
