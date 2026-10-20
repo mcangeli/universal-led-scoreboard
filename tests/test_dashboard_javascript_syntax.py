@@ -16,14 +16,14 @@ def dashboard_script():
 class DashboardJavascriptSyntaxTests(unittest.TestCase):
     def test_news_loaders_have_separate_statements(self):
         script = dashboard_script()
-        self.assertNotRegex(script, r"textContent\\s*=\\s*['\\\"]{2}\\s+newsGroupLoaded\\(")
+        self.assertNotIn("textContent='' newsGroupLoaded(", script)
 
     def test_branch_selection_regex_is_not_double_escaped(self):
         script = dashboard_script()
         self.assertIn("const releaseMatch=", script)
         line = next(line for line in script.splitlines() if "const releaseMatch=" in line)
-        self.assertNotIn(r"\\\\/", line)
-        self.assertNotIn(r"\\\\d", line)
+        self.assertNotIn("releaseMatch=/", line)
+        self.assertIn("new RegExp(", line)
 
     def test_dashboard_script_parses_with_node(self):
         result = subprocess.run(
