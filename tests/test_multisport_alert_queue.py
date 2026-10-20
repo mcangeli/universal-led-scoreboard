@@ -62,6 +62,32 @@ class MultiSportAlertQueueTests(unittest.TestCase):
         now[0] = 6
         self.assertEqual(board.frame(), "NORMAL")
 
+    def test_failed_alert_render_is_retried_for_full_duration(self):
+        now = [0.]
+        calls = [0]
+        alerts = ScoringAlerts(enabled=True, scope="all", seconds=3)
+        alerts.baseline("nhl", "NHL", "1", ())
+        goal = event("nhl", "NHL", "1", "BOS", "goal")
+        alerts.observe("nhl", "NHL", "1", (goal,))
+
+        def draw(e):
+            calls[0] += 1
+            if calls[0] == 1:
+                raise RuntimeError("temporary renderer failure")
+            return e.event_id
+
+        board = MultiSportRenderer(StubSport("NORMAL"), StubSport("OTHER"),
+                                  clock=lambda: now[0], scoring_alerts=alerts,
+                                  alert_renderer=draw)
+        with self.assertRaises(RuntimeError):
+            board.frame()
+        now[0] = 10
+        self.assertEqual(board.frame(), "goal")
+        now[0] = 12
+        self.assertEqual(board.frame(), "goal")
+        now[0] = 13
+        self.assertEqual(board.frame(), "NORMAL")
+
     def test_disable_clears_pending_and_active(self):
         alerts = ScoringAlerts(enabled=True, scope="all", seconds=2)
         alerts.baseline("mlb", "MLB", "1", ())
