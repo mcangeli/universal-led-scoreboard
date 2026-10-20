@@ -162,9 +162,9 @@ async function saveMatrixSettings(){
 async function loadAutomaticNews(){
  if(!newsGroupCanLoad('automatic'))return;
  const status=document.getElementById('auto-news-status');
- try{const response=await fetch('/api/settings',{cache:'no-store'});if(!response.ok)throw Error('Unable to load sports settings');const data=await response.json();document.getElementById('mlb-news-enabled').checked=data.sports.mlb.news_enabled;document.getElementById('nhl-news-enabled').checked=data.sports.nhl.news_enabled;document.getElementById('nba-news-enabled').checked=data.sports.nba.news_enabled;document.getElementById('wnba-news-enabled').checked=data.sports.wnba.news_enabled;document.getElementById('nfl-news-enabled').checked=data.sports.nfl.news_enabled;document.getElementById('mls-news-enabled').checked=data.sports.mls.news_enabled;document.getElementById('nwsl-news-enabled').checked=data.sports.nwsl.news_enabled;document.getElementById('english-news-enabled').checked=data.sports.english.news_enabled;document.getElementById('efl-news-enabled').checked=data.sports.efl.news_enabled;status.textContent=''}
- catch(err){status.textContent=err.message}
- newsGroupLoaded('automatic');
+ try{const response=await fetch('/api/settings',{cache:'no-store'});if(!response.ok)throw Error('Unable to load sports settings');const data=await response.json();document.getElementById('mlb-news-enabled').checked=data.sports.mlb.news_enabled;document.getElementById('nhl-news-enabled').checked=data.sports.nhl.news_enabled;document.getElementById('nba-news-enabled').checked=data.sports.nba.news_enabled;document.getElementById('wnba-news-enabled').checked=data.sports.wnba.news_enabled;document.getElementById('nfl-news-enabled').checked=data.sports.nfl.news_enabled;document.getElementById('mls-news-enabled').checked=data.sports.mls.news_enabled;document.getElementById('nwsl-news-enabled').checked=data.sports.nwsl.news_enabled;document.getElementById('english-news-enabled').checked=data.sports.english.news_enabled;document.getElementById('efl-news-enabled').checked=data.sports.efl.news_enabled;status.textContent='' newsGroupLoaded('automatic');
+ }catch(err){status.textContent=err.message}
+
 }
 async function saveAutomaticNews(){
  const status=document.getElementById('auto-news-status');status.textContent='Saving…';
@@ -184,8 +184,9 @@ async function loadStandingsSettings(){
   document.getElementById('standings-page-seconds').value=options.page_seconds??12;
   document.getElementById('standings-refresh-seconds').value=options.refresh_seconds??900;
   status.textContent='';
+  newsGroupLoaded('standings');
  }catch(error){status.textContent=error.message}
- newsGroupLoaded('standings');
+
 }
 async function saveStandingsSettings(){
  const status=document.getElementById('standings-status');
@@ -228,8 +229,9 @@ async function loadGameInterruptions(){
   for(const kind of ['delayed','postponed','rescheduled','suspended'])
    document.getElementById('interruption-'+kind).value=options[kind]||'when_no_live';
   status.textContent='';
+  newsGroupLoaded('interruptions');
  }catch(err){status.textContent=err.message}
- newsGroupLoaded('interruptions');
+
 }
 async function saveGameInterruptions(){
  const status=document.getElementById('game-interruptions-status');
@@ -260,8 +262,9 @@ async function loadScoringAlerts(){
   document.getElementById('scoring-alerts-scope').value=options.scope;
   document.getElementById('scoring-alerts-seconds').value=options.seconds;
   status.textContent='';
+  newsGroupLoaded('scoring');
  }catch(err){status.textContent=err.message}
- newsGroupLoaded('scoring');
+
 }
 async function saveScoringAlerts(){
  const status=document.getElementById('scoring-alerts-status');
@@ -287,9 +290,9 @@ async function saveScoringAlerts(){
 async function loadNewsTiming(){
  if(!newsGroupCanLoad('timing'))return;
  const status=document.getElementById('news-timing-status');
- try{const response=await fetch('/api/settings',{cache:'no-store'});if(!response.ok)throw Error('Unable to load news timing');const data=await response.json();document.getElementById('news-interval').value=data.news.rotation_interval;document.getElementById('news-duration').value=data.news.headline_seconds;document.getElementById('news-speed').value=data.news.scroll_chars_per_second;status.textContent=''}
- catch(err){status.textContent=err.message}
- newsGroupLoaded('timing');
+ try{const response=await fetch('/api/settings',{cache:'no-store'});if(!response.ok)throw Error('Unable to load news timing');const data=await response.json();document.getElementById('news-interval').value=data.news.rotation_interval;document.getElementById('news-duration').value=data.news.headline_seconds;document.getElementById('news-speed').value=data.news.scroll_chars_per_second;status.textContent='' newsGroupLoaded('timing');
+ }catch(err){status.textContent=err.message}
+
 }
 async function saveNewsTiming(){
  const status=document.getElementById('news-timing-status');
