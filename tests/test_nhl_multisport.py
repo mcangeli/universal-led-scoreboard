@@ -176,6 +176,33 @@ class MultiSportTests(unittest.TestCase):
         self.router.set_bullpen_slots((CrashingSlot(),))
         self.assertEqual(self.router.frame(), "MLB")
 
+    def test_repeated_bullpen_failures_quarantine_plugin(self):
+        from types import SimpleNamespace
+
+        class CrashingSlot:
+            def __init__(self):
+                self.calls = 0
+
+            def frame(self, **kwargs):
+                self.calls += 1
+                raise RuntimeError("broken plugin")
+
+        now = [12]
+        self.router.clock = lambda: now[0]
+        self.router.configure_rotation(("mlb", "nhl"), interval=12)
+        self.mlb.game = lambda: SimpleNamespace(status="scheduled")
+        self.nhl.game = lambda: SimpleNamespace(status="final")
+        slot = CrashingSlot()
+        self.router.set_bullpen_slots((slot,))
+        for _ in range(5):
+            self.assertEqual(self.router.frame(), "MLB")
+        self.assertEqual(slot.calls, 3)
+        self.assertEqual(self.router._bullpen_failures[0], 3)
+        # Reconfiguration explicitly clears the quarantine.
+        self.router.set_bullpen_slots((slot,))
+        self.router.frame()
+        self.assertEqual(slot.calls, 4)
+
     def test_default_is_mlb(self):
         self.assertEqual(self.router.active_sport, "mlb")
         self.assertEqual(self.router.frame(), "MLB")
