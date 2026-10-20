@@ -104,6 +104,39 @@ class ScoringAlertTests(unittest.TestCase):
         alerts.cancel_game("soccer", "EPL", "42")
         self.assertEqual(alerts._queued_at, {})
 
+    def test_pending_snapshot_restores_recent_event(self):
+        source = ScoringAlerts(enabled=True, scope="all")
+        source.set_clock(lambda: 100.)
+        source.baseline("soccer", "EPL", "42", ())
+        source.observe("soccer", "EPL", "42", [event()])
+        snapshot = source.export_pending(now_monotonic=110, now_epoch=1000)
+        target = ScoringAlerts(enabled=True, scope="all")
+        target.set_clock(lambda: 120.)
+        self.assertEqual(target.import_pending(snapshot, now_monotonic=120,
+                                                now_epoch=1010), 1)
+        self.assertEqual(target.next_alert(120).event_id, "g1")
+
+    def test_pending_snapshot_drops_stale_and_future_events(self):
+        source = ScoringAlerts(enabled=True, scope="all")
+        source.set_clock(lambda: 100.)
+        source.baseline("soccer", "EPL", "42", ())
+        source.observe("soccer", "EPL", "42", [event()])
+        snapshot = source.export_pending(now_monotonic=100, now_epoch=1000)
+        target = ScoringAlerts(enabled=True, scope="all")
+        self.assertEqual(target.import_pending(snapshot, now_monotonic=400,
+                                                now_epoch=1181), 0)
+        self.assertEqual(target.import_pending(snapshot, now_monotonic=400,
+                                                now_epoch=999), 0)
+
+    def test_pending_snapshot_excludes_active_alert(self):
+        source = ScoringAlerts(enabled=True, scope="all")
+        source.set_clock(lambda: 100.)
+        source.baseline("soccer", "EPL", "42", ())
+        source.observe("soccer", "EPL", "42", [event()])
+        source.next_alert(100)
+        self.assertEqual(source.export_pending(now_monotonic=101,
+                                                now_epoch=1000)["pending"], [])
+
     def test_disable_clears_queue_timestamps(self):
         alerts = ScoringAlerts(enabled=True, scope="all")
         alerts.set_clock(lambda: 0.)
