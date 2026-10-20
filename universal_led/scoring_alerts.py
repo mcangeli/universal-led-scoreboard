@@ -39,6 +39,7 @@ class ScoringAlerts:
         self._seen = {}
         self._pending = deque()
         self._active = None
+        self._active_favorite = False
         self._expires = None
         self.configure(enabled=enabled, scope=scope, seconds=seconds)
 
@@ -126,17 +127,25 @@ class ScoringAlerts:
         """
         if self._active is not None and self._active == event:
             self._expires = None
-            self._pending.appendleft((True, event))
+            self._pending.appendleft((self._active_favorite, event))
             self._active = None
 
-    def next_alert(self, now):
-        """Return active event or None; expire and restore rotation naturally."""
+    def rendered(self, event, now):
+        """Start the alert duration after its first successful frame render.
+
+        This acknowledges software rendering, not physical matrix delivery.
+        """
+        if self.enabled and self._active == event and self._expires is None:
+            self._expires = now + self.seconds
+
+    def next_alert(self, now, *, defer_start=False):
+        """Return active event; optionally defer its timer until rendered()."""
         if not self.enabled:
             return None
-        if self._active is not None and now >= self._expires:
+        if self._active is not None and self._expires is not None and now >= self._expires:
             self._active = None
             self._expires = None
         if self._active is None and self._pending:
-            self._active = self._pending.popleft()[1]
-            self._expires = now + self.seconds
+            self._active_favorite, self._active = self._pending.popleft()
+            self._expires = None if defer_start else now + self.seconds
         return self._active
