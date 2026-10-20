@@ -34,7 +34,7 @@ class ScoringAlertPersistence:
         while not self._stop.wait(self.interval):
             try:
                 self.save()
-            except OSError:
+            except (OSError, RuntimeError):
                 # Persistence failures must not stop the live scoreboard.
                 continue
 
@@ -44,5 +44,5 @@ class ScoringAlertPersistence:
             self._thread.join(timeout=2)
         try:
             self.save()
-        except OSError:
+        except (OSError, RuntimeError):
             pass
