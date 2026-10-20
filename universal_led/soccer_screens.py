@@ -31,7 +31,7 @@ def _fit(value: str, width: int) -> str:
 
 def _league_heading(league: str) -> str:
     """Use distinct compact headings for English football divisions."""
-    normalized = " ".join(str(league).upper().replace("-", " ").split())
+    normalized = " ".join(str(league).upper().replace("-", " ").replace("_", " ").split())
     headings = {
         "EPL": "EPL",
         "PREMIER LEAGUE": "EPL",
