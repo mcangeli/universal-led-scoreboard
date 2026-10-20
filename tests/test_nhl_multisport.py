@@ -161,6 +161,21 @@ class MultiSportTests(unittest.TestCase):
         self.assertEqual(self.router.frame(), "ENGLISH")
         self.assertEqual(slot.calls, 0)
 
+    def test_crashing_bullpen_falls_back_to_normal_sport(self):
+        from types import SimpleNamespace
+
+        class CrashingSlot:
+            def frame(self, **kwargs):
+                raise RuntimeError("plugin render failed")
+
+        now = [12]
+        self.router.clock = lambda: now[0]
+        self.router.configure_rotation(("mlb", "nhl"), interval=12)
+        self.mlb.game = lambda: SimpleNamespace(status="scheduled")
+        self.nhl.game = lambda: SimpleNamespace(status="final")
+        self.router.set_bullpen_slots((CrashingSlot(),))
+        self.assertEqual(self.router.frame(), "MLB")
+
     def test_default_is_mlb(self):
         self.assertEqual(self.router.active_sport, "mlb")
         self.assertEqual(self.router.frame(), "MLB")
