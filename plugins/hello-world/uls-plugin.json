@@ -1,0 +1,11 @@
+{
+  "id": "hello-world",
+  "name": "Hello World",
+  "version": "0.1.0",
+  "api_version": 1,
+  "capabilities": [
+    "screen"
+  ],
+  "entry_point": "hello_world:HelloWorldScreen",
+  "description": "Offline 64x32 reference screen for native ULS plugins"
+}
