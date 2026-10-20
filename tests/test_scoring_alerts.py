@@ -93,6 +93,28 @@ class ScoringAlertTests(unittest.TestCase):
         self.assertEqual(alerts.next_alert(14), event())
         self.assertIsNone(alerts.next_alert(15))
 
+    def test_burst_queue_is_bounded_and_keeps_favorite(self):
+        alerts = ScoringAlerts(enabled=True, scope="all", seconds=1)
+        alerts.baseline("soccer", "EPL", "42", ())
+        burst = [event(eid=str(i), team="MUN") for i in range(25)]
+        alerts.observe("soccer", "EPL", "42", burst)
+        favorite = event(eid="favorite", team="ARS")
+        alerts.observe("soccer", "EPL", "42", burst + [favorite],
+                       favorite_teams=("ARS",))
+        self.assertEqual(len(alerts._pending), alerts.MAX_PENDING)
+        self.assertEqual(alerts.next_alert(0), favorite)
+        ids = [alerts.next_alert(i).event_id for i in range(1, alerts.MAX_PENDING)]
+        self.assertNotIn("0", ids)
+        self.assertIn("24", ids)
+
+    def test_all_favorite_burst_evicts_oldest(self):
+        alerts = ScoringAlerts(enabled=True, scope="all", seconds=1)
+        alerts.baseline("soccer", "EPL", "42", ())
+        burst = [event(eid=str(i), team="ARS") for i in range(20)]
+        alerts.observe("soccer", "EPL", "42", burst, favorite_teams=("ARS",))
+        self.assertEqual(len(alerts._pending), alerts.MAX_PENDING)
+        self.assertEqual(alerts.next_alert(0).event_id, "4")
+
     def test_favorites_only_does_not_alert_nonfavorites(self):
         alerts = ScoringAlerts(enabled=True, scope="favorites")
         alerts.observe("soccer", "EPL", "42", [])
