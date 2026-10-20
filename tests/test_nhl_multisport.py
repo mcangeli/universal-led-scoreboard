@@ -49,6 +49,66 @@ class MultiSportTests(unittest.TestCase):
         self.router.frame()
         self.assertFalse(soccer.external_live_games)
 
+    def test_bullpen_suppressed_by_live_nhl(self):
+        from types import SimpleNamespace
+
+        class Slot:
+            def __init__(self):
+                self.calls = []
+
+            def frame(self, **kwargs):
+                self.calls.append(kwargs)
+                return "BULLPEN"
+
+        now = [12]
+        self.router.clock = lambda: now[0]
+        self.router.configure_rotation(("mlb", "nhl"), interval=12)
+        self.mlb.game = lambda: SimpleNamespace(status="scheduled")
+        self.nhl.game = lambda: SimpleNamespace(status="live")
+        slot = Slot()
+        self.router.set_bullpen_slots((slot,))
+        self.assertEqual(self.router.frame(), "NHL")
+        self.assertEqual(slot.calls, [])
+
+    def test_bullpen_shares_idle_slots_and_yields_to_normal_frames(self):
+        from types import SimpleNamespace
+
+        class Slot:
+            def __init__(self):
+                self.calls = []
+
+            def frame(self, **kwargs):
+                self.calls.append(kwargs)
+                return "BULLPEN"
+
+        now = [0]
+        self.router.clock = lambda: now[0]
+        self.router.configure_rotation(("mlb", "nhl"), interval=12)
+        self.mlb.game = lambda: SimpleNamespace(status="scheduled")
+        self.nhl.game = lambda: SimpleNamespace(status="final")
+        slot = Slot()
+        self.router.set_bullpen_slots((slot,))
+        self.assertEqual(self.router.frame(), "MLB")
+        self.assertEqual(slot.calls, [])
+        now[0] = 12
+        self.assertEqual(self.router.frame(), "BULLPEN")
+        self.assertEqual(len(slot.calls), 1)
+
+    def test_unready_bullpen_falls_back_to_sport_frame(self):
+        from types import SimpleNamespace
+
+        class Slot:
+            def frame(self, **kwargs):
+                return None
+
+        now = [12]
+        self.router.clock = lambda: now[0]
+        self.router.configure_rotation(("mlb", "nhl"), interval=12)
+        self.mlb.game = lambda: SimpleNamespace(status="scheduled")
+        self.nhl.game = lambda: SimpleNamespace(status="final")
+        self.router.set_bullpen_slots((Slot(),))
+        self.assertEqual(self.router.frame(), "NHL")
+
     def test_default_is_mlb(self):
         self.assertEqual(self.router.active_sport, "mlb")
         self.assertEqual(self.router.frame(), "MLB")
