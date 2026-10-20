@@ -49,6 +49,27 @@ class BullpenBackgroundScreen:
         except Exception:
             LOG.exception("Bullpen background refresh failed")
 
+    def advance_frame(self) -> bool:
+        """Schedule one cached redraw on the worker, without fetching data.
+
+        Coalesces redraw requests with network refreshes so plugin mutable
+        state and renderer scrolling position stay worker-owned.
+        """
+        with self._lock:
+            if self._closed or self._future is None or not self._future.done():
+                return False
+            self._future = self._worker.submit(self._redraw_once)
+            return True
+
+    def _redraw_once(self) -> None:
+        try:
+            frame = self.screen.render_cached()
+            with self._lock:
+                if not self._closed:
+                    self._frame = frame
+        except Exception:
+            LOG.exception("Bullpen cached redraw failed")
+
     def render(self) -> Optional[Framebuffer]:
         """Return last completed frame immediately; never wait for network."""
         with self._lock:
