@@ -45,6 +45,7 @@ id uls >/dev/null 2>&1 || sudo useradd --system --home-dir "$DATA" --shell /usr/
 sudo install -d -o "$USER" -g "$(id -gn)" -m 0755 /opt/uls
 if (( ! RESUME )); then sudo install -d -o "$USER" -g "$(id -gn)" -m 0755 "$APP"; fi
 sudo install -d -o uls -g uls -m 0700 "$CONFIG" "$CONFIG/secrets" "$DATA"
+sudo install -d -o uls -g uls -m 0700 "$DATA/plugins"
 sudo install -d -o uls -g uls -m 0755 /run/uls
 echo "Cloning scoreboard..."
 if (( ! RESUME )); then
