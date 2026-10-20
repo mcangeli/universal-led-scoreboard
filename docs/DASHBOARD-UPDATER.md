@@ -44,3 +44,5 @@ Avoid exposing credentials or secrets in logs. Do not use an unbounded shell out
 8. Failed update attempts rollback and leaves diagnostics accessible.
 9. Works on fresh Trixie physical install and existing upgraded Pi 5.
 10. Does not claim success for emulator mode until its service assumptions are fixed.
+
+For current v0.8.0 candidate acceptance and portable-backup verification, see [v0.8.0 release checklist](V080-RELEASE-CHECKLIST.md). For third-party redistribution status, see [attribution audit](THIRD-PARTY-ATTRIBUTION.md).
