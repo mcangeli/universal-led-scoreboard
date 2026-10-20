@@ -21,6 +21,7 @@ This is the authoritative v0.8.0 acceptance checklist. Earlier version-specific 
 - [x] Dashboard updater rejects failing candidate tests before modifying installed checkout (observed during development).
 - [x] Dashboard navigation restored after JavaScript syntax regression; user confirmed responsive site. Installer now installs Node.js and preflight requires JavaScript parsing.
 - [x] Dashboard Restart Services tested successfully by user on both Pi 3 physical and Pi 5 emulator installations (October 20, 2026). Worker now respects absent/disabled matrix service; regression tests added.
+- [x] Dashboard authentication and session continuity manually verified on both Pis: refresh, page navigation, service restart, logout/login, and settings retained (October 20, 2026). Session expiry duration itself not manually elapsed.
 - [x] Previous Pi 5 Trixie fresh-card **emulator** installation and reboot validated; this is not clean physical-install validation.
 - [x] Prior user observations of EPL live/halftime/second-half/stoppage/final and Pi 3 multi-sport live priority are documented in the v0.7.0 checklist. These are prior acceptance evidence, not proof of every v0.8.0 provider/event combination.
 
@@ -29,7 +30,7 @@ This is the authoritative v0.8.0 acceptance checklist. Earlier version-specific 
 - [ ] Audit redistribution provenance for any copied code, fonts, logos, graphics and bundled data; record upstream license and required notices for each. README credits alone do not establish license compliance.
 - [ ] Review external sports/news/weather feed usage terms and branding constraints; avoid suggesting provider endorsement.
 - [ ] Verify a **fresh physical-mode Trixie installation**, RGB driver build, 64×32 output, HAT mapping, startup splash and saved matrix state after reboot. Use a spare card.
-- [ ] Perform remaining Pi 3 and Pi 5 operational smoke checks: dashboard login, board view, enabled sports, content/news edits, Wi-Fi safety and update log. Backup import/export and service restart were already verified.
+- [ ] Perform remaining Pi 3 and Pi 5 operational smoke checks: board view, enabled sports, content/news edits, Wi-Fi safety and update log. Backup import/export and service restart were already verified.
 - [ ] Confirm live-event-specific behaviors not yet physically observed; deterministic tests do not substitute for provider and hardware verification.
 - [ ] Confirm post-deployment rollback/recovery behavior with a safe supervised plan; preflight rejection is not equivalent to tested post-install rollback.
 - [ ] Repeat full regression suite after final code changes and record the installed commit.
