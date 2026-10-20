@@ -200,10 +200,12 @@ class MultiSportRenderer:
         # Optional scoring interruptions precede game/news rotation. A missing
         # adapter or disabled alerts leave the existing behavior unchanged.
         if self.scoring_alerts is not None and self.alert_renderer is not None:
-            event = self.scoring_alerts.next_alert(self.clock())
+            event = self.scoring_alerts.next_alert(self.clock(), defer_start=True)
             if event is not None:
                 try:
-                    return self.alert_renderer(event)
+                    frame = self.alert_renderer(event)
+                    self.scoring_alerts.rendered(event, self.clock())
+                    return frame
                 except Exception:
                     # A failed render must not consume an unseen alert slot.
                     self.scoring_alerts.render_failed(event)
