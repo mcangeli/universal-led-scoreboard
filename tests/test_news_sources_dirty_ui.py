@@ -11,7 +11,8 @@ class NewsSourcesDirtyUITests(unittest.TestCase):
 
     def test_navigation_warns_before_leaving_unsaved_sources(self):
         html=configurator.HTML
-        self.assertIn("if(name!=='news'&&(newsSourcesDirty||newsSettingsDirty())&&!confirm('You have unsaved Content & News changes.",html)
+        self.assertIn("if(name!=='news'&&(newsSourcesDirty||newsSettingsDirty())){if(!confirm('You have unsaved Content & News changes.",html)
+        self.assertIn('discardNewsEdits();',html)
         self.assertIn("if(name==='news'){if(!newsSourcesDirty)loadNewsSources();",html)
 
     def test_other_news_controls_track_unsaved_changes(self):
@@ -22,6 +23,14 @@ class NewsSourcesDirtyUITests(unittest.TestCase):
                 self.assertIn("newsGroupLoaded('"+group+"')",html)
                 self.assertIn("newsGroupSaved('"+group+"')",html)
         self.assertIn('newsSettingsDirty()',html)
+
+    def test_confirmed_discard_clears_all_news_dirty_snapshots(self):
+        html=configurator.HTML
+        discard=html.split('function discardNewsEdits(){',1)[1].split('function showPage(name)',1)[0]
+        self.assertIn('newsSources=clone(newsSourcesSaved);newsSourcesDirty=false;',discard)
+        self.assertIn('delete newsSettingsSaved[group]',discard)
+        self.assertIn("if(!confirm('You have unsaved Content & News changes.",html)
+        self.assertIn('return;discardNewsEdits();',html)
 
     def test_failed_load_does_not_record_saved_baseline(self):
         html=configurator.HTML
