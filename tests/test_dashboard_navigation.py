@@ -21,7 +21,9 @@ class DashboardNavigationTests(unittest.TestCase):
     def test_unknown_page_does_not_hide_all_sections(self):
         html=configurator.HTML
         self.assertIn("if(!document.querySelector('[data-page=",html)
-        self.assertIn("return;document.querySelectorAll('.nav-item')",html)
+        navigation=html.split('function showPage(name){',1)[1]
+        self.assertLess(navigation.index("if(!document.querySelector('[data-page="),navigation.index("document.querySelectorAll('.nav-item')"))
+        self.assertIn("'))return;",navigation.split("document.querySelectorAll('.nav-item')",1)[0])
 
 
 if __name__=='__main__':
