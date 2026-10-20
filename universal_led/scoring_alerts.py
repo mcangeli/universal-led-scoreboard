@@ -118,6 +118,17 @@ class ScoringAlerts:
             self._active = None
             self._expires = None
 
+    def render_failed(self, event):
+        """Retry an alert whose frame could not be rendered.
+
+        Preserve its priority and reset the presentation timer rather than
+        treating failed rendering as time spent visibly displaying an alert.
+        """
+        if self._active is not None and self._active == event:
+            self._expires = None
+            self._pending.appendleft((True, event))
+            self._active = None
+
     def next_alert(self, now):
         """Return active event or None; expire and restore rotation naturally."""
         if not self.enabled:
