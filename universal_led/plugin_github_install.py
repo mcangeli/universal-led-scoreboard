@@ -13,12 +13,14 @@ from .plugin_download import download_github_plugin
 from .plugin_install import install_local_plugin
 from .plugin_manifest import ManifestError, parse_manifest
 from .plugin_registry import parse_github_source
+from .plugin_source import parse_plugin_source
 
 
 def install_reviewed_github_plugin(source: str, commit: str, plugin_id: str,
                                    plugin_root="/var/lib/uls/plugins",
                                    registry_path="/var/lib/uls/plugins.json") -> dict:
-    owner, repo = parse_github_source(source)
+    canonical, subpath = parse_plugin_source(source)
+    owner, repo = parse_github_source(canonical)
     if not isinstance(commit, str) or not re.fullmatch(r"[0-9a-fA-F]{40}", commit):
         raise ManifestError("a pinned GitHub commit is required")
     if not isinstance(plugin_id, str) or not plugin_id:
@@ -30,6 +32,7 @@ def install_reviewed_github_plugin(source: str, commit: str, plugin_id: str,
     canonical = f"https://github.com/{owner}/{repo}"
     with tempfile.TemporaryDirectory(prefix="uls-plugin-install-") as temp:
         package = download_github_plugin(canonical, commit, Path(temp) / "package")
+        package = package / subpath if subpath else package
         manifest_file = package / "uls-plugin.json"
         if manifest_file.is_symlink() or not manifest_file.is_file() or manifest_file.stat().st_size > 16384:
             raise ManifestError("missing or unsafe plugin manifest")
