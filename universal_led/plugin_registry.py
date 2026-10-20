@@ -11,6 +11,7 @@ from pathlib import Path
 from urllib.parse import urlsplit
 
 from .plugin_manifest import ManifestError, parse_manifest
+from .plugin_source import parse_plugin_source
 
 _OWNER_RE = re.compile(r"^[A-Za-z0-9](?:[A-Za-z0-9-]{0,37}[A-Za-z0-9])?$")
 _REPO_RE = re.compile(r"^[A-Za-z0-9_.-]{1,100}$")
@@ -39,13 +40,13 @@ def parse_github_source(url: str) -> tuple[str, str]:
 def registry_record(manifest_data: dict, source_url: str, commit: str) -> dict:
     """Validate installation metadata before it is persisted."""
     manifest = parse_manifest(manifest_data)
-    owner, repo = parse_github_source(source_url)
+    canonical, subpath = parse_plugin_source(source_url)
     if not isinstance(commit, str) or not re.fullmatch(r"[0-9a-fA-F]{40}", commit):
         raise ManifestError("plugin source must be pinned to a 40-character commit")
     return {
         "id": manifest.plugin_id,
         "version": manifest.version,
-        "source": f"https://github.com/{owner}/{repo}",
+        "source": source_url if subpath else canonical,
         "commit": commit.lower(),
         "enabled": False,
     }
