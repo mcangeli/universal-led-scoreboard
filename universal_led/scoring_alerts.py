@@ -41,6 +41,7 @@ class ScoringAlerts:
     def __init__(self, *, enabled=False, scope="favorites", seconds=8):
         self._queued_at = {}
         self._clock = None
+        self.on_queue_transition = None
         self._seen = {}
         self._pending = deque()
         self._active = None
@@ -197,6 +198,8 @@ class ScoringAlerts:
             self._expires = None
             self._pending.appendleft((self._active_favorite, event))
             self._active = None
+            if self.on_queue_transition is not None:
+                self.on_queue_transition()
 
     def rendered(self, event, now):
         """Start the alert duration after its first successful frame render.
@@ -225,4 +228,6 @@ class ScoringAlerts:
             self._active_favorite, self._active = self._pending.popleft()
             self._queued_at.pop(self._active, None)
             self._expires = None if defer_start else now + self.seconds
+            if self.on_queue_transition is not None:
+                self.on_queue_transition()
         return self._active
