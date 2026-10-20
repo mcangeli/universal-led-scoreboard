@@ -31,6 +31,20 @@ class HelloWorldManagedInstallTests(unittest.TestCase):
         self.assertFalse(read_registry(self.registry)["hello-world"]["enabled"])
         self.assertTrue((self.root / "hello-world" / "hello_world.py").exists())
 
+    def test_first_install_creates_missing_plugin_directory(self):
+        self.root.rmdir()
+        self.assertFalse(self.root.exists())
+        record = install_example(self.root, self.registry)
+        self.assertEqual(record["id"], "hello-world")
+        self.assertTrue((self.root / "hello-world" / "uls-plugin.json").is_file())
+        self.assertFalse(record["enabled"])
+
+    def test_does_not_create_unrelated_parent_directories(self):
+        missing = Path(self.temp.name) / "missing" / "plugins"
+        with self.assertRaises(ManifestError):
+            install_example(missing, self.registry)
+        self.assertFalse(missing.exists())
+
     def test_reinstallation_is_refused(self):
         install_example(self.root, self.registry)
         with self.assertRaises(ManifestError):
