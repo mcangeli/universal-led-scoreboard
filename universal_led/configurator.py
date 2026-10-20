@@ -274,7 +274,10 @@ async function loadNewsTiming(){
  catch(err){status.textContent=err.message}
 }
 async function saveNewsTiming(){
- const status=document.getElementById('news-timing-status');status.textContent='Saving…';
+ const status=document.getElementById('news-timing-status');
+ const fields=[['news-interval',1,20,'News interval'],['news-duration',3,120,'Headline duration'],['news-speed',1,15,'Scroll speed']];
+ for(const [id,min,max,label] of fields){const input=document.getElementById(id),value=Number(input.value);if(input.value.trim()===''||!Number.isInteger(value)||value<min||value>max){status.textContent=label+' must be a whole number from '+min+' to '+max+'.';input.focus();return;}}
+ status.textContent='Saving…';
  try{const response=await fetch('/api/settings',{cache:'no-store'});if(!response.ok)throw Error('Unable to load settings');const data=await response.json();data.news={rotation_interval:Number(document.getElementById('news-interval').value),headline_seconds:Number(document.getElementById('news-duration').value),scroll_chars_per_second:Number(document.getElementById('news-speed').value)};
  const saved=await fetch('/api/settings',{method:'POST',headers:{'Content-Type':'application/json','X-Configurator-Token':token},body:JSON.stringify(data)});
  const result=await saved.json();if(!saved.ok)throw Error(result.error||'Save failed');settings=result.settings;status.textContent='News timing saved.'}
