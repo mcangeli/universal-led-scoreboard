@@ -1,6 +1,5 @@
 """Catch broken inline dashboard scripts before the updater installs them."""
 import re
-import shutil
 import subprocess
 import unittest
 
@@ -26,7 +25,6 @@ class DashboardJavascriptSyntaxTests(unittest.TestCase):
         self.assertNotIn(r"\\\\/", line)
         self.assertNotIn(r"\\\\d", line)
 
-    @unittest.skipUnless(shutil.which("node"), "Node.js unavailable: JavaScript parser check skipped")
     def test_dashboard_script_parses_with_node(self):
         result = subprocess.run(
             ["node", "--check", "-"],
