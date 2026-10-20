@@ -17,6 +17,12 @@ PINNED_EXAMPLE_COMMIT = "0c214f677cf71dc43abc2ff2042eea4001bfdd01"
 
 def install_example(root="/var/lib/uls/plugins", registry="/var/lib/uls/plugins.json"):
     """Register a copy of the bundled example, disabled by default."""
+    root = Path(root)
+    registry = Path(registry)
+    # First-use bootstrap: only create the expected plugins directory, never
+    # create arbitrary parent paths or change existing ownership.
+    if not root.exists() and root.name == "plugins" and root.parent.is_dir() and not root.parent.is_symlink():
+        root.mkdir(mode=0o700)
     return install_local_plugin(EXAMPLE, root, registry, SOURCE, PINNED_EXAMPLE_COMMIT)
 
 
