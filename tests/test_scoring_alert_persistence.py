@@ -1,5 +1,6 @@
 """Lifecycle persistence integration tests."""
 import tempfile
+import threading
 import unittest
 from pathlib import Path
 from universal_led.scoring_alerts import ScoringAlerts, ScoreEvent
@@ -64,6 +65,38 @@ class ScoringPersistenceTests(unittest.TestCase):
                 self.assertEqual(ScoringAlertPersistence(
                     recovered, path, monotonic=lambda: 101.,
                     epoch=lambda: 1001.).restore(), 1)
+            finally:
+                writer.stop()
+
+    def test_concurrent_saves_and_activation_do_not_deadlock(self):
+        with tempfile.TemporaryDirectory() as folder:
+            path = Path(folder) / "alerts.json"
+            alerts = ScoringAlerts(enabled=True, scope="all")
+            alerts.set_clock(lambda: 100.)
+            alerts.baseline("nhl", "NHL", "1", ())
+            goal = ScoreEvent("nhl", "NHL", "1", "goal", "BOS", "GOAL")
+            alerts.observe("nhl", "NHL", "1", [goal])
+            writer = ScoringAlertPersistence(alerts, path, monotonic=lambda: 100.,
+                                             epoch=lambda: 1000., interval=3600)
+            writer.start()
+            errors = []
+            def save_many():
+                try:
+                    for _ in range(30):
+                        writer.save()
+                except Exception as exc:
+                    errors.append(exc)
+            thread = threading.Thread(target=save_many, daemon=True)
+            try:
+                thread.start()
+                self.assertEqual(alerts.next_alert(100), goal)
+                thread.join(timeout=3)
+                self.assertFalse(thread.is_alive(), "Concurrent checkpoint deadlocked")
+                self.assertEqual(errors, [])
+                restored = ScoringAlerts(enabled=True, scope="all")
+                self.assertEqual(ScoringAlertPersistence(
+                    restored, path, monotonic=lambda: 101.,
+                    epoch=lambda: 1001.).restore(), 0)
             finally:
                 writer.stop()
 
