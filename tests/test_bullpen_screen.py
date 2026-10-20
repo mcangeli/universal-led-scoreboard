@@ -53,6 +53,18 @@ class BullpenScreenTests(unittest.TestCase):
         screen.render()
         self.assertEqual(renderer.positions, [0, 1])
 
+    def test_none_return_advances_standard_bullpen_marquee(self):
+        class StandardRenderer(FakeRenderer):
+            def render(self, data, canvas, graphics, position):
+                self.positions.append(position)
+                return None
+        renderer = StandardRenderer()
+        screen = BullpenScreen(FakeData(), renderer)
+        screen.render()
+        screen.render()
+        self.assertEqual(renderer.positions, [0, 1])
+        self.assertEqual(screen.scrolling_text_pos, 2)
+
     def test_skips_when_ineligible(self):
         data, renderer = FakeData(), FakeRenderer()
         renderer.allowed = False
