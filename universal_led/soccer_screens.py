@@ -33,6 +33,7 @@ def _league_heading(league: str) -> str:
     """Use distinct compact headings for English football divisions."""
     normalized = " ".join(str(league).upper().replace("-", " ").split())
     headings = {
+        "EPL": "EPL",
         "PREMIER LEAGUE": "EPL",
         "ENGLISH PREMIER LEAGUE": "EPL",
         "CHAMPIONSHIP": "EFL CH",
