@@ -100,6 +100,14 @@ class ScoringAlerts:
         self._seen.setdefault(key, set()).update(e.event_id for e in events)
         return ()
 
+    def finalize_game(self, sport, league, game_id):
+        """Keep already detected scoring events eligible after final status.
+
+        A final transition must not erase a goal or score notification that
+        has not yet had its scheduled display slot.
+        """
+        return None
+
     def cancel_game(self, sport, league, game_id):
         """Drop stale announcements when a match enters halftime or finishes."""
         key = (sport, league, str(game_id))
