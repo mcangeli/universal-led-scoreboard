@@ -13,6 +13,10 @@ class ScoreChangeObserver:
         self.league = league
         self.kind = kind
         self._previous = {}
+        self._previous_status = {}
+
+    def _announce_final_delta(self, game, previous_status):
+        return False
 
     def _should_announce(self, game):
         return True
@@ -28,18 +32,22 @@ class ScoreChangeObserver:
             key = str(game.game_id)
             scores = (game.away_score, game.home_score)
             previous = self._previous.get(key)
+            previous_status = self._previous_status.get(key)
             self._previous[key] = scores
+            self._previous_status[key] = game.status
             if previous is None:
                 self.alerts.baseline(self.sport, self.league, key, ())
                 continue
             if game.status == "final":
-                # Keep a detected scoring alert queued until its display slot.
-                self.alerts.finalize_game(self.sport, self.league, key)
-                continue
+                # NHL may report a last regulation/OT goal in the same poll
+                # that first reports Final. Other sports remain conservative.
+                if not self._announce_final_delta(game, previous_status):
+                    self.alerts.finalize_game(self.sport, self.league, key)
+                    continue
             if game.status in ("postponed", "canceled", "cancelled"):
                 self.alerts.cancel_game(self.sport, self.league, key)
                 continue
-            if game.status != "live" or not self._should_announce(game) or any(type(v) is not int for v in scores + previous):
+            if game.status not in ("live", "final") or not self._should_announce(game) or any(type(v) is not int for v in scores + previous):
                 continue
             if any(new < old for old, new in zip(previous, scores)):
                 continue
@@ -69,6 +77,9 @@ class NHLGoalObserver(ScoreChangeObserver):
     def __init__(self, alerts):
         super().__init__(alerts, sport="nhl", league="NHL", kind="GOAL")
         self._high_water = {}
+
+    def _announce_final_delta(self, game, previous_status):
+        return previous_status == "live" and not getattr(game, "shootout", False)
 
     def _score_steps(self, key, team, old, new):
         # A downward provider correction must not replay an old goal when
