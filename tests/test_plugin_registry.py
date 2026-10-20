@@ -5,7 +5,7 @@ import unittest
 from pathlib import Path
 
 from universal_led.plugin_manifest import ManifestError
-from universal_led.plugin_registry import parse_github_source, registry_record, read_registry
+from universal_led.plugin_registry import parse_github_source, registry_record, read_registry, set_plugin_enabled
 
 
 MANIFEST = {
@@ -41,6 +41,29 @@ class PluginRegistryTests(unittest.TestCase):
         self.assertFalse(record["enabled"])
         with self.assertRaises(ManifestError):
             registry_record(MANIFEST, "https://github.com/owner/repo", "main")
+
+    def test_enable_disable_preserves_source_metadata(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            path = Path(tmp) / "installed.json"
+            record = registry_record(MANIFEST, "https://github.com/owner/repo", SHA)
+            path.write_text(json.dumps({"test-screen": record}))
+            enabled = set_plugin_enabled(path, "test-screen", True)
+            self.assertTrue(enabled["enabled"])
+            self.assertEqual(enabled["commit"], SHA)
+            disabled = set_plugin_enabled(path, "test-screen", False)
+            self.assertFalse(disabled["enabled"])
+            self.assertEqual(read_registry(path)["test-screen"], disabled)
+
+    def test_enable_rejects_unknown_plugin_and_invalid_flag(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            path = Path(tmp) / "installed.json"
+            record = registry_record(MANIFEST, "https://github.com/owner/repo", SHA)
+            path.write_text(json.dumps({"test-screen": record}))
+            with self.assertRaises(ManifestError):
+                set_plugin_enabled(path, "missing", True)
+            with self.assertRaises(ManifestError):
+                set_plugin_enabled(path, "test-screen", 1)
+            self.assertFalse(read_registry(path)["test-screen"]["enabled"])
 
     def test_registry_read_and_invalid_entry(self):
         with tempfile.TemporaryDirectory() as tmp:
