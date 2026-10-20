@@ -144,7 +144,7 @@ async function reviewGithubPlugin(){
   const response=await fetch('/api/plugins/github/review',{method:'POST',credentials:'same-origin',headers:{'Content-Type':'application/json','X-Configurator-Token':token},body:JSON.stringify({source})});
   const result=await response.json();
   if(!response.ok)throw new Error(result.error||'HTTP '+response.status);
-  target.textContent=[result.name+' v'+result.version,result.description||'', 'ID: '+result.id,'Capabilities: '+result.capabilities.join(', '),'Source: '+result.source,'Pinned commit: '+result.commit,'Not installed. Review only.'].join('\n');
+  target.textContent=[result.name+' v'+result.version,result.description||'', 'ID: '+result.id,'Capabilities: '+result.capabilities.join(', '),'Source: '+result.source,'Pinned commit: '+result.commit,'Not installed. Review only.'].join('\\n');
  }catch(error){target.textContent='Review failed: '+error.message}
 }
 async function setPluginEnabled(id,enabled){
