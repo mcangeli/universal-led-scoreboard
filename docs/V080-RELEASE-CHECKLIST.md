@@ -33,13 +33,15 @@ This is the authoritative v0.8.0 acceptance checklist. Earlier version-specific 
 ## Outstanding release gates
 
 - [ ] Audit redistribution provenance for any copied code, fonts, logos, graphics and bundled data; record upstream license and required notices for each. README credits alone do not establish license compliance.
-- [ ] Review external sports/news/weather feed usage terms and branding constraints; avoid suggesting provider endorsement.
-- [ ] Verify a **fresh physical-mode Trixie installation**, RGB driver build, 64×32 output, HAT mapping, startup splash and saved matrix state after reboot. Use a spare card.
+- [x] Document the external sports/news/weather endpoints, relevant published provider restrictions, and user-discretion/change-without-notice disclaimer in [DATA-SOURCES.md](DATA-SOURCES.md), [THIRD-PARTY-ATTRIBUTION.md](THIRD-PARTY-ATTRIBUTION.md), and README (October 20, 2026). **This completes documentation, not permission clearance:** commercial use, redistribution rights, and specific provider API authorization remain unresolved.
+- [ ] Verify a **fresh physical-mode Trixie installation**, RGB driver build, 64×32 output, HAT mapping, startup splash and saved matrix state after reboot. Use a spare card. This gate remains open by user choice; do not reinstall either working Pi to close it.
 - [x] Pi 3 and Pi 5 operational smoke checks: Board View updating, enabled leagues/favorites retained, Wi-Fi scan shows nearby networks and identifies current connection (user confirmed October 20, 2026). Pi 5 persistent updater log/status also verified. No network change was performed.
 - [ ] Confirm live-event-specific behaviors not yet physically observed; deterministic tests do not substitute for provider and hardware verification.
-- [ ] Confirm post-deployment rollback/recovery behavior with a safe supervised plan; preflight rejection is not equivalent to tested post-install rollback.
+- [ ] Confirm post-deployment rollback/recovery behavior with a safe supervised plan; preflight rejection is not equivalent to tested post-install rollback. Existing isolated failure-injection tests are passing, but no real service-switch rollback has been observed.
 - [x] Pi 5 full regression suite: **1,652 tests passed, 15 skipped** after release-identity fixture isolation fixes (October 20, 2026). Branch commit at time of run: `21c0f1fe2353a27a97613f9af57285d5d9254f5c` (user reported test count; commit inferred from latest pushed test fix, not independently reported from device). Re-run only if subsequent production or test code changes warrant it.
 - [ ] Obtain explicit release approval **before** merging into main or tagging v0.8.0.
+
+**Decision needed:** Whether the outstanding physical fresh-install and real rollback exercises are mandatory for v0.8.0 GA or will be accepted as documented limitations with a follow-up validation milestone. No approval has been assumed.
 
 ## Recommended final smoke procedure
 
