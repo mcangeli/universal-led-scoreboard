@@ -145,9 +145,9 @@ class ConfiguredMLBRenderer:
         if (game is None or game.status!='live') and not self.has_live_games():
             with self._lock:
                 bullpen_slot = self.bullpen_slot
-            if bullpen_slot is not None:
-                # Only explicitly attached plugins participate. Existing
-                # game and supplemental rotation remains the default.
+            if bullpen_slot is not None and game is None:
+                # Only use the plugin when there is no selected game.
+                # Pregame/final game rotation remains unchanged.
                 plugin_frame = bullpen_slot.frame(live_games=False, selected=True)
                 if plugin_frame is not None:
                     return plugin_frame
