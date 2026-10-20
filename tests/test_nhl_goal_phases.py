@@ -25,6 +25,38 @@ class NHLGoalPhaseTests(unittest.TestCase):
         self.assertEqual(observer.observe([game(1,shootout=True)]),())
         self.assertIsNone(alerts.next_alert(10))
 
+    def test_goal_first_seen_on_final_snapshot_is_announced_once(self):
+        alerts=ScoringAlerts(enabled=True,scope='all')
+        observer=NHLGoalObserver(alerts)
+        observer.observe([game(1)])
+        final=game(2)
+        final.status='final'
+        self.assertEqual(len(observer.observe([final])),1)
+        self.assertEqual(alerts.next_alert(0).kind,'GOAL')
+        self.assertEqual(observer.observe([final]),())
+        self.assertIsNone(alerts.next_alert(8))
+
+    def test_shootout_delta_at_final_is_not_announced(self):
+        alerts=ScoringAlerts(enabled=True,scope='all')
+        observer=NHLGoalObserver(alerts)
+        observer.observe([game(1)])
+        final=game(2,shootout=True)
+        final.status='final'
+        self.assertEqual(observer.observe([final]),())
+        self.assertIsNone(alerts.next_alert(0))
+
+    def test_final_snapshot_does_not_invent_goal_without_live_baseline(self):
+        alerts=ScoringAlerts(enabled=True,scope='all')
+        observer=NHLGoalObserver(alerts)
+        observer.observe([game(1)])
+        pregame=game(1)
+        pregame.status='pregame'
+        observer.observe([pregame])
+        final=game(2)
+        final.status='final'
+        self.assertEqual(observer.observe([final]),())
+        self.assertIsNone(alerts.next_alert(0))
+
     def test_other_sports_still_announce_live_score_changes(self):
         alerts=ScoringAlerts(enabled=True,scope='all')
         observer=ScoreChangeObserver(alerts,'nba','NBA')
