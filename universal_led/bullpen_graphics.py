@@ -69,7 +69,7 @@ class BullpenGraphics:
 
     @staticmethod
     def DrawText(canvas, font, x, y, color, text):
-        """Draw with baseline semantics; font.height may override default 7px.
+        """Draw with baseline semantics; return glyph advance width, not endpoint.
 
         This is a fallback for simple ASCII plugins, not a replacement for
         Bullpen's BDF font loader or full graphics API.
@@ -80,7 +80,7 @@ class BullpenGraphics:
             raise ValueError("invalid font height")
         label = str(text)
         canvas.frame.text(label, x, y-height+1, _rgb(color))
-        return x+len(label)*6
+        return len(label)*6
 
 
 def _rgb(color):
