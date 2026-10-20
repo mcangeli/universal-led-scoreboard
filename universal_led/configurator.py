@@ -2184,6 +2184,15 @@ def main():
         board.configure_rotation(enabled, interval=settings['mlb']['rotation_seconds'],
                                  preferred=settings['active_sport'])
     apply_settings(initial)
+    # Restore only fresh, pending notifications after saved settings are active.
+    # Keep the snapshot in the same persistent config directory as other ULS data.
+    from .scoring_alert_persistence import ScoringAlertPersistence
+    scoring_persistence = ScoringAlertPersistence(
+        scoring_alerts, Path(args.config_dir) / 'scoring-alerts-pending.json')
+    scoring_persistence.restore()
+    scoring_persistence.start()
+    import atexit
+    atexit.register(scoring_persistence.stop)
     def standings_status():
         return board.soccer_pregame_diagnostics()
     def feed_status():
