@@ -144,7 +144,7 @@ class ConfiguredMLBRenderer:
         # even if the currently selected game is not live.
         if (game is None or game.status!='live') and not self.has_live_games():
             with self._lock:
-                bullpen_slot = self.bullpen_slot
+                bullpen_slot = getattr(self, "bullpen_slot", None)
             if bullpen_slot is not None and game is None:
                 # Only use the plugin when there is no selected game.
                 # Pregame/final game rotation remains unchanged.
