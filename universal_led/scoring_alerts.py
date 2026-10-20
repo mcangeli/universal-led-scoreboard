@@ -61,6 +61,7 @@ class ScoringAlerts:
         # observed while disabled remain baselined and are never replayed.
         if enabled and not getattr(self, 'enabled', False):
             self._pending.clear()
+            self._queued_at.clear()
             self._active = None
             self._expires = None
         self.enabled = enabled
@@ -106,7 +107,9 @@ class ScoringAlerts:
             if len(self._pending) > self.MAX_PENDING:
                 index = next((i for i, (favorite, _) in enumerate(self._pending)
                               if not favorite), 0)
+                dropped = self._pending[index][1]
                 del self._pending[index]
+                self._queued_at.pop(dropped, None)
         return accepted
 
     def baseline(self, sport, league, game_id, events):
@@ -131,6 +134,9 @@ class ScoringAlerts:
         key = (sport, league, str(game_id))
         self._pending = deque((favorite, event) for favorite, event in self._pending
                               if (event.sport, event.league, event.game_id) != key)
+        retained = {event for _, event in self._pending}
+        self._queued_at = {event: stamp for event, stamp in self._queued_at.items()
+                           if event in retained}
         if self._active is not None and (
                 self._active.sport, self._active.league, self._active.game_id) == key:
             self._active = None
