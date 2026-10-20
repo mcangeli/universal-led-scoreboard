@@ -55,6 +55,17 @@ class MultiSportRenderer:
             self.bullpen_slots = tuple(slots)
             self._bullpen_failures = {}
 
+    def bullpen_health(self):
+        """Return a read-only snapshot suitable for future dashboard reporting."""
+        with self._lock:
+            return tuple({
+                "slot": index,
+                "failures": self._bullpen_failures.get(index, 0),
+                "status": ("quarantined" if self._bullpen_failures.get(index, 0) >= 3
+                           else "degraded" if self._bullpen_failures.get(index, 0)
+                           else "healthy"),
+            } for index in range(len(self.bullpen_slots)))
+
     def _connect_soccer_standings(self):
         """Reuse the exact caches already owned by the idle standings rotation."""
         caches = self.soccer_standings_caches
