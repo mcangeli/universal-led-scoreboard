@@ -56,6 +56,17 @@ These are verified source-code references, not legal conclusions or current prov
 - **Open-Meteo:** https://open-meteo.com/en/terms specifies that its free API is for noncommercial use, with limits of fewer than 10,000 calls/day, 5,000/hour and 600/minute. https://open-meteo.com/en/pricing says a commercial subscription uses a separate customer API endpoint/key and that data attribution under CC BY 4.0 is required. ULS currently calls the free geocoding and forecast endpoints. Do not imply the free endpoint is approved for a commercial website, product, or promotional deployment.
 - **Scope of verification:** These are confirmed statements from the providers' published upstream documentation, not a legal opinion or blanket certification for all dependencies. Other sports, RSS, weather, logos, and code lineage reviews remain open.
 
+## Sports-provider and OpenWeather terms review (October 20, 2026)
+
+| Provider | Published primary source | Finding / unresolved constraint |
+| --- | --- | --- |
+| NHL | https://www.nhl.com/info/terms-of-service | NHL's terms restrict content access/use to noncommercial, informational, personal purposes, and prohibit unauthorized automated harvesting. Public score endpoint availability does **not** grant a redistribution or commercial API license. |
+| MLB | https://www.mlb.com/official-information/terms-of-use | MLB Digital Properties are subject to substantial copying/redistribution and commercial-use restrictions. The exact StatsAPI data license and applicability to each ULS call remain unresolved; do not claim API licensing approval. |
+| ESPN | https://disneytermsofuse.com/ and https://www.espn.com/ | ULS calls undocumented ESPN-hosted JSON score endpoints; no supported developer license or redistribution authorization was verified. Terms applicable to API access require additional confirmation. |
+| OpenWeather | https://openweathermap.org/faq and https://openweathermap.org/price | Published attribution is required for applicable free/self-service tiers. Subscription and data-license conditions vary; verify the particular API key's plan and current terms. |
+
+**Release consequence:** A personal hobby scoreboard and a public/commercial demo are different use cases. Do not infer permitted commercial redistribution from successful requests or an open-source ULS code license. Provider permissions, trademarks and content licenses are independent of GPLv3. These findings document risks; they are not legal clearance.
+
 ## Closeout procedure
 
 1. Search source and packaged assets for copied upstream code, included third-party files, fonts, team badges and logos. Record exact file paths and provenance.
