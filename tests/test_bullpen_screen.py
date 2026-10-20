@@ -65,6 +65,20 @@ class BullpenScreenTests(unittest.TestCase):
         self.assertEqual(renderer.positions, [0, 1])
         self.assertEqual(screen.scrolling_text_pos, 2)
 
+    def test_cached_render_never_updates_data(self):
+        data, renderer = FakeData(), FakeRenderer()
+        screen = BullpenScreen(data, renderer)
+        frame = screen.render_cached()
+        self.assertEqual(data.calls, 0)
+        self.assertEqual(frame.pixels[0][0], (0, 200, 0))
+        self.assertEqual(renderer.positions, [0])
+
+    def test_cached_render_respects_eligibility(self):
+        data, renderer = FakeData(), FakeRenderer()
+        renderer.allowed = False
+        self.assertIsNone(BullpenScreen(data, renderer).render_cached())
+        self.assertEqual(data.calls, 0)
+
     def test_skips_when_ineligible(self):
         data, renderer = FakeData(), FakeRenderer()
         renderer.allowed = False
