@@ -27,8 +27,13 @@ class BullpenGraphicsTests(unittest.TestCase):
     def test_text_baseline(self):
         canvas = BullpenCanvas()
         end = BullpenGraphics.DrawText(canvas, None, 1, 7, (255, 255, 255), "A")
-        self.assertEqual(end, 7)
+        self.assertEqual(end, 6)
         self.assertIn((255, 255, 255), canvas.frame.pixels[1])
+
+    def test_text_width_independent_of_draw_origin(self):
+        canvas = BullpenCanvas()
+        self.assertEqual(BullpenGraphics.DrawText(canvas, None, -1000, 0, (0, 0, 0), "ATL"), 18)
+        self.assertEqual(BullpenGraphics.DrawText(canvas, None, 3, 7, (255, 255, 255), "ATL"), 18)
 
     def test_invalid_color(self):
         with self.assertRaises(ValueError):
