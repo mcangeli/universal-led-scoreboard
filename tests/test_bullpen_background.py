@@ -55,6 +55,31 @@ class BullpenBackgroundTests(unittest.TestCase):
             data.release.set()
             background.close()
 
+    def test_redraw_advances_scroll_without_network_call(self):
+        class ScrollingRenderer(Renderer):
+            def render(self, data, canvas, graphics, position):
+                canvas.SetPixel(position, 0, 40, 50, 60)
+                return None
+        data = Data()
+        background = BullpenBackgroundScreen(BullpenScreen(data, ScrollingRenderer()))
+        try:
+            self.assertTrue(background.refresh())
+            self.assertTrue(data.started.wait(1))
+            data.release.set()
+            deadline = time.monotonic() + 2
+            while background.render() is None and time.monotonic() < deadline:
+                time.sleep(0.005)
+            self.assertIsNotNone(background.render())
+            self.assertTrue(background.advance_frame())
+            deadline = time.monotonic() + 2
+            while background.render().pixels[0][1] != (40, 50, 60) and time.monotonic() < deadline:
+                time.sleep(0.005)
+            self.assertEqual(background.render().pixels[0][1], (40, 50, 60))
+            self.assertEqual(data.calls, 1)
+        finally:
+            data.release.set()
+            background.close()
+
     def test_closed_background_rejects_refresh(self):
         background = BullpenBackgroundScreen(BullpenScreen(Data(), Renderer()))
         background.close()
