@@ -82,3 +82,9 @@ Accepted deferrals and exceptions:
 - [Changelog](../CHANGELOG.md): version history.
 - [Third-party attribution audit](THIRD-PARTY-ATTRIBUTION.md): provenance and license review still required.
 - Older release checklists and preview documents are historical, not current installation instructions.
+
+## Release-candidate post-version verification (October 20, 2026)
+
+- [x] Operator-installed `0.8.0rc1` candidate at commit `8c955363508a2d26def66c324c72ed882ebc7dce` through dashboard updater. Preflight: **1,652 tests, OK (15 skipped)**; update completed successfully and preserved `/etc/uls` and `/var/lib/uls`.
+- [x] Package version identity regression tests corrected after version bump; no reported test failures.
+- [ ] Draft PR review/merge and any release tag remain pending. Previously accepted RC limitations remain in effect.
