@@ -123,7 +123,11 @@ class BasketballMomentObserver(ScoreChangeObserver):
                 self.alerts.baseline(self.sport, self.league, key, ())
                 continue
             if game.status in ("final", "postponed", "canceled", "cancelled"):
-                self.alerts.cancel_game(self.sport, self.league, key)
+                if game.status == "final":
+                    # Preserve already detected moments until their display slot.
+                    self.alerts.finalize_game(self.sport, self.league, key)
+                else:
+                    self.alerts.cancel_game(self.sport, self.league, key)
                 self._run.pop(key, None)
                 continue
             if game.status != "live" or any(type(v) is not int for v in scores + old):
