@@ -185,6 +185,7 @@ class ScoringAlerts:
                            if event in retained}
         if self._active is not None and (
                 self._active.sport, self._active.league, self._active.game_id) == key:
+            self._queued_at.pop(self._active, None)
             self._active = None
             self._expires = None
 
@@ -214,19 +215,21 @@ class ScoringAlerts:
         if not self.enabled:
             return None
         if self._active is not None and self._expires is not None and now >= self._expires:
+            self._queued_at.pop(self._active, None)
             self._active = None
             self._expires = None
         if self._clock is not None:
             cutoff = self._clock() - self.MAX_AGE_SECONDS
             self._pending = deque((fav, event) for fav, event in self._pending
                                   if self._queued_at.get(event, self._clock()) >= cutoff)
-            # Retain timestamps only for queued events, not historical IDs.
+            # Keep the active event's original age for failed-render retries.
             retained = {event for _, event in self._pending}
+            if self._active is not None:
+                retained.add(self._active)
             self._queued_at = {event: stamp for event, stamp in self._queued_at.items()
                                if event in retained}
         if self._active is None and self._pending:
             self._active_favorite, self._active = self._pending.popleft()
-            self._queued_at.pop(self._active, None)
             self._expires = None if defer_start else now + self.seconds
             if self.on_queue_transition is not None:
                 self.on_queue_transition()
