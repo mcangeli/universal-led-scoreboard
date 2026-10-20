@@ -53,3 +53,11 @@ Develop and test on Pi 5 first; keep production Pi 3 on `main` until approved. N
 - The global scheduler enforces live-game priority across all enabled sports; no MLB-local renderer may override a live NBA, NFL, NHL, MLS, or football match.
 - The MLB renderer attachment added during initial adapter testing is temporary and must not become the authoritative scheduling path. Move selection to the multisport coordinator before enabling plugins by default.
 - Default behavior remains unchanged when no plugins are configured. Preserve existing pregame/final layouts and supplemental screen rotation.
+
+## Live-game protection and Big Green Monster decision
+
+- **Absolute rule:** supplemental Bullpen plugin screens must never interrupt any eligible live game from any enabled sport or league. Check global live status before plugin eligibility or animation scheduling, not merely the current MLB screen status.
+- Plugin timers, refreshes, scoring alerts and status changes do not grant permission to preempt live sports. Supplemental plugins rotate only when the multisport scheduler permits non-live content.
+- **Big Green Monster is a different category:** adapt it as an alternative **MLB game renderer**, not a supplemental Bullpen interruption. It may render only the MLB game selected by the universal scheduler, within that game's allotted slot and applicable live/pregame/final display policy. It cannot replace a live game of another sport.
+- Preserve the existing MLB Classic/default renderer as an option, with configurable alternative layout selection; do not automatically replace it.
+- Add regression coverage for cross-sport live-game suppression and for Big Green Monster's restriction to selected MLB game slots before activating either integration.
