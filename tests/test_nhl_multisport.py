@@ -204,6 +204,24 @@ class MultiSportTests(unittest.TestCase):
         self.router.frame()
         self.assertEqual(slot.calls, 4)
 
+    def test_bullpen_health_reports_quarantine_and_reset(self):
+        class Slot:
+            def frame(self, **kwargs):
+                return None
+
+        slot = Slot()
+        self.router.set_bullpen_slots((slot,))
+        self.assertEqual(self.router.bullpen_health(),
+                         ({"slot": 0, "failures": 0, "status": "healthy"},))
+        self.router._bullpen_failures[0] = 1
+        self.assertEqual(self.router.bullpen_health()[0]["status"], "degraded")
+        self.router._bullpen_failures[0] = 3
+        snapshot = self.router.bullpen_health()
+        self.assertEqual(snapshot[0]["status"], "quarantined")
+        self.assertEqual(snapshot[0]["failures"], 3)
+        self.router.set_bullpen_slots((slot,))
+        self.assertEqual(self.router.bullpen_health()[0]["status"], "healthy")
+
     def test_default_is_mlb(self):
         self.assertEqual(self.router.active_sport, "mlb")
         self.assertEqual(self.router.frame(), "MLB")
