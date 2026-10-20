@@ -39,4 +39,4 @@ def install_reviewed_github_plugin(source: str, commit: str, plugin_id: str,
         manifest = parse_manifest(json.loads(manifest_file.read_text(encoding="utf-8")))
         if manifest.plugin_id != plugin_id:
             raise ManifestError("reviewed plugin identity changed")
-        return install_local_plugin(package, root, registry, canonical, commit)
+        return install_local_plugin(package, root, registry, source if subpath else canonical, commit)
