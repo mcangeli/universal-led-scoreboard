@@ -245,21 +245,20 @@ class MultiSportRenderer:
         renderer = self._renderer(sport)
         # Global eligibility: no supplemental Bullpen screen may interrupt
         # any live game, including a game from a different sport.
-        if not self._live_sports():
-            with self._lock:
-                plugin_slots = self.bullpen_slots
-                interval = self._interval
-                started = self._started
-            if plugin_slots:
-                slot_number = int(max(0.0, self.clock() - started) // interval)
-                # Reserve the first slot for existing ULS content. This
-                # keeps supplemental screens from starving normal rotation.
-                plugin_index = slot_number % (len(plugin_slots) + 1) - 1
-                if plugin_index >= 0:
-                    candidate = plugin_slots[plugin_index].frame(
-                        live_games=False, selected=True, now=self.clock())
-                    if candidate is not None:
-                        return candidate
+        with self._lock:
+            plugin_slots = self.bullpen_slots
+            interval = self._interval
+            started = self._started
+        if plugin_slots and not self._live_sports():
+            slot_number = int(max(0.0, self.clock() - started) // interval)
+            # Reserve the first slot for existing ULS content. This
+            # keeps supplemental screens from starving normal rotation.
+            plugin_index = slot_number % (len(plugin_slots) + 1) - 1
+            if plugin_index >= 0:
+                candidate = plugin_slots[plugin_index].frame(
+                    live_games=False, selected=True, now=self.clock())
+                if candidate is not None:
+                    return candidate
         # Live games suppress standings; scheduled pregame games do not.
         # Alternate standings with pregame/news content when both exist.
         idle_news_slot = False
