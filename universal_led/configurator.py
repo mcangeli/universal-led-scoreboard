@@ -1785,13 +1785,13 @@ def main():
     from .mlb_score_alerts import MLBRunObserver
     mlb_run_observer = MLBRunObserver(scoring_alerts, lambda: renderer.settings()['mlb']['favorite_teams'])
     feed.on_games = mlb_run_observer.observe
-    from .score_change_observer import ScoreChangeObserver
-    nba_score_observer = ScoreChangeObserver(scoring_alerts, 'nba', 'NBA', 'SCORE')
-    wnba_score_observer = ScoreChangeObserver(scoring_alerts, 'wnba', 'WNBA', 'SCORE')
+    from .score_change_observer import BasketballMomentObserver
+    nba_score_observer = BasketballMomentObserver(scoring_alerts, 'nba', 'NBA')
+    wnba_score_observer = BasketballMomentObserver(scoring_alerts, 'wnba', 'WNBA')
     nba_feed.on_games = lambda games: (nba_score_observer.observe(games, favorite_teams=nba_renderer.favorite_teams),
-                                       nba_renderer._observe_lead_changes(games), observe_finals('nba', games))
+                                       observe_finals('nba', games))
     wnba_feed.on_games = lambda games: (wnba_score_observer.observe(games, favorite_teams=wnba_renderer.favorite_teams),
-                                        wnba_renderer._observe_lead_changes(games), observe_finals('wnba', games))
+                                        observe_finals('wnba', games))
     from .soccer_data import SoccerFeed, fetch_scores
     from .soccer_runtime import BackgroundSoccerFeed
     from .soccer_engine import ConfiguredSoccerRenderer
