@@ -962,7 +962,7 @@ function renderUpdateBranches(){
  const selected=updateBranchUserSelected?picker.value:data.branch;
  const showAll=document.getElementById('update-show-all').checked;
  const branches=data.branches||[data.branch];
- const releaseMatch=/^(feature|release)\/(\d+\.\d+)/.exec(data.branch);
+ const releaseMatch=new RegExp('^(feature|release)/([0-9]+[.][0-9]+)').exec(data.branch);
  const relevant=branches.filter(name=>name===data.branch||name==='main'||name==='master'||(releaseMatch&&name.startsWith(releaseMatch[1]+'/'+releaseMatch[2]+'.')));
  const visible=showAll?branches:relevant;
  picker.replaceChildren();
