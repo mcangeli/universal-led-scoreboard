@@ -35,7 +35,7 @@ For a deliberate candidate-branch installation, check out that branch and pass t
 
 The installer will prompt for an administrator password (minimum 12 characters), execute the tests, install restricted dashboard restart/update helpers, and enable system services. After installation, the System page provides **Check for Updates** and **Install Update** controls with a persisted update log. Dashboard updates have been validated on the existing Pi 3 installation; fresh-image emulator provisioning has now been verified on Raspberry Pi 5, while physical-driver provisioning remains to be checked. The physical mode compiles the RGB matrix driver and uses default mapping `adafruit-hat`, brightness `40`, GPIO slowdown `4`. These defaults are hardware-specific and must be checked before physical testing. Keep the panel's power supply disconnected while assembling wiring.
 
-Older installations may require a one-time service migration. Do not use migration tooling for a fresh image; the supported installer handles new installations.
+Legacy user-service installation and staged cutover scripts were retired in v0.9 development. Use `scripts/install-system.sh` for fresh installations. Existing system-service installations should use the dashboard updater; older user-service installations require a manual migration plan and backup rather than running retired scripts.
 
 ## Known-good deployed layout (existing installations)
 
