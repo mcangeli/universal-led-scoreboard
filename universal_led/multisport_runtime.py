@@ -202,7 +202,12 @@ class MultiSportRenderer:
         if self.scoring_alerts is not None and self.alert_renderer is not None:
             event = self.scoring_alerts.next_alert(self.clock())
             if event is not None:
-                return self.alert_renderer(event)
+                try:
+                    return self.alert_renderer(event)
+                except Exception:
+                    # A failed render must not consume an unseen alert slot.
+                    self.scoring_alerts.render_failed(event)
+                    raise
         # Final handoffs use a dedicated game renderer contract. Never render
         # an unrelated live game as a final or count repeated frame refreshes
         # as separate display slots.
