@@ -107,7 +107,9 @@ class MultiSportTests(unittest.TestCase):
         self.mlb.game = lambda: SimpleNamespace(status="scheduled")
         self.nhl.game = lambda: SimpleNamespace(status="final")
         self.router.set_bullpen_slots((Slot(),))
-        self.assertEqual(self.router.frame(), "NHL")
+        # The normal scheduler selects MLB at this slot; plugin fallback
+        # must preserve that selection rather than choosing another sport.
+        self.assertEqual(self.router.frame(), "MLB")
 
     def test_default_is_mlb(self):
         self.assertEqual(self.router.active_sport, "mlb")
