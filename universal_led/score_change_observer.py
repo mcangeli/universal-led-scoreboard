@@ -76,7 +76,7 @@ class NHLGoalObserver(ScoreChangeObserver):
 
 
     def _should_announce(self, game):
-        # Intermission and shootout scoreboard changes are not live-play goals.
-        # The normal snapshot update still establishes the next baseline.
-        return not (getattr(game, "intermission", False) or
-                    getattr(game, "shootout", False))
+        # A legitimate late goal may reach the score endpoint after the
+        # clock already switches to intermission. Do not discard that delta.
+        # Shootout score changes are not ordinary goal announcements.
+        return not getattr(game, "shootout", False)
