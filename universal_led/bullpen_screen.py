@@ -30,6 +30,14 @@ class BullpenScreen:
         status = self.data.update()
         if hasattr(status, "ok") and not status.ok():
             return None
+        return self.render_cached()
+
+    def render_cached(self) -> Framebuffer | None:
+        """Draw already-refreshed plugin data without invoking network updates.
+
+        A background worker may call data.update() separately. Callers must
+        synchronize access to mutable plugin data while refreshing/drawing.
+        """
         if not self.renderer.can_render(self.data):
             return None
         canvas = BullpenCanvas()
