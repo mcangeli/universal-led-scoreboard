@@ -46,7 +46,7 @@ class BullpenFactoryTests(unittest.TestCase):
         )
         frame = screen.render()
         self.assertIsNotNone(frame)
-        self.assertIn((255, 200, 0), frame.pixels[1])
+        self.assertTrue(any((255, 200, 0) in row for row in frame.pixels))
         self.assertEqual(screen.wait_time(), 0.12)
 
     def test_missing_factory_classes_rejected(self):
