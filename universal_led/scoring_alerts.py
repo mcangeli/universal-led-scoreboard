@@ -4,7 +4,7 @@ Adapters submit confirmed provider event IDs; no score-difference guesses.
 The first observation of each game establishes a baseline.
 """
 from collections import deque
-from dataclasses import dataclass
+from dataclasses import asdict, dataclass
 
 
 @dataclass(frozen=True)
@@ -112,6 +112,50 @@ class ScoringAlerts:
                 del self._pending[index]
                 self._queued_at.pop(dropped, None)
         return accepted
+
+    def export_pending(self, *, now_monotonic, now_epoch):
+        """Serialize only queued, not active, alerts with restart-safe UTC ages."""
+        rows = []
+        for favorite, event in self._pending:
+            queued = self._queued_at.get(event)
+            if queued is None:
+                continue
+            age = max(0, now_monotonic - queued)
+            if age <= self.MAX_AGE_SECONDS:
+                rows.append({"favorite": favorite, "event": asdict(event),
+                             "queued_epoch": now_epoch - age})
+        return {"version": 1, "pending": rows}
+
+    def import_pending(self, snapshot, *, now_monotonic, now_epoch):
+        """Restore fresh pending events; reject malformed or future timestamps.
+
+        Caller must supply a trusted snapshot and should import before polling.
+        Never restore already-active alerts, which may have been displayed.
+        """
+        if not self.enabled or not isinstance(snapshot, dict) or snapshot.get("version") != 1:
+            return 0
+        rows = snapshot.get("pending")
+        if not isinstance(rows, list):
+            return 0
+        restored = 0
+        for row in rows[:self.MAX_PENDING]:
+            if not isinstance(row, dict) or type(row.get("favorite")) is not bool:
+                continue
+            stamp = row.get("queued_epoch")
+            if type(stamp) not in (int, float) or not 0 <= now_epoch - stamp <= self.MAX_AGE_SECONDS:
+                continue
+            try:
+                event = ScoreEvent(**row["event"])
+            except (KeyError, TypeError, ValueError):
+                continue
+            key = (event.sport, event.league, event.game_id)
+            self._seen.setdefault(key, set()).add(event.event_id)
+            if event == self._active or any(existing == event for _, existing in self._pending):
+                continue
+            self._pending.append((row["favorite"], event))
+            self._queued_at[event] = now_monotonic - (now_epoch - stamp)
+            restored += 1
+        return restored
 
     def baseline(self, sport, league, game_id, events):
         """Ingest confirmed IDs without announcing them (halftime/final)."""
