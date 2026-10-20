@@ -14,6 +14,33 @@ class BasketballMomentTests(unittest.TestCase):
         self.alerts=ScoringAlerts(enabled=True,scope='all')
         self.observer=BasketballMomentObserver(self.alerts,'wnba','WNBA')
 
+    def test_final_keeps_queued_moment(self):
+        self.observer.observe([game(10,12)])
+        self.observer.observe([game(13,12)])
+        final = game(13,12)
+        final.status = 'final'
+        self.observer.observe([final])
+        self.assertEqual(self.alerts.next_alert(0).kind, 'LEAD')
+        self.assertIsNone(self.alerts.next_alert(8))
+
+    def test_final_keeps_active_moment(self):
+        self.observer.observe([game(10,12)])
+        self.observer.observe([game(13,12)])
+        self.assertEqual(self.alerts.next_alert(0).kind, 'LEAD')
+        final = game(13,12)
+        final.status = 'final'
+        self.observer.observe([final])
+        self.assertEqual(self.alerts.next_alert(7).kind, 'LEAD')
+        self.assertIsNone(self.alerts.next_alert(8))
+
+    def test_canceled_game_still_drops_moment(self):
+        self.observer.observe([game(10,12)])
+        self.observer.observe([game(13,12)])
+        canceled = game(13,12)
+        canceled.status = 'canceled'
+        self.observer.observe([canceled])
+        self.assertIsNone(self.alerts.next_alert(0))
+
     def test_ordinary_baskets_are_silent(self):
         self.observer.observe([game(10,12)])
         self.assertEqual(self.observer.observe([game(12,12)]),())
