@@ -15,6 +15,14 @@ The repository distributes its own [GPLv3 license](../LICENSE). That alone does 
 | Sports data, news/RSS and weather providers | Live external data, names and branding | Provider terms, display/redistribution restrictions and trademark review pending |
 | Fonts, team/league logos and artwork | May have independent copyright/trademark restrictions | Inventory files and source/provenance before redistribution |
 
+## Initial source-tree findings (October 19, 2026)
+
+- The `universal_led/` directory contains Python source modules; the initial directory inventory did not expose a standalone bundled logo/image/font directory. **This is not a full recursive asset audit.**
+- `universal_led/mlb_classic.py` explicitly describes its MLB 64×32 layout as an independent clean-room implementation rather than a port of upstream artwork. This is an author statement, not independent proof of provenance.
+- `universal_led/mlb_team_marks.py` describes its compact letterform marks as original symbolic marks rather than official MLB logos. The source uses team abbreviations and colors, so trademark/branding review remains relevant.
+- `scripts/install-system.sh` provisions a physical matrix mode, but installed driver sources and their notices must be checked on a device or in the driver provisioning scripts. A repository directory listing alone does not establish the exact driver license/version deployed.
+- No conclusion has yet been drawn about upstream code similarity, third-party Python packages, provider terms, or graphics embedded as source constants. These require file-level review.
+
 ## Closeout procedure
 
 1. Search source and packaged assets for copied upstream code, included third-party files, fonts, team badges and logos. Record exact file paths and provenance.
