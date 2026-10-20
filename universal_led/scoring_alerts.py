@@ -166,7 +166,12 @@ class ScoringAlerts:
             cutoff = self._clock() - self.MAX_AGE_SECONDS
             self._pending = deque((fav, event) for fav, event in self._pending
                                   if self._queued_at.get(event, self._clock()) >= cutoff)
+            # Retain timestamps only for queued events, not historical IDs.
+            retained = {event for _, event in self._pending}
+            self._queued_at = {event: stamp for event, stamp in self._queued_at.items()
+                               if event in retained}
         if self._active is None and self._pending:
             self._active_favorite, self._active = self._pending.popleft()
+            self._queued_at.pop(self._active, None)
             self._expires = None if defer_start else now + self.seconds
         return self._active
