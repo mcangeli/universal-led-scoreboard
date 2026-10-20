@@ -62,6 +62,25 @@ class MultiSportAlertQueueTests(unittest.TestCase):
         now[0] = 6
         self.assertEqual(board.frame(), "NORMAL")
 
+    def test_alert_timer_begins_after_successful_render(self):
+        now = [0.]
+        alerts = ScoringAlerts(enabled=True, scope="all", seconds=3)
+        alerts.baseline("nhl", "NHL", "1", ())
+        alerts.observe("nhl", "NHL", "1", (event("nhl", "NHL", "1", "BOS", "goal"),))
+        def slow_draw(e):
+            now[0] += 2
+            return e.event_id
+        board = MultiSportRenderer(StubSport("NORMAL"), StubSport("OTHER"),
+                                  clock=lambda: now[0], scoring_alerts=alerts,
+                                  alert_renderer=slow_draw)
+        self.assertEqual(board.frame(), "goal")
+        self.assertEqual(now[0], 2)
+        # The three-second slot begins at successful render (t=2), not t=0.
+        now[0] = 4
+        self.assertEqual(board.frame(), "goal")
+        now[0] = 5
+        self.assertEqual(board.frame(), "NORMAL")
+
     def test_failed_alert_render_is_retried_for_full_duration(self):
         now = [0.]
         calls = [0]
