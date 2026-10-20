@@ -1,6 +1,6 @@
 # v0.8.0 Unified Dashboard Release Checklist
 
-**Status:** feature-branch release candidate; **not merged or tagged**. Updated October 19, 2026.
+**Status:** feature-branch release candidate; **not merged or tagged**. Updated October 20, 2026.
 
 This is the authoritative v0.8.0 acceptance checklist. Earlier version-specific checklists are historical records and do not automatically certify this release.
 
@@ -14,11 +14,12 @@ This is the authoritative v0.8.0 acceptance checklist. Earlier version-specific 
 
 ## Verified evidence
 
-- [x] User-confirmed Raspberry Pi updater preflight: **1,614 tests passed, 15 skipped** (October 19, 2026), after Content & News navigation and failed-load regressions.
+- [x] User-confirmed Raspberry Pi updater preflight: **1,647 tests passed, 15 skipped** (October 20, 2026), installed commit `f765ff2bd9c8f04525ad7d334db2421efc4a10d0`; mandatory Node.js dashboard syntax check included.
 - [x] Portable backup export and selective import tested; configuration restored and scoreboard services reloaded.
 - [x] Configuration archive transferred from Pi 3 to Pi 5; differing settings updated as expected.
 - [x] Export archive filename includes hostname; correction passed user checks.
 - [x] Dashboard updater rejects failing candidate tests before modifying installed checkout (observed during development).
+- [x] Dashboard navigation restored after JavaScript syntax regression; user confirmed responsive site. Installer now installs Node.js and preflight requires JavaScript parsing.
 - [x] Previous Pi 5 Trixie fresh-card **emulator** installation and reboot validated; this is not clean physical-install validation.
 - [x] Prior user observations of EPL live/halftime/second-half/stoppage/final and Pi 3 multi-sport live priority are documented in the v0.7.0 checklist. These are prior acceptance evidence, not proof of every v0.8.0 provider/event combination.
 
