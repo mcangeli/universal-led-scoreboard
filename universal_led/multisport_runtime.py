@@ -255,8 +255,12 @@ class MultiSportRenderer:
             # keeps supplemental screens from starving normal rotation.
             plugin_index = slot_number % (len(plugin_slots) + 1) - 1
             if plugin_index >= 0:
-                candidate = plugin_slots[plugin_index].frame(
-                    live_games=False, selected=True, now=self.clock())
+                try:
+                    candidate = plugin_slots[plugin_index].frame(
+                        live_games=False, selected=True, now=self.clock())
+                except Exception:
+                    # Plugin failures must not interrupt normal sport rendering.
+                    candidate = None
                 if candidate is not None:
                     return candidate
         # Live games suppress standings; scheduled pregame games do not.
