@@ -67,6 +67,10 @@ These are verified source-code references, not legal conclusions or current prov
 
 **Release consequence:** A personal hobby scoreboard and a public/commercial demo are different use cases. Do not infer permitted commercial redistribution from successful requests or an open-source ULS code license. Provider permissions, trademarks and content licenses are independent of GPLv3. These findings document risks; they are not legal clearance.
 
+## Published endpoint inventory
+
+The [data sources and endpoint inventory](DATA-SOURCES.md) lists current score/schedule and standings URLs by sport, weather and news endpoints, and the explicit notice that external services may change without notice and users access them at their own discretion and responsibility. This improves transparency but **does not** resolve provider permission, embedded asset provenance, or distribution obligations.
+
 ## Closeout procedure
 
 1. Search source and packaged assets for copied upstream code, included third-party files, fonts, team badges and logos. Record exact file paths and provenance.
