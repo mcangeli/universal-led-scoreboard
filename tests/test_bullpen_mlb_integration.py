@@ -54,12 +54,15 @@ class BullpenMLBIntegrationTests(unittest.TestCase):
             self.assertEqual(ConfiguredMLBRenderer.frame(renderer), "PREGAME")
         self.assertEqual(slot.calls, [])
 
-    def test_empty_schedule_can_display_plugin(self):
+    def test_empty_schedule_never_bypasses_universal_scheduler(self):
         renderer, slot = self.renderer(None, False)
         with patch("universal_led.runtime_settings.read_config", return_value={"teams": {}, "scoreboard": {}}), \
-             patch("universal_led.runtime_settings.load_time_weather", side_effect=AssertionError("should return plugin first")):
-            self.assertEqual(ConfiguredMLBRenderer.frame(renderer), "PLUGIN")
-        self.assertEqual(slot.calls, [{"live_games": False, "selected": True}])
+             patch("universal_led.runtime_settings.load_time_weather", return_value={"clock_enabled": False, "weather_enabled": False}), \
+             patch("universal_led.runtime_settings.current_countdown", return_value=None), \
+             patch("universal_led.runtime_settings.choose_screen", return_value="splash"), \
+             patch("universal_led.runtime_settings.splash", return_value="SPLASH"):
+            self.assertEqual(ConfiguredMLBRenderer.frame(renderer), "SPLASH")
+        self.assertEqual(slot.calls, [])
 
 
 if __name__ == "__main__":
