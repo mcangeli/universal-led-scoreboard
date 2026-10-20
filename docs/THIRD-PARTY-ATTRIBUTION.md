@@ -39,6 +39,17 @@ The repository distributes its own [GPLv3 license](../LICENSE). That alone does 
 - Review each provider's current terms, permitted caching/rate limits, attribution and branding restrictions before release. NHL and ESPN feed access should not be represented as an official partnership or endorsement.
 - Upstream scoreboard inspirations remain acknowledged, but source-level derivation and copied-code provenance have not been established. Do not infer either copying or independent creation solely from similar score layouts.
 
+## Weather and headlines provider inventory (October 20, 2026)
+
+| Source | Code location | Release concern |
+| --- | --- | --- |
+| Open-Meteo geocoding and forecast | `universal_led/weather_feed.py` | Confirm noncommercial/commercial usage conditions, attribution, and request limits for the deployment context |
+| OpenWeatherMap geocoding, current weather and forecast | `universal_led/weather_openweathermap.py` | User-supplied API key is required; confirm account tier, display attribution and caching/redistribution conditions |
+| MLB public RSS news | `universal_led/mlb_news.py` | Feed visibility does not establish rights to redistribute headline text or MLB branding |
+| User-configured RSS/Atom | `universal_led/news_feeds.py` | Permissions vary by publisher; preserve source identity and avoid implying universal redistribution rights |
+
+These are verified source-code references, not legal conclusions or current provider terms. ULS should document source attribution and responsible rate limits without representing itself as an official service of any league or weather provider. Do not mark provider-terms review complete without examining authoritative current terms.
+
 ## Closeout procedure
 
 1. Search source and packaged assets for copied upstream code, included third-party files, fonts, team badges and logos. Record exact file paths and provenance.
