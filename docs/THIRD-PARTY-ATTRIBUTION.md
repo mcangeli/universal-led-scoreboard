@@ -32,6 +32,13 @@ The repository distributes its own [GPLv3 license](../LICENSE). That alone does 
 - Physical Pi 3 operator check (October 20, 2026): upstream driver `14464b3` (2026-10-10), clean working tree, `uls-matrix.service` enabled/active, frame fresh at 1 second, web health OK. Treat this as a **known-working Pi 3 candidate** for a future pinned install, not cross-device certification. Resolve its full commit SHA and check license notices before pinning; do not silently replace installed drivers.
 - No redistribution clearance is implied by the absence of binary assets. Code lineage, embedded fonts, provider terms, and notices still require inspection.
 
+## Source-level font and feed findings (October 20, 2026)
+
+- `universal_led/display.py` defines a 5×7 pixel glyph dictionary inline. No external font file is bundled, but the glyph designs' provenance is not independently established. Other font tables or encoded assets still require a recursive source-content scan.
+- Confirmed source endpoints include MLB StatsAPI (`universal_led/mlb_data.py`), NHL API (`universal_led/nhl_feed.py`), and ESPN-hosted NBA and NFL scoreboards (`universal_led/nba_feed.py`, `universal_led/nfl_feed.py`). `universal_led/news_feeds.py` consumes configurable RSS/Atom feeds. These are observations of code endpoints, **not** findings that commercial or public redistribution is authorized.
+- Review each provider's current terms, permitted caching/rate limits, attribution and branding restrictions before release. NHL and ESPN feed access should not be represented as an official partnership or endorsement.
+- Upstream scoreboard inspirations remain acknowledged, but source-level derivation and copied-code provenance have not been established. Do not infer either copying or independent creation solely from similar score layouts.
+
 ## Closeout procedure
 
 1. Search source and packaged assets for copied upstream code, included third-party files, fonts, team badges and logos. Record exact file paths and provenance.
