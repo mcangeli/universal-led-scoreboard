@@ -93,6 +93,26 @@ class ScoringAlertTests(unittest.TestCase):
         self.assertEqual(alerts.next_alert(14), event())
         self.assertIsNone(alerts.next_alert(15))
 
+    def test_eviction_does_not_leak_queue_timestamps(self):
+        now = [0.]
+        alerts = ScoringAlerts(enabled=True, scope="all")
+        alerts.set_clock(lambda: now[0])
+        alerts.baseline("soccer", "EPL", "42", ())
+        burst = [event(eid=str(i)) for i in range(30)]
+        alerts.observe("soccer", "EPL", "42", burst)
+        self.assertEqual(len(alerts._queued_at), alerts.MAX_PENDING)
+        alerts.cancel_game("soccer", "EPL", "42")
+        self.assertEqual(alerts._queued_at, {})
+
+    def test_disable_clears_queue_timestamps(self):
+        alerts = ScoringAlerts(enabled=True, scope="all")
+        alerts.set_clock(lambda: 0.)
+        alerts.baseline("soccer", "EPL", "42", ())
+        alerts.observe("soccer", "EPL", "42", [event()])
+        self.assertEqual(len(alerts._queued_at), 1)
+        alerts.configure(enabled=False)
+        self.assertEqual(alerts._queued_at, {})
+
     def test_burst_queue_is_bounded_and_keeps_favorite(self):
         alerts = ScoringAlerts(enabled=True, scope="all", seconds=1)
         alerts.baseline("soccer", "EPL", "42", ())
