@@ -1,0 +1,48 @@
+"""Lifecycle adapter for saving pending scoring alerts on a bounded cadence."""
+import threading
+import time
+
+from .scoring_alert_store import ScoringAlertStore
+
+
+class ScoringAlertPersistence:
+    def __init__(self, alerts, path, *, monotonic=time.monotonic, epoch=time.time,
+                 interval=5):
+        self.alerts = alerts
+        self.store = ScoringAlertStore(path)
+        self.monotonic = monotonic
+        self.epoch = epoch
+        self.interval = interval
+        self._stop = threading.Event()
+        self._thread = None
+
+    def restore(self):
+        return self.store.restore(self.alerts, monotonic=self.monotonic(),
+                                  epoch=self.epoch())
+
+    def save(self):
+        self.store.save(self.alerts, monotonic=self.monotonic(), epoch=self.epoch())
+
+    def start(self):
+        if self._thread is not None:
+            return
+        self._thread = threading.Thread(target=self._run, daemon=True,
+                                        name="uls-scoring-alert-persistence")
+        self._thread.start()
+
+    def _run(self):
+        while not self._stop.wait(self.interval):
+            try:
+                self.save()
+            except OSError:
+                # Persistence failures must not stop the live scoreboard.
+                continue
+
+    def stop(self):
+        self._stop.set()
+        if self._thread is not None:
+            self._thread.join(timeout=2)
+        try:
+            self.save()
+        except OSError:
+            pass
