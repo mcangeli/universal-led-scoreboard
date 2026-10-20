@@ -69,6 +69,7 @@ class ScoringAlerts:
         self.seconds = seconds
         if not enabled:
             self._pending.clear()
+            self._queued_at.clear()
             self._active = None
             self._expires = None
 
