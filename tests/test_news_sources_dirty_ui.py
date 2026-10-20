@@ -11,8 +11,17 @@ class NewsSourcesDirtyUITests(unittest.TestCase):
 
     def test_navigation_warns_before_leaving_unsaved_sources(self):
         html=configurator.HTML
-        self.assertIn("if(name!=='news'&&newsSourcesDirty&&!confirm('You have unsaved news source changes.",html)
+        self.assertIn("if(name!=='news'&&(newsSourcesDirty||newsSettingsDirty())&&!confirm('You have unsaved Content & News changes.",html)
         self.assertIn("if(name==='news'){if(!newsSourcesDirty)loadNewsSources();",html)
+
+    def test_other_news_controls_track_unsaved_changes(self):
+        html=configurator.HTML
+        for group in ('automatic','scoring','timing','interruptions','standings'):
+            with self.subTest(group=group):
+                self.assertIn("newsGroupCanLoad('"+group+"')",html)
+                self.assertIn("newsGroupLoaded('"+group+"')",html)
+                self.assertIn("newsGroupSaved('"+group+"')",html)
+        self.assertIn('newsSettingsDirty()',html)
 
     def test_edit_add_remove_and_save_update_dirty_state(self):
         html=configurator.HTML
