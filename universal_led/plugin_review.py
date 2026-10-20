@@ -13,10 +13,12 @@ from pathlib import Path
 from .plugin_download import download_github_plugin
 from .plugin_manifest import parse_manifest
 from .plugin_registry import parse_github_source
+from .plugin_source import parse_plugin_source
 
 
 def inspect_github_plugin(source_url: str) -> dict:
-    owner, repo = parse_github_source(source_url)
+    canonical, subpath = parse_plugin_source(source_url)
+    owner, repo = parse_github_source(canonical)
     url = f"https://api.github.com/repos/{owner}/{repo}/commits/HEAD"
     request = urllib.request.Request(url, headers={
         "User-Agent": "ULS-Plugin-Installer/0.9",
@@ -29,6 +31,7 @@ def inspect_github_plugin(source_url: str) -> dict:
     commit = json.loads(raw)["sha"]
     with tempfile.TemporaryDirectory(prefix="uls-plugin-review-") as tmp:
         package = download_github_plugin(source_url, commit, Path(tmp) / "package")
+        package = package / subpath if subpath else package
         manifest_file = package / "uls-plugin.json"
         if manifest_file.is_symlink() or not manifest_file.is_file():
             raise ValueError("GitHub repository must contain uls-plugin.json at its root")
@@ -39,7 +42,7 @@ def inspect_github_plugin(source_url: str) -> dict:
             "id": manifest.plugin_id, "name": manifest.name,
             "version": manifest.version, "description": manifest.description,
             "capabilities": list(manifest.capabilities),
-            "source": f"https://github.com/{owner}/{repo}",
+            "source": source_url if subpath else canonical,
             "commit": commit,
             "enabled": False,
         }
