@@ -6,7 +6,7 @@ from pathlib import Path
 
 from universal_led.plugin_install import install_local_plugin
 from universal_led.plugin_manifest import ManifestError
-from universal_led.plugin_registry import read_registry
+from universal_led.plugin_registry import read_registry, set_plugin_enabled, uninstall_plugin
 
 
 MANIFEST = {
@@ -51,6 +51,25 @@ class LocalPluginInstallTests(unittest.TestCase):
             self.install()
         self.assertFalse((self.root / "demo-plugin").exists())
         self.assertFalse(self.registry.exists())
+
+    def test_uninstall_disabled_plugin_preserves_external_data(self):
+        self.install()
+        data = self.base / "plugin-data"
+        data.mkdir()
+        (data / "preferences.json").write_text("{}")
+        removed = uninstall_plugin(self.root, self.registry, "demo-plugin")
+        self.assertEqual(removed["id"], "demo-plugin")
+        self.assertFalse((self.root / "demo-plugin").exists())
+        self.assertEqual(read_registry(self.registry), {})
+        self.assertTrue((data / "preferences.json").exists())
+
+    def test_uninstall_refuses_enabled_plugin(self):
+        self.install()
+        set_plugin_enabled(self.registry, "demo-plugin", True)
+        with self.assertRaises(ManifestError):
+            uninstall_plugin(self.root, self.registry, "demo-plugin")
+        self.assertTrue((self.root / "demo-plugin").exists())
+        self.assertTrue(read_registry(self.registry)["demo-plugin"]["enabled"])
 
     def test_invalid_source_does_not_modify_installation(self):
         with self.assertRaises(ManifestError):
