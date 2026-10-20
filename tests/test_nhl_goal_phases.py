@@ -1,4 +1,4 @@
-"""NHL goal alerts ignore intermission and shootout scoreboard changes."""
+"""NHL goals arriving at intermission still announce; shootout scores do not."""
 import unittest
 from types import SimpleNamespace
 from universal_led.score_change_observer import NHLGoalObserver, ScoreChangeObserver
@@ -10,11 +10,11 @@ def game(score, **kwargs):
 
 
 class NHLGoalPhaseTests(unittest.TestCase):
-    def test_intermission_score_change_is_not_announced_later(self):
+    def test_late_goal_at_intermission_is_announced_once(self):
         alerts=ScoringAlerts(enabled=True,scope='all')
         observer=NHLGoalObserver(alerts)
         observer.observe([game(0)])
-        self.assertEqual(observer.observe([game(1,intermission=True)]),())
+        self.assertEqual(len(observer.observe([game(1,intermission=True)])),1)
         self.assertEqual(observer.observe([game(1,intermission=False)]),())
         self.assertEqual(len(observer.observe([game(2,intermission=False)])),1)
 
