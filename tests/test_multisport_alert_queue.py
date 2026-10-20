@@ -62,6 +62,33 @@ class MultiSportAlertQueueTests(unittest.TestCase):
         now[0] = 6
         self.assertEqual(board.frame(), "NORMAL")
 
+    def test_stale_pending_goal_expires_before_display(self):
+        now = [0.]
+        alerts = ScoringAlerts(enabled=True, scope="all", seconds=4)
+        board = MultiSportRenderer(StubSport("NORMAL"), StubSport("OTHER"),
+                                  clock=lambda: now[0], scoring_alerts=alerts,
+                                  alert_renderer=lambda e: e.event_id)
+        alerts.baseline("nhl", "NHL", "1", ())
+        alerts.observe("nhl", "NHL", "1", (event("nhl", "NHL", "1", "BOS", "old"),))
+        now[0] = 181
+        self.assertEqual(board.frame(), "NORMAL")
+
+    def test_recent_goal_survives_while_older_goal_expires(self):
+        now = [0.]
+        alerts = ScoringAlerts(enabled=True, scope="all", seconds=4)
+        board = MultiSportRenderer(StubSport("NORMAL"), StubSport("OTHER"),
+                                  clock=lambda: now[0], scoring_alerts=alerts,
+                                  alert_renderer=lambda e: e.event_id)
+        alerts.baseline("nhl", "NHL", "1", ())
+        alerts.observe("nhl", "NHL", "1", (event("nhl", "NHL", "1", "BOS", "old"),))
+        now[0] = 170
+        alerts.observe("nhl", "NHL", "1", (
+            event("nhl", "NHL", "1", "BOS", "old"),
+            event("nhl", "NHL", "1", "BOS", "new")))
+        now[0] = 181
+        self.assertEqual(board.frame(), "new")
+        self.assertEqual(len(alerts._queued_at), 0)
+
     def test_alert_timer_begins_after_successful_render(self):
         now = [0.]
         alerts = ScoringAlerts(enabled=True, scope="all", seconds=3)
