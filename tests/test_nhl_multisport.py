@@ -194,6 +194,7 @@ class MultiSportTests(unittest.TestCase):
         self.nhl.game = lambda: SimpleNamespace(status="final")
         slot = CrashingSlot()
         self.router.set_bullpen_slots((slot,))
+        now[0] += 12  # Enter the plugin slot after rotation starts.
         for _ in range(5):
             self.assertEqual(self.router.frame(), "MLB")
         self.assertEqual(slot.calls, 3)
