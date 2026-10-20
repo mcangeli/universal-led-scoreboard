@@ -43,6 +43,10 @@ This is the authoritative v0.8.0 acceptance checklist. Earlier version-specific 
 
 **Decision needed:** Whether the outstanding physical fresh-install and real rollback exercises are mandatory for v0.8.0 GA or will be accepted as documented limitations with a follow-up validation milestone. No approval has been assumed.
 
+## Additional operator installation feedback
+
+- [x] User reports that the recent v0.8.0 candidate version installs successfully (October 20, 2026). Installation method, device, exact installed commit and whether this was a fresh card were not specified; this is **not** evidence that the deferred fresh physical-mode Trixie installation gate is complete.
+
 ## Release-candidate exception acceptance (October 20, 2026)
 
 **User decision:** Approved preparing and shipping a **v0.8.0 release candidate with documented limitations**. This is not approval to represent the build as fully validated general availability, nor explicit authorization to merge into `main` or create the final `v0.8.0` tag.
