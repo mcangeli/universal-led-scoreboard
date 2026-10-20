@@ -24,6 +24,7 @@ This is the authoritative v0.8.0 acceptance checklist. Earlier version-specific 
 - [x] Dashboard authentication and session continuity manually verified on both Pis: refresh, page navigation, service restart, logout/login, and settings retained (October 20, 2026). Session expiry duration itself not manually elapsed.
 - [x] Content & News manual persistence workflow passed on both Pi 3 and Pi 5: unsaved warning, cancel, discard, save, service restart, reload and restoration of original setting (October 20, 2026).
 - [x] Pi 5 rollback helper structural regression checks passed (3 tests), web health passed, and working tree clean (October 20, 2026). This does not certify post-install failure recovery.
+- [x] Pi 5 isolated post-checkout failure simulation passed alongside structural checks (4 tests total, October 20, 2026); web health OK and Git clean. Shell command doubles prevent changes to actual services or Git. This is automated rollback-path evidence, not an end-to-end live rollback.
 - [x] Pi 5 persistent updater log and status inspected: `completed`, update `1435d4b` → `3ecdd15`, scoped dashboard/Wi-Fi helpers installed, sudoers checks passed, existing hotspot preserved, persistent settings reported untouched (October 20, 2026).
 - [x] Pi 3 physical driver inventory: `rpi-rgb-led-matrix` commit `14464b3`, clean checkout, matrix enabled/active and frame 1 second old, web healthy (October 20, 2026).
 - [x] Previous Pi 5 Trixie fresh-card **emulator** installation and reboot validated; this is not clean physical-install validation.
