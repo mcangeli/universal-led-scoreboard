@@ -28,10 +28,16 @@ class ConfiguredMLBRenderer:
         self.weather=weather
         self.opening_feed=MLBOpeningDayFeed()
         self.external_live_games = False
+        self.bullpen_slot = None  # Opt-in: host supplies a BullpenRotationSlot
         self._lock=threading.Lock()
         self._started=time.monotonic()
         self._supplemental_stride=1
         self._settings=load_settings(directory)
+
+    def set_bullpen_slot(self, slot):
+        """Attach or detach an explicitly configured Bullpen slot."""
+        with self._lock:
+            self.bullpen_slot = slot
 
     def settings(self):
         with self._lock:
@@ -137,6 +143,14 @@ class ConfiguredMLBRenderer:
         # Supplemental pages must not interrupt any eligible live MLB game,
         # even if the currently selected game is not live.
         if (game is None or game.status!='live') and not self.has_live_games():
+            with self._lock:
+                bullpen_slot = self.bullpen_slot
+            if bullpen_slot is not None:
+                # Only explicitly attached plugins participate. Existing
+                # game and supplemental rotation remains the default.
+                plugin_frame = bullpen_slot.frame(live_games=False, selected=True)
+                if plugin_frame is not None:
+                    return plugin_frame
             preferences=load_time_weather(self.directory)
             clock_enabled=preferences['clock_enabled'] and (Path(self.directory)/'time_weather.json').exists()
             snapshot=self.weather.snapshot() if preferences['weather_enabled'] and self.weather is not None else None
