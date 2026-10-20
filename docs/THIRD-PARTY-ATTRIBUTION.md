@@ -29,6 +29,7 @@ The repository distributes its own [GPLv3 license](../LICENSE). That alone does 
 - `universal_led/mlb_team_marks.py` contains inline pixel mark and sprite dictionaries. Its comments describe these as original symbolic marks; source ownership and trademark treatment remain subject to review.
 - `scripts/install-system.sh` clones `hzeller/rpi-rgb-led-matrix` into the installer user’s local source directory for physical mode. The driver is an externally installed dependency rather than a copied repository asset. The script does not pin a specific driver commit; reproducibility and installed-version provenance remain open.
 - `docs/RGB-MATRIX-DRIVER.md` identifies the driver as GPL-2.0-or-later and documents compatibility with GPLv3; verify against the precise upstream revision actually installed before declaring the license review complete.
+- Physical Pi 3 operator check (October 20, 2026): upstream driver `14464b3` (2026-10-10), clean working tree, `uls-matrix.service` enabled/active, frame fresh at 1 second, web health OK. Treat this as a **known-working Pi 3 candidate** for a future pinned install, not cross-device certification. Resolve its full commit SHA and check license notices before pinning; do not silently replace installed drivers.
 - No redistribution clearance is implied by the absence of binary assets. Code lineage, embedded fonts, provider terms, and notices still require inspection.
 
 ## Closeout procedure
