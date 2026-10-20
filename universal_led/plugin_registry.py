@@ -110,3 +110,50 @@ def set_plugin_enabled(path: str | Path, plugin_id: str, enabled: bool) -> dict:
         if os.path.exists(temp_path):
             os.unlink(temp_path)
     return updated
+
+
+def uninstall_plugin(plugin_root: str | Path, registry_path: str | Path, plugin_id: str) -> dict:
+    """Remove a disabled plugin package and registry entry; preserve external data.
+
+    Rename the package to a private staging directory first, then publish the
+    registry. On registry failure restore the original package directory.
+    """
+    import os
+    import shutil
+    import tempfile
+
+    root = Path(plugin_root)
+    registry = Path(registry_path)
+    if not root.is_dir() or root.is_symlink() or registry.is_symlink():
+        raise ManifestError("unsafe plugin installation paths")
+    entries = read_registry(registry)
+    if plugin_id not in entries:
+        raise ManifestError("plugin is not installed")
+    record = entries[plugin_id]
+    if record["enabled"]:
+        raise ManifestError("disable plugin before uninstalling")
+    package = root / plugin_id
+    if not package.is_dir() or package.is_symlink():
+        raise ManifestError("installed plugin package is missing or unsafe")
+    fd, tmpname = tempfile.mkstemp(prefix=".uls-registry-", dir=registry.parent)
+    staged = None
+    try:
+        del entries[plugin_id]
+        with os.fdopen(fd, "w", encoding="utf-8") as handle:
+            json.dump(entries, handle, indent=2, sort_keys=True)
+            handle.write("\n")
+            handle.flush()
+            os.fsync(handle.fileno())
+        staged = Path(tempfile.mkdtemp(prefix=".uls-remove-", dir=root))
+        package.rename(staged / plugin_id)
+        try:
+            os.replace(tmpname, registry)
+        except Exception:
+            (staged / plugin_id).rename(package)
+            raise
+    finally:
+        if os.path.exists(tmpname):
+            os.unlink(tmpname)
+        if staged is not None:
+            shutil.rmtree(staged, ignore_errors=True)
+    return record
