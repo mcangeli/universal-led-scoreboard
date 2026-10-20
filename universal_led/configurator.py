@@ -312,7 +312,7 @@ async function saveNewsSources(){
  for(const [index,source] of newsSources.entries()){
   const label='News source '+(index+1);
   if(typeof source.name!=='string'||!source.name.trim()){status.textContent=label+' needs a name.';return;}
-  if(typeof source.url!=='string'||!/^https?:\/\/[^\s/?#]+(?:[/?#][^\s]*)?$/i.test(source.url.trim())){status.textContent=label+' needs a valid HTTP or HTTPS URL.';return;}
+  if(typeof source.url!=='string'||!/^https?:[/][/][^\\s/?#]+(?:[/?#][^\\s]*)?$/i.test(source.url.trim())){status.textContent=label+' needs a valid HTTP or HTTPS URL.';return;}
   if(typeof source.category!=='string'||!source.category.trim()){status.textContent=label+' needs a category.';return;}
   if(!Number.isInteger(source.refresh_seconds)||source.refresh_seconds<60||source.refresh_seconds>86400){status.textContent=label+' refresh interval must be a whole number from 60 to 86400 seconds.';return;}
  }
