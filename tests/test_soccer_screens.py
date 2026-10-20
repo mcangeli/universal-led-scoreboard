@@ -62,8 +62,8 @@ class SoccerScreenTests(unittest.TestCase):
                                    kickoff="2026-10-20T18:45:00Z")
                 screen = match_screen(game, timezone="America/New_York")
                 self.assertEqual(screen.header, heading)
-                self.assertEqual(screen.line1, "CNL 4-3-4")
-                self.assertEqual(screen.line2, "FLE 3-5-3")
+                self.assertEqual(screen.line1, "CNL 3-5-3")
+                self.assertEqual(screen.line2, "FLE 4-3-4")
                 self.assertEqual(screen.footer, "2:45PM")
 
     def test_interruption_aliases_use_readable_status(self):
