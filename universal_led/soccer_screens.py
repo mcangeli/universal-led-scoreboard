@@ -29,6 +29,22 @@ def _fit(value: str, width: int) -> str:
     return value[:max(0, width - 1)] + "~"
 
 
+def _league_heading(league: str) -> str:
+    """Use distinct compact headings for English football divisions."""
+    normalized = " ".join(str(league).upper().replace("-", " ").split())
+    headings = {
+        "PREMIER LEAGUE": "EPL",
+        "ENGLISH PREMIER LEAGUE": "EPL",
+        "CHAMPIONSHIP": "EFL CH",
+        "ENGLISH CHAMPIONSHIP": "EFL CH",
+        "LEAGUE ONE": "EFL L1",
+        "ENGLISH LEAGUE ONE": "EFL L1",
+        "LEAGUE TWO": "EFL L2",
+        "ENGLISH LEAGUE TWO": "EFL L2",
+    }
+    return headings.get(normalized, _fit(league, 6))
+
+
 def match_screen(match: SoccerMatch, *, timezone: str = 'America/New_York') -> SoccerScreen:
     """Prepare concise lines for a 64x32 game frame."""
     pregame = match.status.strip().lower() in ("pre", "scheduled")
@@ -48,7 +64,7 @@ def match_screen(match: SoccerMatch, *, timezone: str = 'America/New_York') -> S
             pass
     return SoccerScreen(
         kind="match",
-        header=_fit(match.league, 6),
+        header=_league_heading(match.league),
         line1=away if pregame else f"{_fit(match.away_id, 5):<5} {match.away_score:>2}",
         line2=home if pregame else f"{_fit(match.home_id, 5):<5} {match.home_score:>2}",
         footer=_fit(footer, 12),
