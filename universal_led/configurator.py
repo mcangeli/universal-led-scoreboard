@@ -166,7 +166,7 @@ async function saveMatrixSettings(){
 async function loadAutomaticNews(){
  if(!newsGroupCanLoad('automatic'))return;
  const status=document.getElementById('auto-news-status');
- try{const response=await fetch('/api/settings',{cache:'no-store'});if(!response.ok)throw Error('Unable to load sports settings');const data=await response.json();document.getElementById('mlb-news-enabled').checked=data.sports.mlb.news_enabled;document.getElementById('nhl-news-enabled').checked=data.sports.nhl.news_enabled;document.getElementById('nba-news-enabled').checked=data.sports.nba.news_enabled;document.getElementById('wnba-news-enabled').checked=data.sports.wnba.news_enabled;document.getElementById('nfl-news-enabled').checked=data.sports.nfl.news_enabled;document.getElementById('mls-news-enabled').checked=data.sports.mls.news_enabled;document.getElementById('nwsl-news-enabled').checked=data.sports.nwsl.news_enabled;document.getElementById('english-news-enabled').checked=data.sports.english.news_enabled;document.getElementById('efl-news-enabled').checked=data.sports.efl.news_enabled;status.textContent='' newsGroupLoaded('automatic');
+ try{const response=await fetch('/api/settings',{cache:'no-store'});if(!response.ok)throw Error('Unable to load sports settings');const data=await response.json();document.getElementById('mlb-news-enabled').checked=data.sports.mlb.news_enabled;document.getElementById('nhl-news-enabled').checked=data.sports.nhl.news_enabled;document.getElementById('nba-news-enabled').checked=data.sports.nba.news_enabled;document.getElementById('wnba-news-enabled').checked=data.sports.wnba.news_enabled;document.getElementById('nfl-news-enabled').checked=data.sports.nfl.news_enabled;document.getElementById('mls-news-enabled').checked=data.sports.mls.news_enabled;document.getElementById('nwsl-news-enabled').checked=data.sports.nwsl.news_enabled;document.getElementById('english-news-enabled').checked=data.sports.english.news_enabled;document.getElementById('efl-news-enabled').checked=data.sports.efl.news_enabled;status.textContent='';newsGroupLoaded('automatic');
  }catch(err){status.textContent=err.message}
 
 }
@@ -294,7 +294,7 @@ async function saveScoringAlerts(){
 async function loadNewsTiming(){
  if(!newsGroupCanLoad('timing'))return;
  const status=document.getElementById('news-timing-status');
- try{const response=await fetch('/api/settings',{cache:'no-store'});if(!response.ok)throw Error('Unable to load news timing');const data=await response.json();document.getElementById('news-interval').value=data.news.rotation_interval;document.getElementById('news-duration').value=data.news.headline_seconds;document.getElementById('news-speed').value=data.news.scroll_chars_per_second;status.textContent='' newsGroupLoaded('timing');
+ try{const response=await fetch('/api/settings',{cache:'no-store'});if(!response.ok)throw Error('Unable to load news timing');const data=await response.json();document.getElementById('news-interval').value=data.news.rotation_interval;document.getElementById('news-duration').value=data.news.headline_seconds;document.getElementById('news-speed').value=data.news.scroll_chars_per_second;status.textContent='';newsGroupLoaded('timing');
  }catch(err){status.textContent=err.message}
 
 }
@@ -962,7 +962,7 @@ function renderUpdateBranches(){
  const selected=updateBranchUserSelected?picker.value:data.branch;
  const showAll=document.getElementById('update-show-all').checked;
  const branches=data.branches||[data.branch];
- const releaseMatch=/^(feature|release)\\/(\\d+\\.\\d+)/.exec(data.branch);
+ const releaseMatch=/^(feature|release)\/(\d+\.\d+)/.exec(data.branch);
  const relevant=branches.filter(name=>name===data.branch||name==='main'||name==='master'||(releaseMatch&&name.startsWith(releaseMatch[1]+'/'+releaseMatch[2]+'.')));
  const visible=showAll?branches:relevant;
  picker.replaceChildren();
