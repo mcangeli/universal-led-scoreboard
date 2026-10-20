@@ -9,7 +9,7 @@
 | MLB | `https://statsapi.mlb.com/api/v1/schedule` | `https://statsapi.mlb.com/api/v1/standings` |
 | NHL | `https://api-web.nhle.com/v1/score/{YYYY-MM-DD}` | `https://api-web.nhle.com/v1/standings/now` |
 | NBA | `https://site.api.espn.com/apis/site/v2/sports/basketball/nba/scoreboard` | `https://site.api.espn.com/apis/v2/sports/basketball/nba/standings` |
-| WNBA | `https://site.api.espn.com/apis/site/v2/sports/basketball/wnba/scoreboard` | **Not confirmed by this inventory**; inspect WNBA standings integration before treating NBA standings URL as equivalent |
+| WNBA | `https://site.api.espn.com/apis/site/v2/sports/basketball/wnba/scoreboard` | `https://site.api.espn.com/apis/v2/sports/basketball/wnba/standings` |
 | NFL | `https://site.api.espn.com/apis/site/v2/sports/football/nfl/scoreboard?dates={YYYYMMDD}` | `https://site.api.espn.com/apis/v2/sports/football/nfl/standings` |
 | MLS | `https://site.api.espn.com/apis/site/v2/sports/soccer/usa.1/scoreboard?dates={YYYYMMDD}` | `https://site.api.espn.com/apis/v2/sports/soccer/usa.1/standings` |
 | NWSL | `https://site.api.espn.com/apis/site/v2/sports/soccer/usa.nwsl/scoreboard?dates={YYYYMMDD}` | `https://site.api.espn.com/apis/v2/sports/soccer/usa.nwsl/standings` |
@@ -18,7 +18,7 @@
 | EFL League One | `https://site.api.espn.com/apis/site/v2/sports/soccer/eng.3/scoreboard?dates={YYYYMMDD}` | `https://site.api.espn.com/apis/v2/sports/soccer/eng.3/standings` |
 | EFL League Two | `https://site.api.espn.com/apis/site/v2/sports/soccer/eng.4/scoreboard?dates={YYYYMMDD}` | `https://site.api.espn.com/apis/v2/sports/soccer/eng.4/standings` |
 
-**Code references:** `universal_led/mlb_data.py`, `mlb_standings_feed.py`, `nhl_feed.py`, `nhl_standings_feed.py`, `nba_feed.py`, `nba_standings_feed.py`, `nfl_feed.py`, `nfl_standings_feed.py`, `soccer_data.py`, `mls_standings_feed.py`, `nwsl_standings_feed.py`, `football_standings_feed.py`. Scoreboard requests may add query parameters such as dates, seasons, or league identifiers. Some optional features may use additional detail endpoints not exhaustively captured in this table.
+**Code references:** `universal_led/mlb_data.py`, `mlb_standings_feed.py`, `nhl_feed.py`, `nhl_standings_feed.py`, `nba_feed.py`, `nba_standings_feed.py`, `wnba_standings_feed.py`, `nfl_feed.py`, `nfl_standings_feed.py`, `soccer_data.py`, `mls_standings_feed.py`, `nwsl_standings_feed.py`, `football_standings_feed.py`. Scoreboard requests may add query parameters such as dates, seasons, or league identifiers. Some optional features may use additional detail endpoints not exhaustively captured in this table.
 
 ## Weather and news endpoints
 
