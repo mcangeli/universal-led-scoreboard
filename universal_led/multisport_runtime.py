@@ -37,6 +37,7 @@ class MultiSportRenderer:
                                else None)
         self.clock = clock
         self.news = news
+        self.bullpen_slots = ()  # Explicitly registered global supplemental screens
         self.settings_getter = settings_getter
         self._news_started = clock()
         self._lock = threading.Lock()
@@ -46,6 +47,11 @@ class MultiSportRenderer:
         self._auto_rotation = False
         self._started = clock()
         self.set_active_sport(active_sport)
+
+    def set_bullpen_slots(self, slots):
+        """Configure ordered, opt-in supplemental slots for every sport."""
+        with self._lock:
+            self.bullpen_slots = tuple(slots)
 
     def _connect_soccer_standings(self):
         """Reuse the exact caches already owned by the idle standings rotation."""
@@ -237,6 +243,23 @@ class MultiSportRenderer:
                         return draw(final_game)
         sport = self._selected()
         renderer = self._renderer(sport)
+        # Global eligibility: no supplemental Bullpen screen may interrupt
+        # any live game, including a game from a different sport.
+        if not self._live_sports():
+            with self._lock:
+                plugin_slots = self.bullpen_slots
+                interval = self._interval
+                started = self._started
+            if plugin_slots:
+                slot_number = int(max(0.0, self.clock() - started) // interval)
+                # Reserve the first slot for existing ULS content. This
+                # keeps supplemental screens from starving normal rotation.
+                plugin_index = slot_number % (len(plugin_slots) + 1) - 1
+                if plugin_index >= 0:
+                    candidate = plugin_slots[plugin_index].frame(
+                        live_games=False, selected=True, now=self.clock())
+                    if candidate is not None:
+                        return candidate
         # Live games suppress standings; scheduled pregame games do not.
         # Alternate standings with pregame/news content when both exist.
         idle_news_slot = False
