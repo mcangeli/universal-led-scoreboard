@@ -39,3 +39,9 @@ Make ULS expandable without core modifications for each new screen, data provide
 
 ## Release discipline
 Develop and test on Pi 5 first; keep production Pi 3 on `main` until approved. No claims of sandbox isolation or plugin security without implementation and verification.
+
+## Initial architecture findings (October 20, 2026)
+
+- Bullpen's documented contract uses Python package entry points under `bullpen.mlbled.plugin`, returning configuration, data and renderer classes. Its renderer produces one frame per call, with optional eligibility/reset hooks. This separation is worth preserving conceptually, but its update method may be called many times per second, so ULS should keep provider I/O in scheduled background workers.
+- Bullpen's published documentation does not itself provide ULS-style dashboard page registration, schema-driven forms, GitHub catalog editing or transactional lifecycle management. Those are first-class ULS requirements, not presumed Bullpen compatibility.
+- Removed obsolete user-level `scripts/install.sh` and staged `scripts/stage-system-services.sh` / `scripts/cutover-to-system.sh` from the v0.9 development branch. These targeted a different service layout from supported `scripts/install-system.sh`. Regression testing and reference audit remain required before treating cleanup as accepted.
