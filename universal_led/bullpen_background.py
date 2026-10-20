@@ -10,6 +10,7 @@ import threading
 from concurrent.futures import ThreadPoolExecutor
 from typing import Optional
 
+from .bullpen_cadence import BullpenCadence
 from .bullpen_screen import BullpenScreen
 from .display import Framebuffer
 
@@ -24,6 +25,7 @@ class BullpenBackgroundScreen:
         self._future = None
         self._frame: Optional[Framebuffer] = None
         self._closed = False
+        self._cadence = BullpenCadence(screen.wait_time())
 
     def refresh(self) -> bool:
         """Schedule one refresh, coalescing calls while a refresh is running."""
@@ -69,6 +71,21 @@ class BullpenBackgroundScreen:
                     self._frame = frame
         except Exception:
             LOG.exception("Bullpen cached redraw failed")
+
+    def tick(self, now: float | None = None) -> bool:
+        """Schedule a due animation frame without waiting or fetching data.
+
+        Only advance the cadence after the worker accepts a redraw. Call this
+        only while the plugin is eligible for the active screen rotation.
+        """
+        with self._lock:
+            if self._closed or self._frame is None or not self._cadence.due(now):
+                return False
+            if self._future is not None and not self._future.done():
+                return False
+            self._future = self._worker.submit(self._redraw_once)
+            self._cadence.advance(now)
+            return True
 
     def render(self) -> Optional[Framebuffer]:
         """Return last completed frame immediately; never wait for network."""
