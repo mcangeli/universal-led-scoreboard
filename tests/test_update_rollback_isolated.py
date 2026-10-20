@@ -45,11 +45,14 @@ grep() { command grep "$@"; }
         )
         self.assertEqual(result.returncode, 1, result.stderr)
         combined = result.stdout + result.stderr
+        self.assertNotIn("provision-hotspot.sh", combined)
         for expected in (
             "git checkout -f feature/0.4.5-dashboard-polish",
             "git reset --hard previous-commit",
             "install-dashboard-update-helper.sh",
             "install-dashboard-restart-helper.sh",
+            "install-wifi-scan-helper.sh",
+            "install-wifi-control-helper.sh",
             "systemctl restart uls-web.service",
             "uls-matrix-control apply",
             "Rollback attempted",
