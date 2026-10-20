@@ -87,7 +87,12 @@ class MultiSportAlertQueueTests(unittest.TestCase):
             event("nhl", "NHL", "1", "BOS", "new")))
         now[0] = 181
         self.assertEqual(board.frame(), "new")
-        self.assertEqual(len(alerts._queued_at), 0)
+        # The active alert retains its original timestamp for failed-render retry.
+        self.assertEqual(len(alerts._queued_at), 1)
+        self.assertEqual(next(iter(alerts._queued_at.values())), 170.)
+        now[0] = 185
+        self.assertEqual(board.frame(), "NORMAL")
+        self.assertEqual(alerts._queued_at, {})
 
     def test_alert_timer_begins_after_successful_render(self):
         now = [0.]
