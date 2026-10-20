@@ -1,6 +1,6 @@
 # Third-party attribution and licensing audit
 
-**Status:** in progress, **not a certification of compliance**. Updated October 19, 2026.
+**Status:** in progress, **not a certification of compliance**. Updated October 20, 2026.
 
 The repository distributes its own [GPLv3 license](../LICENSE). That alone does not determine the provenance or redistribution permissions of each incorporated asset or third-party component. This register separates acknowledgments from a verified dependency and asset inventory.
 
@@ -22,6 +22,14 @@ The repository distributes its own [GPLv3 license](../LICENSE). That alone does 
 - `universal_led/mlb_team_marks.py` describes its compact letterform marks as original symbolic marks rather than official MLB logos. The source uses team abbreviations and colors, so trademark/branding review remains relevant.
 - `scripts/install-system.sh` provisions a physical matrix mode, but installed driver sources and their notices must be checked on a device or in the driver provisioning scripts. A repository directory listing alone does not establish the exact driver license/version deployed.
 - No conclusion has yet been drawn about upstream code similarity, third-party Python packages, provider terms, or graphics embedded as source constants. These require file-level review.
+
+## Recursive source-tree inventory (October 20, 2026)
+
+- Inspected the Git tree at commit `3ecdd158908ad7716157f946d9aa5888fbe1c5ed` (596 entries). No standalone files ending in `.png`, `.jpg`, `.jpeg`, `.gif`, `.svg`, `.ttf`, `.otf`, `.woff`, `.ico` or `.bmp` were found. This does **not** rule out embedded pixel art, base64 payloads, generated artwork or externally fetched assets.
+- `universal_led/mlb_team_marks.py` contains inline pixel mark and sprite dictionaries. Its comments describe these as original symbolic marks; source ownership and trademark treatment remain subject to review.
+- `scripts/install-system.sh` clones `hzeller/rpi-rgb-led-matrix` into the installer user’s local source directory for physical mode. The driver is an externally installed dependency rather than a copied repository asset. The script does not pin a specific driver commit; reproducibility and installed-version provenance remain open.
+- `docs/RGB-MATRIX-DRIVER.md` identifies the driver as GPL-2.0-or-later and documents compatibility with GPLv3; verify against the precise upstream revision actually installed before declaring the license review complete.
+- No redistribution clearance is implied by the absence of binary assets. Code lineage, embedded fonts, provider terms, and notices still require inspection.
 
 ## Closeout procedure
 
