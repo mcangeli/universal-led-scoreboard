@@ -50,6 +50,12 @@ The repository distributes its own [GPLv3 license](../LICENSE). That alone does 
 
 These are verified source-code references, not legal conclusions or current provider terms. ULS should document source attribution and responsible rate limits without representing itself as an official service of any league or weather provider. Do not mark provider-terms review complete without examining authoritative current terms.
 
+## Confirmed upstream terms (reviewed October 20, 2026)
+
+- **RGB matrix driver:** The upstream project explicitly identifies its license as GPL-2.0-or-later, copyright Henner Zeller, and states that use under GPLv3 is permitted. Source: https://github.com/hzeller/rpi-rgb-led-matrix (README and COPYING). ULS installs the dependency from upstream in physical mode; it does not bundle a binary in this repository. Preserve driver license/copyright notices in any redistribution and verify the exact deployed commit before claiming a reproducible dependency set.
+- **Open-Meteo:** https://open-meteo.com/en/terms specifies that its free API is for noncommercial use, with limits of fewer than 10,000 calls/day, 5,000/hour and 600/minute. https://open-meteo.com/en/pricing says a commercial subscription uses a separate customer API endpoint/key and that data attribution under CC BY 4.0 is required. ULS currently calls the free geocoding and forecast endpoints. Do not imply the free endpoint is approved for a commercial website, product, or promotional deployment.
+- **Scope of verification:** These are confirmed statements from the providers' published upstream documentation, not a legal opinion or blanket certification for all dependencies. Other sports, RSS, weather, logos, and code lineage reviews remain open.
+
 ## Closeout procedure
 
 1. Search source and packaged assets for copied upstream code, included third-party files, fonts, team badges and logos. Record exact file paths and provenance.
