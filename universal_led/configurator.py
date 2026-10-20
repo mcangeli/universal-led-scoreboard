@@ -308,7 +308,15 @@ function renderNewsSources(){
 }
 function addNewsSource(){if(newsSources.length>=20){document.getElementById('news-status').textContent='Maximum 20 sources';return}newsSources.push({name:'',url:'',category:'news',enabled:true,refresh_seconds:900});renderNewsSources();markNewsSourcesDirty()}
 async function saveNewsSources(){
- const status=document.getElementById('news-status');status.textContent='Saving…';
+ const status=document.getElementById('news-status');
+ for(const [index,source] of newsSources.entries()){
+  const label='News source '+(index+1);
+  if(typeof source.name!=='string'||!source.name.trim()){status.textContent=label+' needs a name.';return;}
+  if(typeof source.url!=='string'||!/^https?:\/\/[^\s/?#]+(?:[/?#][^\s]*)?$/i.test(source.url.trim())){status.textContent=label+' needs a valid HTTP or HTTPS URL.';return;}
+  if(typeof source.category!=='string'||!source.category.trim()){status.textContent=label+' needs a category.';return;}
+  if(!Number.isInteger(source.refresh_seconds)||source.refresh_seconds<60||source.refresh_seconds>86400){status.textContent=label+' refresh interval must be a whole number from 60 to 86400 seconds.';return;}
+ }
+ status.textContent='Saving…';
  try{const response=await fetch('/api/news-sources',{method:'POST',headers:{'Content-Type':'application/json','X-Configurator-Token':token},body:JSON.stringify({sources:newsSources})});const result=await response.json();if(!response.ok)throw Error(result.error||'Save failed');newsSources=result.settings.sources;newsSourcesSaved=clone(newsSources);newsSourcesDirty=false;renderNewsSources();status.textContent='News sources saved.'}
  catch(err){status.textContent=err.message}
 }
