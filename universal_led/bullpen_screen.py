@@ -36,7 +36,11 @@ class BullpenScreen:
         position = self.renderer.render(
             self.data, canvas, BullpenGraphics, self.scrolling_text_pos
         )
-        if position is not None:
+        if position is None:
+            # Standard Bullpen renderers (including Magic Number) return None.
+            # The framework, not the renderer, advances the marquee position.
+            self.scrolling_text_pos += 1
+        else:
             if isinstance(position, bool) or not isinstance(position, int):
                 raise ValueError("Bullpen scroll position must be an integer or None")
             self.scrolling_text_pos = position
