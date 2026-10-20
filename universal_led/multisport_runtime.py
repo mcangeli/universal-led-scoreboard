@@ -38,6 +38,7 @@ class MultiSportRenderer:
         self.clock = clock
         self.news = news
         self.bullpen_slots = ()  # Explicitly registered global supplemental screens
+        self._bullpen_failures = {}  # Consecutive errors per registered slot
         self.settings_getter = settings_getter
         self._news_started = clock()
         self._lock = threading.Lock()
@@ -52,6 +53,7 @@ class MultiSportRenderer:
         """Configure ordered, opt-in supplemental slots for every sport."""
         with self._lock:
             self.bullpen_slots = tuple(slots)
+            self._bullpen_failures = {}
 
     def _connect_soccer_standings(self):
         """Reuse the exact caches already owned by the idle standings rotation."""
@@ -255,14 +257,23 @@ class MultiSportRenderer:
             # keeps supplemental screens from starving normal rotation.
             plugin_index = slot_number % (len(plugin_slots) + 1) - 1
             if plugin_index >= 0:
-                try:
-                    candidate = plugin_slots[plugin_index].frame(
-                        live_games=False, selected=True, now=self.clock())
-                except Exception:
-                    # Plugin failures must not interrupt normal sport rendering.
-                    candidate = None
-                if candidate is not None:
-                    return candidate
+                plugin = plugin_slots[plugin_index]
+                with self._lock:
+                    disabled = self._bullpen_failures.get(plugin_index, 0) >= 3
+                if not disabled:
+                    try:
+                        candidate = plugin.frame(
+                            live_games=False, selected=True, now=self.clock())
+                    except Exception:
+                        with self._lock:
+                            self._bullpen_failures[plugin_index] = (
+                                self._bullpen_failures.get(plugin_index, 0) + 1)
+                        candidate = None
+                    else:
+                        with self._lock:
+                            self._bullpen_failures.pop(plugin_index, None)
+                    if candidate is not None:
+                        return candidate
         # Live games suppress standings; scheduled pregame games do not.
         # Alternate standings with pregame/news content when both exist.
         idle_news_slot = False
