@@ -21,6 +21,10 @@ class MultiSportRenderer:
         self.nwsl = nwsl_renderer
         self.english = english_renderer
         self.scoring_alerts = scoring_alerts
+        if scoring_alerts is not None:
+            set_clock = getattr(scoring_alerts, 'set_clock', None)
+            if callable(set_clock):
+                set_clock(clock)
         self.standings_rotation = standings_rotation
         self.soccer_standings_caches = (dict(soccer_standings_caches) if soccer_standings_caches is not None else
                                         dict(getattr(standings_rotation, 'caches', {}) or {}))
@@ -200,9 +204,16 @@ class MultiSportRenderer:
         # Optional scoring interruptions precede game/news rotation. A missing
         # adapter or disabled alerts leave the existing behavior unchanged.
         if self.scoring_alerts is not None and self.alert_renderer is not None:
-            event = self.scoring_alerts.next_alert(self.clock())
+            event = self.scoring_alerts.next_alert(self.clock(), defer_start=True)
             if event is not None:
-                return self.alert_renderer(event)
+                try:
+                    frame = self.alert_renderer(event)
+                    self.scoring_alerts.rendered(event, self.clock())
+                    return frame
+                except Exception:
+                    # A failed render must not consume an unseen alert slot.
+                    self.scoring_alerts.render_failed(event)
+                    raise
         # Final handoffs use a dedicated game renderer contract. Never render
         # an unrelated live game as a final or count repeated frame refreshes
         # as separate display slots.

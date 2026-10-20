@@ -62,6 +62,9 @@ rollback() {
   install -m 755 "$APP/scripts/ulsctl" /usr/local/bin/ulsctl || true
   bash "$APP/scripts/install-dashboard-update-helper.sh" || true
   bash "$APP/scripts/install-dashboard-restart-helper.sh" || true
+  bash "$APP/scripts/install-wifi-scan-helper.sh" || true
+  bash "$APP/scripts/install-wifi-control-helper.sh" || true
+  # Avoid provisioning or changing network profiles during rollback.
   systemctl restart uls-web.service || true
   if systemctl list-unit-files uls-matrix.service --no-legend 2>/dev/null | grep -q uls-matrix.service; then bash "$APP/scripts/uls-matrix-control" apply || true; fi
   echo "Rollback attempted; check: sudo ulsctl status" >&2

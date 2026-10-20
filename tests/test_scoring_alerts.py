@@ -14,28 +14,29 @@ class ScoringAlertTests(unittest.TestCase):
     def test_basketball_direct_lead_change_only(self):
         from dataclasses import replace
         from universal_led.nba_data import BasketballGame
-        from universal_led.nba_engine import ConfiguredNBARenderer
+        from universal_led.score_change_observer import BasketballMomentObserver
         class Feed:
             def games(self):
                 return [self.current]
         feed=Feed()
         feed.current=BasketballGame("game1",None,"ATL","BOS","Atlanta","Boston",10,8,"live")
         alerts=ScoringAlerts(enabled=True,scope="all")
-        renderer=ConfiguredNBARenderer(feed,scoring_alerts=alerts)
-        renderer.game()
+        observer=BasketballMomentObserver(alerts,'nba','NBA')
+        observer.observe(feed.games())
         self.assertIsNone(alerts.next_alert(0))
         feed.current=replace(feed.current,away_score=10,home_score=10)
-        renderer.game()
+        observer.observe(feed.games())
         feed.current=replace(feed.current,away_score=10,home_score=12)
-        renderer.game()
+        observer.observe(feed.games())
         self.assertIsNone(alerts.next_alert(1))
         feed.current=replace(feed.current,away_score=14,home_score=12)
-        renderer.game()
+        observer.observe(feed.games())
         self.assertEqual(alerts.next_alert(2).team_id,"ATL")
-        renderer.game()
+        observer.observe(feed.games())
         self.assertIsNone(alerts.next_alert(11))
 
     def test_basketball_lead_change_respects_favorite_scope(self):
+        from universal_led.score_change_observer import BasketballMomentObserver
         from dataclasses import replace
         from universal_led.nba_data import BasketballGame
         from universal_led.nba_engine import ConfiguredNBARenderer
@@ -45,10 +46,10 @@ class ScoringAlertTests(unittest.TestCase):
         feed=Feed()
         feed.current=BasketballGame("game2",None,"ATL","BOS","Atlanta","Boston",8,10,"live")
         alerts=ScoringAlerts(enabled=True,scope="favorites")
-        renderer=ConfiguredNBARenderer(feed,favorite_teams=["ATL"],scoring_alerts=alerts)
-        renderer.game()
+        observer=BasketballMomentObserver(alerts,'nba','NBA')
+        observer.observe(feed.games(),favorite_teams=['ATL'])
         feed.current=replace(feed.current,away_score=12,home_score=10)
-        renderer.game()
+        observer.observe(feed.games(),favorite_teams=['ATL'])
         self.assertEqual(alerts.next_alert(0).team_id,"ATL")
 
     def test_disabled_by_default_and_no_historical_replay(self):
@@ -91,6 +92,81 @@ class ScoringAlertTests(unittest.TestCase):
         alerts.observe("soccer", "EPL", "42", [event()])
         self.assertEqual(alerts.next_alert(14), event())
         self.assertIsNone(alerts.next_alert(15))
+
+    def test_eviction_does_not_leak_queue_timestamps(self):
+        now = [0.]
+        alerts = ScoringAlerts(enabled=True, scope="all")
+        alerts.set_clock(lambda: now[0])
+        alerts.baseline("soccer", "EPL", "42", ())
+        burst = [event(eid=str(i)) for i in range(30)]
+        alerts.observe("soccer", "EPL", "42", burst)
+        self.assertEqual(len(alerts._queued_at), alerts.MAX_PENDING)
+        alerts.cancel_game("soccer", "EPL", "42")
+        self.assertEqual(alerts._queued_at, {})
+
+    def test_pending_snapshot_restores_recent_event(self):
+        source = ScoringAlerts(enabled=True, scope="all")
+        source.set_clock(lambda: 100.)
+        source.baseline("soccer", "EPL", "42", ())
+        source.observe("soccer", "EPL", "42", [event()])
+        snapshot = source.export_pending(now_monotonic=110, now_epoch=1000)
+        target = ScoringAlerts(enabled=True, scope="all")
+        target.set_clock(lambda: 120.)
+        self.assertEqual(target.import_pending(snapshot, now_monotonic=120,
+                                                now_epoch=1010), 1)
+        self.assertEqual(target.next_alert(120).event_id, "g1")
+
+    def test_pending_snapshot_drops_stale_and_future_events(self):
+        source = ScoringAlerts(enabled=True, scope="all")
+        source.set_clock(lambda: 100.)
+        source.baseline("soccer", "EPL", "42", ())
+        source.observe("soccer", "EPL", "42", [event()])
+        snapshot = source.export_pending(now_monotonic=100, now_epoch=1000)
+        target = ScoringAlerts(enabled=True, scope="all")
+        self.assertEqual(target.import_pending(snapshot, now_monotonic=400,
+                                                now_epoch=1181), 0)
+        self.assertEqual(target.import_pending(snapshot, now_monotonic=400,
+                                                now_epoch=999), 0)
+
+    def test_pending_snapshot_excludes_active_alert(self):
+        source = ScoringAlerts(enabled=True, scope="all")
+        source.set_clock(lambda: 100.)
+        source.baseline("soccer", "EPL", "42", ())
+        source.observe("soccer", "EPL", "42", [event()])
+        source.next_alert(100)
+        self.assertEqual(source.export_pending(now_monotonic=101,
+                                                now_epoch=1000)["pending"], [])
+
+    def test_disable_clears_queue_timestamps(self):
+        alerts = ScoringAlerts(enabled=True, scope="all")
+        alerts.set_clock(lambda: 0.)
+        alerts.baseline("soccer", "EPL", "42", ())
+        alerts.observe("soccer", "EPL", "42", [event()])
+        self.assertEqual(len(alerts._queued_at), 1)
+        alerts.configure(enabled=False)
+        self.assertEqual(alerts._queued_at, {})
+
+    def test_burst_queue_is_bounded_and_keeps_favorite(self):
+        alerts = ScoringAlerts(enabled=True, scope="all", seconds=1)
+        alerts.baseline("soccer", "EPL", "42", ())
+        burst = [event(eid=str(i), team="MUN") for i in range(25)]
+        alerts.observe("soccer", "EPL", "42", burst)
+        favorite = event(eid="favorite", team="ARS")
+        alerts.observe("soccer", "EPL", "42", burst + [favorite],
+                       favorite_teams=("ARS",))
+        self.assertEqual(len(alerts._pending), alerts.MAX_PENDING)
+        self.assertEqual(alerts.next_alert(0), favorite)
+        ids = [alerts.next_alert(i).event_id for i in range(1, alerts.MAX_PENDING)]
+        self.assertNotIn("0", ids)
+        self.assertIn("24", ids)
+
+    def test_all_favorite_burst_evicts_oldest(self):
+        alerts = ScoringAlerts(enabled=True, scope="all", seconds=1)
+        alerts.baseline("soccer", "EPL", "42", ())
+        burst = [event(eid=str(i), team="ARS") for i in range(20)]
+        alerts.observe("soccer", "EPL", "42", burst, favorite_teams=("ARS",))
+        self.assertEqual(len(alerts._pending), alerts.MAX_PENDING)
+        self.assertEqual(alerts.next_alert(0).event_id, "4")
 
     def test_favorites_only_does_not_alert_nonfavorites(self):
         alerts = ScoringAlerts(enabled=True, scope="favorites")

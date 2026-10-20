@@ -4,7 +4,7 @@ from unittest.mock import patch
 from tempfile import TemporaryDirectory
 from pathlib import Path
 
-from universal_led import release
+from universal_led import __version__, release
 
 
 class ReleaseIdentityTests(unittest.TestCase):
@@ -17,7 +17,7 @@ class ReleaseIdentityTests(unittest.TestCase):
             return None
         with patch.object(release, 'checkout_branch', return_value=None), patch.object(release, '_git', side_effect=git):
             self.assertEqual(release.display_version(),
-                             'v0.7.0 · feature/0.7.0-scoring-standings · abc12345')
+                             f'v{__version__} · feature/0.7.0-scoring-standings · abc12345')
 
     def test_exact_release_tag_takes_priority(self):
         with patch.object(release, '_git', side_effect=lambda *args:
@@ -29,7 +29,7 @@ class ReleaseIdentityTests(unittest.TestCase):
             if args[0] == 'branch':
                 return 'origin/main\norigin/feature/0.7.0-scoring-standings'
             return None
-        with patch.object(release, '_git', side_effect=git):
+        with patch.object(release, 'checkout_branch', return_value=None), patch.object(release, '_git', side_effect=git):
             self.assertEqual(release.installed_release(), 'main')
 
     def test_installed_main_branch_works_without_git_subprocess(self):
@@ -44,7 +44,7 @@ class ReleaseIdentityTests(unittest.TestCase):
 
     def test_detached_checkout_without_release_metadata(self):
         with patch.object(release, 'checkout_branch', return_value=None), patch.object(release, '_git', return_value=None):
-            self.assertEqual(release.display_version(), 'v0.7.0 · development')
+            self.assertEqual(release.display_version(), f'v{__version__} · development')
 
 
 if __name__ == '__main__':

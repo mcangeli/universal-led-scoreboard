@@ -1,5 +1,8 @@
 # v0.7.0 Scoring and Standings Release Checklist
 
+> **Historical checklist:** This records the v0.7.0 candidate and prior observations. Current release decisions and remaining gates belong in the [v0.8.0 release checklist](V080-RELEASE-CHECKLIST.md).
+
+
 Status: **release candidate, not merged or tagged** (October 19, 2026).
 
 ## Scope

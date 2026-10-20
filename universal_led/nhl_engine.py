@@ -4,7 +4,7 @@ from __future__ import annotations
 import time
 from .nhl_runtime import select_games
 from .game_interruptions import InterruptionPolicy, filter_interrupted_games
-from .score_change_observer import ScoreChangeObserver
+from .score_change_observer import NHLGoalObserver
 from .nhl_visual import NHLVisualScreen
 from .config_store import read_nhl_colors
 
@@ -15,7 +15,7 @@ class ConfiguredNHLRenderer:
     def __init__(self, feed, *, favorite_teams=None, mode="fallback",
                  rotation_seconds=12, clock=time.monotonic, config_dir=None, scoring_alerts=None):
         self.feed = feed
-        self.score_observer = ScoreChangeObserver(scoring_alerts, 'nhl', 'NHL', 'GOAL')
+        self.score_observer = NHLGoalObserver(scoring_alerts)
         self.interruption_policy = InterruptionPolicy()
         self.external_live_games = False
         self.config_dir = config_dir

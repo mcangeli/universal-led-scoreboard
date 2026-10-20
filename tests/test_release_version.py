@@ -14,13 +14,15 @@ class ReleaseVersionTests(unittest.TestCase):
             self.assertEqual(display_version(),f'v{__version__} · development · abc12345')
 
     def test_no_git_checkout_falls_back_to_package_version(self):
-        with patch('universal_led.release.subprocess.run',side_effect=OSError('missing git')):
+        with patch('universal_led.release.checkout_branch', return_value=None), \
+             patch('universal_led.release.subprocess.run',side_effect=OSError('missing git')):
             self.assertIsNone(installed_commit())
             self.assertEqual(display_version(),f'v{__version__} · development')
 
     def test_git_failure_falls_back(self):
         result=subprocess.CompletedProcess([],128,'','not a repository')
-        with patch('universal_led.release.subprocess.run',return_value=result):
+        with patch('universal_led.release.checkout_branch', return_value=None), \
+             patch('universal_led.release.subprocess.run',return_value=result):
             self.assertEqual(display_version(),f'v{__version__} · development')
 
 

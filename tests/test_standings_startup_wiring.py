@@ -15,7 +15,9 @@ class StandingsStartupWiringTests(unittest.TestCase):
     def test_diagnostics_callback_reaches_http_server(self):
         source = inspect.getsource(configurator.main)
         self.assertIn("return board.soccer_pregame_diagnostics()", source)
-        self.assertIn("board.frame,countdown_status,standings_status)", source)
+        self.assertIn("board.frame,countdown_status,standings_status,", source)
+        self.assertIn("'selected_sport':board._selected()", source)
+        self.assertIn("'live_sports':list(board._live_sports())", source)
 
 
 if __name__ == "__main__":

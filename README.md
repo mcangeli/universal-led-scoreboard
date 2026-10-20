@@ -11,6 +11,12 @@ Universal LED Scoreboard is a Raspberry Pi application for a **64×32 RGB LED ma
 - **Extras:** Configurable news sources, time and weather, team colors, brightness and matrix settings.
 - **Administration:** Browser dashboard, board preview, Wi-Fi management, service controls and preflight-tested software updates.
 
+## Third-party data sources
+
+ULS uses external sports, weather, and news endpoints. **These endpoints can change or stop working without notice**, and their availability does not imply permission for every type of use. Users enable and access third-party services **at their own discretion and responsibility**, subject to each provider's current terms, licensing, attribution, and rate limits. ULS is unofficial and is not endorsed by the leagues or providers.
+
+See the [current endpoint inventory and detailed usage notice](docs/DATA-SOURCES.md), including the specific URLs used by each supported sport.
+
 ## Requirements
 
 - Raspberry Pi Zero 2 W, Pi 3, Pi 4 or Pi 5; hardware and performance may vary by model.
@@ -105,3 +111,7 @@ See [LICENSE](LICENSE) for this repository's license. Reused code, artwork, logo
 ## Releases and history
 
 Version-specific features, acceptance results, test counts, release status and historical notes belong in the [Changelog](CHANGELOG.md), not this README.
+
+## v0.8.0 release status
+
+The current unified-dashboard candidate remains on `feature/0.8.0-unified-dashboard`; it has **not** been merged or tagged. See the [v0.8.0 release checklist](docs/V080-RELEASE-CHECKLIST.md) for verified Pi 3/Pi 5 evidence and outstanding hardware/recovery checks, and the [third-party attribution audit](docs/THIRD-PARTY-ATTRIBUTION.md) for licensing work still required. Passing automated tests is not a substitute for physical-device or redistribution acceptance.

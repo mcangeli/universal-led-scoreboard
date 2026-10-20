@@ -2,6 +2,10 @@
 set -eu
 [ "$#" -eq 0 ] || exit 2
 /usr/bin/systemctl restart uls-web.service
-/usr/bin/systemctl restart uls-matrix.service
 /usr/bin/systemctl is-active --quiet uls-web.service
-/usr/bin/systemctl is-active --quiet uls-matrix.service
+# Emulator installations have no matrix unit. Physical installations may
+# intentionally disable the matrix; apply saved state instead of forcing start.
+/usr/bin/systemctl list-unit-files uls-matrix.service --no-legend 2>/dev/null | grep -q uls-matrix.service && matrix_present=1 || matrix_present=0
+if [ "$matrix_present" -eq 1 ]; then
+  /usr/local/libexec/uls-matrix-control apply
+fi

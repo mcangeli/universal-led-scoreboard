@@ -1,6 +1,6 @@
 # Dashboard software updater: architecture and historical design notes
 
-**Status for v0.7.0:** The dashboard updater is implemented and has repeatedly passed candidate preflight checks on the development board. It preserves settings in `/etc/uls` and persistent state in `/var/lib/uls`; a candidate failing regression tests is rejected before installation. The branch picker supports selecting the installed branch and showing older branches on request, with compatibility checks protecting against unsafe switches. This document also retains early design requirements below, some of which describe proposed behavior rather than current implementation. For verified release acceptance, see [CHANGELOG](../CHANGELOG.md).
+**Current status (v0.8.0 release candidate):** Dashboard-driven updates have been exercised on Raspberry Pi installations with preflight test rejection and successful fast-forward installation. Candidate failures leave the installed commit and persistent configuration unchanged. The updater retains progress logs across dashboard restarts; branch selection and compatibility checks are implemented. The documented original design and acceptance checklist below are historical specifications, **not proof that every failure/rollback scenario has been tested**. Consult [CHANGELOG](../CHANGELOG.md) for current acceptance evidence. Portable backup export/import is managed separately from the updater, under Dashboard → Maintenance tools; its recovery snapshot does not replace a full software rollback.
 
 ## Original design: user experience
 
@@ -44,3 +44,5 @@ Avoid exposing credentials or secrets in logs. Do not use an unbounded shell out
 8. Failed update attempts rollback and leaves diagnostics accessible.
 9. Works on fresh Trixie physical install and existing upgraded Pi 5.
 10. Does not claim success for emulator mode until its service assumptions are fixed.
+
+For current v0.8.0 candidate acceptance and portable-backup verification, see [v0.8.0 release checklist](V080-RELEASE-CHECKLIST.md). For third-party redistribution status, see [attribution audit](THIRD-PARTY-ATTRIBUTION.md).

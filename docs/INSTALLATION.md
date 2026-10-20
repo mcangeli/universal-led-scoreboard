@@ -112,3 +112,9 @@ sudo cat /etc/uls/secrets/hotspot-password
 The dashboard's Wi-Fi settings use a separate root-owned, narrowly scoped control helper to change the AP password. Changing it in the dashboard updates NetworkManager, not the original one-time installation secret; the initial password file should not be treated as authoritative after a change. Never include hotspot passwords in support logs.
 
 **Not yet guaranteed:** automatic activation when all saved networks fail. That requires verified recovery scheduling and explicit safeguards against disconnecting the Pi. Do not claim unattended hotspot fallback until its service is implemented and tested.
+
+## v0.8.0 candidate and portable backup
+
+For the current candidate's verified results and remaining gates, see [v0.8.0 release checklist](V080-RELEASE-CHECKLIST.md). The default installer branch remains `main`; it does **not** automatically install the v0.8.0 feature candidate. Branch-specific testing requires an explicit `--branch feature/0.8.0-unified-dashboard` selection on a deliberate test installation.
+
+The Dashboard maintenance section provides portable configuration backup export and selective import. Archives can be moved between Pi 3 and Pi 5, and export filenames include the source hostname. Imports create a recovery snapshot and require scoreboard services to restart before restored settings are loaded. Hardware configuration, Wi-Fi credentials and administrator credentials are excluded; a portable archive is **not** a complete device image or a software rollback. Protect archives that contain site-specific configuration.

@@ -1,3 +1,30 @@
+## v0.8.0 (release candidate, 2026-10-19)
+
+### Added
+- Unified, read-only dashboard overview for MLB, NHL, NBA, WNBA, NFL, MLS, NWSL and English football, including selected sport, live-game priority, feed state, game counts and last successful refresh.
+- Per-sport feed health summaries distinguishing healthy, stale, error, starting, unavailable and disabled feeds. Staleness uses three configured refresh intervals, with a five-minute minimum; zero games is not a feed failure.
+- Portable settings backup export and import for moving configurations between Raspberry Pis, including hostname-based export filenames and a recovery snapshot before restore.
+- Dashboard regression tests for feed timestamp normalization, read-only presentation, scheduler visibility and health reporting.
+- Content & News editing safeguards, including unsaved-change warnings, validated RSS source entries and news timing controls.
+- NBA/WNBA key-moment scoring alerts (lead changes, fourth-quarter/overtime ties and eight unanswered points), instead of alerts for every basket.
+
+### Fixed and improved
+- Corrected 1970-era dates on non-MLB feed cards by converting monotonic worker timestamps to Unix time at the dashboard boundary without changing worker refresh scheduling.
+- English football last-success display uses the oldest successful refresh across all four divisions, and waits for every division to report success.
+- Compact enabled/healthy/stale/error/starting-or-unavailable totals above the sports cards.
+- NHL goal alerts now retain goals whose score updates arrive after the clock has entered intermission; shootout score changes remain excluded.
+
+### Validation and release gates
+- Final user-reported Pi 5 regression baseline: **1,652 tests passed, 15 skipped** (October 20, 2026). Subsequent changes through this documentation update are documentation-only.
+- User confirmed the recent v0.8.0 candidate installs successfully; installation method and whether it was a clean physical card were not specified.
+- User accepted documented **release-candidate** exceptions: fresh physical-mode install, live post-deployment rollback, partial live-event observations, and unresolved third-party provenance/provider permissions. This is not general-availability clearance. See [release checklist](docs/V080-RELEASE-CHECKLIST.md).
+- Raspberry Pi updater and dashboard validated by user: **1,614 tests passed, 15 skipped** on October 19, 2026. The unified dashboard and portable backup transfer between Pi 3 and Pi 5 were also confirmed working.
+- The timestamp and health reporting updates were verified in the installed dashboard; backup export/import and restored settings were tested across devices.
+- A real NHL goal interruption was observed on the physical board. NBA/WNBA key-moment filtering has automated coverage but still needs live-game observation. NFL touchdown-specific classification is not implemented; NFL currently announces generic score changes.
+- Content & News dirty-state protections now handle failed loads and confirmed navigation discard, with regression coverage.
+- Documentation refreshed with a dedicated [v0.8.0 acceptance checklist](docs/V080-RELEASE-CHECKLIST.md) and [third-party provenance register](docs/THIRD-PARTY-ATTRIBUTION.md). These documents track pending work; they do not certify physical installation or license compliance.
+- **Not yet merged or tagged.** Release-candidate exception acceptance is recorded; final merge/tag approval remains separate. Automated tests do not establish live-event coverage for every sport.
+
 # Changelog
 
 ## v0.7.0 (release candidate, 2026-10-19)

@@ -62,6 +62,83 @@ class MultiSportAlertQueueTests(unittest.TestCase):
         now[0] = 6
         self.assertEqual(board.frame(), "NORMAL")
 
+    def test_stale_pending_goal_expires_before_display(self):
+        now = [0.]
+        alerts = ScoringAlerts(enabled=True, scope="all", seconds=4)
+        board = MultiSportRenderer(StubSport("NORMAL"), StubSport("OTHER"),
+                                  clock=lambda: now[0], scoring_alerts=alerts,
+                                  alert_renderer=lambda e: e.event_id)
+        alerts.baseline("nhl", "NHL", "1", ())
+        alerts.observe("nhl", "NHL", "1", (event("nhl", "NHL", "1", "BOS", "old"),))
+        now[0] = 181
+        self.assertEqual(board.frame(), "NORMAL")
+
+    def test_recent_goal_survives_while_older_goal_expires(self):
+        now = [0.]
+        alerts = ScoringAlerts(enabled=True, scope="all", seconds=4)
+        board = MultiSportRenderer(StubSport("NORMAL"), StubSport("OTHER"),
+                                  clock=lambda: now[0], scoring_alerts=alerts,
+                                  alert_renderer=lambda e: e.event_id)
+        alerts.baseline("nhl", "NHL", "1", ())
+        alerts.observe("nhl", "NHL", "1", (event("nhl", "NHL", "1", "BOS", "old"),))
+        now[0] = 170
+        alerts.observe("nhl", "NHL", "1", (
+            event("nhl", "NHL", "1", "BOS", "old"),
+            event("nhl", "NHL", "1", "BOS", "new")))
+        now[0] = 181
+        self.assertEqual(board.frame(), "new")
+        # The active alert retains its original timestamp for failed-render retry.
+        self.assertEqual(len(alerts._queued_at), 1)
+        self.assertEqual(next(iter(alerts._queued_at.values())), 170.)
+        now[0] = 185
+        self.assertEqual(board.frame(), "NORMAL")
+        self.assertEqual(alerts._queued_at, {})
+
+    def test_alert_timer_begins_after_successful_render(self):
+        now = [0.]
+        alerts = ScoringAlerts(enabled=True, scope="all", seconds=3)
+        alerts.baseline("nhl", "NHL", "1", ())
+        alerts.observe("nhl", "NHL", "1", (event("nhl", "NHL", "1", "BOS", "goal"),))
+        def slow_draw(e):
+            now[0] += 2
+            return e.event_id
+        board = MultiSportRenderer(StubSport("NORMAL"), StubSport("OTHER"),
+                                  clock=lambda: now[0], scoring_alerts=alerts,
+                                  alert_renderer=slow_draw)
+        self.assertEqual(board.frame(), "goal")
+        self.assertEqual(now[0], 2)
+        # The three-second slot begins at successful render (t=2), not t=0.
+        now[0] = 4
+        self.assertEqual(board.frame(), "goal")
+        now[0] = 5
+        self.assertEqual(board.frame(), "NORMAL")
+
+    def test_failed_alert_render_is_retried_for_full_duration(self):
+        now = [0.]
+        calls = [0]
+        alerts = ScoringAlerts(enabled=True, scope="all", seconds=3)
+        alerts.baseline("nhl", "NHL", "1", ())
+        goal = event("nhl", "NHL", "1", "BOS", "goal")
+        alerts.observe("nhl", "NHL", "1", (goal,))
+
+        def draw(e):
+            calls[0] += 1
+            if calls[0] == 1:
+                raise RuntimeError("temporary renderer failure")
+            return e.event_id
+
+        board = MultiSportRenderer(StubSport("NORMAL"), StubSport("OTHER"),
+                                  clock=lambda: now[0], scoring_alerts=alerts,
+                                  alert_renderer=draw)
+        with self.assertRaises(RuntimeError):
+            board.frame()
+        now[0] = 10
+        self.assertEqual(board.frame(), "goal")
+        now[0] = 12
+        self.assertEqual(board.frame(), "goal")
+        now[0] = 13
+        self.assertEqual(board.frame(), "NORMAL")
+
     def test_disable_clears_pending_and_active(self):
         alerts = ScoringAlerts(enabled=True, scope="all", seconds=2)
         alerts.baseline("mlb", "MLB", "1", ())
