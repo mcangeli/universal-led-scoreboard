@@ -35,7 +35,7 @@ def inspect_github_plugin(source_url: str) -> dict:
     if not isinstance(commit, str) or not re.fullmatch(r"[0-9a-fA-F]{40}", commit):
         raise ValueError("GitHub returned an invalid commit SHA")
     with tempfile.TemporaryDirectory(prefix="uls-plugin-review-") as tmp:
-        package = download_github_plugin(source_url, commit, Path(tmp) / "package")
+        package = download_github_plugin(canonical, commit, Path(tmp) / "package")
         package = package / subpath if subpath else package
         manifest_file = package / "uls-plugin.json"
         if manifest_file.is_symlink() or not manifest_file.is_file():
