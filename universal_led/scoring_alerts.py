@@ -5,6 +5,16 @@ The first observation of each game establishes a baseline.
 """
 from collections import deque
 from dataclasses import asdict, dataclass
+from functools import wraps
+from threading import RLock
+
+
+def synchronized(method):
+    @wraps(method)
+    def wrapped(self, *args, **kwargs):
+        with self._lock:
+            return method(self, *args, **kwargs)
+    return wrapped
 
 
 @dataclass(frozen=True)
@@ -39,6 +49,7 @@ class ScoringAlerts:
     """
 
     def __init__(self, *, enabled=False, scope="favorites", seconds=8):
+        self._lock = RLock()
         self._queued_at = {}
         self._clock = None
         self.on_queue_transition = None
@@ -49,10 +60,12 @@ class ScoringAlerts:
         self._expires = None
         self.configure(enabled=enabled, scope=scope, seconds=seconds)
 
+    @synchronized
     def set_clock(self, clock):
         """Enable monotonic queue aging using the renderer scheduler clock."""
         self._clock = clock
 
+    @synchronized
     def configure(self, *, enabled=False, scope="favorites", seconds=8):
         if type(enabled) is not bool or scope not in ("favorites", "all"):
             raise ValueError("Invalid scoring alert settings")
@@ -74,6 +87,7 @@ class ScoringAlerts:
             self._active = None
             self._expires = None
 
+    @synchronized
     def observe(self, sport, league, game_id, events, *, favorite_teams=()):
         """Accept official events, deduplicate, and enqueue permitted new ones."""
         key = (sport, league, str(game_id))
@@ -114,6 +128,7 @@ class ScoringAlerts:
                 self._queued_at.pop(dropped, None)
         return accepted
 
+    @synchronized
     def export_pending(self, *, now_monotonic, now_epoch):
         """Serialize only queued, not active, alerts with restart-safe UTC ages."""
         rows = []
@@ -127,6 +142,7 @@ class ScoringAlerts:
                              "queued_epoch": now_epoch - age})
         return {"version": 1, "pending": rows}
 
+    @synchronized
     def import_pending(self, snapshot, *, now_monotonic, now_epoch):
         """Restore fresh pending events; reject malformed or future timestamps.
 
@@ -158,6 +174,7 @@ class ScoringAlerts:
             restored += 1
         return restored
 
+    @synchronized
     def baseline(self, sport, league, game_id, events):
         """Ingest confirmed IDs without announcing them (halftime/final)."""
         key = (sport, league, str(game_id))
@@ -167,6 +184,7 @@ class ScoringAlerts:
         self._seen.setdefault(key, set()).update(e.event_id for e in events)
         return ()
 
+    @synchronized
     def finalize_game(self, sport, league, game_id):
         """Keep already detected scoring events eligible after final status.
 
@@ -175,6 +193,7 @@ class ScoringAlerts:
         """
         return None
 
+    @synchronized
     def cancel_game(self, sport, league, game_id):
         """Drop stale announcements when a match enters halftime or finishes."""
         key = (sport, league, str(game_id))
@@ -189,6 +208,7 @@ class ScoringAlerts:
             self._active = None
             self._expires = None
 
+    @synchronized
     def render_failed(self, event):
         """Retry an alert whose frame could not be rendered.
 
@@ -202,6 +222,7 @@ class ScoringAlerts:
             if self.on_queue_transition is not None:
                 self.on_queue_transition()
 
+    @synchronized
     def rendered(self, event, now):
         """Start the alert duration after its first successful frame render.
 
@@ -210,6 +231,7 @@ class ScoringAlerts:
         if self.enabled and self._active == event and self._expires is None:
             self._expires = now + self.seconds
 
+    @synchronized
     def next_alert(self, now, *, defer_start=False):
         """Return active event; optionally defer its timer until rendered()."""
         if not self.enabled:
