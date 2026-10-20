@@ -21,6 +21,10 @@ class MultiSportRenderer:
         self.nwsl = nwsl_renderer
         self.english = english_renderer
         self.scoring_alerts = scoring_alerts
+        if scoring_alerts is not None:
+            set_clock = getattr(scoring_alerts, 'set_clock', None)
+            if callable(set_clock):
+                set_clock(clock)
         self.standings_rotation = standings_rotation
         self.soccer_standings_caches = (dict(soccer_standings_caches) if soccer_standings_caches is not None else
                                         dict(getattr(standings_rotation, 'caches', {}) or {}))
