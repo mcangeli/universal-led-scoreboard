@@ -25,6 +25,48 @@ class ScoringPersistenceTests(unittest.TestCase):
             self.assertEqual(reader.restore(), 1)
             self.assertEqual(restored.next_alert(110).event_id, "goal")
 
+    def test_activation_immediately_removes_alert_from_disk(self):
+        with tempfile.TemporaryDirectory() as folder:
+            path = Path(folder) / "alerts.json"
+            source = ScoringAlerts(enabled=True, scope="all")
+            source.set_clock(lambda: 100.)
+            source.baseline("nhl", "NHL", "1", ())
+            goal = ScoreEvent("nhl", "NHL", "1", "goal", "BOS", "GOAL")
+            source.observe("nhl", "NHL", "1", [goal])
+            writer = ScoringAlertPersistence(source, path, monotonic=lambda: 100.,
+                                             epoch=lambda: 1000., interval=3600)
+            writer.save()
+            writer.start()
+            try:
+                self.assertEqual(source.next_alert(100), goal)
+                recovered = ScoringAlerts(enabled=True, scope="all")
+                self.assertEqual(ScoringAlertPersistence(
+                    recovered, path, monotonic=lambda: 101.,
+                    epoch=lambda: 1001.).restore(), 0)
+            finally:
+                writer.stop()
+
+    def test_failed_render_requeues_and_checkpoints(self):
+        with tempfile.TemporaryDirectory() as folder:
+            path = Path(folder) / "alerts.json"
+            source = ScoringAlerts(enabled=True, scope="all")
+            source.set_clock(lambda: 100.)
+            source.baseline("nhl", "NHL", "1", ())
+            goal = ScoreEvent("nhl", "NHL", "1", "goal", "BOS", "GOAL")
+            source.observe("nhl", "NHL", "1", [goal])
+            writer = ScoringAlertPersistence(source, path, monotonic=lambda: 100.,
+                                             epoch=lambda: 1000., interval=3600)
+            writer.start()
+            try:
+                self.assertEqual(source.next_alert(100), goal)
+                source.render_failed(goal)
+                recovered = ScoringAlerts(enabled=True, scope="all")
+                self.assertEqual(ScoringAlertPersistence(
+                    recovered, path, monotonic=lambda: 101.,
+                    epoch=lambda: 1001.).restore(), 1)
+            finally:
+                writer.stop()
+
     def test_disabled_settings_prevent_replay(self):
         with tempfile.TemporaryDirectory() as folder:
             path = Path(folder) / "alerts.json"
