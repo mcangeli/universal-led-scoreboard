@@ -105,3 +105,7 @@ See [LICENSE](LICENSE) for this repository's license. Reused code, artwork, logo
 ## Releases and history
 
 Version-specific features, acceptance results, test counts, release status and historical notes belong in the [Changelog](CHANGELOG.md), not this README.
+
+## v0.8.0 release status
+
+The current unified-dashboard candidate remains on `feature/0.8.0-unified-dashboard`; it has **not** been merged or tagged. See the [v0.8.0 release checklist](docs/V080-RELEASE-CHECKLIST.md) for verified Pi 3/Pi 5 evidence and outstanding hardware/recovery checks, and the [third-party attribution audit](docs/THIRD-PARTY-ATTRIBUTION.md) for licensing work still required. Passing automated tests is not a substitute for physical-device or redistribution acceptance.
