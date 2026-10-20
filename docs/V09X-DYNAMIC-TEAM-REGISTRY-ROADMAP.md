@@ -1,6 +1,6 @@
 # v0.9.x roadmap: Dynamic team and division discovery
 
-**Status:** planned for v0.9.x; not in v0.8.0.
+**Status:** planned for v0.9.x; not in v0.8.0. The v0.9.x plugin architecture is the prerequisite for finalizing the provider-discovery contract. See [v0.9.0 extensibility roadmap](V090-PLUGIN-ARCHITECTURE-ROADMAP.md).
 
 ## Goal
 
