@@ -1,4 +1,6 @@
-## v0.8.0 (release candidate, 2026-10-19)
+# Changelog
+
+## v0.8.0rc1 (release candidate, 2026-10-20)
 
 ### Added
 - Unified, read-only dashboard overview for MLB, NHL, NBA, WNBA, NFL, MLS, NWSL and English football, including selected sport, live-game priority, feed state, game counts and last successful refresh.
@@ -23,9 +25,7 @@
 - A real NHL goal interruption was observed on the physical board. NBA/WNBA key-moment filtering has automated coverage but still needs live-game observation. NFL touchdown-specific classification is not implemented; NFL currently announces generic score changes.
 - Content & News dirty-state protections now handle failed loads and confirmed navigation discard, with regression coverage.
 - Documentation refreshed with a dedicated [v0.8.0 acceptance checklist](docs/V080-RELEASE-CHECKLIST.md) and [third-party provenance register](docs/THIRD-PARTY-ATTRIBUTION.md). These documents track pending work; they do not certify physical installation or license compliance.
-- **Not yet merged or tagged.** Release-candidate exception acceptance is recorded; final merge/tag approval remains separate. Automated tests do not establish live-event coverage for every sport.
-
-# Changelog
+- Merged into `main` via PR #11 (`b9d165d`), tagged `v0.8.0-rc.1`, and deployed to production Pi 3 on October 20, 2026. Production updater preflight: **1,652 tests, 15 skipped, no failures**; settings and persistent data preserved. Physical display post-update observation was not separately reported. Accepted RC exceptions remain open.
 
 ## v0.7.0 (release candidate, 2026-10-19)
 
