@@ -5,7 +5,6 @@ import re
 from urllib.parse import urlsplit
 
 from .plugin_manifest import ManifestError
-from .plugin_registry import parse_github_source
 
 _SEGMENT = re.compile(r"^[A-Za-z0-9][A-Za-z0-9._-]*$")
 
@@ -16,6 +15,7 @@ def parse_plugin_source(url: str) -> tuple[str, str]:
     A tree URL may include a branch and a plugins/<name> directory. The
     branch is used only to locate the plugin; downloads are commit-pinned.
     """
+    from .plugin_registry import parse_github_source
     try:
         owner, repo = parse_github_source(url)
         return f"https://github.com/{owner}/{repo}", ""
