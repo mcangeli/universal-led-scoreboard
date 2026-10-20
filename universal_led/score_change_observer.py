@@ -32,7 +32,11 @@ class ScoreChangeObserver:
             if previous is None:
                 self.alerts.baseline(self.sport, self.league, key, ())
                 continue
-            if game.status in ("final", "postponed", "canceled", "cancelled"):
+            if game.status == "final":
+                # Keep a detected scoring alert queued until its display slot.
+                self.alerts.finalize_game(self.sport, self.league, key)
+                continue
+            if game.status in ("postponed", "canceled", "cancelled"):
                 self.alerts.cancel_game(self.sport, self.league, key)
                 continue
             if game.status != "live" or not self._should_announce(game) or any(type(v) is not int for v in scores + previous):
