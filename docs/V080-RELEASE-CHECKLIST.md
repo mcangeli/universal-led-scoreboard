@@ -34,7 +34,7 @@ This is the authoritative v0.8.0 acceptance checklist. Earlier version-specific 
 - [ ] Audit redistribution provenance for any copied code, fonts, logos, graphics and bundled data; record upstream license and required notices for each. README credits alone do not establish license compliance.
 - [ ] Review external sports/news/weather feed usage terms and branding constraints; avoid suggesting provider endorsement.
 - [ ] Verify a **fresh physical-mode Trixie installation**, RGB driver build, 64×32 output, HAT mapping, startup splash and saved matrix state after reboot. Use a spare card.
-- [ ] Perform remaining Pi 3 and Pi 5 operational smoke checks: board view, enabled sports, Wi-Fi safety and update log. Backup import/export and service restart were already verified.
+- [x] Pi 3 and Pi 5 operational smoke checks: Board View updating, enabled leagues/favorites retained, Wi-Fi scan shows nearby networks and identifies current connection (user confirmed October 20, 2026). Pi 5 persistent updater log/status also verified. No network change was performed.
 - [ ] Confirm live-event-specific behaviors not yet physically observed; deterministic tests do not substitute for provider and hardware verification.
 - [ ] Confirm post-deployment rollback/recovery behavior with a safe supervised plan; preflight rejection is not equivalent to tested post-install rollback.
 - [ ] Repeat full regression suite after final code changes and record the installed commit.
