@@ -80,3 +80,75 @@ class NHLGoalObserver(ScoreChangeObserver):
         # clock already switches to intermission. Do not discard that delta.
         # Shootout score changes are not ordinary goal announcements.
         return not getattr(game, "shootout", False)
+
+
+class BasketballMomentObserver(ScoreChangeObserver):
+    """Announce key NBA/WNBA moments rather than every basket.
+
+    A direct lead change, a tie in the fourth quarter or overtime, or an
+    eight-point unanswered run qualifies. Polling snapshots never invent
+    individual basket events.
+    """
+
+    def __init__(self, alerts, sport, league):
+        super().__init__(alerts, sport, league, kind="MOMENT")
+        self._run = {}
+
+    def observe(self, games, *, favorite_teams=()):
+        if self.alerts is None:
+            return ()
+        emitted = []
+        for game in games:
+            key = str(game.game_id)
+            scores = (game.away_score, game.home_score)
+            old = self._previous.get(key)
+            self._previous[key] = scores
+            if old is None:
+                self._run[key] = (0, 0)
+                self.alerts.baseline(self.sport, self.league, key, ())
+                continue
+            if game.status in ("final", "postponed", "canceled", "cancelled"):
+                self.alerts.cancel_game(self.sport, self.league, key)
+                self._run.pop(key, None)
+                continue
+            if game.status != "live" or any(type(v) is not int for v in scores + old):
+                continue
+            if any(new < before for before, new in zip(old, scores)):
+                self._run[key] = (0, 0)
+                continue
+            away_delta, home_delta = scores[0] - old[0], scores[1] - old[1]
+            away_run, home_run = self._run.get(key, (0, 0))
+            if away_delta and home_delta:
+                away_run, home_run = 0, 0
+            elif away_delta:
+                away_run, home_run = away_run + away_delta, 0
+            elif home_delta:
+                away_run, home_run = 0, home_run + home_delta
+            self._run[key] = (away_run, home_run)
+            before = old[0] - old[1]
+            after = scores[0] - scores[1]
+            moment = None
+            team = None
+            if before * after < 0:
+                moment = "LEAD"
+                team = game.away if after > 0 else game.home
+            elif before != 0 and after == 0 and (game.period or 0) >= 4:
+                moment = "LATE TIE"
+                team = game.away if away_delta else game.home
+            elif away_run >= 8 and away_delta:
+                moment, team = "RUN", game.away
+                self._run[key] = (0, home_run)
+            elif home_run >= 8 and home_delta:
+                moment, team = "RUN", game.home
+                self._run[key] = (away_run, 0)
+            if moment is None:
+                continue
+            event = ScoreEvent(self.sport, self.league, key,
+                               f"moment:{moment}:{scores[0]}:{scores[1]}",
+                               team, moment,
+                               home_team=game.home, away_team=game.away,
+                               home_score=scores[1], away_score=scores[0])
+            emitted.extend(self.alerts.observe(
+                self.sport, self.league, key, (event,),
+                favorite_teams=favorite_teams))
+        return tuple(emitted)
