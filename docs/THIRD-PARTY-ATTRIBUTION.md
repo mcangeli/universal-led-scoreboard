@@ -71,6 +71,18 @@ These are verified source-code references, not legal conclusions or current prov
 
 The [data sources and endpoint inventory](DATA-SOURCES.md) lists current score/schedule and standings URLs by sport, weather and news endpoints, and the explicit notice that external services may change without notice and users access them at their own discretion and responsibility. This improves transparency but **does not** resolve provider permission, embedded asset provenance, or distribution obligations.
 
+## Embedded font and mark source review (October 20, 2026)
+
+Directly inspected `universal_led/display.py`, `universal_led/mlb_classic.py` and `universal_led/mlb_team_marks.py` on the v0.8.0 feature branch:
+
+- `display.py` embeds a 5×7 monochrome pixel-glyph dictionary (`FONT`) and draws the startup splash procedurally; there is no referenced external font file or splash bitmap in this module.
+- `mlb_classic.py` embeds a separate 3×5 glyph dictionary (`SMALL`) for compact labels and numbers; its module header describes the screen as an independent implementation.
+- `mlb_team_marks.py` embeds a team-color/letter mapping and five 11×9 pixel sprite definitions (MIL, LAD, ATL, CLE, TBR). These are source constants, not separately bundled official image files. Their shapes, colors and team associations may nevertheless implicate branding rights.
+- **Important limitation:** module comments calling the marks or layouts “original” are claims by the code authors, not independent evidence of who designed each glyph/sprite. The two font dictionaries and five sprites therefore remain provenance exceptions pending author confirmation or documented replacement with clearly licensed assets. Similarity to upstream scoreboard projects was not exhaustively assessed.
+- The previous recursive tree inventory found no standalone image or font files. This targeted inspection does not prove that no other module embeds artwork.
+
+**Disposition:** No files were deleted or altered in this review. Do not mark the bundled-artwork/provenance release gate complete on this evidence alone.
+
 ## Closeout procedure
 
 1. Search source and packaged assets for copied upstream code, included third-party files, fonts, team badges and logos. Record exact file paths and provenance.
