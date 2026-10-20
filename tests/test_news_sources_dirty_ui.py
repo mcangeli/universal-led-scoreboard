@@ -23,6 +23,17 @@ class NewsSourcesDirtyUITests(unittest.TestCase):
                 self.assertIn("newsGroupSaved('"+group+"')",html)
         self.assertIn('newsSettingsDirty()',html)
 
+    def test_failed_load_does_not_record_saved_baseline(self):
+        html=configurator.HTML
+        for name,group in (
+            ('AutomaticNews','automatic'),('ScoringAlerts','scoring'),
+            ('NewsTiming','timing'),('GameInterruptions','interruptions'),
+            ('StandingsSettings','standings')
+        ):
+            with self.subTest(group=group):
+                load=html.split('async function load'+name+'(){',1)[1].split('async function save'+name+'(){',1)[0]
+                self.assertLess(load.index("newsGroupLoaded('"+group+"')"),load.index('catch('))
+
     def test_edit_add_remove_and_save_update_dirty_state(self):
         html=configurator.HTML
         self.assertIn('source[key]=type===\'number\'?Number(input.value):input.value;markNewsSourcesDirty()',html)
