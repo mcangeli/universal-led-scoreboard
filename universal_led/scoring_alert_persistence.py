@@ -13,6 +13,7 @@ class ScoringAlertPersistence:
         self.monotonic = monotonic
         self.epoch = epoch
         self.interval = interval
+        self._save_lock = threading.Lock()
         self._stop = threading.Event()
         self._thread = None
 
@@ -21,11 +22,20 @@ class ScoringAlertPersistence:
                                   epoch=self.epoch())
 
     def save(self):
-        self.store.save(self.alerts, monotonic=self.monotonic(), epoch=self.epoch())
+        with self._save_lock:
+            self.store.save(self.alerts, monotonic=self.monotonic(), epoch=self.epoch())
+
+    def _save_transition(self):
+        try:
+            self.save()
+        except (OSError, RuntimeError):
+            # Never interrupt rendering if persistence is unavailable.
+            pass
 
     def start(self):
         if self._thread is not None:
             return
+        self.alerts.on_queue_transition = self._save_transition
         self._thread = threading.Thread(target=self._run, daemon=True,
                                         name="uls-scoring-alert-persistence")
         self._thread.start()
@@ -39,6 +49,8 @@ class ScoringAlertPersistence:
                 continue
 
     def stop(self):
+        if self.alerts.on_queue_transition == self._save_transition:
+            self.alerts.on_queue_transition = None
         self._stop.set()
         if self._thread is not None:
             self._thread.join(timeout=2)
