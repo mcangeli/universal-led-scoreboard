@@ -6,6 +6,8 @@ explicit installation; never trust an unpinned branch archive.
 from __future__ import annotations
 
 import json
+import re
+from urllib.parse import quote
 import tempfile
 import urllib.request
 from pathlib import Path
@@ -19,7 +21,8 @@ from .plugin_source import parse_plugin_source
 def inspect_github_plugin(source_url: str) -> dict:
     canonical, subpath = parse_plugin_source(source_url)
     owner, repo = parse_github_source(canonical)
-    url = f"https://api.github.com/repos/{owner}/{repo}/commits/HEAD"
+    branch = source_url.split("/tree/", 1)[1].split("/", 1)[0] if subpath else "HEAD"
+    url = f"https://api.github.com/repos/{owner}/{repo}/commits/{quote(branch, safe='')}"
     request = urllib.request.Request(url, headers={
         "User-Agent": "ULS-Plugin-Installer/0.9",
         "Accept": "application/vnd.github+json",
@@ -29,6 +32,8 @@ def inspect_github_plugin(source_url: str) -> dict:
     if len(raw) > 1024 * 1024:
         raise ValueError("GitHub commit response exceeds size limit")
     commit = json.loads(raw)["sha"]
+    if not isinstance(commit, str) or not re.fullmatch(r"[0-9a-fA-F]{40}", commit):
+        raise ValueError("GitHub returned an invalid commit SHA")
     with tempfile.TemporaryDirectory(prefix="uls-plugin-review-") as tmp:
         package = download_github_plugin(source_url, commit, Path(tmp) / "package")
         package = package / subpath if subpath else package
