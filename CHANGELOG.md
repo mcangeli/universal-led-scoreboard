@@ -5,15 +5,19 @@
 - Per-sport feed health summaries distinguishing healthy, stale, error, starting, unavailable and disabled feeds. Staleness uses three configured refresh intervals, with a five-minute minimum; zero games is not a feed failure.
 - Portable settings backup export and import for moving configurations between Raspberry Pis, including hostname-based export filenames and a recovery snapshot before restore.
 - Dashboard regression tests for feed timestamp normalization, read-only presentation, scheduler visibility and health reporting.
+- Content & News editing safeguards, including unsaved-change warnings, validated RSS source entries and news timing controls.
+- NBA/WNBA key-moment scoring alerts (lead changes, fourth-quarter/overtime ties and eight unanswered points), instead of alerts for every basket.
 
 ### Fixed and improved
 - Corrected 1970-era dates on non-MLB feed cards by converting monotonic worker timestamps to Unix time at the dashboard boundary without changing worker refresh scheduling.
 - English football last-success display uses the oldest successful refresh across all four divisions, and waits for every division to report success.
 - Compact enabled/healthy/stale/error/starting-or-unavailable totals above the sports cards.
+- NHL goal alerts now retain goals whose score updates arrive after the clock has entered intermission; shootout score changes remain excluded.
 
 ### Validation and release gates
-- Raspberry Pi updater and dashboard validated by user: **1,539 tests passed** on October 19, 2026; no test failures reported. The unified dashboard and portable backup transfer between Pi 3 and Pi 5 were also confirmed working.
+- Raspberry Pi updater and dashboard validated by user: **1,611 tests passed, 15 skipped** on October 19, 2026. The unified dashboard and portable backup transfer between Pi 3 and Pi 5 were also confirmed working.
 - The timestamp and health reporting updates were verified in the installed dashboard; backup export/import and restored settings were tested across devices.
+- A real NHL goal interruption was observed on the physical board. NBA/WNBA key-moment filtering has automated coverage but still needs live-game observation. NFL touchdown-specific classification is not implemented; NFL currently announces generic score changes.
 - **Not yet merged or tagged.** Remaining checks: final release review, documentation/attribution audit and explicit approval before tagging or merging. Automated tests do not establish live-event coverage for every sport.
 
 # Changelog
