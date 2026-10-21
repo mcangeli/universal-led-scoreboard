@@ -15,8 +15,8 @@
 ## Still to verify before release tagging
 
 - [x] Full regression suite on documentation commit `2940b65`: **1,782 tests run, 15 skipped, no failures**; Pi 5 dashboard updater completed successfully on 2026-10-20.
-- [ ] Fresh GitHub install of a TOML-only screen plugin, followed by enable, render, settings edit, disable, and uninstall.
-- [ ] Existing plugin settings preserved through a TOML update and restart (visual render confirmed; settings details should be checked explicitly).
+- [x] Pi 5 Swimming Fish plugin lifecycle: install, enable, render, disable, uninstall and reinstall verified by user (2026-10-21). Settings and animation verified after reinstallation.
+- [x] Swimming Fish TOML update rendered correctly; user subsequently confirmed settings and animation after reinstallation and service restart (2026-10-21).
 - [x] Pi 5 dashboard favorite-team changes retain the saved selections (user-verified, 2026-10-21).
 - [ ] Dynamic team registry remaining acceptance: restart persistence, sports coverage, and existing saved-config compatibility.
 - [ ] Pi 3 production candidate preflight and physical 64×32 output observation.
