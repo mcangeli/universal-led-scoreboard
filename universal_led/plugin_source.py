@@ -27,11 +27,11 @@ def parse_plugin_source(url: str) -> tuple[str, str]:
     if parts.scheme != "https" or parts.netloc != "github.com" or parts.query or parts.fragment:
         raise ManifestError("invalid GitHub plugin URL")
     segments = parts.path.strip("/").split("/")
-    if len(segments) != 6 or segments[2] != "tree" or segments[4] != "plugins":
+    if len(segments) < 6 or segments[2] != "tree" or segments[-2] != "plugins":
         raise ManifestError("expected GitHub repository or /tree/branch/plugins/name URL")
     owner, repo = parse_github_source("https://github.com/" + "/".join(segments[:2]))
-    branch, name = segments[3], segments[5]
-    if (not _SEGMENT.fullmatch(branch) or branch in {".", ".."}
+    branch, name = "/".join(segments[3:-2]), segments[-1]
+    if (not branch or any(not _SEGMENT.fullmatch(part) or part in {".", ".."} for part in segments[3:-2])
             or not _SEGMENT.fullmatch(name) or name in {".", ".."}):
         raise ManifestError("unsafe GitHub plugin path")
     return f"https://github.com/{owner}/{repo}", "plugins/" + name
