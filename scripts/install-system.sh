@@ -56,7 +56,6 @@ else
   echo "Resuming existing checkout and virtual environment; no clone or venv reset."
 fi
 "$VENV/bin/python" -m pip install --upgrade pip
-"$VENV/bin/python" -m pip install 'cryptography>=42,<47'
 echo "Running baseline tests..."
 (cd "$APP" && "$VENV/bin/python" -m unittest discover -s tests -p 'test_*.py')
 if (( RESUME )); then
