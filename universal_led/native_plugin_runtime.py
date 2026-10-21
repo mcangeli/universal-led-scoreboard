@@ -1,0 +1,60 @@
+"""Subprocess-only execution of enabled native screen plugins.
+
+A timeout bounds rendering; never import plugin code into the web process.
+This is process isolation, not a security sandbox for hostile Python.
+"""
+from __future__ import annotations
+import json
+import subprocess
+import sys
+from pathlib import Path
+from .display import Framebuffer
+from .plugin_manifest import parse_manifest
+from .plugin_registry import read_registry
+
+MAX_FRAME = 64 * 32 * 3
+
+
+def enabled_screen_ids(root, registry):
+    records = read_registry(registry)
+    result = []
+    for plugin_id, record in sorted(records.items()):
+        package = Path(root) / plugin_id
+        manifest_file = package / "uls-plugin.json"
+        if not record["enabled"] or package.is_symlink() or not manifest_file.is_file() or manifest_file.is_symlink():
+            continue
+        try:
+            manifest = parse_manifest(json.loads(manifest_file.read_text()))
+            if manifest.plugin_id == plugin_id and "screen" in manifest.capabilities:
+                result.append(plugin_id)
+        except (OSError, ValueError):
+            continue
+    return tuple(result)
+
+
+class NativePluginSlot:
+    def __init__(self, plugin_id, root="/var/lib/uls/plugins", timeout=1.5):
+        self.plugin_id = plugin_id
+        self.root = Path(root)
+        self.timeout = timeout
+
+    def frame(self, *, live_games=False, selected=True, now=None):
+        if live_games or not selected:
+            return None
+        completed = subprocess.run(
+            [sys.executable, "-m", "universal_led.native_plugin_worker",
+             str(self.root), self.plugin_id],
+            stdout=subprocess.PIPE, stderr=subprocess.PIPE,
+            timeout=self.timeout, check=True)
+        raw = completed.stdout
+        if len(raw) != MAX_FRAME:
+            raise ValueError("plugin must return exactly 64x32 RGB pixels")
+        frame = Framebuffer(64, 32)
+        for y in range(32):
+            offset = y * 64 * 3
+            frame.pixels[y] = [tuple(raw[offset + x*3:offset + x*3 + 3]) for x in range(64)]
+        return frame
+
+
+def enabled_screen_slots(root, registry):
+    return tuple(NativePluginSlot(plugin_id, root) for plugin_id in enabled_screen_ids(root, registry))
