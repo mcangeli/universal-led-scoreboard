@@ -9,8 +9,9 @@ from universal_led.plugin_manifest import ManifestError
 class OfficialPluginCatalogTests(unittest.TestCase):
     def test_only_optional_plugins_are_catalogued(self):
         entries = read_official_catalog()
-        self.assertEqual([item["id"] for item in entries], ["swimming-fish"])
-        self.assertIn("mcangeli/uls-plugins", entries[0]["source"])
+        self.assertEqual([item["id"] for item in entries], ["swimming-fish", "disney-wait-times"])
+        self.assertEqual([item["version"] for item in entries], ["0.2.0", "0.2.0"])
+        for item in entries:\n            self.assertIn("mcangeli/uls-plugins", item["source"])
         self.assertNotIn("hello-world", [item["id"] for item in entries])
 
     def test_rejects_mismatched_directory(self):
