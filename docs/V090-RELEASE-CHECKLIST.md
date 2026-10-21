@@ -17,7 +17,8 @@
 - [x] Full regression suite on documentation commit `2940b65`: **1,782 tests run, 15 skipped, no failures**; Pi 5 dashboard updater completed successfully on 2026-10-20.
 - [ ] Fresh GitHub install of a TOML-only screen plugin, followed by enable, render, settings edit, disable, and uninstall.
 - [ ] Existing plugin settings preserved through a TOML update and restart (visual render confirmed; settings details should be checked explicitly).
-- [ ] Dynamic team registry acceptance: team selection, sports coverage, and saved-config compatibility.
+- [x] Pi 5 dashboard favorite-team changes retain the saved selections (user-verified, 2026-10-21).
+- [ ] Dynamic team registry remaining acceptance: restart persistence, sports coverage, and existing saved-config compatibility.
 - [ ] Pi 3 production candidate preflight and physical 64×32 output observation.
 - [ ] Confirm source attribution, dependencies and remaining accepted release-candidate exceptions.
 - [ ] Review release notes, merge branch to `main`, create `v0.9.0-rc.1`, and verify production update.
