@@ -9,7 +9,8 @@ Scope: dynamic team registry, native external plugin lifecycle, official plugin 
 - [ ] Confirm no pending configuration/schema migration errors on existing installations.
 - [x] Verify favorite-team selection persists through dashboard save and full Pi 3 reboot (operator confirmed 2026-10-21).
 - [ ] Verify dynamic team selections and favorites persist through portable backup/restore (not retested as part of 0.9.0 acceptance).
-- [ ] Confirm live games preempt supplemental plugin screens, and non-live rotation interleaves regular ULS content between enabled plugins.
+- [ ] Confirm live games preempt supplemental plugin screens (awaiting games later on 2026-10-21).
+- [x] Operator confirmed enabled plugins appear in idle rotation on the physical board on 2026-10-21; precise interleaving cadence was previously observed on Pi 5.
 - [ ] Confirm plugins honor per-plugin display duration and enable/disable state after restart (operator reports plugins function as expected on 2026-10-21; precise duration and restart persistence not separately confirmed).
 - [x] Automated local plugin install, update, uninstall, and failed-update rollback tests pass, including preservation of plugin files, registry bytes, and enabled state after simulated failure (1,798-test preflight at `928fb8a`).
 - [ ] Manual dashboard plugin lifecycle and recovery smoke test remains open; existing production plugins should not be used for destructive tests.
@@ -17,7 +18,7 @@ Scope: dynamic team registry, native external plugin lifecycle, official plugin 
 - [x] Operator confirmed official catalog lists Swimming Fish, Disney Wait Times, and Daily Calendar correctly in the dashboard on 2026-10-21; offline behavior has automated coverage but was not manually induced on Pi 3.
 - [ ] Confirm catalog entries and versions match external plugin manifests (run external repository's `python -m unittest discover -s tests -v`).
 - [ ] Check that secret plugin settings and tokens do not appear in logs or exported support diagnostics.
-- [ ] Verify matrix display on Pi 3, and browser board preview on Pi 5.
+- [x] Operator confirmed physical Pi 3 matrix output works and browser board preview works on both Pi 3 and Pi 5 on 2026-10-21.
 - [ ] Verify fresh install and existing-install upgrade paths on supported OS targets.
 
 - [x] Capture expected invalid matrix settings and unauthenticated board API test output locally, without changing production behavior; clean updater preflight at `6cfb3f5` on 2026-10-21.
