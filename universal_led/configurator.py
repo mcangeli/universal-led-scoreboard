@@ -153,7 +153,7 @@ async function reviewInstalledPlugin(plugin){
    return;
   }
   reviewedGithubUpdate={...result,previousSource:plugin.installedSource||plugin.source};
-  target.textContent=['Update available: '+plugin.name,'Installed version: '+plugin.version,'Reviewed version: '+result.version,'Installed commit: '+plugin.commit,'Proposed commit: '+result.commit,'Source: '+result.source,'Enabled state and saved settings will be preserved.'].join('\\n');
+  target.textContent=['Update available: '+plugin.name,'Installed version: '+plugin.version,'Reviewed version: '+result.version,'Installed commit: '+plugin.commit,'Proposed commit: '+result.commit,'Current source: '+(plugin.installedSource||plugin.source),'Reviewed source: '+result.source,(plugin.installedSource&&plugin.installedSource!==result.source?'Official source migration will be performed.':'Source unchanged.'),'Enabled state and saved settings will be preserved.'].join('\\n');
   document.getElementById('plugin-github-update').hidden=false;
   target.scrollIntoView({block:'nearest'});
  }catch(error){target.textContent='Update review failed for '+plugin.source+': '+error.message}
@@ -298,10 +298,20 @@ async function loadPluginInventory(){
   const data=await response.json();
   target.replaceChildren();
   if(!data.plugins.length){target.textContent='No registered third-party plugins installed.'}
+  else{
+   const summary=document.createElement('p');
+   const active=data.plugins.filter(plugin=>plugin.enabled&&!plugin.error).length;
+   summary.textContent=data.plugins.length+' installed · '+active+' enabled · '+(data.plugins.length-active)+' disabled or unavailable';
+   target.appendChild(summary);
+  }
   for(const plugin of data.plugins){
    const item=document.createElement('p');
-   item.textContent=plugin.name+' v'+plugin.version+' · '+plugin.status+(plugin.error?' · '+plugin.error:'');
+   item.textContent=plugin.name+' v'+plugin.version+' · '+(plugin.enabled?'Enabled':'Disabled')+' · '+plugin.status+(plugin.error?' · '+plugin.error:'');
    target.appendChild(item);
+   const sourceLine=document.createElement('p');
+   sourceLine.className='muted';
+   sourceLine.textContent='Source: '+plugin.source+' · Commit: '+(plugin.commit||'unknown').slice(0,12);
+   target.appendChild(sourceLine);
    if(!plugin.error){
     if(plugin.source.startsWith('https://github.com/') && /^[0-9a-f]{40}$/i.test(plugin.commit)){
      const update=document.createElement('button');
