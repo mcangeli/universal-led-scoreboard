@@ -5,13 +5,14 @@ Scope: dynamic team registry, native external plugin lifecycle, official plugin 
 ## Code and compatibility gates
 
 - [x] Pi 5 updater preflight and installation accepted by operator on 2026-10-21, after offline catalog regression fix (commit `f3f2593` and subsequent checklist-only commit). Exact final test count not supplied.
-- [x] Pi 3 updater preflight and installation also accepted by operator on 2026-10-21; both devices updated successfully. Latest verified run: candidate commit `6cfb3f5`, **1,797 tests, 15 skipped, zero failures**, successful fast-forward installation on 2026-10-21; updater confirms `/etc/uls` and `/var/lib/uls` untouched. The latest log does not independently identify which Pi ran it.
+- [x] Pi 3 updater preflight and installation also accepted by operator on 2026-10-21; both devices updated successfully. Latest verified run: candidate commit `928fb8a`, **1,798 tests, 15 skipped, zero failures**, successful fast-forward installation on 2026-10-21; updater confirms `/etc/uls` and `/var/lib/uls` untouched. The latest log does not independently identify which Pi ran it.
 - [ ] Confirm no pending configuration/schema migration errors on existing installations.
 - [x] Verify favorite-team selection persists through dashboard save and full Pi 3 reboot (operator confirmed 2026-10-21).
 - [ ] Verify dynamic team selections and favorites persist through portable backup/restore (not retested as part of 0.9.0 acceptance).
 - [ ] Confirm live games preempt supplemental plugin screens, and non-live rotation interleaves regular ULS content between enabled plugins.
 - [ ] Confirm plugins honor per-plugin display duration and enable/disable state after restart (operator reports plugins function as expected on 2026-10-21; precise duration and restart persistence not separately confirmed).
-- [ ] Verify plugin install, update, uninstall, and failed-install rollback with a test plugin (general plugin functionality confirmed by operator; destructive lifecycle and rollback checks still open).
+- [x] Automated local plugin install, update, uninstall, and failed-update rollback tests pass, including preservation of plugin files, registry bytes, and enabled state after simulated failure (1,798-test preflight at `928fb8a`).
+- [ ] Manual dashboard plugin lifecycle and recovery smoke test remains open; existing production plugins should not be used for destructive tests.
 - [x] Automated tests cover remote catalog, fresh cache, stale offline cache, bundled offline fallback, invalid remote refresh, malformed cache and oversized downloads (1,797-test Pi 3 preflight at `5ec14c9`).
 - [x] Operator confirmed official catalog lists Swimming Fish, Disney Wait Times, and Daily Calendar correctly in the dashboard on 2026-10-21; offline behavior has automated coverage but was not manually induced on Pi 3.
 - [ ] Confirm catalog entries and versions match external plugin manifests (run external repository's `python -m unittest discover -s tests -v`).
