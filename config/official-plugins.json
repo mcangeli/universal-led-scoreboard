@@ -8,13 +8,6 @@
       "description": "Animated 64x32 fish and bubbles",
       "version": "0.1.0",
       "source": "https://github.com/mcangeli/uls-plugins/tree/main/plugins/swimming-fish"
-    },
-    {
-      "id": "disney-wait-times",
-      "name": "Disney Wait Times",
-      "description": "Walt Disney World standby wait times on 64x32",
-      "version": "0.1.0",
-      "source": "https://github.com/mcangeli/uls-plugins/tree/main/plugins/disney-wait-times"
     }
   ]
 }
