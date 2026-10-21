@@ -13,7 +13,7 @@ Scope: dynamic team registry, native external plugin lifecycle, official plugin 
 - [ ] Confirm plugins honor per-plugin display duration and enable/disable state after restart (operator reports plugins function as expected on 2026-10-21; precise duration and restart persistence not separately confirmed).
 - [ ] Verify plugin install, update, uninstall, and failed-install rollback with a test plugin (general plugin functionality confirmed by operator; destructive lifecycle and rollback checks still open).
 - [x] Automated tests cover remote catalog, fresh cache, stale offline cache, bundled offline fallback, invalid remote refresh, malformed cache and oversized downloads (1,797-test Pi 3 preflight at `5ec14c9`).
-- [ ] Confirm official catalog appears in dashboard on hardware; offline behavior has automated coverage but was not manually induced on Pi 3.
+- [x] Operator confirmed official catalog lists Swimming Fish, Disney Wait Times, and Daily Calendar correctly in the dashboard on 2026-10-21; offline behavior has automated coverage but was not manually induced on Pi 3.
 - [ ] Confirm catalog entries and versions match external plugin manifests (run external repository's `python -m unittest discover -s tests -v`).
 - [ ] Check that secret plugin settings and tokens do not appear in logs or exported support diagnostics.
 - [ ] Verify matrix display on Pi 3, and browser board preview on Pi 5.
