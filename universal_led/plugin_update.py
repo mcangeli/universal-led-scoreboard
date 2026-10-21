@@ -27,7 +27,13 @@ def update_local_plugin(package_dir, plugin_root, registry_path, source_url, com
         raise ManifestError("plugin is not installed")
     old = records[manifest.plugin_id]
     if old["source"] != source_url:
-        raise ManifestError("plugin source changed; refusing update")
+        # Allow migration from a legacy repository-root source to a reviewed
+        # plugin subdirectory in that SAME repository, never across repos.
+        from .plugin_source import parse_plugin_source
+        previous_repo, previous_path = parse_plugin_source(old["source"])
+        proposed_repo, proposed_path = parse_plugin_source(source_url)
+        if previous_repo != proposed_repo or previous_path or not proposed_path:
+            raise ManifestError("plugin source changed; refusing update")
     destination = root / manifest.plugin_id
     if not destination.is_dir() or destination.is_symlink():
         raise ManifestError("unsafe installed plugin directory")
