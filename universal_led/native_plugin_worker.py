@@ -33,7 +33,7 @@ def main():
     frame = getattr(module, class_name)().render()
     if not isinstance(frame, Framebuffer) or (frame.width, frame.height) != (64, 32):
         raise ValueError("plugin must return a 64x32 Framebuffer")
-    sys.stdout.buffer.write(frame.ppm().split(b"\\n", 3)[3])
+    sys.stdout.buffer.write(bytes(channel for row in frame.pixels for pixel in row for channel in pixel))
 
 
 if __name__ == "__main__":
