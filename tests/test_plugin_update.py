@@ -49,6 +49,20 @@ class PluginUpdateTests(unittest.TestCase):
         self.assertEqual((self.root / "demo-plugin" / "demo.py").read_text(), "new")
         self.assertEqual((settings / "demo-plugin.json").read_text(), '{"display_seconds": 22}')
 
+    def test_legacy_root_source_can_migrate_to_same_repo_subdirectory(self):
+        legacy = "https://github.com/example/demo-plugin/tree/main/plugins/demo-plugin"
+        self.write_package("1.1.0", "new")
+        record = update_local_plugin(self.package, self.root, self.registry, legacy, SECOND)
+        self.assertEqual(record["source"], legacy)
+        self.assertEqual((self.root / "demo-plugin" / "demo.py").read_text(), "new")
+
+    def test_legacy_source_cannot_migrate_to_other_repo(self):
+        self.write_package("1.1.0", "new")
+        with self.assertRaises(ManifestError):
+            update_local_plugin(self.package, self.root, self.registry,
+                                "https://github.com/example/other/tree/main/plugins/demo-plugin", SECOND)
+        self.assertEqual((self.root / "demo-plugin" / "demo.py").read_text(), "old")
+
     def test_reject_changed_source_without_modifying_install(self):
         self.write_package("1.1.0", "new")
         with self.assertRaises(ManifestError):
