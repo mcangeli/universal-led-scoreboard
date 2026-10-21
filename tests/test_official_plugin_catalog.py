@@ -1,4 +1,5 @@
 import json
+import time
 import tempfile
 import unittest
 from pathlib import Path
@@ -36,12 +37,12 @@ class OfficialPluginCatalogTests(unittest.TestCase):
                 "source": "https://github.com/mcangeli/uls-plugins/tree/main/plugins/test-plugin"
             }]}
             payload = json.dumps(remote).encode("utf-8")
-            entries, source = dynamic_official_catalog(cache_path=cache, fetch=lambda: payload, now=100000)
+            entries, source = dynamic_official_catalog(cache_path=cache, fetch=lambda: payload, now=time.time())
             self.assertEqual(source, "remote")
             self.assertEqual(entries[0]["id"], "test-plugin")
             entries, source = dynamic_official_catalog(cache_path=cache, fetch=lambda: (_ for _ in ()).throw(OSError()), now=100000)
             self.assertEqual(source, "cache")
-            entries, source = dynamic_official_catalog(cache_path=cache, fetch=lambda: (_ for _ in ()).throw(OSError()), now=9999999999)
+            entries, source = dynamic_official_catalog(cache_path=cache, fetch=lambda: (_ for _ in ()).throw(OSError()), now=time.time() + 100000)
             self.assertEqual(source, "stale-cache")
             entries, source = dynamic_official_catalog(cache_path=Path(tmp) / "missing.json",
                 fetch=lambda: (_ for _ in ()).throw(OSError()), now=9999999999)
