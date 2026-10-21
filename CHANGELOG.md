@@ -1,6 +1,6 @@
 # Changelog
 
-## v0.9.0 (release candidate in preparation, 2026-10-20)
+## v0.9.0 (release candidate in preparation, updated 2026-10-21)
 
 ### Added
 - Dynamic team registry groundwork for league/team selection and evolving sports catalogs.
@@ -9,6 +9,9 @@
 - Native plugin authoring documentation and the existing bundled Hello World reference: [developer guide](docs/PLUGIN-DEVELOPMENT.md) and [Hello World](plugins/hello-world/README.md).
 
 ### Improved
+- Official plugin catalog now supports validated remote discovery, cached offline access, bundled fallback, and manual refresh.
+- Supplemental native plugin screens interleave with normal scoreboard content instead of displaying consecutively; live-game preemption is retained.
+- Plugin Manager includes manual Daily Calendar cache invalidation. Google ICS feed publication delays are upstream and cannot be bypassed by this action.
 - Transactional plugin replacement and preserved external settings across updates.
 - Removed abandoned Bullpen compatibility scaffolding. Existing Bullpen plugins must be converted to native ULS plugins; their original repositories remain independent.
 
@@ -16,8 +19,8 @@
 - Pi 5 updater preflight on commit `bea17cc`: **1,782 tests run, 15 skipped, no failures**, and successful fast-forward installation; `/etc/uls` and `/var/lib/uls` preserved.
 - User confirmed external Swimming Fish successfully updated to a TOML-only manifest and continued rendering.
 - The bundled Hello World was already installed and running. Its documentation was expanded; it was not replaced.
-- Documentation updates after `bea17cc` still require final regression. Pi 3 candidate acceptance, full plugin lifecycle, dynamic team selection acceptance, and release tag remain pending. See [v0.9.0 checklist](docs/V090-RELEASE-CHECKLIST.md).
-- Native Magic Number and Green Monster conversions are separate plugin releases, not Core 0.9.0 release gates.
+- On October 21, 2026, the operator confirmed successful updates on **both Pi 3 and Pi 5** after the plugin-rotation and offline-catalog fixes. Exact final test totals were not provided; do not infer a count.\n- Full plugin lifecycle, dynamic team selection persistence, offline fallback behavior on hardware, and release tag remain pending. See [v0.9.0 release checklist](docs/release-0.9.0-checklist.md).
+- Native Magic Number and Green Monster conversions, and Google Calendar OAuth, are separate plugin releases, not Core 0.9.0 release gates. Automatic update notifications are deferred to v1.0.0.
 
 
 ## v0.8.0rc1 (release candidate, 2026-10-20)
