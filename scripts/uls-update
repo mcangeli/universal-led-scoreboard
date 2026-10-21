@@ -49,10 +49,11 @@ done
 # Provision the candidate's Python crypto dependency before running its tests.
 # The venv belongs to the installer user; never install into system Python.
 # Existing application files and settings are unchanged if this step fails.
-if ! as_owner "$VENV/bin/python" -c 'import cryptography' >/dev/null 2>&1; then
+if ! as_owner "$VENV/bin/python" -c 'from cryptography.hazmat.primitives.ciphers.aead import AESGCM; from cryptography.hazmat.primitives.asymmetric import rsa' >/dev/null 2>&1; then
   echo "Installing OAuth pairing cryptography dependency into the ULS virtual environment..."
   as_owner "$VENV/bin/python" -m pip install 'cryptography>=42,<47'
 fi
+echo "OAuth pairing cryptography available; encryption regression tests will execute."
 echo "Checking candidate code before changing the installation..."
 as_owner "$VENV/bin/python" -m compileall -q "$STAGE/universal_led" "$STAGE/tests"
 (cd "$STAGE" && as_owner env PYTHONPATH="$STAGE" "$VENV/bin/python" -m unittest discover -s tests -p 'test_*.py')
