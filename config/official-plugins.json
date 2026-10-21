@@ -15,6 +15,13 @@
       "description": "Theme park attraction wait-time display",
       "version": "0.2.0",
       "source": "https://github.com/mcangeli/uls-plugins/tree/main/plugins/disney-wait-times"
+    },
+    {
+      "id": "daily-calendar",
+      "name": "Daily Calendar",
+      "description": "Today's Google Calendar ICS events on a text-only 64x32 screen",
+      "version": "0.1.0",
+      "source": "https://github.com/mcangeli/uls-plugins/tree/main/plugins/daily-calendar"
     }
   ]
 }
