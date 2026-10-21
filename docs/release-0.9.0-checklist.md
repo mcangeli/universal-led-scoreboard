@@ -5,7 +5,7 @@ Scope: dynamic team registry, native external plugin lifecycle, official plugin 
 ## Code and compatibility gates
 
 - [x] Pi 5 updater preflight and installation accepted by operator on 2026-10-21, after offline catalog regression fix (commit `f3f2593` and subsequent checklist-only commit). Exact final test count not supplied.
-- [x] Pi 3 updater preflight and installation also accepted by operator on 2026-10-21; both devices updated successfully. Exact final test count not supplied.
+- [x] Pi 3 updater preflight and installation also accepted by operator on 2026-10-21; both devices updated successfully. Latest verified Pi 3 run: commit `5ec14c9`, **1,797 tests, 15 skipped, zero failures**, successful fast-forward installation on 2026-10-21; updater confirms `/etc/uls` and `/var/lib/uls` untouched.
 - [ ] Confirm no pending configuration/schema migration errors on existing installations.
 - [ ] Verify dynamic team selections and favorites persist through dashboard save, service restart, and backup/restore.
 - [ ] Confirm live games preempt supplemental plugin screens, and non-live rotation interleaves regular ULS content between enabled plugins.
