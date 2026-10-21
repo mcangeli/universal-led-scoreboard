@@ -19,7 +19,9 @@
 - [x] Swimming Fish TOML update rendered correctly; user subsequently confirmed settings and animation after reinstallation and service restart (2026-10-21).
 - [x] Pi 5 dashboard favorite-team changes retain the saved selections (user-verified, 2026-10-21).
 - [ ] Dynamic team registry remaining acceptance: restart persistence, sports coverage, and existing saved-config compatibility.
-- [ ] Pi 3 production candidate preflight and physical 64×32 output observation.
+- [x] Pi 3 candidate preflight: 1,786 tests run, 15 skipped, no failures; installed commit `96a06dc` successfully (2026-10-21).
+- [x] Pi 3 physical 64×32 display: user confirmed enabled Swimming Fish and bundled Hello World both render correctly.
+- [ ] Pi 3 live sports/game rendering on the physical matrix (plugin rendering verified separately).
 - [ ] Confirm source attribution, dependencies and remaining accepted release-candidate exceptions.
 - [ ] Review release notes, merge branch to `main`, create `v0.9.0-rc.1`, and verify production update.
 
