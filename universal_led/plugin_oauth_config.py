@@ -41,15 +41,14 @@ def load_google_client(path):
 
 
 def google_connection_status(config_path, vault, plugin_id="daily-calendar"):
+    """Local desktop pairing needs no public HTTPS origin or Pi OAuth client.
+
+    The legacy web-redirect configuration is not consulted for local pairing.
+    """
     from .plugin_oauth_vault import VaultError
     try:
-        config = load_google_client(config_path)
-    except OAuthConfigError:
-        return {"configured": False, "connected": False}
-    try:
-        vault.load(plugin_id)
-        connected = True
+        credentials = vault.load(plugin_id)
+        connected = bool(credentials.get("refresh_token"))
     except VaultError:
         connected = False
-    return {"configured": True, "connected": connected,
-            "redirect_uri": config["redirect_uri"]}
+    return {"configured": True, "connected": connected, "method": "local-desktop-pairing"}
