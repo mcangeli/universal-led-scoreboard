@@ -21,16 +21,16 @@
 
 ## Validation so far
 
-- Pi 3 updater on 2026-10-21 at `5ec14c9`: **1,797 tests run, 15 skipped, no failures**; fast-forward installation successful; settings/state untouched by updater.
+- Latest operator updater preflight on 2026-10-21 at `928fb8a`: **1,798 tests run, 15 skipped, no failures**; fast-forward installation successful; settings/state untouched by updater.
 - Pi 5 updater successfully installed current 0.9.0 development changes; exact final test count not reported.
 - Operator confirmed installed plugins function on Pi 3 and favorite-team selection survives a full Pi 3 reboot.
 - Automated tests cover remote catalog discovery, cached and offline fallback, malformed/oversized responses and preservation of a valid cache.
 
 ## Remaining acceptance before candidate tag
 
-- Complete targeted plugin lifecycle and failed-install rollback verification.
-- Confirm catalog UI and plugin rotation/priority behavior on the installed board.
-- Review configuration backup/restore, secret handling and release documentation.
+- Automated plugin install/update/uninstall and failed-update rollback tests pass; manual destructive lifecycle smoke test remains open.
+- Official three-plugin catalog UI confirmed by operator; live-priority hardware recheck remains open.
+- Review 0.9.0 backup/restore acceptance, secret handling and final release documentation.
 - Re-run candidate validation after any further source changes, then tag `v0.9.0-rc.1` and verify the tagged candidate.
 
 ## Intentionally not in Core 0.9.0
