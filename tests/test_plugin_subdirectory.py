@@ -23,6 +23,12 @@ class SubdirectorySourceTests(unittest.TestCase):
         self.assertEqual(parse_plugin_source(SOURCE), (
             "https://github.com/mcangeli/universal-led-scoreboard", "plugins/hello-world"))
 
+    def test_branch_with_slashes(self):
+        source = ("https://github.com/mcangeli/universal-led-scoreboard/tree/"
+                  "feature/0.9.0-dynamic-team-registry/plugins/hello-world")
+        self.assertEqual(parse_plugin_source(source), (
+            "https://github.com/mcangeli/universal-led-scoreboard", "plugins/hello-world"))
+
     def test_reject_traversal_and_unexpected_paths(self):
         for source in (
             SOURCE.replace("hello-world", ".."),
