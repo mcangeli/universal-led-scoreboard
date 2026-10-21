@@ -61,6 +61,33 @@ class OfficialPluginCatalogTests(unittest.TestCase):
             self.assertEqual(source, "bundled-fallback")
             self.assertTrue(entries)
 
+    def test_stale_valid_cache_survives_invalid_remote_refresh(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            cache = Path(tmp) / "cache.json"
+            payload = json.dumps({"schema_version": 1, "plugins": [{
+                "id": "test-plugin", "name": "Test", "description": "Demo",
+                "version": "0.1.0",
+                "source": "https://github.com/mcangeli/uls-plugins/tree/main/plugins/test-plugin"
+            }]}).encode("utf-8")
+            original, source = dynamic_official_catalog(cache_path=cache, fetch=lambda: payload)
+            self.assertEqual(source, "remote")
+            entries, source = dynamic_official_catalog(
+                cache_path=cache, refresh=True, fetch=lambda: b'{"schema_version":1,"plugins":"invalid"}'
+            )
+            self.assertEqual(source, "stale-cache")
+            self.assertEqual(entries, original)
+            self.assertEqual(cache.read_bytes(), payload)
+
+    def test_remote_catalog_size_limit_preserves_fallback(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            cache = Path(tmp) / "cache.json"
+            entries, source = dynamic_official_catalog(
+                cache_path=cache, fetch=lambda: b"x" * 65537
+            )
+            self.assertEqual(source, "bundled-fallback")
+            self.assertFalse(cache.exists())
+            self.assertTrue(entries)
+
     def test_rejects_invalid_remote_without_poisoning_cache(self):
         with tempfile.TemporaryDirectory() as tmp:
             cache = Path(tmp) / "cache.json"
