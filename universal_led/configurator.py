@@ -318,6 +318,46 @@ async function editPluginSettings(pluginId){
    finally{save.disabled=false}
   });
   target.appendChild(form);
+  if(pluginId==='daily-calendar'){
+   const oauth=document.createElement('section');
+   const heading=document.createElement('h3');heading.textContent='Google Calendar connection';oauth.appendChild(heading);
+   const connection=document.createElement('p');connection.setAttribute('role','status');connection.textContent='Checking connection…';oauth.appendChild(connection);
+   const connect=document.createElement('button');connect.type='button';connect.textContent='Connect Google Calendar';oauth.appendChild(connect);
+   const disconnect=document.createElement('button');disconnect.type='button';disconnect.textContent='Disconnect Google Calendar';oauth.appendChild(disconnect);
+   target.appendChild(oauth);
+   async function refreshGoogleStatus(){
+    try{
+     const response=await fetch('/api/plugins/oauth/status',{credentials:'same-origin',cache:'no-store'});
+     const info=await response.json();
+     if(!response.ok)throw new Error(info.error||'Status unavailable');
+     connection.textContent=info.connected?'Connected to Google Calendar':info.configured?'Not connected':'Google OAuth client not configured. An HTTPS public origin is required.';
+     connect.disabled=!info.configured||info.connected;
+     disconnect.disabled=!info.connected;
+     if(info.redirect_uri){const detail=document.createElement('p');detail.textContent='Google redirect URI: '+info.redirect_uri;oauth.appendChild(detail)}
+    }catch(error){connection.textContent='Connection status unavailable: '+error.message;connect.disabled=true;disconnect.disabled=true}
+   }
+   connect.addEventListener('click',async()=>{
+    connect.disabled=true;
+    connection.textContent='Starting Google authorization…';
+    try{
+     const response=await fetch('/api/plugins/oauth/begin',{method:'POST',credentials:'same-origin',headers:{'Content-Type':'application/json','X-Configurator-Token':token},body:JSON.stringify({plugin_id:'daily-calendar',provider:'google-calendar'})});
+     const result=await response.json();
+     if(!response.ok)throw new Error(result.error||'Authorization failed');
+     window.location.assign(result.authorization_url);
+    }catch(error){connection.textContent='Could not connect: '+error.message;connect.disabled=false}
+   });
+   disconnect.addEventListener('click',async()=>{
+    if(!window.confirm('Disconnect Google Calendar from this scoreboard?'))return;
+    disconnect.disabled=true;
+    try{
+     const response=await fetch('/api/plugins/oauth/disconnect',{method:'POST',credentials:'same-origin',headers:{'Content-Type':'application/json','X-Configurator-Token':token},body:JSON.stringify({plugin_id:'daily-calendar',provider:'google-calendar'})});
+     const result=await response.json();
+     if(!response.ok)throw new Error(result.error||'Disconnect failed');
+     await refreshGoogleStatus();
+    }catch(error){connection.textContent='Could not disconnect: '+error.message;disconnect.disabled=false}
+   });
+   await refreshGoogleStatus();
+  }
  }catch(error){target.textContent='Plugin settings unavailable: '+error.message}
 }
 async function loadPluginInventory(refreshCatalog=false){
@@ -1921,7 +1961,7 @@ def make_handler(config_dir,token,frame_provider=None,settings_callback=None,fee
                     self.send_login(error=True);return
                 session=sessions.create()
                 self.send_response(303)
-                self.send_header('Set-Cookie','uls_session='+session+'; HttpOnly; SameSite=Strict; Path=/; Max-Age=28800')
+                self.send_header('Set-Cookie','uls_session='+session+'; HttpOnly; SameSite=Lax; Path=/; Max-Age=28800')
                 self.send_header('Location','/')
                 self.send_header('Cache-Control','no-store')
                 self.end_headers();return
@@ -1932,9 +1972,9 @@ def make_handler(config_dir,token,frame_provider=None,settings_callback=None,fee
                     self.send_json(403,{'error':'Invalid session token'});return
                 sessions.revoke(self.session_token())
                 self.send_response(204)
-                self.send_header('Set-Cookie','uls_session=; HttpOnly; SameSite=Strict; Path=/; Max-Age=0')
+                self.send_header('Set-Cookie','uls_session=; HttpOnly; SameSite=Lax; Path=/; Max-Age=0')
                 self.end_headers();return
-            if path not in ('/api/mlb-colors','/api/nhl-colors','/api/config','/api/frame','/api/settings','/api/wifi/control','/api/service/restart','/api/news-sources','/api/time-weather','/api/weather-key','/api/season-countdown','/api/update/install','/api/matrix-settings','/api/matrix/apply','/api/backup/preview','/api/backup/restore','/api/plugins/enabled','/api/plugins/uninstall','/api/plugins/settings','/api/plugins/cache/refresh','/api/plugins/github/review','/api/plugins/bundled/install','/api/plugins/github/install','/api/plugins/github/update','/api/plugins/oauth/begin'):
+            if path not in ('/api/mlb-colors','/api/nhl-colors','/api/config','/api/frame','/api/settings','/api/wifi/control','/api/service/restart','/api/news-sources','/api/time-weather','/api/weather-key','/api/season-countdown','/api/update/install','/api/matrix-settings','/api/matrix/apply','/api/backup/preview','/api/backup/restore','/api/plugins/enabled','/api/plugins/uninstall','/api/plugins/settings','/api/plugins/cache/refresh','/api/plugins/github/review','/api/plugins/bundled/install','/api/plugins/github/install','/api/plugins/github/update','/api/plugins/oauth/begin','/api/plugins/oauth/disconnect'):
                 self.send_error(404);return
             if not secrets.compare_digest(self.headers.get('X-Configurator-Token',''),token):
                 self.send_json(403,{'error':'Invalid session token'});return
@@ -1945,6 +1985,16 @@ def make_handler(config_dir,token,frame_provider=None,settings_callback=None,fee
                 if self.headers.get('Content-Type','').split(';')[0].strip()!='application/json':
                     self.send_json(415,{'error':'JSON required'});return
                 data=json.loads(self.rfile.read(size))
+                if path=='/api/plugins/oauth/disconnect':
+                    from .plugin_oauth_vault import PluginTokenVault, VaultError
+                    if not isinstance(data,dict) or data != {'plugin_id':'daily-calendar','provider':'google-calendar'}:
+                        self.send_json(400,{'error':'Unsupported OAuth connection'});return
+                    try:
+                        PluginTokenVault(Path('/var/lib/uls/oauth')).delete('daily-calendar')
+                        self.send_json(200,{'connected':False})
+                    except (VaultError,OSError) as exc:
+                        self.send_json(400,{'error':str(exc)})
+                    return
                 if path=='/api/plugins/oauth/begin':
                     from .plugin_oauth_config import load_google_client, OAuthConfigError
                     from .plugin_oauth_providers import resolve_provider, ProviderError
