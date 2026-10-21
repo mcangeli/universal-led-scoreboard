@@ -2539,10 +2539,10 @@ def main():
                     last_plugin_scan = now
                     try:
                         slots = enabled_screen_slots(plugin_root, plugin_registry)
-                        ids = tuple(slot.plugin_id for slot in slots)
-                        if ids != active_plugin_ids:
+                        signature = tuple((slot.plugin_id, slot.display_seconds) for slot in slots)
+                        if signature != active_plugin_ids:
                             board.set_bullpen_slots(slots)
-                            active_plugin_ids = ids
+                            active_plugin_ids = signature
                     except (OSError, ValueError) as exc:
                         print(f'Plugin discovery failed: {exc}', flush=True)
                 write_frame(frame_path, board.frame())
