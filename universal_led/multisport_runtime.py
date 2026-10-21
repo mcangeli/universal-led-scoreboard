@@ -263,10 +263,20 @@ class MultiSportRenderer:
             interval = self._interval
             started = self._started
         if plugin_slots and not self._live_sports():
-            slot_number = int(max(0.0, self.clock() - started) // interval)
-            # Reserve the first slot for existing ULS content. This
-            # keeps supplemental screens from starving normal rotation.
-            plugin_index = slot_number % (len(plugin_slots) + 1) - 1
+            # Keep the regular ULS slot at its normal interval, but give
+            # each supplemental plugin its own validated display duration.
+            durations = [interval] + [
+                max(1, min(3600, getattr(plugin, 'display_seconds', interval)))
+                for plugin in plugin_slots
+            ]
+            cycle_length = sum(durations)
+            elapsed = max(0.0, self.clock() - started) % cycle_length
+            plugin_index = -1
+            for index, duration in enumerate(durations):
+                if elapsed < duration:
+                    plugin_index = index - 1
+                    break
+                elapsed -= duration
             if plugin_index >= 0:
                 plugin = plugin_slots[plugin_index]
                 with self._lock:
