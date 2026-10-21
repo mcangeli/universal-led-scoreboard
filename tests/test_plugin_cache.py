@@ -3,6 +3,8 @@ import unittest
 from pathlib import Path
 from universal_led.plugin_cache import invalidate_plugin_cache
 from universal_led.configurator import HTML
+import inspect
+from universal_led import configurator
 
 
 class PluginCacheTests(unittest.TestCase):
@@ -30,6 +32,7 @@ class PluginCacheTests(unittest.TestCase):
     def test_calendar_refresh_button_present(self):
         self.assertIn("Refresh calendar now", HTML)
         self.assertIn("/api/plugins/cache/refresh", HTML)
+        self.assertIn("'/api/plugins/cache/refresh','/api/plugins/github/review'", inspect.getsource(configurator))
 
 
 if __name__ == "__main__":
