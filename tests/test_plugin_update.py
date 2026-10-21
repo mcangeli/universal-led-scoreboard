@@ -78,7 +78,20 @@ class PluginUpdateTests(unittest.TestCase):
             update_local_plugin(self.package, self.root, self.registry, SOURCE, SECOND)
         self.assertEqual((self.root / "demo-plugin" / "demo.py").read_text(), "old")
 
+    def test_invalid_update_manifest_preserves_active_plugin_and_registry(self):
+        set_plugin_enabled(self.registry, "demo-plugin", True)
+        before = self.registry.read_bytes()
+        self.write_package("1.1.0", "new")
+        (self.package / "uls-plugin.json").write_text("{invalid json")
+        with self.assertRaises((ManifestError, ValueError)):
+            update_local_plugin(self.package, self.root, self.registry, SOURCE, SECOND)
+        self.assertEqual(self.registry.read_bytes(), before)
+        self.assertEqual((self.root / "demo-plugin" / "demo.py").read_text(), "old")
+        self.assertTrue(read_registry(self.registry)["demo-plugin"]["enabled"])
+
     def test_registry_publish_failure_restores_original_package(self):
+        set_plugin_enabled(self.registry, "demo-plugin", True)
+        original_registry = self.registry.read_bytes()
         self.write_package("1.1.0", "new")
         from universal_led import plugin_update
         actual_replace = plugin_update.os.replace
@@ -93,6 +106,8 @@ class PluginUpdateTests(unittest.TestCase):
                 update_local_plugin(self.package, self.root, self.registry, SOURCE, SECOND)
         self.assertEqual((self.root / "demo-plugin" / "demo.py").read_text(), "old")
         self.assertEqual(read_registry(self.registry)["demo-plugin"]["commit"], FIRST)
+        self.assertTrue(read_registry(self.registry)["demo-plugin"]["enabled"])
+        self.assertEqual(self.registry.read_bytes(), original_registry)
 
 
 if __name__ == "__main__":
