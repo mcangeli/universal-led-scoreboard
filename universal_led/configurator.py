@@ -1714,7 +1714,16 @@ def make_handler(config_dir,token,frame_provider=None,settings_callback=None,fee
                     try:
                         self.send_json(200,inspect_github_plugin(data['source']))
                     except (ValueError, KeyError, OSError) as exc:
-                        self.send_json(400,{'error':str(exc)})
+                        from .plugin_source import parse_plugin_source
+                        try:
+                            parse_plugin_source(data['source'])
+                        except ValueError:
+                            import logging
+                            logging.warning('Plugin review rejected source: length=%d repr=%r',
+                                            len(data['source']),data['source'][:500])
+                            self.send_json(400,{'error':'Invalid GitHub plugin URL; check server log for submitted source'})
+                        else:
+                            self.send_json(400,{'error':str(exc)})
                     return
                 if path=='/api/plugins/enabled':
                     from .plugin_inventory import installed_plugin_inventory
