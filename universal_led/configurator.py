@@ -304,7 +304,14 @@ async function loadPluginInventory(){
     if(plugin.source.startsWith('https://github.com/') && /^[0-9a-f]{40}$/i.test(plugin.commit)){
      const update=document.createElement('button');
      update.type='button';update.textContent='Check for update';
-     update.addEventListener('click',()=>reviewInstalledPlugin(plugin));
+     update.addEventListener('click',()=>{
+      const official=(data.official||[]).find(item=>item.id===plugin.id);
+      let reviewedSource=plugin.source;
+      if(official&&official.source.startsWith(plugin.source+'/tree/')){
+       reviewedSource=official.source;
+      }
+      reviewInstalledPlugin({...plugin,source:reviewedSource});
+     });
      target.appendChild(update);
     }
     const settings=document.createElement('button');
