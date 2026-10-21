@@ -7,6 +7,7 @@ helper; its fingerprint must be verified out of band before sending secrets.
 from __future__ import annotations
 
 import time
+import threading
 from .plugin_oauth_pairing import PairingTickets, PairingError
 from .plugin_oauth_pairing_crypto import PairingKey, PairingCryptoError
 
@@ -14,18 +15,20 @@ from .plugin_oauth_pairing_crypto import PairingKey, PairingCryptoError
 class PairingCoordinator:
     def __init__(self, clock=time.time):
         self._clock = clock
+        self._lock = threading.RLock()
         self._tickets = PairingTickets(clock=clock)
         self._keys = {}
 
     def begin(self, *, plugin_id, provider_id, session_id):
-        self._prune()
-        ticket = self._tickets.issue(plugin_id=plugin_id,
-                                     provider_id=provider_id,
-                                     session_id=session_id)
-        key = PairingKey(clock=self._clock)
-        self._keys[ticket] = (key, self._clock() + 300)
-        return {"ticket": ticket, "public_key": key.public_pem(),
-                "fingerprint": key.fingerprint(), "expires_in": 300}
+        with self._lock:
+            self._prune()
+            ticket = self._tickets.issue(plugin_id=plugin_id,
+                                         provider_id=provider_id,
+                                         session_id=session_id)
+            key = PairingKey(clock=self._clock)
+            self._keys[ticket] = (key, self._clock() + 300)
+            return {"ticket": ticket, "public_key": key.public_pem(),
+                    "fingerprint": key.fingerprint(), "expires_in": 300}
 
     def _prune(self):
         now = self._clock()
@@ -34,11 +37,12 @@ class PairingCoordinator:
                 del self._keys[ticket]
 
     def receive(self, *, ticket, plugin_id, provider_id, session_id, envelope):
-        self._prune()
-        entry = self._keys.pop(ticket, None) if isinstance(ticket, str) else None
-        # Consume ticket before decrypting, including invalid encrypted requests.
-        self._tickets.consume(ticket=ticket, plugin_id=plugin_id,
-                              provider_id=provider_id, session_id=session_id)
+        with self._lock:
+            self._prune()
+            entry = self._keys.pop(ticket, None) if isinstance(ticket, str) else None
+            # Consume ticket before decrypting, including invalid encrypted requests.
+            self._tickets.consume(ticket=ticket, plugin_id=plugin_id,
+                                  provider_id=provider_id, session_id=session_id)
         if entry is None:
             raise PairingError("Pairing key expired or already used")
         payload = entry[0].decrypt(envelope)
