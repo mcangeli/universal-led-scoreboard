@@ -205,7 +205,7 @@ def _team_record(entry):
         if kind not in ("total", "overall", "total record"):
             continue
         summary = record.get("summary")
-        if isinstance(summary, str) and re.fullmatch(r"\\s*\\d+-\\d+-\\d+\\s*", summary):
+        if isinstance(summary, str) and re.fullmatch(r"[ \t]*[0-9]+-[0-9]+-[0-9]+[ \t]*", summary):
             wins, draws, losses = map(int, summary.strip().split("-"))
             return f"{wins}-{draws}-{losses}"
     return None
