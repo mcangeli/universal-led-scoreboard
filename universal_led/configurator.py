@@ -322,7 +322,12 @@ async function editPluginSettings(pluginId){
    const oauth=document.createElement('section');
    const heading=document.createElement('h3');heading.textContent='Google Calendar connection';oauth.appendChild(heading);
    const connection=document.createElement('p');connection.setAttribute('role','status');connection.textContent='Checking connection…';oauth.appendChild(connection);
-   const connect=document.createElement('button');connect.type='button';connect.textContent='Connect Google Calendar';oauth.appendChild(connect);
+   const instructions=document.createElement('p');instructions.textContent='Private Pi setup: download a five-minute pairing request, run the Google desktop helper on your computer, then import its encrypted transfer file. No public Pi address is needed.';oauth.appendChild(instructions);
+   const connect=document.createElement('button');connect.type='button';connect.textContent='Download pairing request';oauth.appendChild(connect);
+   const fingerprint=document.createElement('p');fingerprint.style.overflowWrap='anywhere';oauth.appendChild(fingerprint);
+   const fileLabel=document.createElement('label');fileLabel.textContent='Encrypted transfer file: ';oauth.appendChild(fileLabel);
+   const file=document.createElement('input');file.type='file';file.accept='.json,application/json';fileLabel.appendChild(file);
+   const importButton=document.createElement('button');importButton.type='button';importButton.textContent='Import encrypted transfer';oauth.appendChild(importButton);
    const disconnect=document.createElement('button');disconnect.type='button';disconnect.textContent='Disconnect Google Calendar';oauth.appendChild(disconnect);
    target.appendChild(oauth);
    async function refreshGoogleStatus(){
@@ -330,21 +335,41 @@ async function editPluginSettings(pluginId){
      const response=await fetch('/api/plugins/oauth/status',{credentials:'same-origin',cache:'no-store'});
      const info=await response.json();
      if(!response.ok)throw new Error(info.error||'Status unavailable');
-     connection.textContent=info.connected?'Connected to Google Calendar':info.configured?'Not connected':'Google OAuth client not configured. An HTTPS public origin is required.';
-     connect.disabled=!info.configured||info.connected;
+     connection.textContent=info.connected?'Connected to Google Calendar':'Not connected. Use local desktop pairing.';
+     connect.disabled=!!info.connected;
+     importButton.disabled=!!info.connected;
      disconnect.disabled=!info.connected;
-     if(info.redirect_uri){const detail=document.createElement('p');detail.textContent='Google redirect URI: '+info.redirect_uri;oauth.appendChild(detail)}
-    }catch(error){connection.textContent='Connection status unavailable: '+error.message;connect.disabled=true;disconnect.disabled=true}
+    }catch(error){connection.textContent='Connection status unavailable: '+error.message;connect.disabled=true;disconnect.disabled=true;importButton.disabled=true}
    }
    connect.addEventListener('click',async()=>{
     connect.disabled=true;
-    connection.textContent='Starting Google authorization…';
+    connection.textContent='Generating temporary pairing request…';
     try{
-     const response=await fetch('/api/plugins/oauth/begin',{method:'POST',credentials:'same-origin',headers:{'Content-Type':'application/json','X-Configurator-Token':token},body:JSON.stringify({plugin_id:'daily-calendar',provider:'google-calendar'})});
+     const response=await fetch('/api/plugins/oauth/pairing/start',{method:'POST',credentials:'same-origin',headers:{'Content-Type':'application/json','X-Configurator-Token':token},body:JSON.stringify({plugin_id:'daily-calendar',provider:'google-calendar'})});
      const result=await response.json();
-     if(!response.ok)throw new Error(result.error||'Authorization failed');
-     window.location.assign(result.authorization_url);
-    }catch(error){connection.textContent='Could not connect: '+error.message;connect.disabled=false}
+     if(!response.ok)throw new Error(result.error||'Pairing failed');
+     fingerprint.textContent='Verify fingerprint with your desktop helper: '+result.fingerprint;
+     const blob=new Blob([JSON.stringify(result,null,2)],{type:'application/json'});
+     const url=URL.createObjectURL(blob),link=document.createElement('a');
+     link.href=url;link.download='uls-google-calendar-pairing.json';document.body.appendChild(link);link.click();link.remove();setTimeout(()=>URL.revokeObjectURL(url),1000);
+     connection.textContent='Pairing request downloaded. Complete desktop authorization and import within five minutes.';
+    }catch(error){connection.textContent='Could not start pairing: '+error.message}
+    finally{connect.disabled=false}
+   });
+   importButton.addEventListener('click',async()=>{
+    const selected=file.files&&file.files[0];
+    if(!selected){connection.textContent='Choose the encrypted transfer JSON file first.';return}
+    if(selected.size>32768){connection.textContent='Transfer file is too large.';return}
+    importButton.disabled=true;
+    try{
+     const transfer=JSON.parse(await selected.text());
+     const response=await fetch('/api/plugins/oauth/pairing/import',{method:'POST',credentials:'same-origin',headers:{'Content-Type':'application/json','X-Configurator-Token':token},body:JSON.stringify(transfer)});
+     const result=await response.json();
+     if(!response.ok)throw new Error(result.error||'Import failed');
+     file.value='';fingerprint.textContent='';
+     await refreshGoogleStatus();
+    }catch(error){connection.textContent='Could not import transfer: '+error.message}
+    finally{importButton.disabled=false}
    });
    disconnect.addEventListener('click',async()=>{
     if(!window.confirm('Disconnect Google Calendar from this scoreboard?'))return;
