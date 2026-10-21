@@ -7,7 +7,7 @@ from universal_led.plugin_manifest import ManifestError
 
 class PluginSettingsStoreTests(unittest.TestCase):
     def test_settings_survive_separate_package(self):
-        package = Path(__file__).resolve().parents[1] / "plugins" / "swimming-fish"
+        package = Path(__file__).resolve().parents[1] / "tests" / "fixtures" / "native-plugin"
         with tempfile.TemporaryDirectory() as tmp:
             self.assertEqual(read_plugin_settings(package, tmp, "swimming-fish")["display_seconds"], 12)
             saved = save_plugin_settings(package, tmp, "swimming-fish",
@@ -16,7 +16,7 @@ class PluginSettingsStoreTests(unittest.TestCase):
             self.assertEqual(read_plugin_settings(package, tmp, "swimming-fish")["display_seconds"], 27)
 
     def test_invalid_settings_not_written(self):
-        package = Path(__file__).resolve().parents[1] / "plugins" / "swimming-fish"
+        package = Path(__file__).resolve().parents[1] / "tests" / "fixtures" / "native-plugin"
         with tempfile.TemporaryDirectory() as tmp:
             with self.assertRaises(ManifestError):
                 save_plugin_settings(package, tmp, "swimming-fish", {"display_seconds": -1})
