@@ -1,6 +1,6 @@
-# Universal LED Scoreboard v0.9.0-rc.1 — draft release notes
+# Universal LED Scoreboard v0.9.0-rc.1 — release candidate notes
 
-**Status: release candidate not yet tagged.** These notes describe the intended candidate, not an available stable release.
+**Status: candidate prepared; tag and final acceptance pending.** This is not a stable release.
 
 ## Highlights
 
@@ -22,16 +22,16 @@
 ## Validation so far
 
 - Latest operator updater preflight on 2026-10-21 at `928fb8a`: **1,798 tests run, 15 skipped, no failures**; fast-forward installation successful; settings/state untouched by updater.
-- Pi 5 updater successfully installed current 0.9.0 development changes; exact final test count not reported.
-- Operator confirmed installed plugins function on Pi 3 and favorite-team selection survives a full Pi 3 reboot.
+- Both Pi 3 and Pi 5 updater installations were confirmed clean on 2026-10-21; exact final test count for each device was not reported.
+- Operator confirmed Pi 3 physical matrix, both browser previews, plugin rotation, official three-plugin catalog and favorite-team persistence through Pi 3 reboot. Corrected Standings help text was verified after a passing Pi 3 updater run.
 - Automated tests cover remote catalog discovery, cached and offline fallback, malformed/oversized responses and preservation of a valid cache.
 
-## Remaining acceptance before candidate tag
+## Open acceptance and known limitations
 
 - Automated plugin install/update/uninstall and failed-update rollback tests pass; manual destructive lifecycle smoke test remains open.
-- Official three-plugin catalog UI confirmed by operator; live-priority hardware recheck remains open.
-- Review 0.9.0 backup/restore acceptance, secret handling and final release documentation.
-- Re-run candidate validation after any further source changes, then tag `v0.9.0-rc.1` and verify the tagged candidate.
+- Live-game preemption of supplemental plugins awaits an eligible live game; automated priority behavior is covered but final physical observation is pending.
+- Portable backup/restore with 0.9.0 dynamic favorites, plugin setting persistence after restart, fresh physical install, and secret-handling diagnostics were not separately verified for this candidate. Treat these as unverified, not passed.
+- Finalize candidate commit, tag `v0.9.0-rc.1`, and verify the tagged build before stable promotion. No Core feature additions during this release freeze.
 
 ## Intentionally not in Core 0.9.0
 
