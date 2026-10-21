@@ -28,7 +28,7 @@ class NativePluginRuntimeTests(unittest.TestCase):
 
     def test_fish_renders_in_subprocess(self):
         from pathlib import Path
-        source = Path(__file__).resolve().parents[1] / "plugins" / "swimming-fish"
+        source = Path(__file__).resolve().parents[1] / "tests" / "fixtures" / "native-plugin"
         with tempfile.TemporaryDirectory() as tmp:
             root = Path(tmp)
             import shutil
