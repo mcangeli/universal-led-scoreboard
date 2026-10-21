@@ -14,7 +14,7 @@
 
 ## Still to verify before release tagging
 
-- [ ] Full regression suite on the final documentation commit.
+- [x] Full regression suite on documentation commit `2940b65`: **1,782 tests run, 15 skipped, no failures**; Pi 5 dashboard updater completed successfully on 2026-10-20.
 - [ ] Fresh GitHub install of a TOML-only screen plugin, followed by enable, render, settings edit, disable, and uninstall.
 - [ ] Existing plugin settings preserved through a TOML update and restart (visual render confirmed; settings details should be checked explicitly).
 - [ ] Dynamic team registry acceptance: team selection, sports coverage, and saved-config compatibility.
