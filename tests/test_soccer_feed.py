@@ -18,6 +18,36 @@ def fixture(details=None):
 
 
 class SoccerFeedTests(unittest.TestCase):
+    def test_mls_pregame_record_from_named_stats_is_w_l_d(self):
+        payload = fixture()
+        payload["events"][0]["status"]["type"]["state"] = "pre"
+        competitors = payload["events"][0]["competitions"][0]["competitors"]
+        competitors[0]["records"] = [{"stats": [
+            {"name": "wins", "value": 11}, {"name": "losses", "value": 14},
+            {"name": "ties", "value": 9}]}]
+        competitors[1]["records"] = [{"stats": [
+            {"name": "wins", "value": 18}, {"name": "losses", "value": 8},
+            {"name": "draws", "value": 8}]}]
+        match, = parse_scoreboard(payload, "MLS")
+        self.assertEqual((match.home_record, match.away_record),
+                         ("11-14-9", "18-8-8"))
+
+    def test_mls_pregame_record_from_total_summary(self):
+        payload = fixture()
+        competitors = payload["events"][0]["competitions"][0]["competitors"]
+        competitors[0]["records"] = [{"type": "total", "summary": "11-9-14"}]
+        competitors[1]["records"] = [{"type": "total", "summary": "18-8-8"}]
+        match, = parse_scoreboard(payload, "MLS")
+        self.assertEqual((match.home_record, match.away_record),
+                         ("11-14-9", "18-8-8"))
+
+    def test_non_total_summary_does_not_masquerade_as_season_record(self):
+        payload = fixture()
+        payload["events"][0]["competitions"][0]["competitors"][0]["records"] = [
+            {"type": "home", "summary": "5-2-1"}]
+        match, = parse_scoreboard(payload, "MLS")
+        self.assertIsNone(match.home_record)
+
     def test_mls_score_and_status(self):
         match, = parse_scoreboard(fixture(), "MLS")
         self.assertEqual((match.home_id, match.away_id, match.home_score, match.away_score), ("ATL", "MIA", 2, 1))
