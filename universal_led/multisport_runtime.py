@@ -265,16 +265,20 @@ class MultiSportRenderer:
         if plugin_slots and not self._live_sports():
             # Keep the regular ULS slot at its normal interval, but give
             # each supplemental plugin its own validated display duration.
-            durations = [interval] + [
-                max(1, min(3600, getattr(plugin, 'display_seconds', interval)))
-                for plugin in plugin_slots
-            ]
+            # Interleave normal ULS content between plugin appearances:
+            # base, plugin A, base, plugin B, ... rather than a plugin block.
+            # A single plugin retains its existing base/plugin cadence.
+            durations = []
+            slot_ids = []
+            for index, plugin in enumerate(plugin_slots):
+                durations.extend((interval, max(1, min(3600, getattr(plugin, 'display_seconds', interval)))))
+                slot_ids.extend((-1, index))
             cycle_length = sum(durations)
             elapsed = max(0.0, self.clock() - started) % cycle_length
             plugin_index = -1
             for index, duration in enumerate(durations):
                 if elapsed < duration:
-                    plugin_index = index - 1
+                    plugin_index = slot_ids[index]
                     break
                 elapsed -= duration
             if plugin_index >= 0:
