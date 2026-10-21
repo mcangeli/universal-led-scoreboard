@@ -1,108 +1,125 @@
-# ULS Plugin Developer Guide (v0.9.0 design draft)
+# Building native ULS plugins (API v1, ULS 0.9.0)
 
-> **Status:** Proposed plugin contract. This guide describes the target API for the v0.9.0 Plugin Manager work. The examples are **not yet a supported, installable plugin API**. Verify implementation and tests before removing this notice.
+This is the **implemented** screen-plugin contract. Plugins are maintained separately from ULS Core. See [Swimming Fish](https://github.com/mcangeli/uls-plugins/tree/main/plugins/swimming-fish) for a working reference. Bullpen compatibility was discontinued; convert legacy Bullpen plugins to native ULS instead.
 
-## Choose an integration path
-
-| Path | Best for | Integration |
-| --- | --- | --- |
-| Native ULS plugin | New scoreboard screens and integrations | ULS manifest, settings validation, render contract |
-| Bullpen adapter | Existing MLB-LED-Scoreboard Bullpen projects | Compatibility wrapper around the original plugin |
-
-Both paths must produce a valid 64×32 frame, work in the browser preview without matrix hardware, and respect ULS live-game interruption and rotation rules.
-
-## Proposed native plugin package
+## Directory structure
 
 ```text
-example-plugin/
-  uls-plugin.json
-  example_plugin/
-    __init__.py
-    screen.py
-  tests/
-    test_screen.py
+hello-world/
+  uls-plugin.toml
+  settings-schema.json
+  hello_world.py
   README.md
 ```
 
-Current validated manifest format (plugin execution is not yet available):
+The directory must have the same name as the plugin ID. ULS supports exactly **one** manifest per plugin: recommended `uls-plugin.toml`, or legacy `uls-plugin.json`. Both together are rejected. Do not use `pyproject.toml` as a ULS manifest.
+
+### uls-plugin.toml
+
+```toml
+id = "hello-world"
+name = "Hello World"
+version = "0.1.0"
+api_version = 1
+capabilities = ["screen"]
+entry_point = "hello_world:HelloWorldScreen"
+description = "Minimal 64x32 example screen"
+```
+
+Fields: `id` (lowercase alphanumeric with optional separators `.`, `_`, `-`, max 100 characters); `name` (nonempty, max 120); `version` (`X.Y.Z` with optional prerelease/build suffix); `api_version` (integer 1); `capabilities` (unique nonempty array of `screen`, `provider`, `dashboard`); `entry_point` (`module:ClassName`); optional `description` (max 1000). Unknown keys are rejected. Manifest size limit is 16 KiB. **Only screen plugins have a supported execution API in 0.9.0.**
+
+### settings-schema.json
 
 ```json
 {
-  "id": "example-screen",
-  "name": "Example Screen",
-  "version": "0.1.0",
-  "api_version": "1",
-  "entry_point": "example_plugin.screen:ExampleScreen",
-  "capabilities": ["screen"],
-  "description": "Example 64x32 screen"
+  "fields": {
+    "display_seconds": {
+      "type": "integer",
+      "default": 12,
+      "min": 1,
+      "max": 120,
+      "label": "Display duration"
+    },
+    "message": {
+      "type": "string",
+      "default": "HELLO",
+      "label": "Message"
+    }
+  }
 }
 ```
 
-### Target lifecycle
+A screen plugin **must** declare `display_seconds` as an integer, with its schema bounds within 1–3600 seconds. At most 32 fields are supported; field names must be public Python identifiers. Supported types: `integer`, `number`, `boolean`, `string`. Each field requires a correctly typed `default`. Optional properties: numeric `min`/`max`, `choices`, `label`, `description`. Unknown fields and out-of-range values fail validation. The schema must be no larger than 16 KiB. ULS stores validated settings **outside** the plugin package, preserving them across updates.
 
-1. Discover installed packages and validate manifests without importing arbitrary code.
-2. Check API compatibility, dependencies, and permissions.
-3. Load saved settings and validate against the plugin's schema.
-4. Determine eligibility for the current rotation slot.
-5. Render a frame for the 64×32 preview or physical matrix.
-6. Stop cleanly, preserve settings, and report errors without crashing other screens.
+### hello_world.py
 
-The manifest format is implemented in `universal_led/plugin_manifest.py`. The Python execution interface remains to be defined; do not assume the example class is loadable yet.
+```python
+from universal_led.display import Framebuffer
 
-## Adapting an existing Bullpen plugin
+class HelloWorldScreen:
+    def __init__(self):
+        self.message = "HELLO"
 
-Bullpen plugins are not assumed to be drop-in ULS packages. A compatibility adapter should:
+    def configure(self, settings):
+        self.message = settings.get("message", "HELLO")
 
-1. Identify the original Bullpen plugin's Python version, dependencies, configuration, and renderer interfaces.
-2. Translate its configuration into a namespaced ULS settings schema, retaining unknown values during migration where safe.
-3. Wrap the original renderer with a controlled 64×32 frame output and convert supported colors, fonts, and image operations.
-4. Map refresh and rotation eligibility into ULS scheduling rules. Live-game precedence stays controlled by ULS.
-5. Provide a fallback for unsupported Bullpen services and document any features that cannot be translated.
-6. Validate import behavior and rendering without physical hardware before allowing activation.
+    def render(self):
+        frame = Framebuffer(64, 32)
+        frame.text(self.message[:10].upper(), 2, 12, (255, 200, 80))
+        return frame
+```
 
-**Do not** load arbitrary Bullpen Python modules directly inside the dashboard web process. Third-party plugin execution requires a defined trust model and appropriate isolation.
+The entry-point class must be constructible without arguments. ULS calls `configure(settings)` if available, then `render()`. Return a `Framebuffer(64, 32)`, not PIL, PNG, PPM or raw bytes. Use `frame.pixel(x, y, (r, g, b))` and `frame.text(text, x, y, color)`. The built-in 5×7 font supports limited uppercase glyphs; unsupported characters raise errors. Keep text inside the 64×32 boundaries.
 
-### Conversion checklist
+## Runtime contract and limitations
 
-- [ ] Original license and attribution reviewed
-- [ ] Bullpen API and dependency versions recorded
-- [ ] Plugin metadata and ULS compatibility declared
-- [ ] 64×32 frame checked for clipping, scrolling, and color handling
-- [ ] Configuration migrated without losing existing values
-- [ ] No-game, offline, API failure, and restart behavior tested
-- [ ] Browser preview and physical matrix behavior verified
-- [ ] Disable/re-enable preserves settings
-- [ ] Installation failure and rollback tested
+ULS launches a **new Python subprocess per requested frame**. The worker serializes the framebuffer into exactly **6144 RGB bytes** on stdout. Never print diagnostics to stdout. The default render timeout is **1.5 seconds**. No instance/module state survives across frames. There is **no supported persistent background-worker or data/cache API in 0.9.0**, and plugin dependencies are not automatically installed. Network-heavy screens should not fetch data on every render. Plugin screens are suppressed while eligible live games take priority.
 
-## Plugin Manager requirements
+Subprocess execution is **not a security sandbox**. Only install plugins from sources you trust. GitHub installs use reviewed commit hashes, and the installer validates package contents, but arbitrary Python can still be dangerous.
 
-The dashboard should distinguish **built-in modules**, **installed third-party plugins**, and **Bullpen-compatible adapters**. Each entry should show its source, version, compatibility, enabled state, and any actionable validation errors.
+## Publish and install
 
-Disabling must preserve plugin settings. Uninstall must never silently delete user data. Installation and update should stage packages, validate manifests, reject unsafe archive paths, run compatibility checks, and roll back on failure. Do not enable executable third-party plugin installation until these protections are implemented and tested.
+1. Commit the plugin directory to a **public GitHub repository**. Include a README and automated tests.
+2. In the ULS dashboard's **Plugin Manager**, review either a repository-root URL (`https://github.com/OWNER/REPO`) or a shared-repository plugin URL (`https://github.com/OWNER/REPO/tree/main/plugins/hello-world`).
+3. Check the reviewed ID, version, source and pinned commit; install. **Installation does not automatically enable** a plugin.
+4. Enable it, configure its settings, and inspect **Open Board View** during idle rotation.
+5. For updates, bump the manifest version, commit, review the new GitHub commit, and update. Enabled state and external settings are preserved. **Disable before uninstalling**.
 
-## Required tests before release
+No Core catalog registration is required. Core updates and external plugin updates are separate operations.
 
-- Manifest parsing and invalid field rejection
-- Unsupported API version rejection
-- Dependency and archive traversal safeguards
-- Settings preservation across disable, update, and restore
-- Plugin exception isolation and frame validation
-- Native plugin example renders at 64×32
-- Bullpen adapter fixture renders at 64×32
-- Web preview operates without a HAT
-- Rotation respects live-game priority
-- Existing sports and updater regression suite remains green
+## Validate before publishing
 
-## Suggested example projects
+From a ULS checkout:
 
-Start with a simple native static/status screen to prove the API. Then use the existing Magic Number Bullpen plugin as the first real adapter integration. Green Monster and FlightWall can follow once the compatibility layer is stable.
+```bash
+python3 - <<'PY'
+from pathlib import Path
+from universal_led.plugin_manifest import load_plugin_manifest
+from universal_led.plugin_settings_schema import load_settings_schema
+package = Path("/path/to/hello-world")
+print(load_plugin_manifest(package))
+print(load_settings_schema(package))
+PY
+```
 
-## User-facing documentation to add after implementation
+To test the worker, put the plugin in a parent folder containing `hello-world/`:
 
-- Install a native ULS plugin from a trusted source
-- Install a supported Bullpen plugin using the compatibility adapter
-- Configure, enable, disable, update, and uninstall
-- Diagnose missing dependencies, unsupported APIs, and render errors
-- Create, test, package, and publish a plugin
+```bash
+python3 -m universal_led.native_plugin_worker \
+  /absolute/path/to/parent hello-world \
+  '{"display_seconds":12,"message":"HELLO"}' > /tmp/uls-hello.rgb
+wc -c /tmp/uls-hello.rgb
+```
 
-This guide deliberately separates the intended contract from features already shipped. Update examples to runnable code only when the actual API and integration tests exist.
+Expected size: **6144 bytes**. Use the same Python environment as ULS. Add unit tests for 64×32 output, invalid settings, unsupported characters, offline behavior, and failure isolation. Test enable/disable, update, settings preservation, and browser preview on a running Pi.
+
+## Troubleshooting
+
+- **Manifest rejected:** both TOML and JSON present, wrong field types, wrong ID, or manifest exceeds 16 KiB.
+- **GitHub review fails:** use a public repository and the supported `/tree/<branch>/plugins/<id>` directory URL.
+- **Plugin does not appear:** enable it; check live-game precedence and idle rotation.
+- **Worker timeout:** remove slow network requests or expensive work from `render()`.
+- **Invalid schema:** declare `display_seconds` and use supported field types.
+- **Frame invalid:** return exactly a 64×32 `Framebuffer`, and keep stdout free of logs.
+
+See [installation guide](INSTALLATION.md), [0.9.0 release checklist](V090-RELEASE-CHECKLIST.md), and [external plugin examples](https://github.com/mcangeli/uls-plugins).
