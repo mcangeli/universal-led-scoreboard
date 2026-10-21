@@ -21,7 +21,7 @@ from .plugin_source import parse_plugin_source
 def inspect_github_plugin(source_url: str) -> dict:
     canonical, subpath = parse_plugin_source(source_url)
     owner, repo = parse_github_source(canonical)
-    branch = source_url.split("/tree/", 1)[1].split("/", 1)[0] if subpath else "HEAD"
+    branch = source_url.split("/tree/", 1)[1].rsplit("/plugins/", 1)[0] if subpath else "HEAD"
     url = f"https://api.github.com/repos/{owner}/{repo}/commits/{quote(branch, safe='')}"
     request = urllib.request.Request(url, headers={
         "User-Agent": "ULS-Plugin-Installer/0.9",
