@@ -9,7 +9,7 @@ Scope: dynamic team registry, native external plugin lifecycle, official plugin 
 - [ ] Confirm no pending configuration/schema migration errors on existing installations.
 - [x] Verify favorite-team selection persists through dashboard save and full Pi 3 reboot (operator confirmed 2026-10-21).
 - [ ] Verify dynamic team selections and favorites persist through portable backup/restore (not retested as part of 0.9.0 acceptance).
-- [ ] Confirm live games preempt supplemental plugin screens (awaiting games later on 2026-10-21).
+- [x] Pi 3 physical board confirmed an eligible live EFL League One match preempted supplemental screens and returned to normal rotation after the match became final (operator observation).
 - [x] Operator confirmed enabled plugins appear in idle rotation on the physical board on 2026-10-21; precise interleaving cadence was previously observed on Pi 5.
 - [ ] Confirm plugins honor per-plugin display duration and enable/disable state after restart (operator reports plugins function as expected on 2026-10-21; precise duration and restart persistence not separately confirmed).
 - [x] Automated local plugin install, update, uninstall, and failed-update rollback tests pass, including preservation of plugin files, registry bytes, and enabled state after simulated failure (1,798-test preflight at `928fb8a`).
@@ -28,8 +28,8 @@ Scope: dynamic team registry, native external plugin lifecycle, official plugin 
 - [ ] Update installation, upgrade, recovery, plugin developer, and troubleshooting instructions.
 - [ ] Document supported Pi hardware, OS versions, and known limitations.
 - [x] Draft v0.9.0 changelog and release notes (`docs/RELEASE-NOTES-0.9.0-rc.1.md`); final review remains pending.
-- [ ] Create an annotated release candidate tag after both devices pass. Operator confirmed Pi 3 updater tests cleared and corrected Content & News standings text displayed at `35f7a26` on 2026-10-21; exact test count not provided. Pi 5 final UI-text-only commit not separately rechecked.
-- [ ] Recheck the release candidate, then merge/tag stable v0.9.0 only after acceptance.
+- [x] Annotated `v0.9.0-rc.2` tag created and pushed by operator; GitHub comparison confirms tag and `release/v0.9.0-rc.2` branch contain identical code. Pi 3 updated and physical MLS pregame record display verified. Pi 5 ran 1,801 tests with 15 skipped on the matching MLS parser fix before backport.
+- [ ] Complete remaining acceptance checks and explicitly approve stable v0.9.0; do not equate automated coverage with unperformed hardware checks.
 
 ## Explicitly deferred
 
@@ -40,3 +40,10 @@ Scope: dynamic team registry, native external plugin lifecycle, official plugin 
 Operator confirmed installed plugins function as expected on Pi 3 on 2026-10-21. This confirms general plugin operation, not every lifecycle or failure-path test.
 
 Record hardware checks and test results here before release. A passing source-inspection test alone is not hardware acceptance.
+
+## RC2 acceptance update (2026-10-21)
+
+- Pi 3 successfully updated to the RC2 source branch and operator confirmed MLS pregame records render correctly on the physical display.
+- Pi 5 completed 1,801 tests, 15 skipped, on the equivalent MLS parser change; Pi 3 exact final test count was not supplied.
+- OAuth development work is excluded from the v0.9.0 release branch and tag; ICS-based Daily Calendar remains an external plugin.
+- `v0.9.0-rc.2` is immutable and matches its release branch. Earlier RC1 documentation is historical, not the current release status.
