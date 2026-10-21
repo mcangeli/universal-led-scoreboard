@@ -241,6 +241,19 @@ async function setPluginEnabled(id,enabled){
   await loadPluginInventory();
  }catch(error){target.textContent='Plugin setting failed: '+error.message}
 }
+async function refreshPluginData(pluginId){
+ const target=document.getElementById('plugin-settings-editor');
+ try{
+  const response=await fetch('/api/plugins/cache/refresh',{
+   method:'POST',credentials:'same-origin',
+   headers:{'Content-Type':'application/json','X-Configurator-Token':token},
+   body:JSON.stringify({id:pluginId})
+  });
+  const data=await response.json();
+  if(!response.ok)throw new Error(data.error||'Refresh failed');
+  if(target)target.textContent='Data cache cleared for '+pluginId+'. The next render requests fresh data.';
+ }catch(error){if(target)target.textContent='Refresh failed: '+error.message}
+}
 async function editPluginSettings(pluginId){
  const target=document.getElementById('plugin-settings-editor');
  if(!target)return;
@@ -363,6 +376,7 @@ async function loadPluginInventory(refreshCatalog=false){
      });
     }
     if(plugin.id!=='hello-world')addButton(item,'Settings',()=>editPluginSettings(plugin.id));
+    if(plugin.id==='daily-calendar')addButton(item,'Refresh calendar now',()=>refreshPluginData(plugin.id));
     addButton(item,plugin.enabled?'Disable':'Enable',()=>setPluginEnabled(plugin.id,!plugin.enabled));
     if(!plugin.enabled)addButton(item,'Uninstall',()=>removePlugin(plugin.id));
    }
@@ -1943,6 +1957,19 @@ def make_handler(config_dir,token,frame_provider=None,settings_callback=None,fee
                             self.send_json(400,{'error':'Invalid GitHub plugin URL; check server log for submitted source'})
                         else:
                             self.send_json(400,{'error':str(exc)})
+                    return
+                if path=='/api/plugins/cache/refresh':
+                    from .plugin_registry import read_registry
+                    from .plugin_cache import invalidate_plugin_cache
+                    if not isinstance(data, dict) or set(data) != {'id'} or not isinstance(data['id'], str):
+                        raise ValueError('Expected plugin id')
+                    registry = Path(plugin_registry) if plugin_registry is not None else Path('/var/lib/uls/plugins.json')
+                    if data['id'] not in read_registry(registry):
+                        self.send_json(404, {'error': 'Plugin is not installed'})
+                        return
+                    removed = invalidate_plugin_cache(data['id'])
+                    self.send_json(200, {'id': data['id'], 'removed': removed,
+                                         'message': 'Cache cleared; fresh data requested on next render'})
                     return
                 if path=='/api/plugins/settings':
                     from .plugin_registry import read_registry
