@@ -38,6 +38,13 @@ class NativePluginSlot:
         self.root = Path(root)
         self.timeout = timeout
         self.display_seconds = 12
+        from .plugin_settings_store import read_plugin_settings
+        try:
+            settings = read_plugin_settings(self.root / self.plugin_id,
+                                            self.root.parent / 'plugin-settings', self.plugin_id)
+            self.display_seconds = settings['display_seconds']
+        except (OSError, ValueError, KeyError):
+            pass
 
     def frame(self, *, live_games=False, selected=True, now=None):
         if live_games or not selected:
