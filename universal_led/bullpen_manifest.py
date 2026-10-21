@@ -8,7 +8,7 @@ from pathlib import Path
 from .plugin_manifest import ManifestError
 
 ENTRY_GROUP = "bullpen.mlbled.plugin"
-ENTRY_PATTERN = re.compile(r"^[A-Za-z_]\\w*(?:\\.[A-Za-z_]\\w*)*:[A-Za-z_]\\w*$")
+ENTRY_PATTERN = re.compile(r"^[A-Za-z_]\w*(?:\.[A-Za-z_]\w*)*:[A-Za-z_]\w*$")
 ID_PATTERN = re.compile(r"^[a-z][a-z0-9]*(?:[._-][a-z0-9]+)*$")
 
 
@@ -34,7 +34,7 @@ def inspect_bullpen_metadata(package: Path) -> dict:
     name, version = project.get("name"), project.get("version")
     if not isinstance(name, str) or not name.strip() or len(name) > 120:
         raise ManifestError("invalid Bullpen project name")
-    if not isinstance(version, str) or not re.fullmatch(r"[0-9]+\\.[0-9]+\\.[0-9]+(?:[-+][a-zA-Z0-9.-]+)?", version):
+    if not isinstance(version, str) or not re.fullmatch(r"[0-9]+\.[0-9]+\.[0-9]+(?:[-+][a-zA-Z0-9.-]+)?", version):
         raise ManifestError("invalid Bullpen project version")
     description = project.get("description", "")
     if not isinstance(description, str) or len(description) > 1000:
