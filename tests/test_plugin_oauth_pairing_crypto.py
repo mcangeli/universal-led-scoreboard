@@ -1,10 +1,11 @@
 import unittest
 
 from universal_led.plugin_oauth_pairing_crypto import (
-    PairingCryptoError, PairingKey, encrypt_for_public_key,
+    AESGCM, PairingCryptoError, PairingKey, encrypt_for_public_key,
 )
 
 
+@unittest.skipUnless(AESGCM is not None, 'optional cryptography dependency unavailable')
 class PairingCryptoTests(unittest.TestCase):
     def test_encrypted_roundtrip(self):
         key = PairingKey()
