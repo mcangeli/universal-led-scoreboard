@@ -22,8 +22,13 @@ def update_reviewed_github_plugin(source: str, commit: str, plugin_id: str,
         raise ManifestError("a pinned GitHub commit is required")
     root, registry = Path(plugin_root), Path(registry_path)
     installed = read_registry(registry)
-    if plugin_id not in installed or installed[plugin_id]["source"] != source:
-        raise ManifestError("reviewed plugin is not installed from this source")
+    if plugin_id not in installed:
+        raise ManifestError("reviewed plugin is not installed")
+    old_source = installed[plugin_id]["source"]
+    if old_source != source:
+        previous_repo, previous_path = parse_plugin_source(old_source)
+        if previous_repo != canonical or previous_path or not subpath:
+            raise ManifestError("reviewed plugin source does not match installed repository")
     if installed[plugin_id]["commit"].lower() == commit.lower():
         raise ManifestError("plugin is already at the reviewed commit")
     with tempfile.TemporaryDirectory(prefix="uls-plugin-update-") as temp:
