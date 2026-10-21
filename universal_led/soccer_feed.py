@@ -170,15 +170,42 @@ def _english_club_key(competition, side):
 
 
 def _team_record(entry):
-    """Keep provider-supplied W-D-L only; never manufacture standings."""
+    """Normalize provider soccer records to wins-losses-draws.
+
+    ESPN soccer summaries are commonly wins-draws-losses; prefer named
+    statistics when present, and only accept a well-formed total summary.
+    """
+    import re
+
     records = entry.get("records") or []
+    if not isinstance(records, (list, tuple)):
+        return None
     for record in records:
         if not isinstance(record, Mapping):
             continue
-        stats = {str(s.get("name", "")).lower(): s.get("value") for s in record.get("stats", []) if isinstance(s, Mapping)}
-        if all(k in stats for k in ("wins", "ties", "losses")):
+        stats = {
+            str(stat.get("name", "")).lower(): stat.get("value")
+            for stat in record.get("stats", [])
+            if isinstance(stat, Mapping)
+        }
+        if all(key in stats for key in ("wins", "losses")) and (
+            "ties" in stats or "draws" in stats
+        ):
             try:
-                return f'{int(stats["wins"])}-{int(stats["ties"])}-{int(stats["losses"])}'
+                wins = int(stats["wins"])
+                losses = int(stats["losses"])
+                draws = int(stats.get("ties", stats.get("draws")))
+                if min(wins, losses, draws) >= 0:
+                    return f"{wins}-{losses}-{draws}"
             except (ValueError, TypeError):
                 pass
+        # ESPN's soccer record summary uses W-D-L. Avoid interpreting
+        # home/away or other split records as the full-season record.
+        kind = str(record.get("type") or record.get("name") or "").lower()
+        if kind not in ("total", "overall", "total record"):
+            continue
+        summary = record.get("summary")
+        if isinstance(summary, str) and re.fullmatch(r"\\s*\\d+-\\d+-\\d+\\s*", summary):
+            wins, draws, losses = map(int, summary.strip().split("-"))
+            return f"{wins}-{losses}-{draws}"
     return None
