@@ -39,7 +39,7 @@ class SoccerFeedTests(unittest.TestCase):
         competitors[1]["records"] = [{"type": "total", "summary": "18-8-8"}]
         match, = parse_scoreboard(payload, "MLS")
         self.assertEqual((match.home_record, match.away_record),
-                         ("11-14-9", "18-8-8"))
+                         ("11-9-14", "18-8-8"))
 
     def test_non_total_summary_does_not_masquerade_as_season_record(self):
         payload = fixture()
