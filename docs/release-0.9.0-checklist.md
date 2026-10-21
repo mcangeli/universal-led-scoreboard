@@ -4,7 +4,8 @@ Scope: dynamic team registry, native external plugin lifecycle, official plugin 
 
 ## Code and compatibility gates
 
-- [x] Pi 5 updater preflight and installation accepted by operator on 2026-10-21, after offline catalog regression fix (commit `f3f2593` and subsequent checklist-only commit). Exact final test count not supplied.\n- [ ] Pi 3 updater preflight passes with no failures; record test count, skips, and commit SHA.
+- [x] Pi 5 updater preflight and installation accepted by operator on 2026-10-21, after offline catalog regression fix (commit `f3f2593` and subsequent checklist-only commit). Exact final test count not supplied.
+- [x] Pi 3 updater preflight and installation also accepted by operator on 2026-10-21; both devices updated successfully. Exact final test count not supplied.
 - [ ] Confirm no pending configuration/schema migration errors on existing installations.
 - [ ] Verify dynamic team selections and favorites persist through dashboard save, service restart, and backup/restore.
 - [ ] Confirm live games preempt supplemental plugin screens, and non-live rotation interleaves regular ULS content between enabled plugins.
