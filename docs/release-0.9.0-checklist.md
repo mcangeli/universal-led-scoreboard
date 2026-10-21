@@ -27,7 +27,7 @@ Scope: dynamic team registry, native external plugin lifecycle, official plugin 
 - [ ] Update installation, upgrade, recovery, plugin developer, and troubleshooting instructions.
 - [ ] Document supported Pi hardware, OS versions, and known limitations.
 - [x] Draft v0.9.0 changelog and release notes (`docs/RELEASE-NOTES-0.9.0-rc.1.md`); final review remains pending.
-- [ ] Create an annotated release candidate tag after both devices pass.
+- [ ] Create an annotated release candidate tag after both devices pass. Operator confirmed Pi 3 updater tests cleared and corrected Content & News standings text displayed at `35f7a26` on 2026-10-21; exact test count not provided. Pi 5 final UI-text-only commit not separately rechecked.
 - [ ] Recheck the release candidate, then merge/tag stable v0.9.0 only after acceptance.
 
 ## Explicitly deferred
