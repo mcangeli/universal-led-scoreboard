@@ -188,6 +188,68 @@ async function setPluginEnabled(id,enabled){
   await loadPluginInventory();
  }catch(error){target.textContent='Plugin setting failed: '+error.message}
 }
+async function editPluginSettings(pluginId){
+ const target=document.getElementById('plugin-settings-editor');
+ if(!target)return;
+ target.replaceChildren();
+ target.textContent='Loading settings for '+pluginId+'…';
+ try{
+  const response=await fetch('/api/plugins/settings?id='+encodeURIComponent(pluginId),{credentials:'same-origin',cache:'no-store'});
+  const data=await response.json();
+  if(!response.ok)throw new Error(data.error||'HTTP '+response.status);
+  target.replaceChildren();
+  const title=document.createElement('h3');title.textContent='Settings: '+pluginId;target.appendChild(title);
+  const form=document.createElement('form');
+  const inputs={};
+  for(const [key,spec] of Object.entries(data.fields)){
+   const label=document.createElement('label');
+   label.textContent=(spec.label||key)+' ';
+   let control;
+   if(Array.isArray(spec.choices)){
+    control=document.createElement('select');
+    for(const choice of spec.choices){
+     const option=document.createElement('option');
+     option.value=String(choice);option.textContent=String(choice);
+     control.appendChild(option);
+    }
+    control.value=String(data.values[key]);
+   }else{
+    control=document.createElement('input');
+    control.type=spec.type==='boolean'?'checkbox':spec.type==='string'?'text':'number';
+    if(spec.type==='boolean')control.checked=data.values[key];
+    else control.value=String(data.values[key]);
+    if(spec.type==='integer')control.step='1';
+    else if(spec.type==='number')control.step='any';
+    if(spec.min!==undefined)control.min=String(spec.min);
+    if(spec.max!==undefined)control.max=String(spec.max);
+   }
+   control.name=key;
+   inputs[key]=control;
+   label.appendChild(control);
+   if(spec.description){const hint=document.createElement('small');hint.textContent=spec.description;label.appendChild(hint)}
+   form.appendChild(label);
+  }
+  const save=document.createElement('button');save.type='submit';save.textContent='Save plugin settings';form.appendChild(save);
+  const status=document.createElement('p');status.setAttribute('role','status');form.appendChild(status);
+  form.addEventListener('submit',async event=>{
+   event.preventDefault();
+   const values={};
+   for(const [key,spec] of Object.entries(data.fields)){
+    const control=inputs[key];
+    values[key]=spec.type==='boolean'?control.checked:spec.type==='integer'?Number.parseInt(control.value,10):spec.type==='number'?Number(control.value):control.value;
+   }
+   save.disabled=true;status.textContent='Saving…';
+   try{
+    const response=await fetch('/api/plugins/settings',{method:'POST',credentials:'same-origin',headers:{'Content-Type':'application/json','X-Configurator-Token':token},body:JSON.stringify({id:pluginId,values})});
+    const result=await response.json();
+    if(!response.ok)throw new Error(result.error||'HTTP '+response.status);
+    status.textContent='Settings saved.';
+   }catch(error){status.textContent='Could not save settings: '+error.message}
+   finally{save.disabled=false}
+  });
+  target.appendChild(form);
+ }catch(error){target.textContent='Plugin settings unavailable: '+error.message}
+}
 async function loadPluginInventory(){
  const target=document.getElementById('plugin-inventory');
  if(!target)return;
@@ -203,6 +265,10 @@ async function loadPluginInventory(){
    item.textContent=plugin.name+' v'+plugin.version+' · '+plugin.status+(plugin.error?' · '+plugin.error:'');
    target.appendChild(item);
    if(!plugin.error){
+    const settings=document.createElement('button');
+    settings.type='button';settings.textContent='Settings';
+    settings.addEventListener('click',()=>editPluginSettings(plugin.id));
+    target.appendChild(settings);
     const button=document.createElement('button');
     button.type='button';
     button.textContent=plugin.enabled?'Disable':'Enable';
