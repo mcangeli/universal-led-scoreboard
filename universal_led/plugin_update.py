@@ -33,7 +33,11 @@ def update_local_plugin(package_dir, plugin_root, registry_path, source_url, com
         previous_repo, previous_path = parse_plugin_source(old["source"])
         proposed_repo, proposed_path = parse_plugin_source(source_url)
         if previous_repo != proposed_repo or previous_path or not proposed_path:
-            raise ManifestError("plugin source changed; refusing update")
+            from .official_plugin_catalog import read_official_catalog
+            approved = next((item for item in read_official_catalog()
+                             if item["id"] == manifest.plugin_id and item["source"] == source_url), None)
+            if approved is None:
+                raise ManifestError("plugin source changed; refusing update")
     destination = root / manifest.plugin_id
     if not destination.is_dir() or destination.is_symlink():
         raise ManifestError("unsafe installed plugin directory")
