@@ -9,7 +9,7 @@ import subprocess
 import sys
 from pathlib import Path
 from .display import Framebuffer
-from .plugin_manifest import parse_manifest
+from .plugin_manifest import load_plugin_manifest
 from .plugin_registry import read_registry
 
 MAX_FRAME = 64 * 32 * 3
@@ -20,11 +20,10 @@ def enabled_screen_ids(root, registry):
     result = []
     for plugin_id, record in sorted(records.items()):
         package = Path(root) / plugin_id
-        manifest_file = package / "uls-plugin.json"
-        if not record["enabled"] or package.is_symlink() or not manifest_file.is_file() or manifest_file.is_symlink():
+        if not record["enabled"] or package.is_symlink() or not package.is_dir():
             continue
         try:
-            manifest = parse_manifest(json.loads(manifest_file.read_text()))
+            manifest = load_plugin_manifest(package)
             if manifest.plugin_id == plugin_id and "screen" in manifest.capabilities:
                 result.append(plugin_id)
         except (OSError, ValueError):
