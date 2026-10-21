@@ -1,5 +1,25 @@
 # Changelog
 
+## v0.9.0 (release candidate in preparation, 2026-10-20)
+
+### Added
+- Dynamic team registry groundwork for league/team selection and evolving sports catalogs.
+- Native third-party Plugin Manager with reviewed GitHub sources, commit-pinned installation/update, enable/disable, settings validation and isolated screen rendering.
+- Preferred `uls-plugin.toml` manifests alongside backward-compatible `uls-plugin.json` support. Packages containing both are rejected.
+- Native plugin authoring documentation and the existing bundled Hello World reference: [developer guide](docs/PLUGIN-DEVELOPMENT.md) and [Hello World](plugins/hello-world/README.md).
+
+### Improved
+- Transactional plugin replacement and preserved external settings across updates.
+- Removed abandoned Bullpen compatibility scaffolding. Existing Bullpen plugins must be converted to native ULS plugins; their original repositories remain independent.
+
+### Validation and release gates
+- Pi 5 updater preflight on commit `bea17cc`: **1,782 tests run, 15 skipped, no failures**, and successful fast-forward installation; `/etc/uls` and `/var/lib/uls` preserved.
+- User confirmed external Swimming Fish successfully updated to a TOML-only manifest and continued rendering.
+- The bundled Hello World was already installed and running. Its documentation was expanded; it was not replaced.
+- Documentation updates after `bea17cc` still require final regression. Pi 3 candidate acceptance, full plugin lifecycle, dynamic team selection acceptance, and release tag remain pending. See [v0.9.0 checklist](docs/V090-RELEASE-CHECKLIST.md).
+- Native Magic Number and Green Monster conversions are separate plugin releases, not Core 0.9.0 release gates.
+
+
 ## v0.8.0rc1 (release candidate, 2026-10-20)
 
 ### Added
