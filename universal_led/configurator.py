@@ -2399,9 +2399,26 @@ def main():
     from .frame_bridge import write_frame
     frame_path = Path(os.environ.get('ULS_FRAME_FILE', '/run/universal-led-scoreboard/live-frame.ppm'))
     frame_stop = threading.Event()
+    from .native_plugin_runtime import enabled_screen_slots
+    plugin_root = Path('/var/lib/uls/plugins')
+    plugin_registry = Path('/var/lib/uls/plugins.json')
+    active_plugin_ids = None
     def publish_frames():
+        nonlocal active_plugin_ids
+        last_plugin_scan = 0.0
         while not frame_stop.is_set():
             try:
+                now = time.monotonic()
+                if now - last_plugin_scan >= 5.0 or active_plugin_ids is None:
+                    last_plugin_scan = now
+                    try:
+                        slots = enabled_screen_slots(plugin_root, plugin_registry)
+                        ids = tuple(slot.plugin_id for slot in slots)
+                        if ids != active_plugin_ids:
+                            board.set_bullpen_slots(slots)
+                            active_plugin_ids = ids
+                    except (OSError, ValueError) as exc:
+                        print(f'Plugin discovery failed: {exc}', flush=True)
                 write_frame(frame_path, board.frame())
             except Exception as exc:
                 print(f'Frame publishing failed: {exc}', flush=True)
