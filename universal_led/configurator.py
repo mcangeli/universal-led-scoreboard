@@ -103,7 +103,7 @@ section h2{font-size:clamp(21px,1.6vw,26px);line-height:1.25;margin:0 0 18px}
 <div class="dashboard-grid">
 <div class="dashboard-tile"><h3>Installed plugins</h3><p class="muted">Manage active plugins. Disable a plugin before uninstalling it.</p><div id="plugin-inventory" role="status" aria-live="polite">Loading installed plugins…</div><div id="plugin-settings-editor" role="region" aria-label="Plugin settings"></div></div>
 <div class="dashboard-tile"><h3>Install from GitHub</h3><p class="muted">For custom plugins not listed below. Review never installs or runs code.</p><label for="plugin-github-url">GitHub plugin URL</label><input id="plugin-github-url" type="url" placeholder="https://github.com/owner/repo"><button type="button" onclick="reviewGithubPlugin()">Review plugin</button><pre id="plugin-github-review" role="status" style="white-space:pre-wrap;overflow-wrap:anywhere"></pre><button id="plugin-github-install" type="button" onclick="installReviewedGithubPlugin()" hidden>Install reviewed plugin (disabled)</button><button id="plugin-github-update" type="button" onclick="updateReviewedGithubPlugin()" hidden>Update reviewed plugin</button></div>
-<div class="dashboard-tile"><h3>Available plugins</h3><p class="muted">Official ULS plugins, maintained separately from Core. Review a source before installation.</p><div id="plugin-available" role="status" aria-live="polite">Loading available plugins…</div></div>
+<div class="dashboard-tile"><h3>Available plugins</h3><p class="muted">Official ULS plugins, maintained separately from Core. Review a source before installation.</p><button type="button" onclick="loadPluginInventory(true)">Refresh catalog</button><p id="plugin-catalog-status" class="muted" role="status"></p><div id="plugin-available" role="status" aria-live="polite">Loading available plugins…</div></div>
 <div class="dashboard-tile"><h3>Bundled examples</h3><p class="muted">Examples included with ULS Core, independent of the official plugin catalog.</p><div id="plugin-bundled"><p>Hello World v0.1.0 · 64×32 reference screen</p><p id="plugin-bundled-state" class="muted">Checking installation…</p><button id="plugin-bundled-install" type="button" onclick="installBundledHelloWorld()" hidden>Install Hello World</button><p id="plugin-bundled-install-status" role="status"></p></div><button type="button" onclick="previewHelloWorld()">Preview Hello World</button><canvas id="plugin-hello-preview" width="64" height="32" style="width:256px;max-width:100%;aspect-ratio:2/1;image-rendering:pixelated;background:#000" aria-label="Hello World 64 by 32 plugin preview" hidden></canvas><p id="plugin-hello-status" role="status"></p></div>
 </div></section><section data-page="system" hidden><h2>System</h2><h3>Software Updates</h3><p id="update-status" class="muted" role="status">Update status not checked.</p><label for="update-branch">Release branch</label> <select id="update-branch" onchange="updateBranchChanged()"><option value="">Check for branches…</option></select><label><input type="checkbox" id="update-show-all" onchange="renderUpdateBranches()"> Show all branches (including older releases)</label> <button type="button" onclick="checkSoftwareUpdate()">Check for Updates</button> <button type="button" id="install-update" onclick="installSoftwareUpdate()" disabled>Install Update</button><button type="button" id="copy-update-log" onclick="copyUpdateLog()">Copy Log</button><pre id="update-log" style="white-space:pre-wrap;overflow-wrap:anywhere;max-height:220px;overflow:auto"></pre><p id="system-info">Checking server information…</p><div id="pi-info" class="grid"><p class="muted">Loading Raspberry Pi diagnostics…</p></div><p class="muted">Service status is read-only. Hardware output and remote service controls are not enabled.</p></section><div data-page="colors" hidden><section><h2>64 × 32 Live Preview</h2><canvas id="matrix" width="64" height="32"></canvas>
 <p class="muted">Changes preview immediately. Saving is optional.</p><label for="preview-team">Preview favorite team: </label><select id="preview-team"></select><span id="dirty" role="status">All changes saved</span></section>
@@ -305,7 +305,7 @@ async function editPluginSettings(pluginId){
   target.appendChild(form);
  }catch(error){target.textContent='Plugin settings unavailable: '+error.message}
 }
-async function loadPluginInventory(){
+async function loadPluginInventory(refreshCatalog=false){
  const installed=document.getElementById('plugin-inventory');
  const available=document.getElementById('plugin-available');
  const bundledState=document.getElementById('plugin-bundled-state');
@@ -314,9 +314,11 @@ async function loadPluginInventory(){
  installed.textContent='Loading installed plugins…';
  available.textContent='Loading official catalog…';
  try{
-  const response=await fetch('/api/plugins/inventory',{credentials:'same-origin',cache:'no-store'});
+  const response=await fetch('/api/plugins/inventory'+(refreshCatalog?'?refresh=1':''),{credentials:'same-origin',cache:'no-store'});
   if(!response.ok)throw new Error('Inventory request failed (HTTP '+response.status+')');
   const data=await response.json();
+  const catalogStatus=document.getElementById('plugin-catalog-status');
+  if(catalogStatus)catalogStatus.textContent='Catalog source: '+(data.catalog_source||'bundled')+(data.catalog_source==='stale-cache'||data.catalog_source==='bundled-fallback'?' (offline fallback)':'');
   installed.replaceChildren();
   available.replaceChildren();
   const plugins=data.plugins||[];
@@ -1722,10 +1724,12 @@ def make_handler(config_dir,token,frame_provider=None,settings_callback=None,fee
                     root = Path(plugin_root) if plugin_root is not None else Path('/var/lib/uls/plugins')
                     registry = Path(plugin_registry) if plugin_registry is not None else Path('/var/lib/uls/plugins.json')
                     inventory = installed_plugin_inventory(root, registry)
-                    from .official_plugin_catalog import read_official_catalog
+                    from .official_plugin_catalog import dynamic_official_catalog
+                    official, catalog_source = dynamic_official_catalog(refresh='refresh=1' in self.path)
+                    inventory['catalog_source'] = catalog_source
                     installed_ids = {item['id'] for item in inventory['plugins']}
                     inventory['official'] = [dict(item, installed=item['id'] in installed_ids)
-                                             for item in read_official_catalog()]
+                                             for item in official]
                     self.send_json(200, inventory)
                 except (OSError, ValueError) as exc:
                     self.send_json(500, {'error': str(exc)})
