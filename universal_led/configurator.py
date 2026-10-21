@@ -1626,6 +1626,8 @@ def dashboard_feed_status(status, *, unix_time=False, wall_now=None, monotonic_n
 def make_handler(config_dir,token,frame_provider=None,settings_callback=None,feed_status=None,board_provider=None,countdown_status=None,standings_status=None,rotation_status=None,sports_feed_status=None,plugin_root=None,plugin_registry=None):
     started=time.monotonic()
     sessions=Sessions(config_dir)
+    from .plugin_oauth import PendingAuthorizations
+    oauth_pending=PendingAuthorizations()
     class Handler(BaseHTTPRequestHandler):
         def session_token(self):
             from http.cookies import SimpleCookie
@@ -1716,6 +1718,18 @@ def make_handler(config_dir,token,frame_provider=None,settings_callback=None,fee
                     self.send_json(200, frame_payload(render_hello_world()))
                 except (OSError, ValueError, ImportError, AttributeError) as exc:
                     self.send_json(500, {'error': str(exc)})
+            elif path=='/api/plugins/oauth/status':
+                from .plugin_oauth_config import google_connection_status
+                from .plugin_oauth_vault import PluginTokenVault
+                from .plugin_registry import read_registry
+                registry = Path(plugin_registry) if plugin_registry is not None else Path('/var/lib/uls/plugins.json')
+                if 'daily-calendar' not in read_registry(registry):
+                    self.send_json(404, {'error':'Daily Calendar plugin is not installed'})
+                else:
+                    self.send_json(200, google_connection_status(
+                        Path(config_dir) / 'oauth' / 'google-calendar.json',
+                        PluginTokenVault(Path('/var/lib/uls/oauth')),
+                    ))
             elif path=='/api/plugins/settings':
                 from .plugin_registry import read_registry
                 from .plugin_settings_schema import load_settings_schema
@@ -1893,7 +1907,7 @@ def make_handler(config_dir,token,frame_provider=None,settings_callback=None,fee
                 self.send_response(204)
                 self.send_header('Set-Cookie','uls_session=; HttpOnly; SameSite=Strict; Path=/; Max-Age=0')
                 self.end_headers();return
-            if path not in ('/api/mlb-colors','/api/nhl-colors','/api/config','/api/frame','/api/settings','/api/wifi/control','/api/service/restart','/api/news-sources','/api/time-weather','/api/weather-key','/api/season-countdown','/api/update/install','/api/matrix-settings','/api/matrix/apply','/api/backup/preview','/api/backup/restore','/api/plugins/enabled','/api/plugins/uninstall','/api/plugins/settings','/api/plugins/cache/refresh','/api/plugins/github/review','/api/plugins/bundled/install','/api/plugins/github/install','/api/plugins/github/update'):
+            if path not in ('/api/mlb-colors','/api/nhl-colors','/api/config','/api/frame','/api/settings','/api/wifi/control','/api/service/restart','/api/news-sources','/api/time-weather','/api/weather-key','/api/season-countdown','/api/update/install','/api/matrix-settings','/api/matrix/apply','/api/backup/preview','/api/backup/restore','/api/plugins/enabled','/api/plugins/uninstall','/api/plugins/settings','/api/plugins/cache/refresh','/api/plugins/github/review','/api/plugins/bundled/install','/api/plugins/github/install','/api/plugins/github/update','/api/plugins/oauth/begin'):
                 self.send_error(404);return
             if not secrets.compare_digest(self.headers.get('X-Configurator-Token',''),token):
                 self.send_json(403,{'error':'Invalid session token'});return
@@ -1904,6 +1918,26 @@ def make_handler(config_dir,token,frame_provider=None,settings_callback=None,fee
                 if self.headers.get('Content-Type','').split(';')[0].strip()!='application/json':
                     self.send_json(415,{'error':'JSON required'});return
                 data=json.loads(self.rfile.read(size))
+                if path=='/api/plugins/oauth/begin':
+                    from .plugin_oauth_config import load_google_client, OAuthConfigError
+                    from .plugin_oauth_providers import resolve_provider, ProviderError
+                    from .plugin_registry import read_registry
+                    registry = Path(plugin_registry) if plugin_registry is not None else Path('/var/lib/uls/plugins.json')
+                    if (not isinstance(data,dict) or data != {'plugin_id':'daily-calendar','provider':'google-calendar'}):
+                        self.send_json(400,{'error':'Unsupported OAuth connection'});return
+                    if 'daily-calendar' not in read_registry(registry):
+                        self.send_json(404,{'error':'Daily Calendar plugin is not installed'});return
+                    try:
+                        provider=resolve_provider(data['plugin_id'],data['provider'])
+                        client=load_google_client(Path(config_dir) / 'oauth' / 'google-calendar.json')
+                        url=oauth_pending.begin(
+                            plugin_id=data['plugin_id'],session_id=self.session_token(),
+                            client_id=client['client_id'],redirect_uri=client['redirect_uri'],
+                            authorization_endpoint=provider.authorization_endpoint,scope=provider.scope)
+                        self.send_json(200,{'authorization_url':url})
+                    except (OAuthConfigError,ProviderError,ValueError) as exc:
+                        self.send_json(400,{'error':str(exc)})
+                    return
                 if path=='/api/plugins/github/update':
                     from .plugin_github_update import update_reviewed_github_plugin
                     from .plugin_manifest import ManifestError
