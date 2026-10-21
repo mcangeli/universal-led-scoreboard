@@ -13,11 +13,13 @@ import secrets
 import time
 
 try:
+    from cryptography.exceptions import InvalidTag
     from cryptography.hazmat.primitives import hashes, serialization
     from cryptography.hazmat.primitives.asymmetric import padding, rsa
     from cryptography.hazmat.primitives.ciphers.aead import AESGCM
 except ImportError:
     AESGCM = None
+    InvalidTag = None
 
 MAX_ENVELOPE = 16384
 KEY_TTL = 300
@@ -82,7 +84,7 @@ class PairingKey:
             if not isinstance(result, dict):
                 raise PairingCryptoError("Invalid pairing payload")
             return result
-        except (ValueError, TypeError, KeyError):
+        except (ValueError, TypeError, KeyError, InvalidTag):
             raise PairingCryptoError("Unable to decrypt pairing payload") from None
 
 
