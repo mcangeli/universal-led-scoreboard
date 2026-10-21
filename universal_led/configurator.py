@@ -1668,6 +1668,8 @@ def make_handler(config_dir,token,frame_provider=None,settings_callback=None,fee
     sessions=Sessions(config_dir)
     from .plugin_oauth import PendingAuthorizations
     oauth_pending=PendingAuthorizations()
+    from .plugin_oauth_pairing_coordinator import PairingCoordinator
+    oauth_pairing=PairingCoordinator()
     class Handler(BaseHTTPRequestHandler):
         def session_token(self):
             from http.cookies import SimpleCookie
@@ -1974,7 +1976,7 @@ def make_handler(config_dir,token,frame_provider=None,settings_callback=None,fee
                 self.send_response(204)
                 self.send_header('Set-Cookie','uls_session=; HttpOnly; SameSite=Lax; Path=/; Max-Age=0')
                 self.end_headers();return
-            if path not in ('/api/mlb-colors','/api/nhl-colors','/api/config','/api/frame','/api/settings','/api/wifi/control','/api/service/restart','/api/news-sources','/api/time-weather','/api/weather-key','/api/season-countdown','/api/update/install','/api/matrix-settings','/api/matrix/apply','/api/backup/preview','/api/backup/restore','/api/plugins/enabled','/api/plugins/uninstall','/api/plugins/settings','/api/plugins/cache/refresh','/api/plugins/github/review','/api/plugins/bundled/install','/api/plugins/github/install','/api/plugins/github/update','/api/plugins/oauth/begin','/api/plugins/oauth/disconnect'):
+            if path not in ('/api/mlb-colors','/api/nhl-colors','/api/config','/api/frame','/api/settings','/api/wifi/control','/api/service/restart','/api/news-sources','/api/time-weather','/api/weather-key','/api/season-countdown','/api/update/install','/api/matrix-settings','/api/matrix/apply','/api/backup/preview','/api/backup/restore','/api/plugins/enabled','/api/plugins/uninstall','/api/plugins/settings','/api/plugins/cache/refresh','/api/plugins/github/review','/api/plugins/bundled/install','/api/plugins/github/install','/api/plugins/github/update','/api/plugins/oauth/begin','/api/plugins/oauth/disconnect','/api/plugins/oauth/pairing/start'):
                 self.send_error(404);return
             if not secrets.compare_digest(self.headers.get('X-Configurator-Token',''),token):
                 self.send_json(403,{'error':'Invalid session token'});return
@@ -1985,6 +1987,22 @@ def make_handler(config_dir,token,frame_provider=None,settings_callback=None,fee
                 if self.headers.get('Content-Type','').split(';')[0].strip()!='application/json':
                     self.send_json(415,{'error':'JSON required'});return
                 data=json.loads(self.rfile.read(size))
+                if path=='/api/plugins/oauth/pairing/start':
+                    from .plugin_registry import read_registry
+                    from .plugin_oauth_pairing import PairingError
+                    from .plugin_oauth_providers import ProviderError
+                    if not isinstance(data,dict) or data != {'plugin_id':'daily-calendar','provider':'google-calendar'}:
+                        self.send_json(400,{'error':'Unsupported OAuth pairing'});return
+                    registry=Path(plugin_registry) if plugin_registry is not None else Path('/var/lib/uls/plugins.json')
+                    if 'daily-calendar' not in read_registry(registry):
+                        self.send_json(404,{'error':'Daily Calendar plugin is not installed'});return
+                    try:
+                        issued=oauth_pairing.begin(plugin_id='daily-calendar',provider_id='google-calendar',
+                                                   session_id=self.session_token())
+                        self.send_json(200,issued)
+                    except (PairingError,ProviderError,ValueError) as exc:
+                        self.send_json(400,{'error':str(exc)})
+                    return
                 if path=='/api/plugins/oauth/disconnect':
                     from .plugin_oauth_vault import PluginTokenVault, VaultError
                     if not isinstance(data,dict) or data != {'plugin_id':'daily-calendar','provider':'google-calendar'}:
