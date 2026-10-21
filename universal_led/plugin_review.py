@@ -39,7 +39,11 @@ def inspect_github_plugin(source_url: str) -> dict:
         package = package / subpath if subpath else package
         manifest_file = package / "uls-plugin.json"
         if manifest_file.is_symlink() or not manifest_file.is_file():
-            raise ValueError("GitHub repository must contain uls-plugin.json at its root")
+            from .bullpen_manifest import inspect_bullpen_metadata
+            reviewed = inspect_bullpen_metadata(package)
+            reviewed.update({"source": source_url if subpath else canonical,
+                             "commit": commit, "enabled": False})
+            return reviewed
         if manifest_file.stat().st_size > 16384:
             raise ValueError("plugin manifest exceeds size limit")
         manifest = parse_manifest(json.loads(manifest_file.read_text(encoding="utf-8")))
