@@ -4,8 +4,8 @@ Scope: dynamic team registry, native external plugin lifecycle, official plugin 
 
 ## Code and compatibility gates
 
-- [x] Pi 5 updater preflight and installation accepted by operator on 2026-10-21, after offline catalog regression fix (commit `f3f2593` and subsequent checklist-only commit). Exact final test count not supplied.
-- [x] Pi 3 updater preflight and installation also accepted by operator on 2026-10-21; both devices updated successfully. Latest verified run: candidate commit `928fb8a`, **1,798 tests, 15 skipped, zero failures**, successful fast-forward installation on 2026-10-21; updater confirms `/etc/uls` and `/var/lib/uls` untouched. The latest log does not independently identify which Pi ran it.
+- [x] Pi 5 updater preflight and installation accepted by operator on 2026-10-21, including the final documentation-only branch head `86a2b04`. Exact final test count not supplied.
+- [x] Pi 3 updater preflight and installation also accepted by operator on 2026-10-21, including the final documentation-only branch head `86a2b04`; both devices updated cleanly. Latest verified run: candidate commit `928fb8a`, **1,798 tests, 15 skipped, zero failures**, successful fast-forward installation on 2026-10-21; updater confirms `/etc/uls` and `/var/lib/uls` untouched. The latest log does not independently identify which Pi ran it.
 - [ ] Confirm no pending configuration/schema migration errors on existing installations.
 - [x] Verify favorite-team selection persists through dashboard save and full Pi 3 reboot (operator confirmed 2026-10-21).
 - [ ] Verify dynamic team selections and favorites persist through portable backup/restore (not retested as part of 0.9.0 acceptance).
