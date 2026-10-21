@@ -7,7 +7,7 @@ from universal_led.plugin_manifest import ManifestError
 
 class PluginSettingsSchemaTests(unittest.TestCase):
     def test_swimming_fish_schema_and_defaults(self):
-        package = Path(__file__).resolve().parents[1] / "plugins" / "swimming-fish"
+        package = Path(__file__).resolve().parents[1] / "tests" / "fixtures" / "native-plugin"
         fields = load_settings_schema(package)
         self.assertEqual(validated_settings(fields, {})["display_seconds"], 12)
         self.assertEqual(validated_settings(fields, {"display_seconds": 30})["display_seconds"], 30)
@@ -17,12 +17,12 @@ class PluginSettingsSchemaTests(unittest.TestCase):
             validate_settings_schema({"fields": {"speed": {"type": "number", "default": 1}}})
 
     def test_rejects_out_of_range_duration(self):
-        fields = load_settings_schema(Path(__file__).resolve().parents[1] / "plugins" / "swimming-fish")
+        fields = load_settings_schema(Path(__file__).resolve().parents[1] / "tests" / "fixtures" / "native-plugin")
         with self.assertRaises(ManifestError):
             validated_settings(fields, {"display_seconds": 1000})
 
     def test_rejects_unknown_setting(self):
-        fields = load_settings_schema(Path(__file__).resolve().parents[1] / "plugins" / "swimming-fish")
+        fields = load_settings_schema(Path(__file__).resolve().parents[1] / "tests" / "fixtures" / "native-plugin")
         with self.assertRaises(ManifestError):
             validated_settings(fields, {"unknown": True})
 
