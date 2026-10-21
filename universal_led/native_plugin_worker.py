@@ -9,7 +9,7 @@ from .plugin_manifest import parse_manifest
 
 
 def main():
-    if len(sys.argv) != 3:
+    if len(sys.argv) not in (3, 4):
         raise ValueError("expected plugin root and id")
     root, plugin_id = Path(sys.argv[1]), sys.argv[2]
     package = root / plugin_id
@@ -30,7 +30,15 @@ def main():
         raise ValueError("cannot load plugin module")
     module = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(module)
-    frame = getattr(module, class_name)().render()
+    instance = getattr(module, class_name)()
+    if len(sys.argv) == 4:
+        settings = json.loads(sys.argv[3])
+        if not isinstance(settings, dict):
+            raise ValueError('invalid plugin settings')
+        configure = getattr(instance, 'configure', None)
+        if callable(configure):
+            configure(settings)
+    frame = instance.render()
     if not isinstance(frame, Framebuffer) or (frame.width, frame.height) != (64, 32):
         raise ValueError("plugin must return a 64x32 Framebuffer")
     sys.stdout.buffer.write(bytes(channel for row in frame.pixels for pixel in row for channel in pixel))
