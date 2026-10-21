@@ -170,7 +170,7 @@ def _english_club_key(competition, side):
 
 
 def _team_record(entry):
-    """Normalize provider soccer records to wins-losses-draws.
+    """Normalize provider soccer records to wins-draws-losses.
 
     ESPN soccer summaries are commonly wins-draws-losses; prefer named
     statistics when present, and only accept a well-formed total summary.
@@ -196,7 +196,7 @@ def _team_record(entry):
                 losses = int(stats["losses"])
                 draws = int(stats.get("ties", stats.get("draws")))
                 if min(wins, losses, draws) >= 0:
-                    return f"{wins}-{losses}-{draws}"
+                    return f"{wins}-{draws}-{losses}"
             except (ValueError, TypeError):
                 pass
         # ESPN's soccer record summary uses W-D-L. Avoid interpreting
@@ -205,7 +205,7 @@ def _team_record(entry):
         if kind not in ("total", "overall", "total record"):
             continue
         summary = record.get("summary")
-        if isinstance(summary, str) and re.fullmatch(r"\\s*\\d+-\\d+-\\d+\\s*", summary):
+        if isinstance(summary, str) and re.fullmatch(r"[ \t]*[0-9]+-[0-9]+-[0-9]+[ \t]*", summary):
             wins, draws, losses = map(int, summary.strip().split("-"))
-            return f"{wins}-{losses}-{draws}"
+            return f"{wins}-{draws}-{losses}"
     return None
