@@ -35,11 +35,15 @@ class PluginDurationTests(unittest.TestCase):
         self.board.set_bullpen_slots((self.a, self.b))
 
     def test_different_durations_and_cycle_boundaries(self):
+        # Cycle: game 0-12, first 12-17, game 17-29,
+        # second 29-49; repeat every 49 seconds.
         for moment, expected in ((0, "game"), (11.99, "game"),
                                  (12, "first"), (16.99, "first"),
-                                 (17, "second"), (36.99, "second"),
-                                 (37, "game"), (49, "first"),
-                                 (54, "second")):
+                                 (17, "game"), (28.99, "game"),
+                                 (29, "second"), (36.99, "second"),
+                                 (48.99, "second"), (49, "game"),
+                                 (60.99, "game"), (61, "first"),
+                                 (66, "game"), (78, "second")):
             with self.subTest(moment=moment):
                 self.now[0] = moment
                 self.assertEqual(self.board.frame(), expected)
@@ -52,10 +56,14 @@ class PluginDurationTests(unittest.TestCase):
         self.assertEqual(self.b.calls, 0)
 
     def test_updated_duration_changes_next_selection(self):
-        self.now[0] = 18
+        self.now[0] = 29
         self.assertEqual(self.board.frame(), "second")
         self.a.display_seconds = 10
-        self.assertEqual(self.board.frame(), "first")
+        # Extending the first plugin shifts the following base slot,
+        # so this same timestamp now belongs to regular content.
+        self.assertEqual(self.board.frame(), "game")
+        self.now[0] = 34
+        self.assertEqual(self.board.frame(), "second")
 
 
 if __name__ == "__main__":
