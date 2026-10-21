@@ -210,6 +210,10 @@ async function reviewGithubPlugin(){
   const response=await fetch('/api/plugins/github/review',{method:'POST',credentials:'same-origin',headers:{'Content-Type':'application/json','X-Configurator-Token':token},body:JSON.stringify({source})});
   const result=await response.json();
   if(!response.ok)throw new Error(result.error||'HTTP '+response.status);
+  if(result.format==='bullpen' || result.installable===false){
+   target.textContent=[result.name+' v'+result.version,result.description||'','Format: Bullpen (pyproject.toml)','ID: '+result.id,'Entry point: '+result.entry_point,'Source: '+result.source,'Pinned commit: '+result.commit,'Compatibility: '+result.compatibility,'Installation is disabled until the Bullpen runtime adapter is implemented.'].join('\\n');
+   return;
+  }
   reviewedGithubPlugin=result;
   document.getElementById('plugin-github-install').hidden=false;
   target.textContent=[result.name+' v'+result.version,result.description||'', 'ID: '+result.id,'Capabilities: '+result.capabilities.join(', '),'Source: '+result.source,'Pinned commit: '+result.commit,'Not installed. Review only.'].join('\\n');
