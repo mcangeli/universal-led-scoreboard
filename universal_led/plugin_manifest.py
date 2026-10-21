@@ -6,6 +6,7 @@ installation will be separate, explicitly authorized lifecycle operations.
 from __future__ import annotations
 
 import json
+import tomllib
 import re
 from dataclasses import dataclass
 from pathlib import Path
@@ -99,3 +100,24 @@ def discover_plugins(directory: str | Path) -> tuple[dict[str, PluginManifest], 
         except (ValueError, OSError, UnicodeError) as exc:
             errors[folder.name] = str(exc)
     return found, errors
+
+
+def load_plugin_manifest(package: str | Path) -> PluginManifest:
+    """Load native TOML or legacy JSON; reject ambiguous packages."""
+    folder = Path(package)
+    toml_path = folder / "uls-plugin.toml"
+    json_path = folder / "uls-plugin.json"
+    for path in (toml_path, json_path):
+        if path.is_symlink():
+            raise ManifestError("plugin manifest cannot be a symlink")
+    if toml_path.is_file() and json_path.is_file():
+        raise ManifestError("plugin must provide only one manifest format")
+    path = toml_path if toml_path.is_file() else json_path
+    if not path.is_file() or path.stat().st_size > 16384:
+        raise ManifestError("missing or oversized native plugin manifest")
+    try:
+        content = path.read_text(encoding="utf-8")
+        data = tomllib.loads(content) if path == toml_path else json.loads(content)
+        return parse_manifest(data)
+    except (ValueError, UnicodeError) as exc:
+        raise ManifestError("invalid native plugin manifest") from exc
