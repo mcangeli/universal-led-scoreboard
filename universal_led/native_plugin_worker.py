@@ -5,7 +5,7 @@ import json
 import sys
 from pathlib import Path
 from .display import Framebuffer
-from .plugin_manifest import parse_manifest
+from .plugin_manifest import load_plugin_manifest
 
 
 def main():
@@ -15,10 +15,7 @@ def main():
     package = root / plugin_id
     if package.is_symlink() or not package.is_dir():
         raise ValueError("unsafe plugin directory")
-    manifest_path = package / "uls-plugin.json"
-    if manifest_path.is_symlink() or not manifest_path.is_file():
-        raise ValueError("unsafe plugin manifest")
-    manifest = parse_manifest(json.loads(manifest_path.read_text()))
+    manifest = load_plugin_manifest(package)
     if manifest.plugin_id != plugin_id or "screen" not in manifest.capabilities:
         raise ValueError("invalid screen plugin")
     module_name, class_name = manifest.entry_point.split(":")
