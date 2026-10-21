@@ -214,6 +214,23 @@ async function loadPluginInventory(){
    const item=document.createElement('p');item.textContent='Invalid package '+name+': '+error;target.appendChild(item);
   }
   if(data.unregistered.length){const item=document.createElement('p');item.textContent='Unregistered packages: '+data.unregistered.join(', ');target.appendChild(item)}
+  if(data.official&&data.official.length){
+   const heading=document.createElement('h3');heading.textContent='Official plugins available to install';target.appendChild(heading);
+   for(const plugin of data.official){
+    const item=document.createElement('p');
+    item.textContent=plugin.name+' v'+plugin.version+' · '+plugin.description+(plugin.installed?' · Installed':' · Not installed');
+    target.appendChild(item);
+    if(!plugin.installed){
+     const source=document.createElement('code');source.textContent=plugin.source;target.appendChild(source);
+     const button=document.createElement('button');button.type='button';button.textContent='Use source for installation';
+     button.addEventListener('click',()=>{
+      const field=document.querySelector('#plugin-source')||document.querySelector('[id*="plugin-source"]');
+      if(field){field.value=plugin.source;field.focus()}else navigator.clipboard?.writeText(plugin.source);
+     });
+     target.appendChild(button);
+    }
+   }
+  }
  }catch(error){target.textContent='Plugin inventory unavailable: '+error.message}
 }
 function showPage(name){if(!document.querySelector('[data-page="'+name+'"]'))return;if(name!=='sports'&&sportsSettingsDirty&&!confirm('You have unsaved sport settings changes. Leave this page without saving?'))return;if(name!=='news'&&(newsSourcesDirty||newsSettingsDirty())){if(!confirm('You have unsaved Content & News changes. Leave this page without saving?'))return;discardNewsEdits();}document.querySelectorAll('.nav-item').forEach(button=>{const active=button.getAttribute('onclick')==="showPage('"+name+"')";button.classList.toggle('active',active);if(active)button.setAttribute('aria-current','page');else button.removeAttribute('aria-current');});document.querySelectorAll('[data-page]').forEach(el=>el.hidden=el.dataset.page!==name);if(name==='news'){if(!newsSourcesDirty)loadNewsSources();loadAutomaticNews();loadNewsTiming();loadScoringAlerts();loadGameInterruptions();loadStandingsSettings()}if(name==='display'){loadClockSettings();loadCountdown();}if(name==='dashboard'||name==='system')refreshStatus();if(name==='system'){refreshSystem();checkSoftwareUpdate();}if(name==='matrix-settings'){loadMatrixSettings();refreshMatrixStatus();}if(name==='wifi'){refreshWifi();refreshWifiProfiles();refreshRecoveryReadiness();scanWifi()}if(name==='plugins')loadPluginInventory()}
@@ -1524,7 +1541,12 @@ def make_handler(config_dir,token,frame_provider=None,settings_callback=None,fee
                 try:
                     root = Path(plugin_root) if plugin_root is not None else Path('/var/lib/uls/plugins')
                     registry = Path(plugin_registry) if plugin_registry is not None else Path('/var/lib/uls/plugins.json')
-                    self.send_json(200, installed_plugin_inventory(root, registry))
+                    inventory = installed_plugin_inventory(root, registry)
+                    from .official_plugin_catalog import read_official_catalog
+                    installed_ids = {item['id'] for item in inventory['plugins']}
+                    inventory['official'] = [dict(item, installed=item['id'] in installed_ids)
+                                             for item in read_official_catalog()]
+                    self.send_json(200, inventory)
                 except (OSError, ValueError) as exc:
                     self.send_json(500, {'error': str(exc)})
             elif path=='/api/config':
