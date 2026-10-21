@@ -147,12 +147,12 @@ async function reviewInstalledPlugin(plugin){
   const response=await fetch('/api/plugins/github/review',{method:'POST',credentials:'same-origin',headers:{'Content-Type':'application/json','X-Configurator-Token':token},body:JSON.stringify({source:plugin.source})});
   const result=await response.json();
   if(!response.ok)throw new Error(result.error||'HTTP '+response.status);
-  if(result.id!==plugin.id||result.source!==plugin.source)throw new Error('Plugin identity or source changed');
+  if(result.id!==plugin.id||result.source!==plugin.source)throw new Error('Plugin identity or reviewed source changed');
   if(result.commit.toLowerCase()===plugin.commit.toLowerCase()){
    target.textContent=plugin.name+' is already at the latest reviewed commit.';
    return;
   }
-  reviewedGithubUpdate=result;
+  reviewedGithubUpdate={...result,previousSource:plugin.installedSource||plugin.source};
   target.textContent=['Update available: '+plugin.name,'Installed version: '+plugin.version,'Reviewed version: '+result.version,'Installed commit: '+plugin.commit,'Proposed commit: '+result.commit,'Source: '+result.source,'Enabled state and saved settings will be preserved.'].join('\\n');
   document.getElementById('plugin-github-update').hidden=false;
   target.scrollIntoView({block:'nearest'});
@@ -164,7 +164,7 @@ async function updateReviewedGithubPlugin(){
  const target=document.getElementById('plugin-github-review');
  target.textContent='Updating reviewed plugin…';
  try{
-  const response=await fetch('/api/plugins/github/update',{method:'POST',credentials:'same-origin',headers:{'Content-Type':'application/json','X-Configurator-Token':token},body:JSON.stringify({source:reviewed.source,commit:reviewed.commit,id:reviewed.id,confirm:true})});
+  const response=await fetch('/api/plugins/github/update',{method:'POST',credentials:'same-origin',headers:{'Content-Type':'application/json','X-Configurator-Token':token},body:JSON.stringify({source:reviewed.source,commit:reviewed.commit,id:reviewed.id,previous_source:reviewed.previousSource,confirm:true})});
   const result=await response.json();
   if(!response.ok)throw new Error(result.error||'HTTP '+response.status);
   reviewedGithubUpdate=null;
@@ -310,9 +310,9 @@ async function loadPluginInventory(){
       if(official){
        const installedRepo=plugin.source.split('/tree/')[0].replace(/\\/$/,'');
        const officialRepo=official.source.split('/tree/')[0].replace(/\\/$/,'');
-       if(installedRepo===officialRepo)reviewedSource=official.source;
+       if(installedRepo===officialRepo || plugin.id===official.id)reviewedSource=official.source;
       }
-      reviewInstalledPlugin({...plugin,source:reviewedSource});
+      reviewInstalledPlugin({...plugin,installedSource:plugin.source,source:reviewedSource});
      });
      target.appendChild(update);
     }
@@ -1845,13 +1845,13 @@ def make_handler(config_dir,token,frame_provider=None,settings_callback=None,fee
                 if path=='/api/plugins/github/update':
                     from .plugin_github_update import update_reviewed_github_plugin
                     from .plugin_manifest import ManifestError
-                    if (not isinstance(data,dict) or set(data)!={'source','commit','id','confirm'}
+                    if (not isinstance(data,dict) or set(data)!={'source','commit','id','previous_source','confirm'}
                             or data['confirm'] is not True):
                         raise ValueError('Explicit pinned plugin update confirmation required')
                     root = Path(plugin_root) if plugin_root is not None else Path('/var/lib/uls/plugins')
                     registry = Path(plugin_registry) if plugin_registry is not None else Path('/var/lib/uls/plugins.json')
                     try:
-                        self.send_json(200,update_reviewed_github_plugin(data['source'],data['commit'],data['id'],root,registry))
+                        self.send_json(200,update_reviewed_github_plugin(data['source'],data['commit'],data['id'],root,registry,previous_source=data['previous_source']))
                     except (ManifestError,ValueError,OSError,KeyError) as exc:
                         self.send_json(400,{'error':str(exc)})
                     return
