@@ -11,7 +11,7 @@ import shutil
 import tempfile
 from pathlib import Path
 
-from .plugin_manifest import ManifestError, parse_manifest
+from .plugin_manifest import ManifestError, load_plugin_manifest
 from .plugin_registry import read_registry, registry_record
 
 
@@ -32,13 +32,8 @@ def install_local_plugin(package_dir, plugin_root, registry_path, source_url, co
         raise ManifestError("registry parent must be a real directory")
     if registry.is_symlink():
         raise ManifestError("registry cannot be a symlink")
-    manifest_file = source / "uls-plugin.json"
-    if not manifest_file.is_file() or manifest_file.is_symlink() or manifest_file.stat().st_size > 16384:
-        raise ManifestError("missing or unsafe plugin manifest")
-    try:
-        manifest_data = json.loads(manifest_file.read_text(encoding="utf-8"))
-    except (ValueError, UnicodeError) as exc:
-        raise ManifestError("invalid plugin manifest JSON") from exc
+    manifest = load_plugin_manifest(source)
+    manifest_data = {"id": manifest.plugin_id, "name": manifest.name, "version": manifest.version, "api_version": manifest.api_version, "capabilities": list(manifest.capabilities), "entry_point": manifest.entry_point, "description": manifest.description}
     record = registry_record(manifest_data, source_url, commit)
     plugin_id = record["id"]
     destination = root / plugin_id
@@ -60,7 +55,7 @@ def install_local_plugin(package_dir, plugin_root, registry_path, source_url, co
         shutil.copytree(source, stage / "package", symlinks=False)
         staged = stage / "package"
         # Revalidate staged metadata before publication.
-        if parse_manifest(json.loads((staged / "uls-plugin.json").read_text(encoding="utf-8"))).plugin_id != plugin_id:
+        if load_plugin_manifest(staged).plugin_id != plugin_id:
             raise ManifestError("staged plugin identity mismatch")
         entries[plugin_id] = record
         fd, tmpname = tempfile.mkstemp(prefix=".uls-registry-", dir=registry.parent)
