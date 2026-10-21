@@ -32,7 +32,17 @@ class OAuthConfigTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as root:
             self.assertEqual(google_connection_status(Path(root) / "missing",
                              PluginTokenVault(Path(root) / "vault")),
-                             {"configured": False, "connected": False})
+                             {"configured": True, "connected": False, "method": "local-desktop-pairing"})
+
+    def test_local_pairing_status_without_public_origin(self):
+        with tempfile.TemporaryDirectory() as root:
+            vault = PluginTokenVault(Path(root) / "vault")
+            vault.save("daily-calendar", {"access_token":"access","refresh_token":"refresh",
+                                           "client_id":"desktop.apps.googleusercontent.com",
+                                           "expires_at":2000000000})
+            self.assertEqual(google_connection_status(Path(root) / "missing", vault),
+                             {"configured": True, "connected": True,
+                              "method": "local-desktop-pairing"})
 
 
 if __name__ == "__main__":
