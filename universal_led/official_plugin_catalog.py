@@ -56,7 +56,7 @@ def dynamic_official_catalog(*, cache_path=None, refresh=False, fetch=None, now=
     fallback = read_official_catalog()
     try:
         cached = read_official_catalog(cache_path)
-    except (OSError, ValueError):
+    except (OSError, ValueError, TypeError):
         cached = None
     try:
         fresh = now - cache_path.stat().st_mtime < CACHE_SECONDS
