@@ -9,8 +9,8 @@ Scope: dynamic team registry, native external plugin lifecycle, official plugin 
 - [ ] Confirm no pending configuration/schema migration errors on existing installations.
 - [ ] Verify dynamic team selections and favorites persist through dashboard save, service restart, and backup/restore.
 - [ ] Confirm live games preempt supplemental plugin screens, and non-live rotation interleaves regular ULS content between enabled plugins.
-- [ ] Confirm plugins honor per-plugin display duration and enable/disable state after restart.
-- [ ] Verify plugin install, update, uninstall, and failed-install rollback with a test plugin.
+- [ ] Confirm plugins honor per-plugin display duration and enable/disable state after restart (operator reports plugins function as expected on 2026-10-21; precise duration and restart persistence not separately confirmed).
+- [ ] Verify plugin install, update, uninstall, and failed-install rollback with a test plugin (general plugin functionality confirmed by operator; destructive lifecycle and rollback checks still open).
 - [ ] Confirm official catalog loads remotely, uses cached data offline, and falls back to the bundled catalog when necessary.
 - [ ] Confirm catalog entries and versions match external plugin manifests (run external repository's `python -m unittest discover -s tests -v`).
 - [ ] Check that secret plugin settings and tokens do not appear in logs or exported support diagnostics.
@@ -31,4 +31,4 @@ Scope: dynamic team registry, native external plugin lifecycle, official plugin 
 - Daily Calendar direct Google OAuth, recurrence and faster Google API sync: external `uls-plugins` release.
 - Any new plugin feature unrelated to Core release stability.
 
-Record hardware checks and test results here before release. A passing source-inspection test alone is not hardware acceptance.
+Operator confirmed installed plugins function as expected on Pi 3 on 2026-10-21. This confirms general plugin operation, not every lifecycle or failure-path test.\n\nRecord hardware checks and test results here before release. A passing source-inspection test alone is not hardware acceptance.
