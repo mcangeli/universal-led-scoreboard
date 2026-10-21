@@ -222,10 +222,13 @@ async function loadPluginInventory(){
     target.appendChild(item);
     if(!plugin.installed){
      const source=document.createElement('code');source.textContent=plugin.source;target.appendChild(source);
-     const button=document.createElement('button');button.type='button';button.textContent='Use source for installation';
-     button.addEventListener('click',()=>{
-      const field=document.querySelector('#plugin-source')||document.querySelector('[id*="plugin-source"]');
-      if(field){field.value=plugin.source;field.focus()}else navigator.clipboard?.writeText(plugin.source);
+     const button=document.createElement('button');button.type='button';button.textContent='Review & install';
+     button.addEventListener('click',async()=>{
+      const field=document.getElementById('plugin-github-url');
+      if(!field)return;
+      field.value=plugin.source;
+      await reviewGithubPlugin();
+      document.getElementById('plugin-github-review')?.scrollIntoView({block:'nearest'});
      });
      target.appendChild(button);
     }
