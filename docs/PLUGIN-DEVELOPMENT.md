@@ -1,14 +1,14 @@
 # Building native ULS plugins (API v1, ULS 0.9.0)
 
-This is the **implemented** screen-plugin contract. Plugins are maintained separately from ULS Core. Start with the fully documented, installable [Hello World example](https://github.com/mcangeli/uls-plugins/tree/main/plugins/hello-world), then explore [Swimming Fish](https://github.com/mcangeli/uls-plugins/tree/main/plugins/swimming-fish) for animation. Bullpen compatibility was discontinued; convert legacy Bullpen plugins to native ULS instead.
+This is the **implemented** screen-plugin contract. Plugins are maintained separately from ULS Core. Start with the **existing bundled** [Hello World example](../plugins/hello-world/README.md), then explore the external [Swimming Fish](https://github.com/mcangeli/uls-plugins/tree/main/plugins/swimming-fish) for animation. The bundled example uses the supported legacy JSON manifest; TOML is recommended for new external plugins. Bullpen compatibility was discontinued; convert legacy Bullpen plugins to native ULS instead.
 
 ## Directory structure
 
 ```text
-hello-world/
+my-screen/
   uls-plugin.toml
   settings-schema.json
-  hello_world.py
+  my_screen.py
   README.md
 ```
 
@@ -51,7 +51,7 @@ Fields: `id` (lowercase alphanumeric with optional separators `.`, `_`, `-`, max
 
 A screen plugin **must** declare `display_seconds` as an integer, with its schema bounds within 1–3600 seconds. At most 32 fields are supported; field names must be public Python identifiers. Supported types: `integer`, `number`, `boolean`, `string`. Each field requires a correctly typed `default`. Optional properties: numeric `min`/`max`, `choices`, `label`, `description`. Unknown fields and out-of-range values fail validation. The schema must be no larger than 16 KiB. ULS stores validated settings **outside** the plugin package, preserving them across updates.
 
-### hello_world.py
+### Example screen class (new external plugin)
 
 ```python
 from universal_led.display import Framebuffer
@@ -121,5 +121,7 @@ Expected size: **6144 bytes**. Use the same Python environment as ULS. Add unit 
 - **Worker timeout:** remove slow network requests or expensive work from `render()`.
 - **Invalid schema:** declare `display_seconds` and use supported field types.
 - **Frame invalid:** return exactly a 64×32 `Framebuffer`, and keep stdout free of logs.
+
+The bundled Hello World uses a static two-line display and does not include a settings schema. The settings example above illustrates a **new external plugin**, not the exact bundled source. See [the actual bundled code](../plugins/hello-world/hello_world.py).
 
 See [installation guide](INSTALLATION.md), [0.9.0 release checklist](V090-RELEASE-CHECKLIST.md), and [external plugin examples](https://github.com/mcangeli/uls-plugins).
