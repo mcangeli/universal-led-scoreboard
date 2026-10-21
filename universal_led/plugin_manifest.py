@@ -84,14 +84,10 @@ def discover_plugins(directory: str | Path) -> tuple[dict[str, PluginManifest], 
     for folder in sorted(root.iterdir()):
         if folder.is_symlink() or not folder.is_dir():
             continue
-        manifest_file = folder / "uls-plugin.json"
-        if not manifest_file.is_file() or manifest_file.is_symlink():
+        if not (folder / "uls-plugin.json").exists() and not (folder / "uls-plugin.toml").exists():
             continue
         try:
-            if manifest_file.stat().st_size > 16384:
-                raise ManifestError("manifest exceeds 16 KiB")
-            with manifest_file.open("r", encoding="utf-8") as handle:
-                manifest = parse_manifest(json.load(handle))
+            manifest = load_plugin_manifest(folder)
             if folder.name != manifest.plugin_id:
                 raise ManifestError("directory must match plugin id")
             if manifest.plugin_id in found:
