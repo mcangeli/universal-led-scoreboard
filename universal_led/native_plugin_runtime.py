@@ -37,13 +37,21 @@ class NativePluginSlot:
         self.plugin_id = plugin_id
         self.root = Path(root)
         self.timeout = timeout
+        self.display_seconds = 12
 
     def frame(self, *, live_games=False, selected=True, now=None):
         if live_games or not selected:
             return None
+        from .plugin_settings_store import read_plugin_settings
+        try:
+            settings = read_plugin_settings(self.root / self.plugin_id,
+                                            self.root.parent / 'plugin-settings', self.plugin_id)
+        except (OSError, ValueError):
+            settings = {}
+        self.display_seconds = settings.get('display_seconds', 12)
         completed = subprocess.run(
             [sys.executable, "-m", "universal_led.native_plugin_worker",
-             str(self.root), self.plugin_id],
+             str(self.root), self.plugin_id, json.dumps(settings)],
             stdout=subprocess.PIPE, stderr=subprocess.PIPE,
             timeout=self.timeout, check=True)
         raw = completed.stdout
