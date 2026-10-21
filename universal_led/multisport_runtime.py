@@ -37,6 +37,8 @@ class MultiSportRenderer:
                                else None)
         self.clock = clock
         self.news = news
+        self.bullpen_slots = ()  # Explicitly registered global supplemental screens
+        self._bullpen_failures = {}  # Consecutive errors per registered slot
         self.settings_getter = settings_getter
         self._news_started = clock()
         self._lock = threading.Lock()
@@ -46,6 +48,23 @@ class MultiSportRenderer:
         self._auto_rotation = False
         self._started = clock()
         self.set_active_sport(active_sport)
+
+    def set_bullpen_slots(self, slots):
+        """Configure ordered, opt-in supplemental slots for every sport."""
+        with self._lock:
+            self.bullpen_slots = tuple(slots)
+            self._bullpen_failures = {}
+
+    def bullpen_health(self):
+        """Return a read-only snapshot suitable for future dashboard reporting."""
+        with self._lock:
+            return tuple({
+                "slot": index,
+                "failures": self._bullpen_failures.get(index, 0),
+                "status": ("quarantined" if self._bullpen_failures.get(index, 0) >= 3
+                           else "degraded" if self._bullpen_failures.get(index, 0)
+                           else "healthy"),
+            } for index in range(len(self.bullpen_slots)))
 
     def _connect_soccer_standings(self):
         """Reuse the exact caches already owned by the idle standings rotation."""
@@ -237,6 +256,49 @@ class MultiSportRenderer:
                         return draw(final_game)
         sport = self._selected()
         renderer = self._renderer(sport)
+        # Global eligibility: no supplemental Bullpen screen may interrupt
+        # any live game, including a game from a different sport.
+        with self._lock:
+            plugin_slots = self.bullpen_slots
+            interval = self._interval
+            started = self._started
+        if plugin_slots and not self._live_sports():
+            # Keep the regular ULS slot at its normal interval, but give
+            # each supplemental plugin its own validated display duration.
+            # Interleave normal ULS content between plugin appearances:
+            # base, plugin A, base, plugin B, ... rather than a plugin block.
+            # A single plugin retains its existing base/plugin cadence.
+            durations = []
+            slot_ids = []
+            for index, plugin in enumerate(plugin_slots):
+                durations.extend((interval, max(1, min(3600, getattr(plugin, 'display_seconds', interval)))))
+                slot_ids.extend((-1, index))
+            cycle_length = sum(durations)
+            elapsed = max(0.0, self.clock() - started) % cycle_length
+            plugin_index = -1
+            for index, duration in enumerate(durations):
+                if elapsed < duration:
+                    plugin_index = slot_ids[index]
+                    break
+                elapsed -= duration
+            if plugin_index >= 0:
+                plugin = plugin_slots[plugin_index]
+                with self._lock:
+                    disabled = self._bullpen_failures.get(plugin_index, 0) >= 3
+                if not disabled:
+                    try:
+                        candidate = plugin.frame(
+                            live_games=False, selected=True, now=self.clock())
+                    except Exception:
+                        with self._lock:
+                            self._bullpen_failures[plugin_index] = (
+                                self._bullpen_failures.get(plugin_index, 0) + 1)
+                        candidate = None
+                    else:
+                        with self._lock:
+                            self._bullpen_failures.pop(plugin_index, None)
+                    if candidate is not None:
+                        return candidate
         # Live games suppress standings; scheduled pregame games do not.
         # Alternate standings with pregame/news content when both exist.
         idle_news_slot = False

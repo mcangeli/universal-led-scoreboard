@@ -28,6 +28,20 @@ class ScreenRotationTests(unittest.TestCase):
     def test_weather_only(self):
         self.assertEqual(choose_screen(20,has_game=False,clock=False,weather=True,news=False),'weather')
 
+    def test_plugins_share_nonlive_rotation(self):
+        screens = [choose_screen(i, has_game=False, clock=True, weather=False,
+                                 news=False, plugins=('magic_number', 'flightwall'))
+                   for i in range(6)]
+        self.assertEqual(screens, ['clock', 'plugin:magic_number',
+                                   'plugin:flightwall'] * 2)
+
+    def test_global_live_games_suppress_all_plugins(self):
+        for i in range(8):
+            self.assertEqual(choose_screen(i, has_game=False, clock=True,
+                                           weather=True, news=True,
+                                           plugins=('magic_number', 'flightwall'),
+                                           live_games=True), 'game')
+
     def test_empty_is_splash(self):
         self.assertEqual(choose_screen(0,has_game=False,clock=False,weather=False,news=False),'splash')
 

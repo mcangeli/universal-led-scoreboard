@@ -1,0 +1,49 @@
+# ULS 0.9.0 release candidate checklist
+
+Scope: dynamic team registry, native external plugin lifecycle, official plugin catalog, and plugin rotation. Google Calendar OAuth is a separate **external plugin** enhancement and is not a Core 0.9.0 blocker.
+
+## Code and compatibility gates
+
+- [x] Pi 5 updater preflight and installation accepted by operator on 2026-10-21, including the final documentation-only branch head `86a2b04`. Exact final test count not supplied.
+- [x] Pi 3 updater preflight and installation also accepted by operator on 2026-10-21, including the final documentation-only branch head `86a2b04`; both devices updated cleanly. Latest verified run: candidate commit `928fb8a`, **1,798 tests, 15 skipped, zero failures**, successful fast-forward installation on 2026-10-21; updater confirms `/etc/uls` and `/var/lib/uls` untouched. The latest log does not independently identify which Pi ran it.
+- [ ] Confirm no pending configuration/schema migration errors on existing installations.
+- [x] Verify favorite-team selection persists through dashboard save and full Pi 3 reboot (operator confirmed 2026-10-21).
+- [ ] Verify dynamic team selections and favorites persist through portable backup/restore (not retested as part of 0.9.0 acceptance).
+- [x] Pi 3 physical board confirmed an eligible live EFL League One match preempted supplemental screens and returned to normal rotation after the match became final (operator observation).
+- [x] Operator confirmed enabled plugins appear in idle rotation on the physical board on 2026-10-21; precise interleaving cadence was previously observed on Pi 5.
+- [ ] Confirm plugins honor per-plugin display duration and enable/disable state after restart (operator reports plugins function as expected on 2026-10-21; precise duration and restart persistence not separately confirmed).
+- [x] Automated local plugin install, update, uninstall, and failed-update rollback tests pass, including preservation of plugin files, registry bytes, and enabled state after simulated failure (1,798-test preflight at `928fb8a`).
+- [ ] Manual dashboard plugin lifecycle and recovery smoke test remains open; existing production plugins should not be used for destructive tests.
+- [x] Automated tests cover remote catalog, fresh cache, stale offline cache, bundled offline fallback, invalid remote refresh, malformed cache and oversized downloads (1,797-test Pi 3 preflight at `5ec14c9`).
+- [x] Operator confirmed official catalog lists Swimming Fish, Disney Wait Times, and Daily Calendar correctly in the dashboard on 2026-10-21; offline behavior has automated coverage but was not manually induced on Pi 3.
+- [ ] Confirm catalog entries and versions match external plugin manifests (run external repository's `python -m unittest discover -s tests -v`).
+- [ ] Check that secret plugin settings and tokens do not appear in logs or exported support diagnostics.
+- [x] Operator confirmed physical Pi 3 matrix output works and browser board preview works on both Pi 3 and Pi 5 on 2026-10-21.
+- [ ] Verify fresh install and existing-install upgrade paths on supported OS targets.
+
+- [x] Capture expected invalid matrix settings and unauthenticated board API test output locally, without changing production behavior; clean updater preflight at `6cfb3f5` on 2026-10-21.
+
+## Documentation and release gates
+
+- [ ] Update installation, upgrade, recovery, plugin developer, and troubleshooting instructions.
+- [ ] Document supported Pi hardware, OS versions, and known limitations.
+- [x] Draft v0.9.0 changelog and release notes (`docs/RELEASE-NOTES-0.9.0-rc.1.md`); final review remains pending.
+- [x] Annotated `v0.9.0-rc.2` tag created and pushed by operator; GitHub comparison confirms tag and `release/v0.9.0-rc.2` branch contain identical code. Pi 3 updated and physical MLS pregame record display verified. Pi 5 ran 1,801 tests with 15 skipped on the matching MLS parser fix before backport.
+- [ ] Complete remaining acceptance checks and explicitly approve stable v0.9.0; do not equate automated coverage with unperformed hardware checks.
+
+## Explicitly deferred
+
+- Automatic **update-available notifications**: v1.0.0. Updates remain administrator-approved.
+- Daily Calendar direct Google OAuth, recurrence and faster Google API sync: external `uls-plugins` release.
+- Any new plugin feature unrelated to Core release stability.
+
+Operator confirmed installed plugins function as expected on Pi 3 on 2026-10-21. This confirms general plugin operation, not every lifecycle or failure-path test.
+
+Record hardware checks and test results here before release. A passing source-inspection test alone is not hardware acceptance.
+
+## RC2 acceptance update (2026-10-21)
+
+- Pi 3 successfully updated to the RC2 source branch and operator confirmed MLS pregame records render correctly on the physical display.
+- Pi 5 completed 1,801 tests, 15 skipped, on the equivalent MLS parser change; Pi 3 exact final test count was not supplied.
+- OAuth development work is excluded from the v0.9.0 release branch and tag; ICS-based Daily Calendar remains an external plugin.
+- `v0.9.0-rc.2` is immutable and matches its release branch. Earlier RC1 documentation is historical, not the current release status.

@@ -81,6 +81,8 @@ fi
 install -m 755 "$APP/scripts/ulsctl" /usr/local/bin/ulsctl
 bash "$APP/scripts/install-dashboard-update-helper.sh"
 bash "$APP/scripts/install-dashboard-restart-helper.sh"
+# Prepare plugin storage only after candidate tests pass; preserve existing packages.
+install -d -o uls -g uls -m 0700 /var/lib/uls/plugins
 bash "$APP/scripts/install-wifi-scan-helper.sh"
 bash "$APP/scripts/install-wifi-control-helper.sh"
 bash "$APP/scripts/provision-hotspot.sh"

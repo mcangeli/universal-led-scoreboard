@@ -49,6 +49,179 @@ class MultiSportTests(unittest.TestCase):
         self.router.frame()
         self.assertFalse(soccer.external_live_games)
 
+    def test_bullpen_suppressed_by_live_nhl(self):
+        from types import SimpleNamespace
+
+        class Slot:
+            def __init__(self):
+                self.calls = []
+
+            def frame(self, **kwargs):
+                self.calls.append(kwargs)
+                return "BULLPEN"
+
+        now = [12]
+        self.router.clock = lambda: now[0]
+        self.router.configure_rotation(("mlb", "nhl"), interval=12)
+        self.mlb.game = lambda: SimpleNamespace(status="scheduled")
+        self.nhl.game = lambda: SimpleNamespace(status="live")
+        slot = Slot()
+        self.router.set_bullpen_slots((slot,))
+        self.assertEqual(self.router.frame(), "NHL")
+        self.assertEqual(slot.calls, [])
+
+    def test_bullpen_shares_idle_slots_and_yields_to_normal_frames(self):
+        from types import SimpleNamespace
+
+        class Slot:
+            def __init__(self):
+                self.calls = []
+
+            def frame(self, **kwargs):
+                self.calls.append(kwargs)
+                return "BULLPEN"
+
+        now = [0]
+        self.router.clock = lambda: now[0]
+        self.router.configure_rotation(("mlb", "nhl"), interval=12)
+        self.mlb.game = lambda: SimpleNamespace(status="scheduled")
+        self.nhl.game = lambda: SimpleNamespace(status="final")
+        slot = Slot()
+        self.router.set_bullpen_slots((slot,))
+        self.assertEqual(self.router.frame(), "MLB")
+        self.assertEqual(slot.calls, [])
+        now[0] = 12
+        self.assertEqual(self.router.frame(), "BULLPEN")
+        self.assertEqual(len(slot.calls), 1)
+
+    def test_unready_bullpen_falls_back_to_sport_frame(self):
+        from types import SimpleNamespace
+
+        class Slot:
+            def frame(self, **kwargs):
+                return None
+
+        now = [12]
+        self.router.clock = lambda: now[0]
+        self.router.configure_rotation(("mlb", "nhl"), interval=12)
+        self.mlb.game = lambda: SimpleNamespace(status="scheduled")
+        self.nhl.game = lambda: SimpleNamespace(status="final")
+        self.router.set_bullpen_slots((Slot(),))
+        # The normal scheduler selects MLB at this slot; plugin fallback
+        # must preserve that selection rather than choosing another sport.
+        self.assertEqual(self.router.frame(), "MLB")
+
+    def test_bullpen_suppressed_by_live_nba(self):
+        from types import SimpleNamespace
+
+        class Slot:
+            def __init__(self):
+                self.calls = 0
+
+            def frame(self, **kwargs):
+                self.calls += 1
+                return "BULLPEN"
+
+        now = [12]
+        self.router.clock = lambda: now[0]
+        nba = FakeRenderer("NBA")
+        nba.has_live_games = lambda: True
+        nba.game = lambda: SimpleNamespace(status="live")
+        self.router.nba = nba
+        self.router.configure_rotation(("mlb", "nhl", "nba"), interval=12)
+        self.mlb.game = lambda: SimpleNamespace(status="scheduled")
+        self.nhl.game = lambda: SimpleNamespace(status="final")
+        slot = Slot()
+        self.router.set_bullpen_slots((slot,))
+        self.assertEqual(self.router.frame(), "NBA")
+        self.assertEqual(slot.calls, 0)
+
+    def test_bullpen_suppressed_by_live_english_football(self):
+        from types import SimpleNamespace
+
+        class Slot:
+            def __init__(self):
+                self.calls = 0
+
+            def frame(self, **kwargs):
+                self.calls += 1
+                return "BULLPEN"
+
+        now = [12]
+        self.router.clock = lambda: now[0]
+        english = FakeRenderer("ENGLISH")
+        english.has_live_games = lambda: True
+        english.game = lambda: SimpleNamespace(status="live")
+        self.router.english = english
+        self.router.configure_rotation(("mlb", "nhl", "english"), interval=12)
+        self.mlb.game = lambda: SimpleNamespace(status="scheduled")
+        self.nhl.game = lambda: SimpleNamespace(status="final")
+        slot = Slot()
+        self.router.set_bullpen_slots((slot,))
+        self.assertEqual(self.router.frame(), "ENGLISH")
+        self.assertEqual(slot.calls, 0)
+
+    def test_crashing_bullpen_falls_back_to_normal_sport(self):
+        from types import SimpleNamespace
+
+        class CrashingSlot:
+            def frame(self, **kwargs):
+                raise RuntimeError("plugin render failed")
+
+        now = [12]
+        self.router.clock = lambda: now[0]
+        self.router.configure_rotation(("mlb", "nhl"), interval=12)
+        self.mlb.game = lambda: SimpleNamespace(status="scheduled")
+        self.nhl.game = lambda: SimpleNamespace(status="final")
+        self.router.set_bullpen_slots((CrashingSlot(),))
+        self.assertEqual(self.router.frame(), "MLB")
+
+    def test_repeated_bullpen_failures_quarantine_plugin(self):
+        from types import SimpleNamespace
+
+        class CrashingSlot:
+            def __init__(self):
+                self.calls = 0
+
+            def frame(self, **kwargs):
+                self.calls += 1
+                raise RuntimeError("broken plugin")
+
+        now = [12]
+        self.router.clock = lambda: now[0]
+        self.router.configure_rotation(("mlb", "nhl"), interval=12)
+        self.mlb.game = lambda: SimpleNamespace(status="scheduled")
+        self.nhl.game = lambda: SimpleNamespace(status="final")
+        slot = CrashingSlot()
+        self.router.set_bullpen_slots((slot,))
+        now[0] += 12  # Enter the plugin slot after rotation starts.
+        for _ in range(5):
+            self.assertEqual(self.router.frame(), "NHL")
+        self.assertEqual(slot.calls, 3)
+        self.assertEqual(self.router._bullpen_failures[0], 3)
+        # Reconfiguration explicitly clears the quarantine.
+        self.router.set_bullpen_slots((slot,))
+        self.router.frame()
+        self.assertEqual(slot.calls, 4)
+
+    def test_bullpen_health_reports_quarantine_and_reset(self):
+        class Slot:
+            def frame(self, **kwargs):
+                return None
+
+        slot = Slot()
+        self.router.set_bullpen_slots((slot,))
+        self.assertEqual(self.router.bullpen_health(),
+                         ({"slot": 0, "failures": 0, "status": "healthy"},))
+        self.router._bullpen_failures[0] = 1
+        self.assertEqual(self.router.bullpen_health()[0]["status"], "degraded")
+        self.router._bullpen_failures[0] = 3
+        snapshot = self.router.bullpen_health()
+        self.assertEqual(snapshot[0]["status"], "quarantined")
+        self.assertEqual(snapshot[0]["failures"], 3)
+        self.router.set_bullpen_slots((slot,))
+        self.assertEqual(self.router.bullpen_health()[0]["status"], "healthy")
+
     def test_default_is_mlb(self):
         self.assertEqual(self.router.active_sport, "mlb")
         self.assertEqual(self.router.frame(), "MLB")

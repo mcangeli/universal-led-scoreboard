@@ -87,7 +87,7 @@ section h2{font-size:clamp(21px,1.6vw,26px);line-height:1.25;margin:0 0 18px}
 .rotation-summary{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:12px}.rotation-summary .item{display:block;line-height:1.65}
 </style></head><body>
 <header><div><div class="eyebrow">UNIVERSAL LED SCOREBOARD</div><h1>Scoreboard Configurator</h1><span class="muted">__PREVIEW_VERSION__</span></div><span class="header-note">64 × 32 Display Manager</span></header>
-<div class="shell"><aside><div class="side-title">DISPLAY</div><nav aria-label="Configurator navigation"><button class="nav-item" type="button" onclick="showPage('dashboard')">◫ Dashboard</button> <button class="nav-item" type="button" onclick="showPage('sports')">⚾ Sports</button> <button class="nav-item" type="button" onclick="showPage('display')">▦ Display</button> <button class="nav-item" type="button" onclick="showPage('colors')">◉ Colors</button> <button class="nav-item" type="button" onclick="showPage('news')">▤ Content &amp; News</button> <button class="nav-item" type="button" onclick="showPage('wifi')">◈ Wi-Fi</button> <button class="nav-item" type="button" onclick="showPage('matrix-settings')">▦ Matrix Hardware</button> <button class="nav-item" type="button" onclick="showPage('system')">⚙ System</button></nav><div class="sidebar-footer"><a class="board-button" href="/board" target="_blank" rel="noopener">Open Board View ↗</a><button type="button" class="signout" onclick="logout()">Sign Out</button></div></aside><main><section data-page="dashboard" class="dashboard-page"><div class="page-heading"><div><p class="page-kicker">Board overview</p><h2>Dashboard</h2><p class="muted">Your current display configuration and feed health at a glance.</p></div></div><div class="dashboard-grid"><div class="dashboard-tile dashboard-tile-primary"><h3>Active Configuration</h3><p id="summary">Loading settings…</p></div><div class="dashboard-tile dashboard-tile-primary"><h3>Current Game</h3><p id="current-game" class="muted">Waiting for game information…</p></div><div class="dashboard-tile"><h3>MLB Feed Diagnostics <span id="feed-indicator" class="status-dot" aria-hidden="true"></span></h3><p id="feed-status" class="muted" role="status">MLB feed loading…</p></div><div class="dashboard-tile"><h3>Feed Refresh</h3><p id="last-refresh" class="muted">Last feed update: pending</p></div></div><h3>Rotation selection</h3><div class="dashboard-tile"><h3>Selected sport &amp; priority</h3><p id="dashboard-rotation" class="muted">Checking rotation…</p><p class="muted">Shows the scheduler selection, not scoring alerts, final handoffs, or supplemental screens.</p></div><h3>System overview</h3><div class="dashboard-grid"><div class="dashboard-tile"><h3>Host &amp; Service</h3><p id="dashboard-host" class="muted" role="status">Checking device…</p></div><div class="dashboard-tile"><h3>Hardware &amp; Resources</h3><p id="dashboard-hardware" class="muted">Checking hardware…</p></div></div><h3>Configured sports</h3><p class="muted">Read-only configuration summary. Feed activity is shown only when available.</p><p id="dashboard-sports-summary" class="muted" role="status">Checking sport feed health…</p><div id="dashboard-sports" class="sports-overview-grid" aria-live="polite">Loading sports…</div><div class="dashboard-actions"><div><h3>Management</h3><p class="muted">Configuration and service actions live on their dedicated pages.</p></div><button type="button" onclick="showPage('system')">System Details</button><button type="button" onclick="showPage('sports')">Sports &amp; Rotation</button></div><details class="dashboard-maintenance"><summary>Maintenance tools (restart, export and import)</summary><div class="dashboard-actions"><div><h3>Scoreboard controls</h3><p class="muted">Board view updates independently every second. Restarting shows the startup splash without rebooting the Pi.</p></div><button type="button" id="restart-scoreboard" onclick="restartScoreboard()">Restart Scoreboard</button></div><p id="restart-status" class="muted" role="status" aria-live="polite"></p><div class="dashboard-actions"><div><h3>Portable Configuration Backup</h3><p class="muted">Download application settings and team colors. Hardware, Wi-Fi and credentials are excluded.</p></div><button type="button" id="download-backup" onclick="downloadBackup()">Download Backup</button></div><p id="backup-status" class="muted" role="status" aria-live="polite"></p><div class="dashboard-actions"><div><h3>Import Portable Backup</h3><p class="muted">Choose a ZIP, preview the changes, then explicitly restore selected sections. Device settings stay local.</p><input id="import-backup-file" type="file" accept=".zip,application/zip" onchange="previewBackup()"/></div></div><div id="import-backup-preview" class="muted" role="status" aria-live="polite"></div><button type="button" id="apply-backup" onclick="applyBackup()" hidden>Restore Selected Sections</button></details></section><section data-page="sports" hidden><h2>Sports &amp; Rotation</h2><p class="muted">Manage active leagues, configure favorites, and review per-sport timing without scrolling through every team.</p><div class="sports-subnav" role="group" aria-label="Sports configuration views"><button type="button" data-sports-view="overview" onclick="showSportsView('overview')">Overview</button><button type="button" data-sports-view="configure" onclick="showSportsView('configure')">Configure Sport</button><button type="button" data-sports-view="rotation" onclick="showSportsView('rotation')">Rotation</button></div><div id="sports-overview" class="sports-view"><h3>Available sports</h3><div class="sports-overview-grid"><button type="button" class="sport-choice" onclick="selectSport('mlb')"><strong>MLB</strong><span id="sport-state-mlb">Configure →</span></button><button type="button" class="sport-choice" onclick="selectSport('nhl')"><strong>NHL</strong><span id="sport-state-nhl">Configure →</span></button><button type="button" class="sport-choice" onclick="selectSport('nba')"><strong>NBA</strong><span id="sport-state-nba">Configure →</span></button><button type="button" class="sport-choice" onclick="selectSport('wnba')"><strong>WNBA</strong><span id="sport-state-wnba">Configure →</span></button><button type="button" class="sport-choice" onclick="selectSport('nfl')"><strong>NFL</strong><span id="sport-state-nfl">Configure →</span></button><button type="button" class="sport-choice" onclick="selectSport('mls')"><strong>MLS</strong><span id="sport-state-mls">Configure →</span></button><button type="button" class="sport-choice" onclick="selectSport('nwsl')"><strong>NWSL</strong><span id="sport-state-nwsl">Configure →</span></button><button type="button" class="sport-choice" onclick="selectSport('english')"><strong>English Football</strong><span id="sport-state-english">Configure →</span></button></div><p class="muted">Choose a sport to edit its settings. Enable and disable sports within Configure Sport.</p></div><div id="sports-configure" class="sports-view" hidden><label for="sport-picker">Sport to configure</label> <select id="sport-picker" onchange="selectSport(this.value)"><option value="mlb">MLB</option><option value="nhl">NHL</option><option value="nba">NBA</option><option value="wnba">WNBA</option><option value="nfl">NFL</option><option value="mls">MLS</option><option value="nwsl">NWSL</option><option value="english">English Football</option></select><div class="sport-config-panel" data-sport-panel="mlb" hidden><fieldset class="favorite-fieldset"><legend>MLB configuration</legend><p><label><input type="checkbox" id="mlb-enabled"> Enable MLB</label></p><h3>MLB standings divisions</h3><p class="muted">Select divisions for standings pages. Independent of MLB game coverage; requires Standings Pages enabled under Content/News.</p><div id="mlb-standings-divisions" class="favorite-team-grid"><label><input type="checkbox" value="AL_EAST"> AL East</label><label><input type="checkbox" value="AL_CENTRAL"> AL Central</label><label><input type="checkbox" value="AL_WEST"> AL West</label><label><input type="checkbox" value="NL_EAST"> NL East</label><label><input type="checkbox" value="NL_CENTRAL"> NL Central</label><label><input type="checkbox" value="NL_WEST"> NL West</label></div><h3>Favorite MLB teams</h3><p class="muted">Select one or more teams. Games featuring any favorite will be included.</p><div id="favorite-teams" class="favorite-team-grid"><label><input type="checkbox" value="ARI"> Arizona Diamondbacks</label><label><input type="checkbox" value="ATL"> Atlanta Braves</label><label><input type="checkbox" value="BAL"> Baltimore Orioles</label><label><input type="checkbox" value="BOS"> Boston Red Sox</label><label><input type="checkbox" value="CHC"> Chicago Cubs</label><label><input type="checkbox" value="CWS"> Chicago White Sox</label><label><input type="checkbox" value="CIN"> Cincinnati Reds</label><label><input type="checkbox" value="CLE"> Cleveland Guardians</label><label><input type="checkbox" value="COL"> Colorado Rockies</label><label><input type="checkbox" value="DET"> Detroit Tigers</label><label><input type="checkbox" value="HOU"> Houston Astros</label><label><input type="checkbox" value="KCR"> Kansas City Royals</label><label><input type="checkbox" value="LAA"> Los Angeles Angels</label><label><input type="checkbox" value="LAD"> Los Angeles Dodgers</label><label><input type="checkbox" value="MIA"> Miami Marlins</label><label><input type="checkbox" value="MIL"> Milwaukee Brewers</label><label><input type="checkbox" value="MIN"> Minnesota Twins</label><label><input type="checkbox" value="NYM"> New York Mets</label><label><input type="checkbox" value="NYY"> New York Yankees</label><label><input type="checkbox" value="OAK"> Athletics</label><label><input type="checkbox" value="PHI"> Philadelphia Phillies</label><label><input type="checkbox" value="PIT"> Pittsburgh Pirates</label><label><input type="checkbox" value="SDP"> San Diego Padres</label><label><input type="checkbox" value="SFG"> San Francisco Giants</label><label><input type="checkbox" value="SEA"> Seattle Mariners</label><label><input type="checkbox" value="STL"> St. Louis Cardinals</label><label><input type="checkbox" value="TBR"> Tampa Bay Rays</label><label><input type="checkbox" value="TEX"> Texas Rangers</label><label><input type="checkbox" value="TOR"> Toronto Blue Jays</label><label><input type="checkbox" value="WSN"> Washington Nationals</label></div><p id="favorite-summary" class="muted" aria-live="polite"></p><p><label>MLB game selection <select id="mode"><option value="favorite">Favorites only</option><option value="fallback">Favorites, otherwise all</option><option value="all">All games</option></select></label></p><p id="mode-help" class="muted" aria-live="polite"></p><p><label>MLB rotation seconds <input id="rotation" type="number" min="1" max="3600" value="12"></label> <label>MLB feed refresh seconds <input id="refresh" type="number" min="1" max="3600" value="60"></label></p><h3>MLB live screen rotation</h3><p class="muted">Percent of each live game interval. Last Play uses the remaining time. Classic must be at least 1%.</p><p><label>Classic % <input id="live-classic" type="number" min="1" max="100" step="1" value="50"></label> <label>Matchup % <input id="live-matchup" type="number" min="0" max="99" step="1" value="25"></label></p><p id="live-play-share" class="muted" aria-live="polite">Last Play: 25%</p></fieldset></div><div class="sport-config-panel" data-sport-panel="nhl" hidden><fieldset class="favorite-fieldset"><legend>NHL configuration</legend>
+<div class="shell"><aside><div class="side-title">DISPLAY</div><nav aria-label="Configurator navigation"><button class="nav-item" type="button" onclick="showPage('dashboard')">◫ Dashboard</button> <button class="nav-item" type="button" onclick="showPage('sports')">⚾ Sports</button> <button class="nav-item" type="button" onclick="showPage('display')">▦ Display</button> <button class="nav-item" type="button" onclick="showPage('colors')">◉ Colors</button> <button class="nav-item" type="button" onclick="showPage('news')">▤ Content &amp; News</button> <button class="nav-item" type="button" onclick="showPage('wifi')">◈ Wi-Fi</button> <button class="nav-item" type="button" onclick="showPage('matrix-settings')">▦ Matrix Hardware</button> <button class="nav-item" type="button" onclick="showPage('plugins')">▧ Plugins</button> <button class="nav-item" type="button" onclick="showPage('system')">⚙ System</button></nav><div class="sidebar-footer"><a class="board-button" href="/board" target="_blank" rel="noopener">Open Board View ↗</a><button type="button" class="signout" onclick="logout()">Sign Out</button></div></aside><main><section data-page="dashboard" class="dashboard-page"><div class="page-heading"><div><p class="page-kicker">Board overview</p><h2>Dashboard</h2><p class="muted">Your current display configuration and feed health at a glance.</p></div></div><div class="dashboard-grid"><div class="dashboard-tile dashboard-tile-primary"><h3>Active Configuration</h3><p id="summary">Loading settings…</p></div><div class="dashboard-tile dashboard-tile-primary"><h3>Current Game</h3><p id="current-game" class="muted">Waiting for game information…</p></div><div class="dashboard-tile"><h3>MLB Feed Diagnostics <span id="feed-indicator" class="status-dot" aria-hidden="true"></span></h3><p id="feed-status" class="muted" role="status">MLB feed loading…</p></div><div class="dashboard-tile"><h3>Feed Refresh</h3><p id="last-refresh" class="muted">Last feed update: pending</p></div></div><h3>Rotation selection</h3><div class="dashboard-tile"><h3>Selected sport &amp; priority</h3><p id="dashboard-rotation" class="muted">Checking rotation…</p><p class="muted">Shows the scheduler selection, not scoring alerts, final handoffs, or supplemental screens.</p></div><h3>System overview</h3><div class="dashboard-grid"><div class="dashboard-tile"><h3>Host &amp; Service</h3><p id="dashboard-host" class="muted" role="status">Checking device…</p></div><div class="dashboard-tile"><h3>Hardware &amp; Resources</h3><p id="dashboard-hardware" class="muted">Checking hardware…</p></div></div><h3>Configured sports</h3><p class="muted">Read-only configuration summary. Feed activity is shown only when available.</p><p id="dashboard-sports-summary" class="muted" role="status">Checking sport feed health…</p><div id="dashboard-sports" class="sports-overview-grid" aria-live="polite">Loading sports…</div><div class="dashboard-actions"><div><h3>Management</h3><p class="muted">Configuration and service actions live on their dedicated pages.</p></div><button type="button" onclick="showPage('system')">System Details</button><button type="button" onclick="showPage('sports')">Sports &amp; Rotation</button></div><details class="dashboard-maintenance"><summary>Maintenance tools (restart, export and import)</summary><div class="dashboard-actions"><div><h3>Scoreboard controls</h3><p class="muted">Board view updates independently every second. Restarting shows the startup splash without rebooting the Pi.</p></div><button type="button" id="restart-scoreboard" onclick="restartScoreboard()">Restart Scoreboard</button></div><p id="restart-status" class="muted" role="status" aria-live="polite"></p><div class="dashboard-actions"><div><h3>Portable Configuration Backup</h3><p class="muted">Download application settings and team colors. Hardware, Wi-Fi and credentials are excluded.</p></div><button type="button" id="download-backup" onclick="downloadBackup()">Download Backup</button></div><p id="backup-status" class="muted" role="status" aria-live="polite"></p><div class="dashboard-actions"><div><h3>Import Portable Backup</h3><p class="muted">Choose a ZIP, preview the changes, then explicitly restore selected sections. Device settings stay local.</p><input id="import-backup-file" type="file" accept=".zip,application/zip" onchange="previewBackup()"/></div></div><div id="import-backup-preview" class="muted" role="status" aria-live="polite"></div><button type="button" id="apply-backup" onclick="applyBackup()" hidden>Restore Selected Sections</button></details></section><section data-page="sports" hidden><h2>Sports &amp; Rotation</h2><p class="muted">Manage active leagues, configure favorites, and review per-sport timing without scrolling through every team.</p><div class="sports-subnav" role="group" aria-label="Sports configuration views"><button type="button" data-sports-view="overview" onclick="showSportsView('overview')">Overview</button><button type="button" data-sports-view="configure" onclick="showSportsView('configure')">Configure Sport</button><button type="button" data-sports-view="rotation" onclick="showSportsView('rotation')">Rotation</button></div><div id="sports-overview" class="sports-view"><h3>Available sports</h3><div class="sports-overview-grid"><button type="button" class="sport-choice" onclick="selectSport('mlb')"><strong>MLB</strong><span id="sport-state-mlb">Configure →</span></button><button type="button" class="sport-choice" onclick="selectSport('nhl')"><strong>NHL</strong><span id="sport-state-nhl">Configure →</span></button><button type="button" class="sport-choice" onclick="selectSport('nba')"><strong>NBA</strong><span id="sport-state-nba">Configure →</span></button><button type="button" class="sport-choice" onclick="selectSport('wnba')"><strong>WNBA</strong><span id="sport-state-wnba">Configure →</span></button><button type="button" class="sport-choice" onclick="selectSport('nfl')"><strong>NFL</strong><span id="sport-state-nfl">Configure →</span></button><button type="button" class="sport-choice" onclick="selectSport('mls')"><strong>MLS</strong><span id="sport-state-mls">Configure →</span></button><button type="button" class="sport-choice" onclick="selectSport('nwsl')"><strong>NWSL</strong><span id="sport-state-nwsl">Configure →</span></button><button type="button" class="sport-choice" onclick="selectSport('english')"><strong>English Football</strong><span id="sport-state-english">Configure →</span></button></div><p class="muted">Choose a sport to edit its settings. Enable and disable sports within Configure Sport.</p></div><div id="sports-configure" class="sports-view" hidden><label for="sport-picker">Sport to configure</label> <select id="sport-picker" onchange="selectSport(this.value)"><option value="mlb">MLB</option><option value="nhl">NHL</option><option value="nba">NBA</option><option value="wnba">WNBA</option><option value="nfl">NFL</option><option value="mls">MLS</option><option value="nwsl">NWSL</option><option value="english">English Football</option></select><div class="sport-config-panel" data-sport-panel="mlb" hidden><fieldset class="favorite-fieldset"><legend>MLB configuration</legend><p><label><input type="checkbox" id="mlb-enabled"> Enable MLB</label></p><h3>MLB standings divisions</h3><p class="muted">Select divisions for standings pages. Independent of MLB game coverage; requires Standings Pages enabled under Content/News.</p><div id="mlb-standings-divisions" class="favorite-team-grid"><label><input type="checkbox" value="AL_EAST"> AL East</label><label><input type="checkbox" value="AL_CENTRAL"> AL Central</label><label><input type="checkbox" value="AL_WEST"> AL West</label><label><input type="checkbox" value="NL_EAST"> NL East</label><label><input type="checkbox" value="NL_CENTRAL"> NL Central</label><label><input type="checkbox" value="NL_WEST"> NL West</label></div><h3>Favorite MLB teams</h3><p class="muted">Select one or more teams. Games featuring any favorite will be included.</p><div id="favorite-teams" class="favorite-team-grid"><label><input type="checkbox" value="ARI"> Arizona Diamondbacks</label><label><input type="checkbox" value="ATL"> Atlanta Braves</label><label><input type="checkbox" value="BAL"> Baltimore Orioles</label><label><input type="checkbox" value="BOS"> Boston Red Sox</label><label><input type="checkbox" value="CHC"> Chicago Cubs</label><label><input type="checkbox" value="CWS"> Chicago White Sox</label><label><input type="checkbox" value="CIN"> Cincinnati Reds</label><label><input type="checkbox" value="CLE"> Cleveland Guardians</label><label><input type="checkbox" value="COL"> Colorado Rockies</label><label><input type="checkbox" value="DET"> Detroit Tigers</label><label><input type="checkbox" value="HOU"> Houston Astros</label><label><input type="checkbox" value="KCR"> Kansas City Royals</label><label><input type="checkbox" value="LAA"> Los Angeles Angels</label><label><input type="checkbox" value="LAD"> Los Angeles Dodgers</label><label><input type="checkbox" value="MIA"> Miami Marlins</label><label><input type="checkbox" value="MIL"> Milwaukee Brewers</label><label><input type="checkbox" value="MIN"> Minnesota Twins</label><label><input type="checkbox" value="NYM"> New York Mets</label><label><input type="checkbox" value="NYY"> New York Yankees</label><label><input type="checkbox" value="OAK"> Athletics</label><label><input type="checkbox" value="PHI"> Philadelphia Phillies</label><label><input type="checkbox" value="PIT"> Pittsburgh Pirates</label><label><input type="checkbox" value="SDP"> San Diego Padres</label><label><input type="checkbox" value="SFG"> San Francisco Giants</label><label><input type="checkbox" value="SEA"> Seattle Mariners</label><label><input type="checkbox" value="STL"> St. Louis Cardinals</label><label><input type="checkbox" value="TBR"> Tampa Bay Rays</label><label><input type="checkbox" value="TEX"> Texas Rangers</label><label><input type="checkbox" value="TOR"> Toronto Blue Jays</label><label><input type="checkbox" value="WSN"> Washington Nationals</label></div><p id="favorite-summary" class="muted" aria-live="polite"></p><p><label>MLB game selection <select id="mode"><option value="favorite">Favorites only</option><option value="fallback">Favorites, otherwise all</option><option value="all">All games</option></select></label></p><p id="mode-help" class="muted" aria-live="polite"></p><p><label>MLB rotation seconds <input id="rotation" type="number" min="1" max="3600" value="12"></label> <label>MLB feed refresh seconds <input id="refresh" type="number" min="1" max="3600" value="60"></label></p><h3>MLB live screen rotation</h3><p class="muted">Percent of each live game interval. Last Play uses the remaining time. Classic must be at least 1%.</p><p><label>Classic % <input id="live-classic" type="number" min="1" max="100" step="1" value="50"></label> <label>Matchup % <input id="live-matchup" type="number" min="0" max="99" step="1" value="25"></label></p><p id="live-play-share" class="muted" aria-live="polite">Last Play: 25%</p></fieldset></div><div class="sport-config-panel" data-sport-panel="nhl" hidden><fieldset class="favorite-fieldset"><legend>NHL configuration</legend>
 <p><label><input type="checkbox" id="nhl-enabled"> Enable NHL</label></p>
 <h3>NHL standings</h3><p class="muted">Select divisions and Wild Card races for idle-time standings. Enable standings globally under Content/News.</p><div id="nhl-standings-divisions" class="favorite-team-grid"><label><input type="checkbox" value="Atlantic"> Atlantic</label><label><input type="checkbox" value="Metropolitan"> Metropolitan</label><label><input type="checkbox" value="Central"> Central</label><label><input type="checkbox" value="Pacific"> Pacific</label></div><h3>NHL Wild Card standings</h3><p class="muted">Choose conference Wild Card tables independently. Each displays the five leading contenders.</p><div id="nhl-standings-wild-cards" class="favorite-team-grid"><label><input type="checkbox" value="Eastern_Wild_Card"> Eastern Conference</label><label><input type="checkbox" value="Western_Wild_Card"> Western Conference</label></div><h3>Favorite NHL teams</h3><p class="muted">Select one or more teams, just like MLB.</p><p><button type="button" onclick="setNHLFavorites(NHL_TEAMS.map(team=>team[0]))">Select all</button> <button type="button" onclick="setNHLFavorites([])">Clear all</button></p><div id="nhl-teams" class="favorite-team-grid"><label><input type="checkbox" value="ANA"> Anaheim Ducks</label><label><input type="checkbox" value="BOS"> Boston Bruins</label><label><input type="checkbox" value="BUF"> Buffalo Sabres</label><label><input type="checkbox" value="CGY"> Calgary Flames</label><label><input type="checkbox" value="CAR"> Carolina Hurricanes</label><label><input type="checkbox" value="CHI"> Chicago Blackhawks</label><label><input type="checkbox" value="COL"> Colorado Avalanche</label><label><input type="checkbox" value="CBJ"> Columbus Blue Jackets</label><label><input type="checkbox" value="DAL"> Dallas Stars</label><label><input type="checkbox" value="DET"> Detroit Red Wings</label><label><input type="checkbox" value="EDM"> Edmonton Oilers</label><label><input type="checkbox" value="FLA"> Florida Panthers</label><label><input type="checkbox" value="LAK"> Los Angeles Kings</label><label><input type="checkbox" value="MIN"> Minnesota Wild</label><label><input type="checkbox" value="MTL"> Montréal Canadiens</label><label><input type="checkbox" value="NSH"> Nashville Predators</label><label><input type="checkbox" value="NJD"> New Jersey Devils</label><label><input type="checkbox" value="NYI"> New York Islanders</label><label><input type="checkbox" value="NYR"> New York Rangers</label><label><input type="checkbox" value="OTT"> Ottawa Senators</label><label><input type="checkbox" value="PHI"> Philadelphia Flyers</label><label><input type="checkbox" value="PIT"> Pittsburgh Penguins</label><label><input type="checkbox" value="SJS"> San Jose Sharks</label><label><input type="checkbox" value="SEA"> Seattle Kraken</label><label><input type="checkbox" value="STL"> St. Louis Blues</label><label><input type="checkbox" value="TBL"> Tampa Bay Lightning</label><label><input type="checkbox" value="TOR"> Toronto Maple Leafs</label><label><input type="checkbox" value="UTA"> Utah Mammoth</label><label><input type="checkbox" value="VAN"> Vancouver Canucks</label><label><input type="checkbox" value="VGK"> Vegas Golden Knights</label><label><input type="checkbox" value="WSH"> Washington Capitals</label><label><input type="checkbox" value="WPG"> Winnipeg Jets</label></div><p id="nhl-favorite-summary" class="muted" aria-live="polite"></p>
 <p><label>NHL game selection <select id="nhl-mode"><option value="favorite">Favorites only</option><option value="fallback">Favorites, otherwise all</option><option value="all">All games</option></select></label></p><p id="nhl-mode-help" class="muted" aria-live="polite"></p>
@@ -99,13 +99,19 @@ section h2{font-size:clamp(21px,1.6vw,26px);line-height:1.25;margin:0 0 18px}
 <div id="nfl-teams" class="favorite-team-grid"></div>
 <p><label>NFL game selection <select id="nfl-mode"><option value="favorite">Favorites only</option><option value="fallback">Favorites, otherwise all</option><option value="all">All games</option></select></label></p><p id="nfl-mode-help" class="muted" aria-live="polite"></p>
 <p><label>NFL rotation seconds <input id="nfl-rotation" type="number" min="5" max="3600" value="12"></label>
-<label>NFL feed refresh seconds <input id="nfl-refresh" type="number" min="5" max="3600" value="60"></label></p></fieldset></div><div class="sport-config-panel" data-sport-panel="mls" hidden><fieldset class="favorite-fieldset"><legend>MLS configuration</legend><p><label><input type="checkbox" id="mls-enabled"> Enable MLS</label></p><h3>MLS standings conferences</h3><p class="muted">Select conferences for idle-time standings. Enable Standings Pages under Content &amp; News.</p><div id="mls-standings-conferences" class="favorite-team-grid"><label><input type="checkbox" value="Eastern Conference"> Eastern Conference</label><label><input type="checkbox" value="Western Conference"> Western Conference</label></div><h3>Favorite MLS teams</h3><p class="muted">Select one or more teams. Games featuring your favorites are prioritized.</p><div id="mls-teams" class="favorite-team-grid"></div><p><label>Game selection <select id="mls-mode"><option value="favorite">Favorites only</option><option value="fallback">Favorites, otherwise all</option><option value="all">All matches</option></select></label></p><p id="mls-mode-help" class="muted" aria-live="polite"></p><p><label>Data source <select id="mls-provider"><option value="league_first">League first, ESPN fallback</option><option value="espn_only">ESPN only</option><option value="league_only">League only (requires native endpoint)</option></select></label></p><p><label>Rotation seconds <input id="mls-rotation" type="number" min="5" max="3600" value="12"></label><label>Refresh seconds <input id="mls-refresh" type="number" min="5" max="3600" value="60"></label></p></fieldset></div><div class="sport-config-panel" data-sport-panel="nwsl" hidden><fieldset class="favorite-fieldset"><legend>NWSL configuration</legend><p><label><input type="checkbox" id="nwsl-enabled"> Enable NWSL</label></p><p><label><input type="checkbox" id="nwsl-standings-enabled"> Show NWSL standings when idle</label></p><h3>Favorite NWSL teams</h3><p class="muted">Select one or more teams. Games featuring your favorites are prioritized.</p><div id="nwsl-teams" class="favorite-team-grid"></div><p><label>Game selection <select id="nwsl-mode"><option value="favorite">Favorites only</option><option value="fallback">Favorites, otherwise all</option><option value="all">All matches</option></select></label></p><p id="nwsl-mode-help" class="muted" aria-live="polite"></p><p><label>Data source <select id="nwsl-provider"><option value="league_first">League first, ESPN fallback</option><option value="espn_only">ESPN only</option><option value="league_only">League only (requires native endpoint)</option></select></label></p><p><label>Rotation seconds <input id="nwsl-rotation" type="number" min="5" max="3600" value="12"></label><label>Refresh seconds <input id="nwsl-refresh" type="number" min="5" max="3600" value="60"></label></p></fieldset></div><div class="sport-config-panel" data-sport-panel="english" hidden><fieldset class="favorite-fieldset"><legend>English football configuration</legend><p><label><input type="checkbox" id="english-enabled"> Enable English football</label></p><h3>Divisions</h3><div id="english-leagues" class="favorite-team-grid"><label><input type="checkbox" value="EPL"> Premier League</label><label><input type="checkbox" value="CHAMPIONSHIP"> Championship</label><label><input type="checkbox" value="LEAGUE_ONE"> League One</label><label><input type="checkbox" value="LEAGUE_TWO"> League Two</label></div><p id="english-game-coverage-summary" class="muted" aria-live="polite"></p><h3>Standings pages</h3><p class="muted">Choose which English divisions appear in idle-time standings. Game coverage is controlled separately above.</p><div id="english-standings-leagues" class="favorite-team-grid"><label><input type="checkbox" value="EPL"> Premier League</label><label><input type="checkbox" value="CHAMPIONSHIP"> Championship</label><label><input type="checkbox" value="LEAGUE_ONE"> League One</label><label><input type="checkbox" value="LEAGUE_TWO"> League Two</label></div><p id="english-standings-coverage-summary" class="muted" aria-live="polite"></p><h3>Favorite clubs</h3><p><label>Search clubs <input id="english-team-search" type="search" placeholder="Search all four divisions" oninput="filterEnglishClubs()"></label></p><div id="english-teams" class="favorite-team-grid"></div><p id="english-team-filter-summary" class="muted" role="status" aria-live="polite"></p><p id="english-team-status" class="muted">Loading club directory…</p><p><label>Game selection <select id="english-mode"><option value="favorite">Favorites only</option><option value="fallback">Favorites, otherwise all</option><option value="all">All matches</option></select></label></p><p id="english-mode-help" class="muted" aria-live="polite"></p><p><label>Rotation seconds <input id="english-rotation" type="number" min="5" max="3600" value="12"></label><label>Refresh seconds <input id="english-refresh" type="number" min="5" max="3600" value="60"></label></p><p class="muted">ESPN is the current data source. Club favorites remain selected when a club changes division.</p></fieldset></div><div id="sports-rotation" class="sports-view" hidden><h3>Rotation behavior</h3><p>Each sport currently has its own game rotation and feed refresh timing. Use Configure Sport to adjust those values for the selected league.</p><div class="rotation-summary" id="sports-rotation-summary"></div><p class="muted">Shared clock, weather, and countdown rotation settings remain under Display. A separate global rotation priority control is not supported by the current configuration schema.</p></div><div class="sports-savebar"><button id="save-settings">Save Sport Settings</button><span id="settings-status" role="status" aria-live="polite"></span></div></section><section data-page="display" hidden><h2>Shared Display Settings</h2><fieldset class="favorite-fieldset"><legend>Time &amp; Weather</legend><label><input id="clock-enabled" type="checkbox"> Enable clock rotation</label><label>Time zone <select id="clock-timezone"><option value="America/New_York">Eastern (ET)</option><option value="America/Chicago">Central (CT)</option><option value="America/Denver">Mountain (MT)</option><option value="America/Phoenix">Arizona (MST, no DST)</option><option value="America/Los_Angeles">Pacific (PT)</option><option value="America/Anchorage">Alaska (AKT)</option><option value="Pacific/Honolulu">Hawaii (HST)</option><option value="UTC">UTC</option><option value="Europe/London">London (UK)</option><option value="Europe/Paris">Central Europe</option><option value="Asia/Tokyo">Japan</option><option value="Australia/Sydney">Sydney</option></select></label><label>Time format <select id="clock-format"><option value="12h">12-hour</option><option value="24h">24-hour</option></select></label><label>Clock every N non-live slots <input id="clock-interval" type="number" min="1" max="20" value="5"></label><label><input id="weather-enabled" type="checkbox"> Enable weather display</label><label>Weather location <input id="weather-location" type="text" placeholder="City or ZIP"></label><label>Temperature unit <select id="weather-unit"><option value="fahrenheit">Fahrenheit</option><option value="celsius">Celsius</option></select></label><label>Weather provider <select id="weather-provider"><option value="open-meteo">Open-Meteo (no key)</option><option value="openweathermap">OpenWeatherMap (API key)</option></select></label><label>OpenWeatherMap API key <input id="weather-key" type="password" autocomplete="new-password" placeholder="Leave blank to keep saved key"></label><button type="button" onclick="saveClockSettings()">Save Time &amp; Weather</button><p id="clock-status" role="status"></p></fieldset><fieldset class="favorite-fieldset"><legend>Season Opening Countdown</legend><p class="muted">Optional shared countdown. Enter an opening date with its timezone offset, such as 2027-03-25T13:00:00-04:00. Disabled until configured.</p><p><label><input id="countdown-enabled" type="checkbox"> Enable countdown</label></p><p><label>Sport <select id="countdown-sport"><option value="mlb">MLB</option><option value="nba">NBA</option><option value="nfl">NFL</option><option value="nhl">NHL</option><option value="mls">MLS</option><option value="efl">EFL</option></select></label> <label>Season <input id="countdown-season" type="text" placeholder="2027"></label></p><p><label>Date source <select id="countdown-source"><option value="manual">Manual date</option><option value="automatic">Automatic MLB schedule</option></select></label></p><p><label>Opening date/time (ISO with timezone) <input id="countdown-opening" type="text" placeholder="2027-03-25T13:00:00-04:00"></label></p><p><label>Target <select id="countdown-target"><option value="league">League opening</option><option value="favorite">Favorite team opening</option></select></label> <label>Team code <input id="countdown-team" type="text" placeholder="ATL"></label></p><p><label>Display <select id="countdown-window"><option value="offseason">Offseason only</option><option value="within_days">Within N days</option><option value="always">Always when no live game</option></select></label> <label>Days <input id="countdown-days" type="number" min="1" max="366" value="30"></label></p><button type="button" onclick="saveCountdown()">Save Countdown</button><p id="countdown-status" role="status" aria-live="polite"></p><p id="countdown-feed-status" class="muted" role="status" aria-live="polite">Schedule status not checked.</p><button type="button" onclick="refreshCountdownStatus()">Check Schedule Status</button></fieldset></section><section data-page="wifi" hidden><h2>Wi-Fi & Hotspot</h2><p id="wifi-recovery-readiness" class="muted" role="status">Checking recovery protection…</p><p id="wifi-info">Loading…</p><h4>Saved Wi-Fi connections</h4><div id="wifi-profiles" class="grid"><p class="muted">Loading saved profiles…</p></div><button type="button" onclick="refreshWifi()">Refresh Wi-Fi</button> <button type="button" onclick="scanWifi()">Scan Networks</button><p id="wifi-scan-status" class="muted" role="status" aria-live="polite">Click Scan Networks to list nearby access points.</p><div id="wifi-networks" class="grid"></div><div id="wifi-selection" hidden><h4>Selected network: <span id="wifi-selected-name"></span></h4><p id="wifi-selected-security"></p><label>Network password <input id="wifi-password" type="password" autocomplete="off" minlength="8" maxlength="63"></label><p id="wifi-connect-note" class="muted">Network switching requires the privileged helper and recovery worker. Keep Ethernet connected during initial testing.</p><button type="button" onclick="connectWifi()">Connect Wi-Fi</button><p id="wifi-connect-result" role="status"></p></div><h4>Hotspot Settings</h4><p class="muted">Change the password for Universal-LED-Setup. Changes take effect the next time the hotspot starts.</p><label>New hotspot password <input id="hotspot-password" type="password" minlength="8" maxlength="63" autocomplete="new-password"></label> <label>Confirm password <input id="hotspot-confirm" type="password" minlength="8" maxlength="63" autocomplete="new-password"></label> <button type="button" onclick="saveHotspotPassword()">Save Hotspot Password</button><p id="hotspot-result" role="status"></p></section><section data-page="matrix-settings" hidden><h2>Physical Matrix Settings</h2><p class="muted">Hardware changes require restarting only uls-matrix.service. Saving does not restart the hardware automatically.</p><div class="grid"><label class="item"><input type="checkbox" id="matrix-enabled"> Enable physical matrix output</label><label class="item">Brightness (1–100%) <input type="number" id="matrix-brightness" min="1" max="100" value="40"></label><label class="item">GPIO slowdown (0–10) <input type="number" id="matrix-slowdown" min="0" max="10" value="4"></label><label class="item">Hardware mapping <select id="matrix-mapping"><option value="adafruit-hat">Adafruit HAT</option><option value="adafruit-hat-pwm">Adafruit HAT PWM</option><option value="regular">Regular</option><option value="compute-module">Compute Module</option></select></label><label class="item">Frame poll interval (seconds) <input type="number" id="matrix-interval" min="0.05" max="10" step="0.05" value="0.2"></label></div><p><button type="button" onclick="saveMatrixSettings()">Save Matrix Settings</button> <button type="button" onclick="applyMatrixSettings()">Apply Saved Settings</button></p><p id="matrix-service-state" class="muted" role="status">Checking matrix service…</p><p id="matrix-settings-status" role="status" aria-live="polite"></p></section><section data-page="system" hidden><h2>System</h2><h3>Software Updates</h3><p id="update-status" class="muted" role="status">Update status not checked.</p><label for="update-branch">Release branch</label> <select id="update-branch" onchange="updateBranchChanged()"><option value="">Check for branches…</option></select><label><input type="checkbox" id="update-show-all" onchange="renderUpdateBranches()"> Show all branches (including older releases)</label> <button type="button" onclick="checkSoftwareUpdate()">Check for Updates</button> <button type="button" id="install-update" onclick="installSoftwareUpdate()" disabled>Install Update</button><button type="button" id="copy-update-log" onclick="copyUpdateLog()">Copy Log</button><pre id="update-log" style="white-space:pre-wrap;overflow-wrap:anywhere;max-height:220px;overflow:auto"></pre><p id="system-info">Checking server information…</p><div id="pi-info" class="grid"><p class="muted">Loading Raspberry Pi diagnostics…</p></div><p class="muted">Service status is read-only. Hardware output and remote service controls are not enabled.</p></section><div data-page="colors" hidden><section><h2>64 × 32 Live Preview</h2><canvas id="matrix" width="64" height="32"></canvas>
+<label>NFL feed refresh seconds <input id="nfl-refresh" type="number" min="5" max="3600" value="60"></label></p></fieldset></div><div class="sport-config-panel" data-sport-panel="mls" hidden><fieldset class="favorite-fieldset"><legend>MLS configuration</legend><p><label><input type="checkbox" id="mls-enabled"> Enable MLS</label></p><h3>MLS standings conferences</h3><p class="muted">Select conferences for idle-time standings. Enable Standings Pages under Content &amp; News.</p><div id="mls-standings-conferences" class="favorite-team-grid"><label><input type="checkbox" value="Eastern Conference"> Eastern Conference</label><label><input type="checkbox" value="Western Conference"> Western Conference</label></div><h3>Favorite MLS teams</h3><p class="muted">Select one or more teams. Games featuring your favorites are prioritized.</p><div id="mls-teams" class="favorite-team-grid"></div><p><label>Game selection <select id="mls-mode"><option value="favorite">Favorites only</option><option value="fallback">Favorites, otherwise all</option><option value="all">All matches</option></select></label></p><p id="mls-mode-help" class="muted" aria-live="polite"></p><p><label>Data source <select id="mls-provider"><option value="league_first">League first, ESPN fallback</option><option value="espn_only">ESPN only</option><option value="league_only">League only (requires native endpoint)</option></select></label></p><p><label>Rotation seconds <input id="mls-rotation" type="number" min="5" max="3600" value="12"></label><label>Refresh seconds <input id="mls-refresh" type="number" min="5" max="3600" value="60"></label></p></fieldset></div><div class="sport-config-panel" data-sport-panel="nwsl" hidden><fieldset class="favorite-fieldset"><legend>NWSL configuration</legend><p><label><input type="checkbox" id="nwsl-enabled"> Enable NWSL</label></p><p><label><input type="checkbox" id="nwsl-standings-enabled"> Show NWSL standings when idle</label></p><h3>Favorite NWSL teams</h3><p class="muted">Select one or more teams. Games featuring your favorites are prioritized.</p><div id="nwsl-teams" class="favorite-team-grid"></div><p><label>Game selection <select id="nwsl-mode"><option value="favorite">Favorites only</option><option value="fallback">Favorites, otherwise all</option><option value="all">All matches</option></select></label></p><p id="nwsl-mode-help" class="muted" aria-live="polite"></p><p><label>Data source <select id="nwsl-provider"><option value="league_first">League first, ESPN fallback</option><option value="espn_only">ESPN only</option><option value="league_only">League only (requires native endpoint)</option></select></label></p><p><label>Rotation seconds <input id="nwsl-rotation" type="number" min="5" max="3600" value="12"></label><label>Refresh seconds <input id="nwsl-refresh" type="number" min="5" max="3600" value="60"></label></p></fieldset></div><div class="sport-config-panel" data-sport-panel="english" hidden><fieldset class="favorite-fieldset"><legend>English football configuration</legend><p><label><input type="checkbox" id="english-enabled"> Enable English football</label></p><h3>Divisions</h3><div id="english-leagues" class="favorite-team-grid"><label><input type="checkbox" value="EPL"> Premier League</label><label><input type="checkbox" value="CHAMPIONSHIP"> Championship</label><label><input type="checkbox" value="LEAGUE_ONE"> League One</label><label><input type="checkbox" value="LEAGUE_TWO"> League Two</label></div><p id="english-game-coverage-summary" class="muted" aria-live="polite"></p><h3>Standings pages</h3><p class="muted">Choose which English divisions appear in idle-time standings. Game coverage is controlled separately above.</p><div id="english-standings-leagues" class="favorite-team-grid"><label><input type="checkbox" value="EPL"> Premier League</label><label><input type="checkbox" value="CHAMPIONSHIP"> Championship</label><label><input type="checkbox" value="LEAGUE_ONE"> League One</label><label><input type="checkbox" value="LEAGUE_TWO"> League Two</label></div><p id="english-standings-coverage-summary" class="muted" aria-live="polite"></p><h3>Favorite clubs</h3><p><label>Search clubs <input id="english-team-search" type="search" placeholder="Search all four divisions" oninput="filterEnglishClubs()"></label></p><div id="english-teams" class="favorite-team-grid"></div><p id="english-team-filter-summary" class="muted" role="status" aria-live="polite"></p><p id="english-team-status" class="muted">Loading club directory…</p><p><label>Game selection <select id="english-mode"><option value="favorite">Favorites only</option><option value="fallback">Favorites, otherwise all</option><option value="all">All matches</option></select></label></p><p id="english-mode-help" class="muted" aria-live="polite"></p><p><label>Rotation seconds <input id="english-rotation" type="number" min="5" max="3600" value="12"></label><label>Refresh seconds <input id="english-refresh" type="number" min="5" max="3600" value="60"></label></p><p class="muted">ESPN is the current data source. Club favorites remain selected when a club changes division.</p></fieldset></div><div id="sports-rotation" class="sports-view" hidden><h3>Rotation behavior</h3><p>Each sport currently has its own game rotation and feed refresh timing. Use Configure Sport to adjust those values for the selected league.</p><div class="rotation-summary" id="sports-rotation-summary"></div><p class="muted">Shared clock, weather, and countdown rotation settings remain under Display. A separate global rotation priority control is not supported by the current configuration schema.</p></div><div class="sports-savebar"><button id="save-settings">Save Sport Settings</button><span id="settings-status" role="status" aria-live="polite"></span></div></section><section data-page="display" hidden><h2>Shared Display Settings</h2><fieldset class="favorite-fieldset"><legend>Time &amp; Weather</legend><label><input id="clock-enabled" type="checkbox"> Enable clock rotation</label><label>Time zone <select id="clock-timezone"><option value="America/New_York">Eastern (ET)</option><option value="America/Chicago">Central (CT)</option><option value="America/Denver">Mountain (MT)</option><option value="America/Phoenix">Arizona (MST, no DST)</option><option value="America/Los_Angeles">Pacific (PT)</option><option value="America/Anchorage">Alaska (AKT)</option><option value="Pacific/Honolulu">Hawaii (HST)</option><option value="UTC">UTC</option><option value="Europe/London">London (UK)</option><option value="Europe/Paris">Central Europe</option><option value="Asia/Tokyo">Japan</option><option value="Australia/Sydney">Sydney</option></select></label><label>Time format <select id="clock-format"><option value="12h">12-hour</option><option value="24h">24-hour</option></select></label><label>Clock every N non-live slots <input id="clock-interval" type="number" min="1" max="20" value="5"></label><label><input id="weather-enabled" type="checkbox"> Enable weather display</label><label>Weather location <input id="weather-location" type="text" placeholder="City or ZIP"></label><label>Temperature unit <select id="weather-unit"><option value="fahrenheit">Fahrenheit</option><option value="celsius">Celsius</option></select></label><label>Weather provider <select id="weather-provider"><option value="open-meteo">Open-Meteo (no key)</option><option value="openweathermap">OpenWeatherMap (API key)</option></select></label><label>OpenWeatherMap API key <input id="weather-key" type="password" autocomplete="new-password" placeholder="Leave blank to keep saved key"></label><button type="button" onclick="saveClockSettings()">Save Time &amp; Weather</button><p id="clock-status" role="status"></p></fieldset><fieldset class="favorite-fieldset"><legend>Season Opening Countdown</legend><p class="muted">Optional shared countdown. Enter an opening date with its timezone offset, such as 2027-03-25T13:00:00-04:00. Disabled until configured.</p><p><label><input id="countdown-enabled" type="checkbox"> Enable countdown</label></p><p><label>Sport <select id="countdown-sport"><option value="mlb">MLB</option><option value="nba">NBA</option><option value="nfl">NFL</option><option value="nhl">NHL</option><option value="mls">MLS</option><option value="efl">EFL</option></select></label> <label>Season <input id="countdown-season" type="text" placeholder="2027"></label></p><p><label>Date source <select id="countdown-source"><option value="manual">Manual date</option><option value="automatic">Automatic MLB schedule</option></select></label></p><p><label>Opening date/time (ISO with timezone) <input id="countdown-opening" type="text" placeholder="2027-03-25T13:00:00-04:00"></label></p><p><label>Target <select id="countdown-target"><option value="league">League opening</option><option value="favorite">Favorite team opening</option></select></label> <label>Team code <input id="countdown-team" type="text" placeholder="ATL"></label></p><p><label>Display <select id="countdown-window"><option value="offseason">Offseason only</option><option value="within_days">Within N days</option><option value="always">Always when no live game</option></select></label> <label>Days <input id="countdown-days" type="number" min="1" max="366" value="30"></label></p><button type="button" onclick="saveCountdown()">Save Countdown</button><p id="countdown-status" role="status" aria-live="polite"></p><p id="countdown-feed-status" class="muted" role="status" aria-live="polite">Schedule status not checked.</p><button type="button" onclick="refreshCountdownStatus()">Check Schedule Status</button></fieldset></section><section data-page="wifi" hidden><h2>Wi-Fi & Hotspot</h2><p id="wifi-recovery-readiness" class="muted" role="status">Checking recovery protection…</p><p id="wifi-info">Loading…</p><h4>Saved Wi-Fi connections</h4><div id="wifi-profiles" class="grid"><p class="muted">Loading saved profiles…</p></div><button type="button" onclick="refreshWifi()">Refresh Wi-Fi</button> <button type="button" onclick="scanWifi()">Scan Networks</button><p id="wifi-scan-status" class="muted" role="status" aria-live="polite">Click Scan Networks to list nearby access points.</p><div id="wifi-networks" class="grid"></div><div id="wifi-selection" hidden><h4>Selected network: <span id="wifi-selected-name"></span></h4><p id="wifi-selected-security"></p><label>Network password <input id="wifi-password" type="password" autocomplete="off" minlength="8" maxlength="63"></label><p id="wifi-connect-note" class="muted">Network switching requires the privileged helper and recovery worker. Keep Ethernet connected during initial testing.</p><button type="button" onclick="connectWifi()">Connect Wi-Fi</button><p id="wifi-connect-result" role="status"></p></div><h4>Hotspot Settings</h4><p class="muted">Change the password for Universal-LED-Setup. Changes take effect the next time the hotspot starts.</p><label>New hotspot password <input id="hotspot-password" type="password" minlength="8" maxlength="63" autocomplete="new-password"></label> <label>Confirm password <input id="hotspot-confirm" type="password" minlength="8" maxlength="63" autocomplete="new-password"></label> <button type="button" onclick="saveHotspotPassword()">Save Hotspot Password</button><p id="hotspot-result" role="status"></p></section><section data-page="matrix-settings" hidden><h2>Physical Matrix Settings</h2><p class="muted">Hardware changes require restarting only uls-matrix.service. Saving does not restart the hardware automatically.</p><div class="grid"><label class="item"><input type="checkbox" id="matrix-enabled"> Enable physical matrix output</label><label class="item">Brightness (1–100%) <input type="number" id="matrix-brightness" min="1" max="100" value="40"></label><label class="item">GPIO slowdown (0–10) <input type="number" id="matrix-slowdown" min="0" max="10" value="4"></label><label class="item">Hardware mapping <select id="matrix-mapping"><option value="adafruit-hat">Adafruit HAT</option><option value="adafruit-hat-pwm">Adafruit HAT PWM</option><option value="regular">Regular</option><option value="compute-module">Compute Module</option></select></label><label class="item">Frame poll interval (seconds) <input type="number" id="matrix-interval" min="0.05" max="10" step="0.05" value="0.2"></label></div><p><button type="button" onclick="saveMatrixSettings()">Save Matrix Settings</button> <button type="button" onclick="applyMatrixSettings()">Apply Saved Settings</button></p><p id="matrix-service-state" class="muted" role="status">Checking matrix service…</p><p id="matrix-settings-status" role="status" aria-live="polite"></p></section><section data-page="plugins" hidden><div class="page-heading"><div><p class="page-kicker">Extensions</p><h2>Plugin Manager</h2><p class="muted">Install, configure and manage optional 64×32 scoreboard screens.</p></div><button type="button" onclick="loadPluginInventory()">Refresh plugins</button></div>
+<div class="dashboard-grid">
+<div class="dashboard-tile"><h3>Installed plugins</h3><p class="muted">Manage active plugins. Disable a plugin before uninstalling it.</p><div id="plugin-inventory" role="status" aria-live="polite">Loading installed plugins…</div><div id="plugin-settings-editor" role="region" aria-label="Plugin settings"></div></div>
+<div class="dashboard-tile"><h3>Install from GitHub</h3><p class="muted">For custom plugins not listed below. Review never installs or runs code.</p><label for="plugin-github-url">GitHub plugin URL</label><input id="plugin-github-url" type="url" placeholder="https://github.com/owner/repo"><button type="button" onclick="reviewGithubPlugin()">Review plugin</button><pre id="plugin-github-review" role="status" style="white-space:pre-wrap;overflow-wrap:anywhere"></pre><button id="plugin-github-install" type="button" onclick="installReviewedGithubPlugin()" hidden>Install reviewed plugin (disabled)</button><button id="plugin-github-update" type="button" onclick="updateReviewedGithubPlugin()" hidden>Update reviewed plugin</button></div>
+<div class="dashboard-tile"><h3>Available plugins</h3><p class="muted">Official ULS plugins, maintained separately from Core. Review a source before installation.</p><button type="button" onclick="loadPluginInventory(true)">Refresh catalog</button><p id="plugin-catalog-status" class="muted" role="status"></p><div id="plugin-available" role="status" aria-live="polite">Loading available plugins…</div></div>
+<div class="dashboard-tile"><h3>Bundled examples</h3><p class="muted">Examples included with ULS Core, independent of the official plugin catalog.</p><div id="plugin-bundled"><p>Hello World v0.1.0 · 64×32 reference screen</p><p id="plugin-bundled-state" class="muted">Checking installation…</p><button id="plugin-bundled-install" type="button" onclick="installBundledHelloWorld()" hidden>Install Hello World</button><p id="plugin-bundled-install-status" role="status"></p></div><button type="button" onclick="previewHelloWorld()">Preview Hello World</button><canvas id="plugin-hello-preview" width="64" height="32" style="width:256px;max-width:100%;aspect-ratio:2/1;image-rendering:pixelated;background:#000" aria-label="Hello World 64 by 32 plugin preview" hidden></canvas><p id="plugin-hello-status" role="status"></p></div>
+</div></section><section data-page="system" hidden><h2>System</h2><h3>Software Updates</h3><p id="update-status" class="muted" role="status">Update status not checked.</p><label for="update-branch">Release branch</label> <select id="update-branch" onchange="updateBranchChanged()"><option value="">Check for branches…</option></select><label><input type="checkbox" id="update-show-all" onchange="renderUpdateBranches()"> Show all branches (including older releases)</label> <button type="button" onclick="checkSoftwareUpdate()">Check for Updates</button> <button type="button" id="install-update" onclick="installSoftwareUpdate()" disabled>Install Update</button><button type="button" id="copy-update-log" onclick="copyUpdateLog()">Copy Log</button><pre id="update-log" style="white-space:pre-wrap;overflow-wrap:anywhere;max-height:220px;overflow:auto"></pre><p id="system-info">Checking server information…</p><div id="pi-info" class="grid"><p class="muted">Loading Raspberry Pi diagnostics…</p></div><p class="muted">Service status is read-only. Hardware output and remote service controls are not enabled.</p></section><div data-page="colors" hidden><section><h2>64 × 32 Live Preview</h2><canvas id="matrix" width="64" height="32"></canvas>
 <p class="muted">Changes preview immediately. Saving is optional.</p><label for="preview-team">Preview favorite team: </label><select id="preview-team"></select><span id="dirty" role="status">All changes saved</span></section>
 <section><h2>Scoreboard Colors</h2><p class="muted">General display text, accents, separators and status colors.</p><div id="scoreboard" class="grid"></div></section>
 <section><h2>NHL Team Colors</h2><p class="muted">NHL colors are stored separately from MLB. Use the same RGB editor for both sports.</p><label for="nhl-edit-team">NHL team to edit</label> <select id="nhl-edit-team"></select><div id="nhl-color-editor" class="grid"></div><button type="button" id="nhl-save-color">Save NHL Color</button> <button type="button" id="nhl-reset-color">Reset NHL Color</button> <span id="nhl-color-status" role="status"></span></section>
 <section><h2>MLB Team Colors</h2><p class="muted">Edit one team at a time, using the same compact controls as NHL. All other team colors remain unchanged.</p><label for="edit-team">MLB team to edit</label> <select id="edit-team"></select><div id="teams" class="grid"></div><button id="mlb-save-color" type="button">Save MLB Color</button> <button id="mlb-reset-color" type="button">Reset MLB Color</button> <span id="mlb-color-status" role="status"></span></section>
 <section><button id="save">Save Color Settings</button> <button id="cancel" type="button">Cancel Changes</button> <button id="reset" type="button">Reset Selected Color</button> <span id="status" role="status"></span>
-<p class="muted">Available on your trusted LAN. Backups are created before overwriting existing files.</p></section></div><div data-page="news" hidden><section><h2>Content &amp; News Sources</h2><p class="muted">Configure RSS or Atom feeds for future ticker use. Automatic and custom feeds display during available news rotation slots.</p><fieldset class="favorite-fieldset"><legend>Automatic Sports News</legend><p class="muted">Enable headlines separately for each sport. News appears during non-live rotation slots when that sport is enabled.</p><label><input type="checkbox" id="mlb-news-enabled"> MLB official headlines</label> <label><input type="checkbox" id="nhl-news-enabled"> NHL headlines</label> <label><input type="checkbox" id="nba-news-enabled"> NBA headlines</label> <label><input type="checkbox" id="wnba-news-enabled"> WNBA headlines</label> <label><input type="checkbox" id="nfl-news-enabled"> NFL headlines</label> <label><input type="checkbox" id="mls-news-enabled"> MLS headlines</label> <label><input type="checkbox" id="nwsl-news-enabled"> NWSL headlines</label> <label><input type="checkbox" id="english-news-enabled"> Premier League headlines</label> <label><input type="checkbox" id="efl-news-enabled"> EFL Championship, League One &amp; League Two headlines</label> <button type="button" onclick="saveAutomaticNews()">Save Automatic News</button><p id="auto-news-status" role="status"></p></fieldset><fieldset class="favorite-fieldset"><legend>News Display Timing</legend><label>Show news every N non-live slots <input id="news-interval" type="number" min="1" max="20"></label> <label>Headline duration (seconds) <input id="news-duration" type="number" min="3" max="120"></label> <label>Scroll speed (characters/second) <input id="news-speed" type="number" min="1" max="15"></label> <button type="button" onclick="saveNewsTiming()">Save News Timing</button><p id="news-timing-status" role="status"></p></fieldset><fieldset class="favorite-fieldset"><legend>Scoring Alerts</legend><p>Briefly interrupt the board for confirmed scoring events from supported sports. Availability depends on each sport's event feed; favorite-team selections control priority and filtering.</p><label><input type="checkbox" id="scoring-alerts-enabled"> Enable scoring alerts</label><label>Announce scoring events for <select id="scoring-alerts-scope"><option value="favorites">Favorite teams only</option><option value="all">All enabled games</option></select></label><label>Alert duration (seconds) <input id="scoring-alerts-seconds" type="number" min="1" max="60" step="1"></label><button type="button" onclick="saveScoringAlerts()">Save Scoring Alerts</button><p id="scoring-alerts-status" role="status"></p></fieldset><fieldset class="favorite-fieldset"><legend>Game Delays &amp; Schedule Changes</legend><p>Choose when interrupted games appear. Live games remain the default priority.</p><label>Delayed games <select id="interruption-delayed"><option value="when_no_live">Show when no games are live</option><option value="hide">Hide</option><option value="always">Always show</option></select></label><label>Postponed games <select id="interruption-postponed"><option value="when_no_live">Show when no games are live</option><option value="hide">Hide</option><option value="always">Always show</option></select></label><label>Rescheduled games <select id="interruption-rescheduled"><option value="when_no_live">Show when no games are live</option><option value="hide">Hide</option><option value="always">Always show</option></select></label><label>Suspended games <select id="interruption-suspended"><option value="when_no_live">Show when no games are live</option><option value="hide">Hide</option><option value="always">Always show</option></select></label><button type="button" onclick="saveGameInterruptions()">Save Game Status Preferences</button><p id="game-interruptions-status" role="status"></p></fieldset><fieldset class="favorite-fieldset"><legend>Standings Pages</legend><p class="muted">Show cached standings only when no eligible games are available. Currently English football standings are supported; additional sport and division controls are being developed. Scoring alerts and live games always take priority.</p><p><label><input type="checkbox" id="standings-enabled"> Enable standings pages</label></p><div class="grid"><label>Page duration (seconds) <input type="number" id="standings-page-seconds" min="3" max="3600" step="1" value="12"></label><label>Refresh interval (seconds) <input type="number" id="standings-refresh-seconds" min="60" max="86400" step="1" value="900"></label></div><p><button type="button" onclick="saveStandingsSettings()">Save Standings Preferences</button></p><p id="standings-status" role="status"></p></fieldset><h3>Additional Custom Feeds</h3><div id="news-sources"></div><button type="button" id="news-add" onclick="addNewsSource()">Add Source</button> <button type="button" onclick="saveNewsSources()">Save News Sources</button> <p id="news-status" role="status"></p></section></div></main></div>
+<p class="muted">Available on your trusted LAN. Backups are created before overwriting existing files.</p></section></div><div data-page="news" hidden><section><h2>Content &amp; News Sources</h2><p class="muted">Configure RSS or Atom feeds for future ticker use. Automatic and custom feeds display during available news rotation slots.</p><fieldset class="favorite-fieldset"><legend>Automatic Sports News</legend><p class="muted">Enable headlines separately for each sport. News appears during non-live rotation slots when that sport is enabled.</p><label><input type="checkbox" id="mlb-news-enabled"> MLB official headlines</label> <label><input type="checkbox" id="nhl-news-enabled"> NHL headlines</label> <label><input type="checkbox" id="nba-news-enabled"> NBA headlines</label> <label><input type="checkbox" id="wnba-news-enabled"> WNBA headlines</label> <label><input type="checkbox" id="nfl-news-enabled"> NFL headlines</label> <label><input type="checkbox" id="mls-news-enabled"> MLS headlines</label> <label><input type="checkbox" id="nwsl-news-enabled"> NWSL headlines</label> <label><input type="checkbox" id="english-news-enabled"> Premier League headlines</label> <label><input type="checkbox" id="efl-news-enabled"> EFL Championship, League One &amp; League Two headlines</label> <button type="button" onclick="saveAutomaticNews()">Save Automatic News</button><p id="auto-news-status" role="status"></p></fieldset><fieldset class="favorite-fieldset"><legend>News Display Timing</legend><label>Show news every N non-live slots <input id="news-interval" type="number" min="1" max="20"></label> <label>Headline duration (seconds) <input id="news-duration" type="number" min="3" max="120"></label> <label>Scroll speed (characters/second) <input id="news-speed" type="number" min="1" max="15"></label> <button type="button" onclick="saveNewsTiming()">Save News Timing</button><p id="news-timing-status" role="status"></p></fieldset><fieldset class="favorite-fieldset"><legend>Scoring Alerts</legend><p>Briefly interrupt the board for confirmed scoring events from supported sports. Availability depends on each sport's event feed; favorite-team selections control priority and filtering.</p><label><input type="checkbox" id="scoring-alerts-enabled"> Enable scoring alerts</label><label>Announce scoring events for <select id="scoring-alerts-scope"><option value="favorites">Favorite teams only</option><option value="all">All enabled games</option></select></label><label>Alert duration (seconds) <input id="scoring-alerts-seconds" type="number" min="1" max="60" step="1"></label><button type="button" onclick="saveScoringAlerts()">Save Scoring Alerts</button><p id="scoring-alerts-status" role="status"></p></fieldset><fieldset class="favorite-fieldset"><legend>Game Delays &amp; Schedule Changes</legend><p>Choose when interrupted games appear. Live games remain the default priority.</p><label>Delayed games <select id="interruption-delayed"><option value="when_no_live">Show when no games are live</option><option value="hide">Hide</option><option value="always">Always show</option></select></label><label>Postponed games <select id="interruption-postponed"><option value="when_no_live">Show when no games are live</option><option value="hide">Hide</option><option value="always">Always show</option></select></label><label>Rescheduled games <select id="interruption-rescheduled"><option value="when_no_live">Show when no games are live</option><option value="hide">Hide</option><option value="always">Always show</option></select></label><label>Suspended games <select id="interruption-suspended"><option value="when_no_live">Show when no games are live</option><option value="hide">Hide</option><option value="always">Always show</option></select></label><button type="button" onclick="saveGameInterruptions()">Save Game Status Preferences</button><p id="game-interruptions-status" role="status"></p></fieldset><fieldset class="favorite-fieldset"><legend>Standings Pages</legend><p class="muted">Show cached standings for enabled sports and divisions when no eligible games are available. Choose which standings to display in each sport’s settings; page duration and rotation timing are controlled here. Live games and scoring alerts always take priority.</p><p><label><input type="checkbox" id="standings-enabled"> Enable standings pages</label></p><div class="grid"><label>Page duration (seconds) <input type="number" id="standings-page-seconds" min="3" max="3600" step="1" value="12"></label><label>Refresh interval (seconds) <input type="number" id="standings-refresh-seconds" min="60" max="86400" step="1" value="900"></label></div><p><button type="button" onclick="saveStandingsSettings()">Save Standings Preferences</button></p><p id="standings-status" role="status"></p></fieldset><h3>Additional Custom Feeds</h3><div id="news-sources"></div><button type="button" id="news-add" onclick="addNewsSource()">Add Source</button> <button type="button" onclick="saveNewsSources()">Save News Sources</button> <p id="news-status" role="status"></p></section></div></main></div>
 <script>
 const token=__TOKEN__;
 async function logout(){await fetch('/logout',{method:'POST',headers:{'X-Configurator-Token':token}});location.href='/login'}
@@ -122,7 +128,292 @@ function discardNewsEdits(){
  newsSources=clone(newsSourcesSaved);newsSourcesDirty=false;
  for(const group of Object.keys(newsSettingsGroups))delete newsSettingsSaved[group];
 }
-function showPage(name){if(!document.querySelector('[data-page="'+name+'"]'))return;if(name!=='sports'&&sportsSettingsDirty&&!confirm('You have unsaved sport settings changes. Leave this page without saving?'))return;if(name!=='news'&&(newsSourcesDirty||newsSettingsDirty())){if(!confirm('You have unsaved Content & News changes. Leave this page without saving?'))return;discardNewsEdits();}document.querySelectorAll('.nav-item').forEach(button=>{const active=button.getAttribute('onclick')==="showPage('"+name+"')";button.classList.toggle('active',active);if(active)button.setAttribute('aria-current','page');else button.removeAttribute('aria-current');});document.querySelectorAll('[data-page]').forEach(el=>el.hidden=el.dataset.page!==name);if(name==='news'){if(!newsSourcesDirty)loadNewsSources();loadAutomaticNews();loadNewsTiming();loadScoringAlerts();loadGameInterruptions();loadStandingsSettings()}if(name==='display'){loadClockSettings();loadCountdown();}if(name==='dashboard'||name==='system')refreshStatus();if(name==='system'){refreshSystem();checkSoftwareUpdate();}if(name==='matrix-settings'){loadMatrixSettings();refreshMatrixStatus();}if(name==='wifi'){refreshWifi();refreshWifiProfiles();refreshRecoveryReadiness();scanWifi()}}
+async function previewHelloWorld(){
+ const status=document.getElementById('plugin-hello-status');
+ const canvas=document.getElementById('plugin-hello-preview');
+ status.textContent='Rendering Hello World…';
+ try{
+  const response=await fetch('/api/plugins/hello-world/frame',{credentials:'same-origin',cache:'no-store'});
+  if(!response.ok)throw new Error('Preview request failed (HTTP '+response.status+')');
+  const frame=await response.json();
+  if(frame.width!==64||frame.height!==32||!Array.isArray(frame.pixels)||frame.pixels.length!==2048)throw new Error('Invalid 64x32 frame');
+  const ctx=canvas.getContext('2d'),pixels=ctx.createImageData(64,32);
+  frame.pixels.forEach((rgb,i)=>{pixels.data[i*4]=rgb[0];pixels.data[i*4+1]=rgb[1];pixels.data[i*4+2]=rgb[2];pixels.data[i*4+3]=255});
+  ctx.putImageData(pixels,0,0);canvas.hidden=false;status.textContent='Hello World example rendered. Live scoreboard unchanged.';
+ }catch(error){status.textContent='Preview unavailable: '+error.message}
+}
+let reviewedGithubPlugin=null;
+let reviewedGithubUpdate=null;
+async function reviewInstalledPlugin(plugin){
+ const target=document.getElementById('plugin-github-review');
+ reviewedGithubUpdate=null;
+ document.getElementById('plugin-github-update').hidden=true;
+ target.textContent='Checking '+plugin.name+' for updates…';
+ try{
+  const response=await fetch('/api/plugins/github/review',{method:'POST',credentials:'same-origin',headers:{'Content-Type':'application/json','X-Configurator-Token':token},body:JSON.stringify({source:plugin.source})});
+  const result=await response.json();
+  if(!response.ok)throw new Error(result.error||'HTTP '+response.status);
+  if(result.id!==plugin.id||result.source!==plugin.source)throw new Error('Plugin identity or reviewed source changed');
+  if(result.commit.toLowerCase()===plugin.commit.toLowerCase()){
+   target.textContent=plugin.name+' is already at the latest reviewed commit.';
+   return;
+  }
+  reviewedGithubUpdate={...result,previousSource:plugin.installedSource||plugin.source};
+  target.textContent=['Update available: '+plugin.name,'Installed version: '+plugin.version,'Reviewed version: '+result.version,'Installed commit: '+plugin.commit,'Proposed commit: '+result.commit,'Current source: '+(plugin.installedSource||plugin.source),'Reviewed source: '+result.source,(plugin.installedSource&&plugin.installedSource!==result.source?'Official source migration will be performed.':'Source unchanged.'),'Enabled state and saved settings will be preserved.'].join('\\n');
+  document.getElementById('plugin-github-update').hidden=false;
+  target.scrollIntoView({block:'nearest'});
+ }catch(error){target.textContent='Update review failed for '+plugin.source+': '+error.message}
+}
+async function updateReviewedGithubPlugin(){
+ const reviewed=reviewedGithubUpdate;
+ if(!reviewed||!confirm('Update '+reviewed.name+' to pinned commit '+reviewed.commit+'? Existing enabled state and settings will be preserved.'))return;
+ const target=document.getElementById('plugin-github-review');
+ target.textContent='Updating reviewed plugin…';
+ try{
+  const response=await fetch('/api/plugins/github/update',{method:'POST',credentials:'same-origin',headers:{'Content-Type':'application/json','X-Configurator-Token':token},body:JSON.stringify({source:reviewed.source,commit:reviewed.commit,id:reviewed.id,previous_source:reviewed.previousSource,confirm:true})});
+  const result=await response.json();
+  if(!response.ok)throw new Error(result.error||'HTTP '+response.status);
+  reviewedGithubUpdate=null;
+  document.getElementById('plugin-github-update').hidden=true;
+  target.textContent='Updated '+result.id+' to '+result.version+'. Saved settings and enabled state preserved.';
+  await loadPluginInventory();
+ }catch(error){target.textContent='Plugin update failed: '+error.message}
+}
+async function installReviewedGithubPlugin(){
+ const reviewed=reviewedGithubPlugin;
+ if(!reviewed||!confirm('Install '+reviewed.name+' v'+reviewed.version+' from pinned GitHub commit '+reviewed.commit+' as disabled?'))return;
+ const target=document.getElementById('plugin-github-review');
+ target.textContent='Installing reviewed commit…';
+ try{
+  const response=await fetch('/api/plugins/github/install',{method:'POST',credentials:'same-origin',headers:{'Content-Type':'application/json','X-Configurator-Token':token},body:JSON.stringify({source:reviewed.source,commit:reviewed.commit,id:reviewed.id,confirm:true})});
+  const result=await response.json();
+  if(!response.ok)throw new Error(result.error||'HTTP '+response.status);
+  reviewedGithubPlugin=null;
+  document.getElementById('plugin-github-install').hidden=true;
+  target.textContent='Installed '+result.id+' v'+result.version+' (disabled).';
+  await loadPluginInventory();
+ }catch(error){target.textContent='Installation failed: '+error.message}
+}
+async function installBundledHelloWorld(){
+ const target=document.getElementById('plugin-bundled-install-status');
+ if(!confirm('Install bundled Hello World plugin as disabled?'))return;
+ target.textContent='Installing Hello World…';
+ try{
+  const response=await fetch('/api/plugins/bundled/install',{method:'POST',credentials:'same-origin',headers:{'Content-Type':'application/json','X-Configurator-Token':token},body:JSON.stringify({id:'hello-world',confirm:true})});
+  const result=await response.json();
+  if(!response.ok)throw new Error(result.error||'HTTP '+response.status);
+  target.textContent='Installed '+result.id+' v'+result.version+' (disabled).';
+  await loadPluginInventory();
+ }catch(error){target.textContent='Installation failed: '+error.message}
+}
+async function reviewGithubPlugin(){
+ const target=document.getElementById('plugin-github-review');
+ const source=document.getElementById('plugin-github-url').value.trim();
+ reviewedGithubPlugin=null;
+ document.getElementById('plugin-github-install').hidden=true;
+ target.textContent='Reviewing repository…';
+ try{
+  const response=await fetch('/api/plugins/github/review',{method:'POST',credentials:'same-origin',headers:{'Content-Type':'application/json','X-Configurator-Token':token},body:JSON.stringify({source})});
+  const result=await response.json();
+  if(!response.ok)throw new Error(result.error||'HTTP '+response.status);
+  reviewedGithubPlugin=result;
+  document.getElementById('plugin-github-install').hidden=false;
+  target.textContent=[result.name+' v'+result.version,result.description||'', 'ID: '+result.id,'Capabilities: '+result.capabilities.join(', '),'Source: '+result.source,'Pinned commit: '+result.commit,'Not installed. Review only.'].join('\\n');
+ }catch(error){target.textContent='Review failed: '+error.message}
+}
+async function removePlugin(id){
+ const target=document.getElementById('plugin-inventory');
+ if(!confirm('Uninstall '+id+'? The installed package will be removed. Saved external data will be preserved. This cannot be undone without reinstalling.'))return;
+ try{
+  const response=await fetch('/api/plugins/uninstall',{method:'POST',credentials:'same-origin',headers:{'Content-Type':'application/json','X-Configurator-Token':__TOKEN__},body:JSON.stringify({id,confirm:true})});
+  const result=await response.json();
+  if(!response.ok)throw new Error(result.error||'HTTP '+response.status);
+  document.getElementById('plugin-settings-editor').replaceChildren();
+  await loadPluginInventory();
+ }catch(error){target.textContent='Uninstall failed: '+error.message}
+}
+async function setPluginEnabled(id,enabled){
+ const target=document.getElementById('plugin-inventory');
+ if(!confirm((enabled?'Enable ':'Disable ')+id+'?'))return;
+ try{
+  const response=await fetch('/api/plugins/enabled',{method:'POST',credentials:'same-origin',headers:{'Content-Type':'application/json','X-Configurator-Token':__TOKEN__},body:JSON.stringify({id,enabled})});
+  if(!response.ok){const error=await response.json();throw new Error(error.error||'HTTP '+response.status)}
+  await loadPluginInventory();
+ }catch(error){target.textContent='Plugin setting failed: '+error.message}
+}
+async function refreshPluginData(pluginId){
+ const target=document.getElementById('plugin-settings-editor');
+ try{
+  const response=await fetch('/api/plugins/cache/refresh',{
+   method:'POST',credentials:'same-origin',
+   headers:{'Content-Type':'application/json','X-Configurator-Token':token},
+   body:JSON.stringify({id:pluginId})
+  });
+  const contentType=response.headers.get('Content-Type')||'';
+  const data=contentType.includes('application/json')?await response.json():null;
+  if(!response.ok)throw new Error((data&&data.error)||'Refresh request failed (HTTP '+response.status+')');
+  if(!data)throw new Error('Refresh returned an unexpected non-JSON response');
+  if(target)target.textContent='Data cache cleared for '+pluginId+'. The next render requests fresh data.';
+ }catch(error){if(target)target.textContent='Refresh failed: '+error.message}
+}
+async function editPluginSettings(pluginId){
+ const target=document.getElementById('plugin-settings-editor');
+ if(!target)return;
+ target.replaceChildren();
+ target.textContent='Loading settings for '+pluginId+'…';
+ try{
+  const response=await fetch('/api/plugins/settings?id='+encodeURIComponent(pluginId),{credentials:'same-origin',cache:'no-store'});
+  const data=await response.json();
+  if(!response.ok)throw new Error(data.error||'HTTP '+response.status);
+  target.replaceChildren();
+  const title=document.createElement('h3');title.textContent='Settings: '+pluginId;target.appendChild(title);
+  const form=document.createElement('form');
+  const inputs={};
+  for(const [key,spec] of Object.entries(data.fields)){
+   const label=document.createElement('label');
+   label.textContent=(spec.label||key)+' ';
+   let control;
+   if(Array.isArray(spec.choices)){
+    control=document.createElement('select');
+    for(const choice of spec.choices){
+     const option=document.createElement('option');
+     option.value=String(choice);option.textContent=String(choice);
+     control.appendChild(option);
+    }
+    control.value=String(data.values[key]);
+   }else{
+    control=document.createElement('input');
+    control.type=spec.type==='boolean'?'checkbox':spec.type==='string'?'text':'number';
+    if(spec.type==='boolean')control.checked=data.values[key];
+    else control.value=String(data.values[key]);
+    if(spec.type==='integer')control.step='1';
+    else if(spec.type==='number')control.step='any';
+    if(spec.min!==undefined)control.min=String(spec.min);
+    if(spec.max!==undefined)control.max=String(spec.max);
+   }
+   control.name=key;
+   inputs[key]=control;
+   label.appendChild(control);
+   if(spec.description){const hint=document.createElement('small');hint.textContent=spec.description;label.appendChild(hint)}
+   form.appendChild(label);
+  }
+  const save=document.createElement('button');save.type='submit';save.textContent='Save plugin settings';form.appendChild(save);
+  const status=document.createElement('p');status.setAttribute('role','status');form.appendChild(status);
+  form.addEventListener('submit',async event=>{
+   event.preventDefault();
+   const values={};
+   for(const [key,spec] of Object.entries(data.fields)){
+    const control=inputs[key];
+    values[key]=spec.type==='boolean'?control.checked:spec.type==='integer'?Number.parseInt(control.value,10):spec.type==='number'?Number(control.value):control.value;
+   }
+   save.disabled=true;status.textContent='Saving…';
+   try{
+    const response=await fetch('/api/plugins/settings',{method:'POST',credentials:'same-origin',headers:{'Content-Type':'application/json','X-Configurator-Token':token},body:JSON.stringify({id:pluginId,values})});
+    const contentType=response.headers.get('Content-Type')||'';
+    if(!contentType.includes('application/json'))throw new Error('Server returned HTTP '+response.status+' ('+contentType+'), not JSON');
+    const result=await response.json();
+    if(!response.ok)throw new Error(result.error||'HTTP '+response.status);
+    status.textContent='Settings saved.';
+   }catch(error){status.textContent='Could not save settings: '+error.message}
+   finally{save.disabled=false}
+  });
+  target.appendChild(form);
+ }catch(error){target.textContent='Plugin settings unavailable: '+error.message}
+}
+async function loadPluginInventory(refreshCatalog=false){
+ const installed=document.getElementById('plugin-inventory');
+ const available=document.getElementById('plugin-available');
+ const bundledState=document.getElementById('plugin-bundled-state');
+ const bundledInstall=document.getElementById('plugin-bundled-install');
+ if(!installed||!available)return;
+ installed.textContent='Loading installed plugins…';
+ available.textContent='Loading official catalog…';
+ try{
+  const response=await fetch('/api/plugins/inventory'+(refreshCatalog?'?refresh=1':''),{credentials:'same-origin',cache:'no-store'});
+  if(!response.ok)throw new Error('Inventory request failed (HTTP '+response.status+')');
+  const data=await response.json();
+  const catalogStatus=document.getElementById('plugin-catalog-status');
+  if(catalogStatus)catalogStatus.textContent='Catalog source: '+(data.catalog_source||'bundled')+(data.catalog_source==='stale-cache'||data.catalog_source==='bundled-fallback'?' (offline fallback)':'');
+  installed.replaceChildren();
+  available.replaceChildren();
+  const plugins=data.plugins||[];
+  const helloInstalled=plugins.some(plugin=>plugin.id==='hello-world');
+  bundledState.textContent=helloInstalled?'Installed in ULS · manage under Installed plugins':'Not installed';
+  bundledInstall.hidden=helloInstalled;
+  const addButton=(parent,label,action)=>{
+   const button=document.createElement('button');
+   button.type='button';button.textContent=label;button.addEventListener('click',action);
+   parent.appendChild(button);
+  };
+  if(!plugins.length)installed.textContent='No plugins installed.';
+  else{
+   const summary=document.createElement('p');
+   summary.textContent=plugins.length+' installed · '+plugins.filter(p=>p.enabled&&!p.error).length+' enabled';
+   installed.appendChild(summary);
+  }
+  for(const plugin of plugins){
+   const item=document.createElement('div');item.className='plugin-entry';
+   const title=document.createElement('h4');
+   title.textContent=plugin.name+' · v'+plugin.version;
+   item.appendChild(title);
+   const status=document.createElement('p');status.className='muted';
+   status.textContent=(plugin.enabled?'Enabled':'Disabled')+(plugin.error?' · '+plugin.error:'');
+   item.appendChild(status);
+   if(plugin.source){
+    const source=document.createElement('p');source.className='muted';
+    source.textContent='Source: '+plugin.source+' · '+(plugin.commit||'').slice(0,12);
+    item.appendChild(source);
+   }
+   if(!plugin.error){
+    const official=(data.official||[]).find(p=>p.id===plugin.id);
+    if(plugin.source.startsWith('https://github.com/')&&/^[0-9a-f]{40}$/i.test(plugin.commit)){
+     addButton(item,'Check for update',()=>{
+      let source=plugin.source;
+      if(official){
+       const installedRepo=plugin.source.split('/tree/')[0].replace(/\\/$/,'');
+       const officialRepo=official.source.split('/tree/')[0].replace(/\\/$/,'');
+       if(installedRepo===officialRepo)source=official.source;
+      }
+      reviewInstalledPlugin({...plugin,installedSource:plugin.source,source});
+     });
+    }
+    if(plugin.id!=='hello-world')addButton(item,'Settings',()=>editPluginSettings(plugin.id));
+    if(plugin.id==='daily-calendar')addButton(item,'Refresh calendar now',()=>refreshPluginData(plugin.id));
+    addButton(item,plugin.enabled?'Disable':'Enable',()=>setPluginEnabled(plugin.id,!plugin.enabled));
+    if(!plugin.enabled)addButton(item,'Uninstall',()=>removePlugin(plugin.id));
+   }
+   installed.appendChild(item);
+  }
+  for(const [name,error] of Object.entries(data.errors||{})){
+   const note=document.createElement('p');note.textContent='Invalid package '+name+': '+error;installed.appendChild(note);
+  }
+  if((data.unregistered||[]).length){
+   const note=document.createElement('p');note.textContent='Unregistered packages: '+data.unregistered.join(', ');installed.appendChild(note);
+  }
+  const catalog=data.official||[];
+  if(!catalog.length)available.textContent='No official plugins listed.';
+  for(const plugin of catalog){
+   const item=document.createElement('div');item.className='plugin-entry';
+   const title=document.createElement('h4');title.textContent=plugin.name+' · v'+plugin.version;item.appendChild(title);
+   const description=document.createElement('p');description.className='muted';
+   description.textContent=plugin.description;item.appendChild(description);
+   const state=document.createElement('p');state.className='muted';
+   state.textContent=plugin.installed?'Installed':'Available to install';item.appendChild(state);
+   if(!plugin.installed)addButton(item,'Review & install',async()=>{
+    document.getElementById('plugin-github-url').value=plugin.source;
+    await reviewGithubPlugin();
+    document.getElementById('plugin-github-review')?.scrollIntoView({block:'nearest'});
+   });
+   available.appendChild(item);
+  }
+ }catch(error){
+  installed.textContent='Plugin inventory unavailable: '+error.message;
+  available.textContent='Catalog unavailable.';
+  bundledState.textContent='Installation state unavailable.';
+  bundledInstall.hidden=true;
+ }
+}
+function showPage(name){if(!document.querySelector('[data-page="'+name+'"]'))return;if(name!=='sports'&&sportsSettingsDirty&&!confirm('You have unsaved sport settings changes. Leave this page without saving?'))return;if(name!=='news'&&(newsSourcesDirty||newsSettingsDirty())){if(!confirm('You have unsaved Content & News changes. Leave this page without saving?'))return;discardNewsEdits();}document.querySelectorAll('.nav-item').forEach(button=>{const active=button.getAttribute('onclick')==="showPage('"+name+"')";button.classList.toggle('active',active);if(active)button.setAttribute('aria-current','page');else button.removeAttribute('aria-current');});document.querySelectorAll('[data-page]').forEach(el=>el.hidden=el.dataset.page!==name);if(name==='news'){if(!newsSourcesDirty)loadNewsSources();loadAutomaticNews();loadNewsTiming();loadScoringAlerts();loadGameInterruptions();loadStandingsSettings()}if(name==='display'){loadClockSettings();loadCountdown();}if(name==='dashboard'||name==='system')refreshStatus();if(name==='system'){refreshSystem();checkSoftwareUpdate();}if(name==='matrix-settings'){loadMatrixSettings();refreshMatrixStatus();}if(name==='wifi'){refreshWifi();refreshWifiProfiles();refreshRecoveryReadiness();scanWifi()}if(name==='plugins')loadPluginInventory()}
 async function refreshMatrixStatus(){
  const el=document.getElementById('matrix-service-state');
  try{const response=await fetch('/api/matrix-status',{cache:'no-store'});const result=await response.json();
@@ -1332,7 +1623,7 @@ def dashboard_feed_status(status, *, unix_time=False, wall_now=None, monotonic_n
         result['last_success']=wall_now-(monotonic_now-stamp)
     return result
 
-def make_handler(config_dir,token,frame_provider=None,settings_callback=None,feed_status=None,board_provider=None,countdown_status=None,standings_status=None,rotation_status=None,sports_feed_status=None):
+def make_handler(config_dir,token,frame_provider=None,settings_callback=None,feed_status=None,board_provider=None,countdown_status=None,standings_status=None,rotation_status=None,sports_feed_status=None,plugin_root=None,plugin_registry=None):
     started=time.monotonic()
     sessions=Sessions(config_dir)
     class Handler(BaseHTTPRequestHandler):
@@ -1418,6 +1709,46 @@ def make_handler(config_dir,token,frame_provider=None,settings_callback=None,fee
                     self.wfile.write(body)
                 except (OSError,ValueError) as exc:
                     self.send_json(500,{'error':str(exc)})
+            elif path=='/api/plugins/hello-world/frame':
+                try:
+                    from .example_plugin_runner import render_hello_world
+                    from .web_preview import frame_payload
+                    self.send_json(200, frame_payload(render_hello_world()))
+                except (OSError, ValueError, ImportError, AttributeError) as exc:
+                    self.send_json(500, {'error': str(exc)})
+            elif path=='/api/plugins/settings':
+                from .plugin_registry import read_registry
+                from .plugin_settings_schema import load_settings_schema
+                from .plugin_settings_store import read_plugin_settings
+                from .plugin_manifest import ManifestError
+                from urllib.parse import parse_qs
+                plugin_id = parse_qs(urlsplit(self.path).query).get('id', [''])[0]
+                root = Path(plugin_root) if plugin_root is not None else Path('/var/lib/uls/plugins')
+                registry = Path(plugin_registry) if plugin_registry is not None else Path('/var/lib/uls/plugins.json')
+                try:
+                    if plugin_id not in read_registry(registry):
+                        raise ManifestError('Plugin is not installed')
+                    package = root / plugin_id
+                    fields = load_settings_schema(package)
+                    values = read_plugin_settings(package, root.parent / 'plugin-settings', plugin_id)
+                    self.send_json(200, {'id': plugin_id, 'fields': fields, 'values': values})
+                except (ManifestError, OSError, ValueError) as exc:
+                    self.send_json(400, {'error': str(exc)})
+            elif path=='/api/plugins/inventory':
+                from .plugin_inventory import installed_plugin_inventory
+                try:
+                    root = Path(plugin_root) if plugin_root is not None else Path('/var/lib/uls/plugins')
+                    registry = Path(plugin_registry) if plugin_registry is not None else Path('/var/lib/uls/plugins.json')
+                    inventory = installed_plugin_inventory(root, registry)
+                    from .official_plugin_catalog import dynamic_official_catalog
+                    official, catalog_source = dynamic_official_catalog(refresh='refresh=1' in self.path)
+                    inventory['catalog_source'] = catalog_source
+                    installed_ids = {item['id'] for item in inventory['plugins']}
+                    inventory['official'] = [dict(item, installed=item['id'] in installed_ids)
+                                             for item in official]
+                    self.send_json(200, inventory)
+                except (OSError, ValueError) as exc:
+                    self.send_json(500, {'error': str(exc)})
             elif path=='/api/config':
                 try:self.send_json(200,read_config(config_dir))
                 except (OSError,ValueError) as exc:self.send_json(500,{'error':str(exc)})
@@ -1562,7 +1893,7 @@ def make_handler(config_dir,token,frame_provider=None,settings_callback=None,fee
                 self.send_response(204)
                 self.send_header('Set-Cookie','uls_session=; HttpOnly; SameSite=Strict; Path=/; Max-Age=0')
                 self.end_headers();return
-            if path not in ('/api/mlb-colors','/api/nhl-colors','/api/config','/api/frame','/api/settings','/api/wifi/control','/api/service/restart','/api/news-sources','/api/time-weather','/api/weather-key','/api/season-countdown','/api/update/install','/api/matrix-settings','/api/matrix/apply','/api/backup/preview','/api/backup/restore'):
+            if path not in ('/api/mlb-colors','/api/nhl-colors','/api/config','/api/frame','/api/settings','/api/wifi/control','/api/service/restart','/api/news-sources','/api/time-weather','/api/weather-key','/api/season-countdown','/api/update/install','/api/matrix-settings','/api/matrix/apply','/api/backup/preview','/api/backup/restore','/api/plugins/enabled','/api/plugins/uninstall','/api/plugins/settings','/api/plugins/cache/refresh','/api/plugins/github/review','/api/plugins/bundled/install','/api/plugins/github/install','/api/plugins/github/update'):
                 self.send_error(404);return
             if not secrets.compare_digest(self.headers.get('X-Configurator-Token',''),token):
                 self.send_json(403,{'error':'Invalid session token'});return
@@ -1573,6 +1904,122 @@ def make_handler(config_dir,token,frame_provider=None,settings_callback=None,fee
                 if self.headers.get('Content-Type','').split(';')[0].strip()!='application/json':
                     self.send_json(415,{'error':'JSON required'});return
                 data=json.loads(self.rfile.read(size))
+                if path=='/api/plugins/github/update':
+                    from .plugin_github_update import update_reviewed_github_plugin
+                    from .plugin_manifest import ManifestError
+                    if (not isinstance(data,dict) or set(data)!={'source','commit','id','previous_source','confirm'}
+                            or data['confirm'] is not True):
+                        raise ValueError('Explicit pinned plugin update confirmation required')
+                    root = Path(plugin_root) if plugin_root is not None else Path('/var/lib/uls/plugins')
+                    registry = Path(plugin_registry) if plugin_registry is not None else Path('/var/lib/uls/plugins.json')
+                    try:
+                        self.send_json(200,update_reviewed_github_plugin(data['source'],data['commit'],data['id'],root,registry,previous_source=data['previous_source']))
+                    except (ManifestError,ValueError,OSError,KeyError) as exc:
+                        self.send_json(400,{'error':str(exc)})
+                    return
+                if path=='/api/plugins/github/install':
+                    from .plugin_github_install import install_reviewed_github_plugin
+                    from .plugin_manifest import ManifestError
+                    if (not isinstance(data,dict) or set(data)!={'source','commit','id','confirm'}
+                            or data['confirm'] is not True):
+                        raise ValueError('Explicit pinned plugin installation confirmation required')
+                    root = Path(plugin_root) if plugin_root is not None else Path('/var/lib/uls/plugins')
+                    registry = Path(plugin_registry) if plugin_registry is not None else Path('/var/lib/uls/plugins.json')
+                    try:
+                        self.send_json(200,install_reviewed_github_plugin(data['source'],data['commit'],data['id'],root,registry))
+                    except (ManifestError,ValueError,OSError,KeyError) as exc:
+                        self.send_json(400,{'error':str(exc)})
+                    return
+                if path=='/api/plugins/bundled/install':
+                    if data != {'id':'hello-world','confirm':True}:
+                        raise ValueError('Explicit confirmation for bundled Hello World required')
+                    from .example_plugin_install import install_example
+                    from .plugin_manifest import ManifestError
+                    root = Path(plugin_root) if plugin_root is not None else Path('/var/lib/uls/plugins')
+                    registry = Path(plugin_registry) if plugin_registry is not None else Path('/var/lib/uls/plugins.json')
+                    try:
+                        self.send_json(200,install_example(root,registry))
+                    except (ManifestError,OSError) as exc:
+                        self.send_json(400,{'error':str(exc)})
+                    return
+                if path=='/api/plugins/github/review':
+                    from .plugin_review import inspect_github_plugin
+                    if not isinstance(data,dict) or set(data)!={'source'} or not isinstance(data['source'],str):
+                        raise ValueError('Expected GitHub repository source URL')
+                    try:
+                        self.send_json(200,inspect_github_plugin(data['source']))
+                    except (ValueError, KeyError, OSError) as exc:
+                        from .plugin_source import parse_plugin_source
+                        try:
+                            parse_plugin_source(data['source'])
+                        except ValueError:
+                            import logging
+                            logging.warning('Plugin review rejected source: length=%d repr=%r',
+                                            len(data['source']),data['source'][:500])
+                            self.send_json(400,{'error':'Invalid GitHub plugin URL; check server log for submitted source'})
+                        else:
+                            self.send_json(400,{'error':str(exc)})
+                    return
+                if path=='/api/plugins/cache/refresh':
+                    from .plugin_registry import read_registry
+                    from .plugin_cache import invalidate_plugin_cache
+                    if not isinstance(data, dict) or set(data) != {'id'} or not isinstance(data['id'], str):
+                        raise ValueError('Expected plugin id')
+                    registry = Path(plugin_registry) if plugin_registry is not None else Path('/var/lib/uls/plugins.json')
+                    if data['id'] not in read_registry(registry):
+                        self.send_json(404, {'error': 'Plugin is not installed'})
+                        return
+                    removed = invalidate_plugin_cache(data['id'])
+                    self.send_json(200, {'id': data['id'], 'removed': removed,
+                                         'message': 'Cache cleared; fresh data requested on next render'})
+                    return
+                if path=='/api/plugins/settings':
+                    from .plugin_registry import read_registry
+                    from .plugin_settings_store import save_plugin_settings
+                    from .plugin_manifest import ManifestError
+                    if not isinstance(data, dict) or set(data) != {'id', 'values'} or not isinstance(data['id'], str):
+                        raise ValueError('Expected plugin id and values')
+                    root = Path(plugin_root) if plugin_root is not None else Path('/var/lib/uls/plugins')
+                    registry = Path(plugin_registry) if plugin_registry is not None else Path('/var/lib/uls/plugins.json')
+                    try:
+                        if data['id'] not in read_registry(registry):
+                            raise ManifestError('Plugin is not installed')
+                        values = save_plugin_settings(root / data['id'], root.parent / 'plugin-settings',
+                                                      data['id'], data['values'])
+                        self.send_json(200, {'id': data['id'], 'values': values})
+                    except (ManifestError, OSError, ValueError) as exc:
+                        self.send_json(400, {'error': str(exc)})
+                    return
+                if path=='/api/plugins/uninstall':
+                    from .plugin_registry import uninstall_plugin
+                    from .plugin_manifest import ManifestError
+                    if (not isinstance(data,dict) or set(data)!={'id','confirm'}
+                            or not isinstance(data['id'],str) or data['confirm'] is not True):
+                        raise ValueError('Explicit plugin uninstall confirmation required')
+                    root = Path(plugin_root) if plugin_root is not None else Path('/var/lib/uls/plugins')
+                    registry = Path(plugin_registry) if plugin_registry is not None else Path('/var/lib/uls/plugins.json')
+                    try:
+                        removed = uninstall_plugin(root,registry,data['id'])
+                        self.send_json(200,{'id':removed['id'],'removed':True,'data_preserved':True})
+                    except (ManifestError,OSError,ValueError) as exc:
+                        self.send_json(400,{'error':str(exc)})
+                    return
+                if path=='/api/plugins/enabled':
+                    from .plugin_inventory import installed_plugin_inventory
+                    from .plugin_registry import set_plugin_enabled
+                    from .plugin_manifest import ManifestError
+                    if not isinstance(data,dict) or set(data)!={'id','enabled'} or type(data['enabled']) is not bool:
+                        raise ValueError('Expected plugin id and boolean enabled')
+                    root = Path(plugin_root) if plugin_root is not None else Path('/var/lib/uls/plugins')
+                    registry = Path(plugin_registry) if plugin_registry is not None else Path('/var/lib/uls/plugins.json')
+                    inventory = installed_plugin_inventory(root,registry)
+                    matching = [item for item in inventory['plugins'] if item['id']==data['id']]
+                    if not matching:
+                        raise ValueError('Plugin is not installed')
+                    if matching[0]['error']:
+                        raise ValueError('Plugin package is invalid: '+matching[0]['error'])
+                    self.send_json(200,set_plugin_enabled(registry,data['id'],data['enabled']))
+                    return
                 if path in ('/api/backup/preview','/api/backup/restore'):
                     import base64
                     from .config_archive import inspect_portable, validate_portable_sections, restore_portable
@@ -2231,9 +2678,26 @@ def main():
     from .frame_bridge import write_frame
     frame_path = Path(os.environ.get('ULS_FRAME_FILE', '/run/universal-led-scoreboard/live-frame.ppm'))
     frame_stop = threading.Event()
+    from .native_plugin_runtime import enabled_screen_slots
+    plugin_root = Path('/var/lib/uls/plugins')
+    plugin_registry = Path('/var/lib/uls/plugins.json')
+    active_plugin_ids = None
     def publish_frames():
+        nonlocal active_plugin_ids
+        last_plugin_scan = 0.0
         while not frame_stop.is_set():
             try:
+                now = time.monotonic()
+                if now - last_plugin_scan >= 5.0 or active_plugin_ids is None:
+                    last_plugin_scan = now
+                    try:
+                        slots = enabled_screen_slots(plugin_root, plugin_registry)
+                        signature = tuple((slot.plugin_id, slot.display_seconds) for slot in slots)
+                        if signature != active_plugin_ids:
+                            board.set_bullpen_slots(slots)
+                            active_plugin_ids = signature
+                    except (OSError, ValueError) as exc:
+                        print(f'Plugin discovery failed: {exc}', flush=True)
                 write_frame(frame_path, board.frame())
             except Exception as exc:
                 print(f'Frame publishing failed: {exc}', flush=True)

@@ -1,4 +1,5 @@
 """Matrix worker settings precedence and safe disable tests."""
+import io
 import json
 import tempfile
 import unittest
@@ -54,9 +55,11 @@ class MatrixWorkerSettingsTests(unittest.TestCase):
             config.write_text(json.dumps({"brightness": 500}))
             with patch("sys.argv", ["matrix_worker", "--config-file", str(config)]), \
                  patch.object(matrix_worker, "create_matrix") as create:
-                with self.assertRaises(SystemExit) as caught:
-                    matrix_worker.main()
+                with patch("sys.stderr", new_callable=io.StringIO) as stderr:
+                    with self.assertRaises(SystemExit) as caught:
+                        matrix_worker.main()
                 self.assertEqual(caught.exception.code, 2)
+                self.assertIn("Invalid matrix configuration", stderr.getvalue())
                 create.assert_not_called()
 
 

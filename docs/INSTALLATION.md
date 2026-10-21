@@ -1,6 +1,6 @@
 # Installation and first-run guide
 
-**Supported installation:** Raspberry Pi OS Trixie 64-bit using system-level services. Release-specific acceptance results and remaining checks are recorded in [CHANGELOG](../CHANGELOG.md) and the applicable release checklist. Do not wipe a working scoreboard or assume `scripts/install.sh` provisions the production layout. That script creates an older **user-level** `universal-led-scoreboard.service`. The current working installation uses **system-level** `uls-web.service` and `uls-matrix.service`.
+**Supported installation:** Raspberry Pi OS Trixie 64-bit using system-level services. Release-specific acceptance results and remaining checks are recorded in [CHANGELOG](../CHANGELOG.md) and the applicable release checklist. Do not wipe a working scoreboard. The supported installation uses system-level `uls-web.service` and `uls-matrix.service`.
 
 ## Before a clean-install test
 
@@ -35,7 +35,7 @@ For a deliberate candidate-branch installation, check out that branch and pass t
 
 The installer will prompt for an administrator password (minimum 12 characters), execute the tests, install restricted dashboard restart/update helpers, and enable system services. After installation, the System page provides **Check for Updates** and **Install Update** controls with a persisted update log. Dashboard updates have been validated on the existing Pi 3 installation; fresh-image emulator provisioning has now been verified on Raspberry Pi 5, while physical-driver provisioning remains to be checked. The physical mode compiles the RGB matrix driver and uses default mapping `adafruit-hat`, brightness `40`, GPIO slowdown `4`. These defaults are hardware-specific and must be checked before physical testing. Keep the panel's power supply disconnected while assembling wiring.
 
-**Do not run the legacy `scripts/install.sh`** on this installation. The existing `scripts/stage-system-services.sh` and `scripts/cutover-to-system.sh` are **migration tools**: they require a previously migrated `/opt/uls/app`, `/etc/uls/admin.json`, and, for cutover, a running legacy service. They are not suitable for a fresh image.
+Legacy user-service installation and staged cutover scripts were retired in v0.9 development. Use `scripts/install-system.sh` for fresh installations. Existing system-service installations should use the dashboard updater; older user-service installations require a manual migration plan and backup rather than running retired scripts.
 
 ## Known-good deployed layout (existing installations)
 
@@ -113,8 +113,8 @@ The dashboard's Wi-Fi settings use a separate root-owned, narrowly scoped contro
 
 **Not yet guaranteed:** automatic activation when all saved networks fail. That requires verified recovery scheduling and explicit safeguards against disconnecting the Pi. Do not claim unattended hotspot fallback until its service is implemented and tested.
 
-## v0.8.0 candidate and portable backup
+## Portable backup
 
-For the current candidate's verified results and remaining gates, see [v0.8.0 release checklist](V080-RELEASE-CHECKLIST.md). The default installer branch remains `main`; it does **not** automatically install the v0.8.0 feature candidate. Branch-specific testing requires an explicit `--branch feature/0.8.0-unified-dashboard` selection on a deliberate test installation.
+Release-specific validation and limitations are recorded in the [changelog](../CHANGELOG.md) and [v0.8.0 checklist](V080-RELEASE-CHECKLIST.md). The default installer branch is `main`; use `--branch` only for deliberate development testing.
 
 The Dashboard maintenance section provides portable configuration backup export and selective import. Archives can be moved between Pi 3 and Pi 5, and export filenames include the source hostname. Imports create a recovery snapshot and require scoreboard services to restart before restored settings are loaded. Hardware configuration, Wi-Fi credentials and administrator credentials are excluded; a portable archive is **not** a complete device image or a software rollback. Protect archives that contain site-specific configuration.

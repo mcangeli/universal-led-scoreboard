@@ -11,6 +11,10 @@ Universal LED Scoreboard is a Raspberry Pi application for a **64×32 RGB LED ma
 - **Extras:** Configurable news sources, time and weather, team colors, brightness and matrix settings.
 - **Administration:** Browser dashboard, board preview, Wi-Fi management, service controls and preflight-tested software updates.
 
+## Native plugins (v0.9.0 candidate)
+
+ULS includes a bundled **Hello World** reference screen and supports independently maintained native screen plugins through the dashboard Plugin Manager. New plugin authors should start with the [bundled Hello World walkthrough](plugins/hello-world/README.md) and [native plugin developer guide](docs/PLUGIN-DEVELOPMENT.md), which document TOML manifests, settings schemas, Python framebuffer rendering, GitHub publishing, testing and runtime limits. External plugin updates are separate from ULS Core updates. Plugins execute trusted Python code; the subprocess boundary is not a security sandbox.
+
 ## Third-party data sources
 
 ULS uses external sports, weather, and news endpoints. **These endpoints can change or stop working without notice**, and their availability does not imply permission for every type of use. Users enable and access third-party services **at their own discretion and responsibility**, subject to each provider's current terms, licensing, attribution, and rate limits. ULS is unofficial and is not endorsed by the leagues or providers.
@@ -28,7 +32,7 @@ The browser-only emulator does not require a matrix or HAT. Do not connect or di
 
 ## Installation
 
-The supported system installation uses `scripts/install-system.sh` and installs `uls-web.service` and `uls-matrix.service`. The legacy `scripts/install.sh` creates a different user-level service and **is not** the supported clean-install path.
+The supported installation uses `scripts/install-system.sh` and provisions `uls-web.service` and `uls-matrix.service`.
 
 Start with a fresh Raspberry Pi OS Trixie image, configure SSH/networking and install Git:
 
@@ -112,6 +116,3 @@ See [LICENSE](LICENSE) for this repository's license. Reused code, artwork, logo
 
 Version-specific features, acceptance results, test counts, release status and historical notes belong in the [Changelog](CHANGELOG.md), not this README.
 
-## v0.8.0 release status
-
-The current unified-dashboard candidate remains on `feature/0.8.0-unified-dashboard`; it has **not** been merged or tagged. See the [v0.8.0 release checklist](docs/V080-RELEASE-CHECKLIST.md) for verified Pi 3/Pi 5 evidence and outstanding hardware/recovery checks, and the [third-party attribution audit](docs/THIRD-PARTY-ATTRIBUTION.md) for licensing work still required. Passing automated tests is not a substitute for physical-device or redistribution acceptance.
