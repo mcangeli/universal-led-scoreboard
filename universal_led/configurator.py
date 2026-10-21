@@ -215,6 +215,17 @@ async function reviewGithubPlugin(){
   target.textContent=[result.name+' v'+result.version,result.description||'', 'ID: '+result.id,'Capabilities: '+result.capabilities.join(', '),'Source: '+result.source,'Pinned commit: '+result.commit,'Not installed. Review only.'].join('\\n');
  }catch(error){target.textContent='Review failed: '+error.message}
 }
+async function removePlugin(id){
+ const target=document.getElementById('plugin-inventory');
+ if(!confirm('Uninstall '+id+'? The installed package will be removed. Saved external data will be preserved. This cannot be undone without reinstalling.'))return;
+ try{
+  const response=await fetch('/api/plugins/uninstall',{method:'POST',credentials:'same-origin',headers:{'Content-Type':'application/json','X-Configurator-Token':__TOKEN__},body:JSON.stringify({id,confirm:true})});
+  const result=await response.json();
+  if(!response.ok)throw new Error(result.error||'HTTP '+response.status);
+  document.getElementById('plugin-settings-editor').replaceChildren();
+  await loadPluginInventory();
+ }catch(error){target.textContent='Uninstall failed: '+error.message}
+}
 async function setPluginEnabled(id,enabled){
  const target=document.getElementById('plugin-inventory');
  if(!confirm((enabled?'Enable ':'Disable ')+id+'? This changes eligibility only; live rotation is not yet connected.'))return;
@@ -337,6 +348,12 @@ async function loadPluginInventory(){
     button.textContent=plugin.enabled?'Disable':'Enable';
     button.addEventListener('click',()=>setPluginEnabled(plugin.id,!plugin.enabled));
     target.appendChild(button);
+    if(!plugin.enabled){
+     const remove=document.createElement('button');
+     remove.type='button';remove.textContent='Uninstall';
+     remove.addEventListener('click',()=>removePlugin(plugin.id));
+     target.appendChild(remove);
+    }
    }
   }
   for(const [name,error] of Object.entries(data.errors||{})){
@@ -1843,7 +1860,7 @@ def make_handler(config_dir,token,frame_provider=None,settings_callback=None,fee
                 self.send_response(204)
                 self.send_header('Set-Cookie','uls_session=; HttpOnly; SameSite=Strict; Path=/; Max-Age=0')
                 self.end_headers();return
-            if path not in ('/api/mlb-colors','/api/nhl-colors','/api/config','/api/frame','/api/settings','/api/wifi/control','/api/service/restart','/api/news-sources','/api/time-weather','/api/weather-key','/api/season-countdown','/api/update/install','/api/matrix-settings','/api/matrix/apply','/api/backup/preview','/api/backup/restore','/api/plugins/enabled','/api/plugins/settings','/api/plugins/github/review','/api/plugins/bundled/install','/api/plugins/github/install','/api/plugins/github/update'):
+            if path not in ('/api/mlb-colors','/api/nhl-colors','/api/config','/api/frame','/api/settings','/api/wifi/control','/api/service/restart','/api/news-sources','/api/time-weather','/api/weather-key','/api/season-countdown','/api/update/install','/api/matrix-settings','/api/matrix/apply','/api/backup/preview','/api/backup/restore','/api/plugins/enabled','/api/plugins/uninstall','/api/plugins/settings','/api/plugins/github/review','/api/plugins/bundled/install','/api/plugins/github/install','/api/plugins/github/update'):
                 self.send_error(404);return
             if not secrets.compare_digest(self.headers.get('X-Configurator-Token',''),token):
                 self.send_json(403,{'error':'Invalid session token'});return
@@ -1926,6 +1943,20 @@ def make_handler(config_dir,token,frame_provider=None,settings_callback=None,fee
                         self.send_json(200, {'id': data['id'], 'values': values})
                     except (ManifestError, OSError, ValueError) as exc:
                         self.send_json(400, {'error': str(exc)})
+                    return
+                if path=='/api/plugins/uninstall':
+                    from .plugin_registry import uninstall_plugin
+                    from .plugin_manifest import ManifestError
+                    if (not isinstance(data,dict) or set(data)!={'id','confirm'}
+                            or not isinstance(data['id'],str) or data['confirm'] is not True):
+                        raise ValueError('Explicit plugin uninstall confirmation required')
+                    root = Path(plugin_root) if plugin_root is not None else Path('/var/lib/uls/plugins')
+                    registry = Path(plugin_registry) if plugin_registry is not None else Path('/var/lib/uls/plugins.json')
+                    try:
+                        removed = uninstall_plugin(root,registry,data['id'])
+                        self.send_json(200,{'id':removed['id'],'removed':True,'data_preserved':True})
+                    except (ManifestError,OSError,ValueError) as exc:
+                        self.send_json(400,{'error':str(exc)})
                     return
                 if path=='/api/plugins/enabled':
                     from .plugin_inventory import installed_plugin_inventory
