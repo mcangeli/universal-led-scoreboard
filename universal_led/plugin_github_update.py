@@ -7,7 +7,7 @@ import tempfile
 from pathlib import Path
 
 from .plugin_download import download_github_plugin
-from .plugin_manifest import ManifestError, parse_manifest
+from .plugin_manifest import ManifestError, load_plugin_manifest
 from .plugin_registry import parse_github_source, read_registry
 from .plugin_source import parse_plugin_source
 from .plugin_update import update_local_plugin
@@ -42,10 +42,7 @@ def update_reviewed_github_plugin(source: str, commit: str, plugin_id: str,
     with tempfile.TemporaryDirectory(prefix="uls-plugin-update-") as temp:
         package = download_github_plugin(f"https://github.com/{owner}/{repo}", commit, Path(temp) / "package")
         package = package / subpath if subpath else package
-        manifest_file = package / "uls-plugin.json"
-        if manifest_file.is_symlink() or not manifest_file.is_file() or manifest_file.stat().st_size > 16384:
-            raise ManifestError("missing or unsafe plugin manifest")
-        manifest = parse_manifest(json.loads(manifest_file.read_text(encoding="utf-8")))
+        manifest = load_plugin_manifest(package)
         if manifest.plugin_id != plugin_id:
             raise ManifestError("reviewed plugin identity changed")
         return update_local_plugin(package, root, registry, source, commit)
