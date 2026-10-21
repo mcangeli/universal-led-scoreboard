@@ -7,7 +7,7 @@ import shutil
 import tempfile
 from pathlib import Path
 
-from .plugin_manifest import ManifestError, parse_manifest
+from .plugin_manifest import ManifestError, load_plugin_manifest
 from .plugin_registry import read_registry, registry_record
 
 
@@ -17,11 +17,8 @@ def update_local_plugin(package_dir, plugin_root, registry_path, source_url, com
             or root.is_symlink() or not registry.is_file() or registry.is_symlink()
             or registry.parent.is_symlink()):
         raise ManifestError("unsafe plugin update paths")
-    manifest_path = source / "uls-plugin.json"
-    if manifest_path.is_symlink() or not manifest_path.is_file() or manifest_path.stat().st_size > 16384:
-        raise ManifestError("unsafe update manifest")
-    manifest_data = json.loads(manifest_path.read_text(encoding="utf-8"))
-    manifest = parse_manifest(manifest_data)
+    manifest = load_plugin_manifest(source)
+    manifest_data = {"id": manifest.plugin_id, "name": manifest.name, "version": manifest.version, "api_version": manifest.api_version, "capabilities": list(manifest.capabilities), "entry_point": manifest.entry_point, "description": manifest.description}
     records = read_registry(registry)
     if manifest.plugin_id not in records:
         raise ManifestError("plugin is not installed")
@@ -55,7 +52,7 @@ def update_local_plugin(package_dir, plugin_root, registry_path, source_url, com
     try:
         staged = stage / "new"
         shutil.copytree(source, staged)
-        if parse_manifest(json.loads((staged / "uls-plugin.json").read_text(encoding="utf-8"))).plugin_id != manifest.plugin_id:
+        if load_plugin_manifest(staged).plugin_id != manifest.plugin_id:
             raise ManifestError("staged plugin identity mismatch")
         records[manifest.plugin_id] = record
         fd, temporary_registry = tempfile.mkstemp(prefix=".uls-registry-", dir=registry.parent)
