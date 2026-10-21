@@ -156,7 +156,7 @@ async function reviewInstalledPlugin(plugin){
   target.textContent=['Update available: '+plugin.name,'Installed version: '+plugin.version,'Reviewed version: '+result.version,'Installed commit: '+plugin.commit,'Proposed commit: '+result.commit,'Source: '+result.source,'Enabled state and saved settings will be preserved.'].join('\\n');
   document.getElementById('plugin-github-update').hidden=false;
   target.scrollIntoView({block:'nearest'});
- }catch(error){target.textContent='Update review failed: '+error.message}
+ }catch(error){target.textContent='Update review failed for '+plugin.source+': '+error.message}
 }
 async function updateReviewedGithubPlugin(){
  const reviewed=reviewedGithubUpdate;
@@ -307,8 +307,10 @@ async function loadPluginInventory(){
      update.addEventListener('click',()=>{
       const official=(data.official||[]).find(item=>item.id===plugin.id);
       let reviewedSource=plugin.source;
-      if(official&&official.source.startsWith(plugin.source+'/tree/')){
-       reviewedSource=official.source;
+      if(official){
+       const installedRepo=plugin.source.split('/tree/')[0].replace(/\\/$/,'');
+       const officialRepo=official.source.split('/tree/')[0].replace(/\\/$/,'');
+       if(installedRepo===officialRepo)reviewedSource=official.source;
       }
       reviewInstalledPlugin({...plugin,source:reviewedSource});
      });
