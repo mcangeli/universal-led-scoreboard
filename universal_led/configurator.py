@@ -1718,6 +1718,33 @@ def make_handler(config_dir,token,frame_provider=None,settings_callback=None,fee
                     self.send_json(200, frame_payload(render_hello_world()))
                 except (OSError, ValueError, ImportError, AttributeError) as exc:
                     self.send_json(500, {'error': str(exc)})
+            elif path=='/api/plugins/oauth/callback':
+                from urllib.parse import parse_qs
+                from .plugin_oauth import OAuthError
+                from .plugin_oauth_config import load_google_client, OAuthConfigError
+                from .plugin_oauth_exchange import exchange_google_code, TokenExchangeError
+                from .plugin_oauth_vault import PluginTokenVault, VaultError
+                query=parse_qs(urlsplit(self.path).query)
+                try:
+                    if query.get('error'):
+                        raise OAuthError('Google authorization was declined')
+                    if set(query) != {'state','code'} or len(query['state']) != 1 or len(query['code']) != 1:
+                        raise OAuthError('Invalid Google authorization callback')
+                    callback=oauth_pending.consume(
+                        state=query['state'][0],code=query['code'][0],
+                        session_id=self.session_token(),plugin_id='daily-calendar')
+                    client=load_google_client(Path(config_dir) / 'oauth' / 'google-calendar.json')
+                    if callback['redirect_uri'] != client['redirect_uri']:
+                        raise OAuthError('Google authorization configuration changed')
+                    credentials=exchange_google_code(client['client_id'],callback)
+                    PluginTokenVault(Path('/var/lib/uls/oauth')).save('daily-calendar',credentials)
+                    self.send_response(303)
+                    self.send_header('Location','/?google_calendar=connected')
+                    self.send_header('Cache-Control','no-store')
+                    self.send_header('Referrer-Policy','no-referrer')
+                    self.end_headers()
+                except (OAuthError,OAuthConfigError,TokenExchangeError,VaultError,ValueError):
+                    self.send_json(400,{'error':'Google Calendar connection failed. Retry from plugin settings.'})
             elif path=='/api/plugins/oauth/status':
                 from .plugin_oauth_config import google_connection_status
                 from .plugin_oauth_vault import PluginTokenVault
