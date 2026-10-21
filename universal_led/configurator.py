@@ -1539,6 +1539,24 @@ def make_handler(config_dir,token,frame_provider=None,settings_callback=None,fee
                     self.send_json(200, frame_payload(render_hello_world()))
                 except (OSError, ValueError, ImportError, AttributeError) as exc:
                     self.send_json(500, {'error': str(exc)})
+            elif path=='/api/plugins/settings':
+                from .plugin_registry import read_registry
+                from .plugin_settings_schema import load_settings_schema
+                from .plugin_settings_store import read_plugin_settings
+                from .plugin_manifest import ManifestError
+                from urllib.parse import parse_qs
+                plugin_id = parse_qs(urlsplit(self.path).query).get('id', [''])[0]
+                root = Path(plugin_root) if plugin_root is not None else Path('/var/lib/uls/plugins')
+                registry = Path(plugin_registry) if plugin_registry is not None else Path('/var/lib/uls/plugins.json')
+                try:
+                    if plugin_id not in read_registry(registry):
+                        raise ManifestError('Plugin is not installed')
+                    package = root / plugin_id
+                    fields = load_settings_schema(package)
+                    values = read_plugin_settings(package, root.parent / 'plugin-settings', plugin_id)
+                    self.send_json(200, {'id': plugin_id, 'fields': fields, 'values': values})
+                except (ManifestError, OSError, ValueError) as exc:
+                    self.send_json(400, {'error': str(exc)})
             elif path=='/api/plugins/inventory':
                 from .plugin_inventory import installed_plugin_inventory
                 try:
@@ -1749,6 +1767,23 @@ def make_handler(config_dir,token,frame_provider=None,settings_callback=None,fee
                             self.send_json(400,{'error':'Invalid GitHub plugin URL; check server log for submitted source'})
                         else:
                             self.send_json(400,{'error':str(exc)})
+                    return
+                if path=='/api/plugins/settings':
+                    from .plugin_registry import read_registry
+                    from .plugin_settings_store import save_plugin_settings
+                    from .plugin_manifest import ManifestError
+                    if not isinstance(data, dict) or set(data) != {'id', 'values'} or not isinstance(data['id'], str):
+                        raise ValueError('Expected plugin id and values')
+                    root = Path(plugin_root) if plugin_root is not None else Path('/var/lib/uls/plugins')
+                    registry = Path(plugin_registry) if plugin_registry is not None else Path('/var/lib/uls/plugins.json')
+                    try:
+                        if data['id'] not in read_registry(registry):
+                            raise ManifestError('Plugin is not installed')
+                        values = save_plugin_settings(root / data['id'], root.parent / 'plugin-settings',
+                                                      data['id'], data['values'])
+                        self.send_json(200, {'id': data['id'], 'values': values})
+                    except (ManifestError, OSError, ValueError) as exc:
+                        self.send_json(400, {'error': str(exc)})
                     return
                 if path=='/api/plugins/enabled':
                     from .plugin_inventory import installed_plugin_inventory
