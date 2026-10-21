@@ -8,6 +8,7 @@ from http.server import ThreadingHTTPServer
 from unittest.mock import patch
 
 from universal_led.configurator import make_handler
+from universal_led.plugin_oauth_pairing_crypto import encrypt_for_public_key
 
 
 class PairingHttpTests(unittest.TestCase):
@@ -30,7 +31,7 @@ class PairingHttpTests(unittest.TestCase):
         self.addCleanup(self.server.shutdown)
         self.addCleanup(self.thread.join, 3)
 
-    def request(self, *, cookie=None, csrf=None, payload=None):
+    def request(self, *, cookie=None, csrf=None, payload=None, endpoint="/api/plugins/oauth/pairing/start"):
         body = json.dumps(payload if payload is not None else
                           {"plugin_id": "daily-calendar", "provider": "google-calendar"})
         headers = {"Content-Type": "application/json"}
@@ -40,7 +41,7 @@ class PairingHttpTests(unittest.TestCase):
             headers["X-Configurator-Token"] = csrf
         connection = http.client.HTTPConnection("127.0.0.1", self.server.server_port, timeout=5)
         try:
-            connection.request("POST", "/api/plugins/oauth/pairing/start", body, headers)
+            connection.request("POST", endpoint, body, headers)
             response = connection.getresponse()
             return response.status, json.loads(response.read())
         finally:
@@ -68,6 +69,41 @@ class PairingHttpTests(unittest.TestCase):
                                  payload={"plugin_id": "swimming-fish",
                                           "provider": "google-calendar"})
         self.assertEqual(status, 400)
+
+
+    def test_import_requires_authentication_and_csrf(self):
+        payload={"plugin_id":"daily-calendar","provider":"google-calendar",
+                 "ticket":"bogus","envelope":{}}
+        endpoint="/api/plugins/oauth/pairing/import"
+        self.assertEqual(self.request(csrf="csrf-secret",payload=payload,endpoint=endpoint)[0],401)
+        self.assertEqual(self.request(cookie="valid-session",payload=payload,endpoint=endpoint)[0],403)
+
+    def test_invalid_ticket_cannot_import(self):
+        status, _ = self.request(cookie="valid-session",csrf="csrf-secret",
+            payload={"plugin_id":"daily-calendar","provider":"google-calendar",
+                     "ticket":"bogus","envelope":{}},
+            endpoint="/api/plugins/oauth/pairing/import")
+        self.assertEqual(status,400)
+
+    def test_valid_encrypted_import_uses_private_vault(self):
+        status, issued = self.request(cookie="valid-session",csrf="csrf-secret")
+        self.assertEqual(status,200)
+        envelope=encrypt_for_public_key(issued["public_key"], {
+            "access_token":"access","refresh_token":"refresh",
+            "client_id":"desktop.apps.googleusercontent.com","expires_at":2000000000})
+        payload={"plugin_id":"daily-calendar","provider":"google-calendar",
+                 "ticket":issued["ticket"],"envelope":envelope}
+        endpoint="/api/plugins/oauth/pairing/import"
+        with patch("universal_led.plugin_oauth_vault.PluginTokenVault.save") as save:
+            status, response=self.request(cookie="valid-session",csrf="csrf-secret",
+                                         payload=payload,endpoint=endpoint)
+            self.assertEqual(status,200,response)
+            self.assertEqual(response,{"connected":True})
+            save.assert_called_once()
+            self.assertEqual(save.call_args.args[0],"daily-calendar")
+            self.assertEqual(save.call_args.args[1]["refresh_token"],"refresh")
+            self.assertEqual(self.request(cookie="valid-session",csrf="csrf-secret",
+                                          payload=payload,endpoint=endpoint)[0],400)
 
 
 if __name__ == "__main__":
