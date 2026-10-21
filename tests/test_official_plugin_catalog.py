@@ -49,6 +49,18 @@ class OfficialPluginCatalogTests(unittest.TestCase):
             self.assertEqual(source, "bundled-fallback")
             self.assertIn("daily-calendar", [entry["id"] for entry in entries])
 
+    def test_corrupt_cache_falls_back_offline(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            cache = Path(tmp) / "cache.json"
+            cache.write_text('{"schema_version":1,"plugins":"not-a-list"}')
+            entries, source = dynamic_official_catalog(
+                cache_path=cache,
+                fetch=lambda: (_ for _ in ()).throw(OSError("offline")),
+                refresh=True,
+            )
+            self.assertEqual(source, "bundled-fallback")
+            self.assertTrue(entries)
+
     def test_rejects_invalid_remote_without_poisoning_cache(self):
         with tempfile.TemporaryDirectory() as tmp:
             cache = Path(tmp) / "cache.json"
