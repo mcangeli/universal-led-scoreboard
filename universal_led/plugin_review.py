@@ -13,7 +13,7 @@ import urllib.request
 from pathlib import Path
 
 from .plugin_download import download_github_plugin
-from .plugin_manifest import parse_manifest
+from .plugin_manifest import load_plugin_manifest
 from .plugin_registry import parse_github_source
 from .plugin_source import parse_plugin_source
 
@@ -37,16 +37,7 @@ def inspect_github_plugin(source_url: str) -> dict:
     with tempfile.TemporaryDirectory(prefix="uls-plugin-review-") as tmp:
         package = download_github_plugin(canonical, commit, Path(tmp) / "package")
         package = package / subpath if subpath else package
-        manifest_file = package / "uls-plugin.json"
-        if manifest_file.is_symlink() or not manifest_file.is_file():
-            from .bullpen_manifest import inspect_bullpen_metadata
-            reviewed = inspect_bullpen_metadata(package)
-            reviewed.update({"source": source_url if subpath else canonical,
-                             "commit": commit, "enabled": False})
-            return reviewed
-        if manifest_file.stat().st_size > 16384:
-            raise ValueError("plugin manifest exceeds size limit")
-        manifest = parse_manifest(json.loads(manifest_file.read_text(encoding="utf-8")))
+        manifest = load_plugin_manifest(package)
         return {
             "id": manifest.plugin_id, "name": manifest.name,
             "version": manifest.version, "description": manifest.description,
