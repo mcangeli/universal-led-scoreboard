@@ -1,6 +1,6 @@
 # Building native ULS plugins (API v1, ULS 0.9.0)
 
-This is the **implemented** screen-plugin contract. Plugins are maintained separately from ULS Core. See [Swimming Fish](https://github.com/mcangeli/uls-plugins/tree/main/plugins/swimming-fish) for a working reference. Bullpen compatibility was discontinued; convert legacy Bullpen plugins to native ULS instead.
+This is the **implemented** screen-plugin contract. Plugins are maintained separately from ULS Core. Start with the fully documented, installable [Hello World example](https://github.com/mcangeli/uls-plugins/tree/main/plugins/hello-world), then explore [Swimming Fish](https://github.com/mcangeli/uls-plugins/tree/main/plugins/swimming-fish) for animation. Bullpen compatibility was discontinued; convert legacy Bullpen plugins to native ULS instead.
 
 ## Directory structure
 
