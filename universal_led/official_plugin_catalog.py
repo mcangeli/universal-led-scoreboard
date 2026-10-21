@@ -1,6 +1,9 @@
 """Official plugin discovery metadata; no plugin code is installed by discovery."""
 from __future__ import annotations
 import json
+import os
+import time
+from urllib.request import Request, urlopen
 from pathlib import Path
 from .plugin_manifest import ManifestError
 from .plugin_source import parse_plugin_source
@@ -32,3 +35,56 @@ def read_official_catalog(path=None):
         seen.add(plugin_id)
         result.append(dict(entry))
     return tuple(result)
+
+# The official repository owns publication metadata. A bundled snapshot is the
+# offline fallback, not the authoritative list after a successful refresh.
+REMOTE_CATALOG_URL = "https://raw.githubusercontent.com/mcangeli/uls-plugins/main/catalog.json"
+CACHE_SECONDS = 15 * 60
+MAX_CATALOG_BYTES = 65536
+
+
+def dynamic_official_catalog(*, cache_path=None, refresh=False, fetch=None, now=None):
+    """Return validated remote entries, using disk cache or bundled fallback.
+
+    Never execute code from the catalog. GitHub plugin installation still goes
+    through the existing pinned-commit review flow.
+    """
+    if cache_path is None:
+        cache_path = Path("/var/lib/uls/official-plugins-cache.json")
+    cache_path = Path(cache_path)
+    now = time.time() if now is None else now
+    fallback = read_official_catalog()
+    try:
+        cached = read_official_catalog(cache_path)
+    except (OSError, ValueError):
+        cached = None
+    try:
+        fresh = now - cache_path.stat().st_mtime < CACHE_SECONDS
+    except OSError:
+        fresh = False
+    if cached is not None and fresh and not refresh:
+        return cached, "cache"
+    try:
+        if fetch is None:
+            request = Request(REMOTE_CATALOG_URL, headers={"User-Agent": "ULS-Plugin-Catalog/0.9"})
+            with urlopen(request, timeout=3) as response:
+                raw = response.read(MAX_CATALOG_BYTES + 1)
+        else:
+            raw = fetch()
+        if len(raw) > MAX_CATALOG_BYTES:
+            raise ManifestError("official catalog exceeds size limit")
+        cache_path.parent.mkdir(parents=True, exist_ok=True)
+        # Validate untrusted bytes before writing the persistent cache.
+        import tempfile
+        with tempfile.NamedTemporaryFile(dir=cache_path.parent, delete=False) as temp:
+            temp.write(raw)
+            candidate = Path(temp.name)
+        try:
+            validated = read_official_catalog(candidate)
+            os.chmod(candidate, 0o600)
+            os.replace(candidate, cache_path)
+        finally:
+            candidate.unlink(missing_ok=True)
+        return validated, "remote"
+    except (OSError, ValueError, TypeError):
+        return (cached, "stale-cache") if cached is not None else (fallback, "bundled-fallback")
