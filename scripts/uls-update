@@ -46,6 +46,13 @@ echo "Checking candidate compatibility..."
 for required in scripts/uls-update scripts/uls-update-select scripts/uls-update-status scripts/uls-matrix-control scripts/install-dashboard-update-helper.sh scripts/install-dashboard-restart-helper.sh; do
   [[ -f "$STAGE/$required" ]] || { echo "Candidate missing required update/matrix component: $required" >&2; exit 1; }
 done
+# Provision the candidate's Python crypto dependency before running its tests.
+# The venv belongs to the installer user; never install into system Python.
+# Existing application files and settings are unchanged if this step fails.
+if ! as_owner "$VENV/bin/python" -c 'import cryptography' >/dev/null 2>&1; then
+  echo "Installing OAuth pairing cryptography dependency into the ULS virtual environment..."
+  as_owner "$VENV/bin/python" -m pip install 'cryptography>=42,<47'
+fi
 echo "Checking candidate code before changing the installation..."
 as_owner "$VENV/bin/python" -m compileall -q "$STAGE/universal_led" "$STAGE/tests"
 (cd "$STAGE" && as_owner env PYTHONPATH="$STAGE" "$VENV/bin/python" -m unittest discover -s tests -p 'test_*.py')
