@@ -1,6 +1,17 @@
 # Changelog
 
-## v0.9.0 (release candidate in preparation, updated 2026-10-21)
+## v0.9.2 (2026-10-22, released)
+
+### Fixed
+- Live-game rotation eligibility and continuation across enabled sports after other games reach final status; prevents a completed game from suppressing remaining live games.
+
+### Clean-install validation
+- Raspberry Pi 5, freshly imaged Raspberry Pi OS, emulator mode: installed `main` at merge commit `44fe811` (`v0.9.2`), clean working tree, web service running and web endpoint healthy.
+- Operator-reported full regression suite: **1,809 tests clean** on October 22, 2026.
+- The installed package's `universal_led.__version__` still reported `0.9.0` at this tag; the maintenance branch corrects this metadata to `0.9.2`. The existing release tag remains unchanged.
+- Browser preview, backup restore, and physical-matrix acceptance were not part of this clean-image validation.
+
+## v0.9.0 (historical release-candidate notes, updated 2026-10-21)
 
 ### Added
 - Dynamic team registry groundwork for league/team selection and evolving sports catalogs.
@@ -19,7 +30,8 @@
 - Pi 5 updater preflight on commit `bea17cc`: **1,782 tests run, 15 skipped, no failures**, and successful fast-forward installation; `/etc/uls` and `/var/lib/uls` preserved.
 - User confirmed external Swimming Fish successfully updated to a TOML-only manifest and continued rendering.
 - The bundled Hello World was already installed and running. Its documentation was expanded; it was not replaced.
-- On October 21, 2026, the operator confirmed successful updates on **both Pi 3 and Pi 5** after the plugin-rotation and offline-catalog fixes. Latest 0.9.0 candidate preflight: **1,798 tests, 15 skipped, zero failures** at `928fb8a`; updater preserved settings and state. Favorite-team persistence through Pi 3 reboot and the official three-plugin catalog UI were operator-confirmed.\n- Automated plugin lifecycle and failed-update rollback, including enabled-state and registry preservation, passed. Manual destructive plugin lifecycle and offline hardware testing remain unverified; release tag pending. See [v0.9.0 release checklist](docs/release-0.9.0-checklist.md).
+- On October 21, 2026, the operator confirmed successful updates on **both Pi 3 and Pi 5** after the plugin-rotation and offline-catalog fixes. Latest 0.9.0 candidate preflight: **1,798 tests, 15 skipped, zero failures** at `928fb8a`; updater preserved settings and state. Favorite-team persistence through Pi 3 reboot and the official three-plugin catalog UI were operator-confirmed.
+- Automated plugin lifecycle and failed-update rollback, including enabled-state and registry preservation, passed. Manual destructive plugin lifecycle and offline hardware testing remain unverified; release tag pending. See [v0.9.0 release checklist](docs/release-0.9.0-checklist.md).
 - Native Magic Number and Green Monster conversions, and Google Calendar OAuth, are separate plugin releases, not Core 0.9.0 release gates. Automatic update notifications are deferred to v1.0.0.
 
 
