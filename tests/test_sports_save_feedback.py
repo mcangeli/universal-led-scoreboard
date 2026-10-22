@@ -8,6 +8,7 @@ class SportsSaveFeedbackTests(unittest.TestCase):
         html = configurator.HTML
         self.assertIn("event.target.closest('#sports-configure')", html)
         self.assertIn("function sportsFormSnapshot()", html)
+        self.assertIn("!['english-team-search','sport-picker'].includes(el.id)", html)
         self.assertIn("sportsFormSnapshot()!==savedSportsForm", html)
         self.assertIn("sportsSettingsDirty=savedSportsForm!==null", html)
         self.assertIn("sportsSettingsDirty?'Unsaved sport settings changes':''", html)
