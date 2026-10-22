@@ -15,6 +15,16 @@ class SportsSaveFeedbackTests(unittest.TestCase):
         self.assertIn("addEventListener('input',markSportsSettingsDirty)", html)
         self.assertIn("addEventListener('change',markSportsSettingsDirty)", html)
 
+    def test_confirmed_navigation_discards_sports_edits(self):
+        html = configurator.HTML
+        self.assertIn(
+            "if(name!=='sports'&&sportsSettingsDirty){"
+            "if(!confirm('You have unsaved sport settings changes. "
+            "Leave this page without saving?'))return;"
+            "resetSportsSettingsDirty();loadSettings();}",
+            html,
+        )
+
     def test_successful_save_refreshes_saved_snapshot(self):
         html = configurator.HTML
         self.assertIn("function resetSportsSettingsDirty()", html)
