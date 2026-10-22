@@ -222,6 +222,31 @@ class MultiSportTests(unittest.TestCase):
         self.router.set_bullpen_slots((slot,))
         self.assertEqual(self.router.bullpen_health()[0]["status"], "healthy")
 
+    def test_bullpen_diagnostics_hide_exception_details_and_reset(self):
+        from types import SimpleNamespace
+
+        class BrokenSlot:
+            plugin_id = 'example-plugin'
+            def frame(self, **kwargs):
+                raise RuntimeError('private token must not appear in diagnostics')
+
+        now = [0]
+        self.router.clock = lambda: now[0]
+        self.router.configure_rotation(('mlb', 'nhl'), interval=12)
+        self.mlb.game = lambda: SimpleNamespace(status='scheduled')
+        self.nhl.game = lambda: SimpleNamespace(status='final')
+        self.router.set_bullpen_slots((BrokenSlot(),))
+        now[0] = 12
+        self.router.frame()
+        details = self.router.bullpen_diagnostics()
+        self.assertEqual(details[0]['plugin_id'], 'example-plugin')
+        self.assertEqual(details[0]['last_error_type'], 'RuntimeError')
+        self.assertEqual(details[0]['failures'], 1)
+        self.assertNotIn('private token', repr(details))
+        self.router.set_bullpen_slots((BrokenSlot(),))
+        self.assertIsNone(self.router.bullpen_diagnostics()[0]['last_error_type'])
+        self.assertEqual(self.router.bullpen_diagnostics()[0]['failures'], 0)
+
     def test_default_is_mlb(self):
         self.assertEqual(self.router.active_sport, "mlb")
         self.assertEqual(self.router.frame(), "MLB")
