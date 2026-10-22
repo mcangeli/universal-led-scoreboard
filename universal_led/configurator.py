@@ -1132,6 +1132,7 @@ async function loadSettings(){
  const enabled=['mlb','nhl','nba','wnba','nfl','mls','nwsl','english'].filter(s=>settings.sports[s]?.enabled);
  const favoriteCounts=enabled.map(s=>{const favorites=settings[s]?.favorite_teams||[];return s.toUpperCase()+': '+favorites.length+' favorites';});
  document.getElementById('summary').textContent=enabled.length+' enabled sports: '+enabled.map(s=>s.toUpperCase()).join(', ')+' | '+favoriteCounts.join(' · ');
+ resetSportsSettingsDirty();
 }
 function updateLiveShare(){
  const classic=Number(document.getElementById('live-classic').value);
@@ -1143,11 +1144,23 @@ function updateLiveShare(){
 }
 document.getElementById('live-classic').addEventListener('input',updateLiveShare);
 document.getElementById('live-matchup').addEventListener('input',updateLiveShare);
+// Compare normalized editable values, rather than treating every input event as a change.
+// This also clears the warning when a user reverts an edit to its saved value.
 let sportsSettingsDirty=false;
+let savedSportsForm=null;
+function sportsFormSnapshot(){
+ return JSON.stringify(Array.from(document.querySelectorAll('#sports-configure input, #sports-configure select, #sports-configure textarea'))
+  .filter(el=>el.id!=='english-team-search' && !el.disabled && !['button','submit','reset','hidden'].includes(el.type))
+  .map(el=>[el.id||el.name||'',el.type==='checkbox'||el.type==='radio'?el.checked:el.value]));
+}
+function resetSportsSettingsDirty(){
+ savedSportsForm=sportsFormSnapshot();
+ sportsSettingsDirty=false;
+}
 function markSportsSettingsDirty(event){
  if(!event.target.closest('#sports-configure')||event.target.id==='english-team-search')return;
- sportsSettingsDirty=true;
- document.getElementById('settings-status').textContent='Unsaved sport settings changes';
+ sportsSettingsDirty=savedSportsForm!==null && sportsFormSnapshot()!==savedSportsForm;
+ document.getElementById('settings-status').textContent=sportsSettingsDirty?'Unsaved sport settings changes':'';
 }
 document.querySelector('[data-page="sports"]').addEventListener('input',markSportsSettingsDirty);
 document.querySelector('[data-page="sports"]').addEventListener('change',markSportsSettingsDirty);
@@ -1234,7 +1247,7 @@ async function saveSportSettings(source){
   try{result=await response.json()}catch(_){throw Error('Server returned an unreadable response (HTTP '+response.status+'). Check configurator logs.');}
   if(!response.ok)throw Error('Server rejected sport settings (HTTP '+response.status+'): '+(result.error||'Save failed'));
   settings=result.settings;
-  sportsSettingsDirty=false;
+  resetSportsSettingsDirty();
   status.textContent='Sport settings saved.';
   try{await loadSettings();draw();await refreshStatus();status.textContent='Saved and applied to configurator preview.';}
   catch(refreshError){status.textContent='Settings saved, but the dashboard could not refresh: '+refreshError.message;}
