@@ -21,6 +21,26 @@ class AppearanceFrequencyTests(unittest.TestCase):
                 with self.assertRaises(ManifestError):
                     validated_settings(fields, {'appearance_every_pages': 101})
 
+    def test_calendar_waits_ten_regular_pages(self):
+        from universal_led.multisport_runtime import MultiSportRenderer
+        class Sport:
+            def frame(self): return 'base'
+            def has_live_games(self): return False
+        class Plugin:
+            display_seconds = 5
+            appearance_every_pages = 10
+            def frame(self, **kwargs): return 'calendar'
+        now = [0]
+        board = MultiSportRenderer(Sport(), None, clock=lambda: now[0])
+        board.set_bullpen_slots([Plugin()])
+        for page in range(10):
+            now[0] = page * 12
+            self.assertEqual(board.frame(), 'base')
+        now[0] = 120
+        self.assertEqual(board.frame(), 'calendar')
+        now[0] = 125
+        self.assertEqual(board.frame(), 'base')
+
     def test_live_games_precede_plugins(self):
         from universal_led.multisport_runtime import MultiSportRenderer
         class Sport:
