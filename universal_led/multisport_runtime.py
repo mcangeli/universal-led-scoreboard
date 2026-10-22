@@ -276,15 +276,18 @@ class MultiSportRenderer:
             else:
                 # Count completed regular pages, never rendered frames.
                 # A bounded schedule avoids work proportional to uptime.
-                last_shown = [0 if value > 1 else -1 for value in intervals]
+                last_shown = [0 for _ in intervals]
                 for base_page in range(1000):
                     durations.append(interval)
                     slot_ids.append(-1)
+                    # The regular page above has now completed. Count it
+                    # before deciding whether a plugin can follow it.
+                    completed_pages = base_page + 1
                     eligible = [i for i, value in enumerate(intervals)
-                                if base_page - last_shown[i] >= value]
+                                if completed_pages - last_shown[i] >= value]
                     if eligible:
-                        selected = max(eligible, key=lambda i: (base_page - last_shown[i]) / intervals[i])
-                        last_shown[selected] = base_page
+                        selected = max(eligible, key=lambda i: (completed_pages - last_shown[i]) / intervals[i])
+                        last_shown[selected] = completed_pages
                         durations.append(max(1, min(3600, getattr(plugin_slots[selected], 'display_seconds', interval))))
                         slot_ids.append(selected)
             cycle_length = sum(durations)
