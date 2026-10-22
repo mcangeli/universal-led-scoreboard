@@ -39,6 +39,7 @@ class MultiSportRenderer:
         self.news = news
         self.bullpen_slots = ()  # Explicitly registered global supplemental screens
         self._bullpen_failures = {}  # Consecutive errors per registered slot
+        self._bullpen_error_types = {}  # Exception class only; never expose plugin secrets
         self.settings_getter = settings_getter
         self._news_started = clock()
         self._lock = threading.Lock()
@@ -56,6 +57,7 @@ class MultiSportRenderer:
         with self._lock:
             self.bullpen_slots = tuple(slots)
             self._bullpen_failures = {}
+            self._bullpen_error_types = {}
             self._plugin_schedule_key = None
             self._plugin_schedule = None
 
@@ -69,6 +71,19 @@ class MultiSportRenderer:
                            else "degraded" if self._bullpen_failures.get(index, 0)
                            else "healthy"),
             } for index in range(len(self.bullpen_slots)))
+
+    def bullpen_diagnostics(self):
+        """Safe plugin failure details without exception messages or private data."""
+        with self._lock:
+            return tuple({
+                "slot": index,
+                "plugin_id": getattr(plugin, "plugin_id", None),
+                "failures": self._bullpen_failures.get(index, 0),
+                "status": ("quarantined" if self._bullpen_failures.get(index, 0) >= 3
+                           else "degraded" if self._bullpen_failures.get(index, 0)
+                           else "healthy"),
+                "last_error_type": self._bullpen_error_types.get(index),
+            } for index, plugin in enumerate(self.bullpen_slots))
 
     def _connect_soccer_standings(self):
         """Reuse the exact caches already owned by the idle standings rotation."""
@@ -321,14 +336,16 @@ class MultiSportRenderer:
                     try:
                         candidate = plugin.frame(
                             live_games=False, selected=True, now=self.clock())
-                    except Exception:
+                    except Exception as exc:
                         with self._lock:
+                            self._bullpen_error_types[plugin_index] = type(exc).__name__
                             self._bullpen_failures[plugin_index] = (
                                 self._bullpen_failures.get(plugin_index, 0) + 1)
                         candidate = None
                     else:
                         with self._lock:
                             self._bullpen_failures.pop(plugin_index, None)
+                            self._bullpen_error_types.pop(plugin_index, None)
                     if candidate is not None:
                         return candidate
         # Live games suppress standings; scheduled pregame games do not.
