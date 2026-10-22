@@ -86,6 +86,41 @@ class AppearanceFrequencyTests(unittest.TestCase):
         board.frame()
         self.assertIsNotNone(board._plugin_schedule)
 
+    def test_plugin_manager_health_wiring_is_authenticated_and_read_only(self):
+        from universal_led import configurator
+        source = Path(configurator.__file__).read_text(encoding='utf-8')
+        self.assertIn("plugin_diagnostics=board.bullpen_diagnostics", source)
+        self.assertIn("plugin['runtime_health'] = health[plugin['id']]", source)
+        self.assertIn("if plugin.runtime_health", source)
+        self.assertIn("health.last_error_type", source)
+        # Inventory endpoint must remain after the authentication gate.
+        self.assertLess(source.index("if not self.authenticated():", source.index("def do_GET(self):")),
+                        source.index("elif path=='/api/plugins/inventory':"))
+
+    def test_runtime_health_is_safe_for_dashboard_serialization(self):
+        import json
+        from universal_led.multisport_runtime import MultiSportRenderer
+        class Sport:
+            def frame(self): return 'base'
+            def has_live_games(self): return False
+        class Plugin:
+            plugin_id = 'daily-calendar'
+            appearance_every_pages = 1
+            display_seconds = 5
+            def frame(self, **kwargs):
+                raise RuntimeError('secret calendar feed URL')
+        now = [0]
+        board = MultiSportRenderer(Sport(), None, clock=lambda: now[0])
+        board.set_bullpen_slots([Plugin()])
+        now[0] = 12
+        for _ in range(3):
+            board.frame()
+        health = board.bullpen_diagnostics()[0]
+        self.assertEqual(health['status'], 'quarantined')
+        self.assertEqual(health['failures'], 3)
+        self.assertEqual(health['last_error_type'], 'RuntimeError')
+        self.assertNotIn('secret calendar feed URL', json.dumps(health))
+
     def test_live_games_precede_plugins(self):
         from universal_led.multisport_runtime import MultiSportRenderer
         class Sport:
