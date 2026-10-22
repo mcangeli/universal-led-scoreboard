@@ -40,6 +40,7 @@ class MultiSportRenderer:
         self.bullpen_slots = ()  # Explicitly registered global supplemental screens
         self._bullpen_failures = {}  # Consecutive errors per registered slot
         self._bullpen_error_types = {}  # Exception class only; never expose plugin secrets
+        self._bullpen_retry_at = {}  # Monotonic retry deadlines for quarantined slots
         self.settings_getter = settings_getter
         self._news_started = clock()
         self._lock = threading.Lock()
@@ -58,6 +59,7 @@ class MultiSportRenderer:
             self.bullpen_slots = tuple(slots)
             self._bullpen_failures = {}
             self._bullpen_error_types = {}
+            self._bullpen_retry_at = {}
             self._plugin_schedule_key = None
             self._plugin_schedule = None
 
@@ -83,6 +85,7 @@ class MultiSportRenderer:
                            else "degraded" if self._bullpen_failures.get(index, 0)
                            else "healthy"),
                 "last_error_type": self._bullpen_error_types.get(index),
+                "retry_in_seconds": max(0, round(self._bullpen_retry_at[index] - self.clock())) if index in self._bullpen_retry_at else None,
             } for index, plugin in enumerate(self.bullpen_slots))
 
     def _connect_soccer_standings(self):
@@ -331,7 +334,9 @@ class MultiSportRenderer:
             if plugin_index >= 0:
                 plugin = plugin_slots[plugin_index]
                 with self._lock:
-                    disabled = self._bullpen_failures.get(plugin_index, 0) >= 3
+                    failures = self._bullpen_failures.get(plugin_index, 0)
+                    retry_at = self._bullpen_retry_at.get(plugin_index, float('inf'))
+                    disabled = failures >= 3 and self.clock() < retry_at
                 if not disabled:
                     try:
                         candidate = plugin.frame(
@@ -341,11 +346,14 @@ class MultiSportRenderer:
                             self._bullpen_error_types[plugin_index] = type(exc).__name__
                             self._bullpen_failures[plugin_index] = (
                                 self._bullpen_failures.get(plugin_index, 0) + 1)
+                            if self._bullpen_failures[plugin_index] >= 3:
+                                self._bullpen_retry_at[plugin_index] = self.clock() + 300
                         candidate = None
                     else:
                         with self._lock:
                             self._bullpen_failures.pop(plugin_index, None)
                             self._bullpen_error_types.pop(plugin_index, None)
+                            self._bullpen_retry_at.pop(plugin_index, None)
                     if candidate is not None:
                         return candidate
         # Live games suppress standings; scheduled pregame games do not.
