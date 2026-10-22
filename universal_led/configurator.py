@@ -2711,7 +2711,7 @@ def main():
                     last_plugin_scan = now
                     try:
                         slots = enabled_screen_slots(plugin_root, plugin_registry)
-                        signature = tuple((slot.plugin_id, slot.display_seconds) for slot in slots)
+                        signature = tuple((slot.plugin_id, slot.display_seconds, slot.appearance_every_pages) for slot in slots)
                         if signature != active_plugin_ids:
                             board.set_bullpen_slots(slots)
                             active_plugin_ids = signature
