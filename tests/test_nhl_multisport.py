@@ -237,8 +237,14 @@ class MultiSportTests(unittest.TestCase):
         self.assertEqual(slot.calls, 3)
         self.assertEqual(self.router.bullpen_diagnostics()[0]["retry_in_seconds"], 1)
         slot.fail = False
-        now[0] = 324
-        self.assertEqual(self.router.frame(), "RECOVERED")
+        # Retry only when the regular rotation next selects the plugin.
+        recovered = False
+        for second in range(324, 360):
+            now[0] = second
+            if self.router.frame() == "RECOVERED":
+                recovered = True
+                break
+        self.assertTrue(recovered, "Plugin should recover in its next eligible rotation slot")
         self.assertEqual(slot.calls, 4)
         health = self.router.bullpen_diagnostics()[0]
         self.assertEqual(health["status"], "healthy")
