@@ -67,6 +67,25 @@ class AppearanceFrequencyTests(unittest.TestCase):
         board.frame()
         self.assertIsNot(board._plugin_schedule, updated)
 
+    def test_replacing_plugin_slots_invalidates_cached_schedule(self):
+        from universal_led.multisport_runtime import MultiSportRenderer
+        class Sport:
+            def frame(self): return 'base'
+            def has_live_games(self): return False
+        class Plugin:
+            display_seconds = 5
+            appearance_every_pages = 10
+            def frame(self, **kwargs): return 'calendar'
+        board = MultiSportRenderer(Sport(), None, clock=lambda: 0)
+        plugin = Plugin()
+        board.set_bullpen_slots([plugin])
+        board.frame()
+        self.assertIsNotNone(board._plugin_schedule)
+        board.set_bullpen_slots([plugin])
+        self.assertIsNone(board._plugin_schedule)
+        board.frame()
+        self.assertIsNotNone(board._plugin_schedule)
+
     def test_live_games_precede_plugins(self):
         from universal_led.multisport_runtime import MultiSportRenderer
         class Sport:
