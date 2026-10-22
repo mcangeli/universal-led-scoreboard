@@ -275,32 +275,32 @@ class MultiSportRenderer:
                 for p in plugin_slots))
             with self._lock:
                 if schedule_key != self._plugin_schedule_key:
-                intervals = [max(1, min(100, int(getattr(p, 'appearance_every_pages', 1))))
-                             for p in plugin_slots]
-                durations = []
-                slot_ids = []
-                if all(value == 1 for value in intervals):
-                    for index, plugin in enumerate(plugin_slots):
-                        durations.extend((interval, max(1, min(3600, getattr(plugin, 'display_seconds', interval)))))
-                        slot_ids.extend((-1, index))
-                else:
-                    # Count completed regular pages, never rendered frames.
-                    # A bounded schedule avoids work proportional to uptime.
-                    last_shown = [0 for _ in intervals]
-                    for base_page in range(1000):
-                        durations.append(interval)
-                        slot_ids.append(-1)
-                        # The regular page above has now completed. Count it
-                        # before deciding whether a plugin can follow it.
-                        completed_pages = base_page + 1
-                        eligible = [i for i, value in enumerate(intervals)
-                                    if completed_pages - last_shown[i] >= value]
-                        if eligible:
-                            selected = max(eligible, key=lambda i: (completed_pages - last_shown[i]) / intervals[i])
-                            last_shown[selected] = completed_pages
-                            durations.append(max(1, min(3600, getattr(plugin_slots[selected], 'display_seconds', interval))))
-                            slot_ids.append(selected)
-                cycle_length = sum(durations)
+                    intervals = [max(1, min(100, int(getattr(p, 'appearance_every_pages', 1))))
+                                 for p in plugin_slots]
+                    durations = []
+                    slot_ids = []
+                    if all(value == 1 for value in intervals):
+                        for index, plugin in enumerate(plugin_slots):
+                            durations.extend((interval, max(1, min(3600, getattr(plugin, 'display_seconds', interval)))))
+                            slot_ids.extend((-1, index))
+                    else:
+                        # Count completed regular pages, never rendered frames.
+                        # A bounded schedule avoids work proportional to uptime.
+                        last_shown = [0 for _ in intervals]
+                        for base_page in range(1000):
+                            durations.append(interval)
+                            slot_ids.append(-1)
+                            # The regular page above has now completed. Count it
+                            # before deciding whether a plugin can follow it.
+                            completed_pages = base_page + 1
+                            eligible = [i for i, value in enumerate(intervals)
+                                        if completed_pages - last_shown[i] >= value]
+                            if eligible:
+                                selected = max(eligible, key=lambda i: (completed_pages - last_shown[i]) / intervals[i])
+                                last_shown[selected] = completed_pages
+                                durations.append(max(1, min(3600, getattr(plugin_slots[selected], 'display_seconds', interval))))
+                                slot_ids.append(selected)
+                    cycle_length = sum(durations)
                     self._plugin_schedule = (tuple(durations), tuple(slot_ids), cycle_length)
                     self._plugin_schedule_key = schedule_key
                 durations, slot_ids, cycle_length = self._plugin_schedule
