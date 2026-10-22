@@ -280,7 +280,7 @@ class MultiSportRenderer:
                 durations.append(interval)
                 slot_ids.append(-1)
                 eligible = [i for i, p in enumerate(plugin_slots)
-                            if base_page - last_shown[i] >= max(1, min(100, int(getattr(p, 'appearance_every_pages', 1))))]
+                            if base_page - last_shown[i] > max(1, min(100, int(getattr(p, 'appearance_every_pages', 1))))]
                 if eligible:
                     selected = max(eligible, key=lambda i: (base_page - last_shown[i]) /
                                    max(1, min(100, int(getattr(plugin_slots[i], 'appearance_every_pages', 1)))))
