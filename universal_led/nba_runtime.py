@@ -10,7 +10,13 @@ def select_games(games, teams=None, mode="fallback"):
         return list(games)
     favorites = {str(team).upper() for team in ([teams] if isinstance(teams, str) else teams)}
     matched = [game for game in games if game.away in favorites or game.home in favorites]
-    return matched if matched or mode == "favorite" else list(games)
+    if mode == "favorite":
+        return matched
+    live = [game for game in games if game.status == "live"]
+    if live:
+        favorite_live = [game for game in live if game.away in favorites or game.home in favorites]
+        return favorite_live or live
+    return matched or list(games)
 
 class BackgroundNBAFeed:
     def __init__(self, feed, day_provider=None, timezone_name="America/New_York", on_games=None):

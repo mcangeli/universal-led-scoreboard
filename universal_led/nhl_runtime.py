@@ -11,7 +11,13 @@ def select_games(games, team=None, mode="fallback"):
         return list(games)
     favorites = {s.upper() for s in ([team] if isinstance(team, str) else team)}
     matches = [g for g in games if g.away in favorites or g.home in favorites]
-    return matches if matches or mode == "favorite" else list(games)
+    if mode == "favorite":
+        return matches
+    live = [g for g in games if g.status == "live"]
+    if live:
+        favorite_live = [g for g in live if g.away in favorites or g.home in favorites]
+        return favorite_live or live
+    return matches or list(games)
 
 
 class BackgroundNHLFeed:

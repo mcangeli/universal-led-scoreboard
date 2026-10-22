@@ -43,7 +43,13 @@ def eligible_matches(
         match for match in games
         if any(identifier.strip().upper() in favorite_ids for identifier in (match.home_id, match.away_id, match.home_club_key or '', match.away_club_key or ''))
     )
-    return selected if mode == "favorites" or selected else games
+    if mode == "favorites":
+        return selected
+    live = tuple(match for match in games if is_live(match))
+    if live:
+        favorite_live = tuple(match for match in selected if is_live(match))
+        return favorite_live or live
+    return selected or games
 
 
 def prioritize_live(matches: Iterable[SoccerMatch]) -> tuple[SoccerMatch, ...]:
