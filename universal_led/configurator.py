@@ -126,6 +126,10 @@ function newsGroupCanLoad(group){return !newsGroupDirty(group)}
 function newsGroupSaved(group){newsSettingsSaved[group]=newsGroupSnapshot(group)}
 function discardNewsEdits(){
  newsSources=clone(newsSourcesSaved);newsSourcesDirty=false;
+ // Restore the visible custom-feed editor immediately; reload each settings group
+ // from the server on the next visit so discarded values cannot linger.
+ renderNewsSources();
+ document.getElementById('news-status').textContent='';
  for(const group of Object.keys(newsSettingsGroups))delete newsSettingsSaved[group];
 }
 async function previewHelloWorld(){
