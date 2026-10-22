@@ -276,7 +276,7 @@ class MultiSportRenderer:
             else:
                 # Count completed regular pages, never rendered frames.
                 # A bounded schedule avoids work proportional to uptime.
-                last_shown = [-value for value in intervals]
+                last_shown = [0 if value > 1 else -1 for value in intervals]
                 for base_page in range(1000):
                     durations.append(interval)
                     slot_ids.append(-1)
