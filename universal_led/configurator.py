@@ -1150,7 +1150,7 @@ let sportsSettingsDirty=false;
 let savedSportsForm=null;
 function sportsFormSnapshot(){
  return JSON.stringify(Array.from(document.querySelectorAll('#sports-configure input, #sports-configure select, #sports-configure textarea'))
-  .filter(el=>el.id!=='english-team-search' && !el.disabled && !['button','submit','reset','hidden'].includes(el.type))
+  .filter(el=>!['english-team-search','sport-picker'].includes(el.id) && !el.disabled && !['button','submit','reset','hidden'].includes(el.type))
   .map(el=>[el.id||el.name||'',el.type==='checkbox'||el.type==='radio'?el.checked:el.value]));
 }
 function resetSportsSettingsDirty(){
