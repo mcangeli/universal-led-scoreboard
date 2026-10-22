@@ -268,11 +268,25 @@ class MultiSportRenderer:
             # Interleave normal ULS content between plugin appearances:
             # base, plugin A, base, plugin B, ... rather than a plugin block.
             # A single plugin retains its existing base/plugin cadence.
+            # Build a deterministic idle-only schedule. Each plugin specifies
+            # how many ordinary pages must intervene between its appearances.
+            # At most one plugin follows a base page; overdue plugins queue
+            # fairly rather than crowding out regular content.
             durations = []
             slot_ids = []
-            for index, plugin in enumerate(plugin_slots):
-                durations.extend((interval, max(1, min(3600, getattr(plugin, 'display_seconds', interval)))))
-                slot_ids.extend((-1, index))
+            last_shown = [-max(1, min(100, int(getattr(p, 'appearance_every_pages', 1))))
+                          for p in plugin_slots]
+            for base_page in range(1000):
+                durations.append(interval)
+                slot_ids.append(-1)
+                eligible = [i for i, p in enumerate(plugin_slots)
+                            if base_page - last_shown[i] >= max(1, min(100, int(getattr(p, 'appearance_every_pages', 1))))]
+                if eligible:
+                    selected = max(eligible, key=lambda i: (base_page - last_shown[i]) /
+                                   max(1, min(100, int(getattr(plugin_slots[i], 'appearance_every_pages', 1)))))
+                    last_shown[selected] = base_page
+                    durations.append(max(1, min(3600, getattr(plugin_slots[selected], 'display_seconds', interval))))
+                    slot_ids.append(selected)
             cycle_length = sum(durations)
             elapsed = max(0.0, self.clock() - started) % cycle_length
             plugin_index = -1
