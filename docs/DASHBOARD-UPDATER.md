@@ -29,7 +29,7 @@ Avoid exposing credentials or secrets in logs. Do not use an unbounded shell out
 
 - Install helpers and scoped sudoers rules from `scripts/install-system.sh` and provide an idempotent migration helper for existing systems.
 - Existing `sudo ulsctl update` remains supported and shares the same lock with dashboard-triggered updates.
-- The current updater assumes a physical matrix service exists. Before enabling dashboard update on emulator-only installs, teach the updater and `ulsctl health` to handle that mode.
+- **Historical design caveat:** the original updater design assumed a physical matrix service. Emulator-mode installations are now supported, and the October 22, 2026 fresh Pi 5 emulator installation passed `ulsctl health`. This observation does not by itself validate dashboard-driven update/rollback in emulator mode.
 - Continue rejecting dirty checkouts, non-fast-forward changes, and failed candidate tests.
 
 ## Acceptance tests
@@ -43,6 +43,6 @@ Avoid exposing credentials or secrets in logs. Do not use an unbounded shell out
 7. Installed CLI synchronizes; health is verified before success.
 8. Failed update attempts rollback and leaves diagnostics accessible.
 9. Works on fresh Trixie physical install and existing upgraded Pi 5.
-10. Does not claim success for emulator mode until its service assumptions are fixed.
+10. Validate dashboard-driven update and rollback in emulator mode separately from a successful emulator installation and health check.
 
 For current v0.8.0 candidate acceptance and portable-backup verification, see [v0.8.0 release checklist](V080-RELEASE-CHECKLIST.md). For third-party redistribution status, see [attribution audit](THIRD-PARTY-ATTRIBUTION.md).
