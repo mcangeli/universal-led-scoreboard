@@ -363,6 +363,14 @@ async function loadPluginInventory(refreshCatalog=false){
    const status=document.createElement('p');status.className='muted';
    status.textContent=(plugin.enabled?'Enabled':'Disabled')+(plugin.error?' · '+plugin.error:'');
    item.appendChild(status);
+   if(plugin.runtime_health){
+    const health=plugin.runtime_health;
+    const detail=document.createElement('p');detail.className='muted';
+    detail.textContent='Runtime health: '+health.status+
+      (health.failures?' · '+health.failures+' consecutive failures':'')+
+      (health.last_error_type?' · Last error: '+health.last_error_type:'');
+    item.appendChild(detail);
+   }
    if(plugin.source){
     const source=document.createElement('p');source.className='muted';
     source.textContent='Source: '+plugin.source+' · '+(plugin.commit||'').slice(0,12);
@@ -1640,7 +1648,7 @@ def dashboard_feed_status(status, *, unix_time=False, wall_now=None, monotonic_n
         result['last_success']=wall_now-(monotonic_now-stamp)
     return result
 
-def make_handler(config_dir,token,frame_provider=None,settings_callback=None,feed_status=None,board_provider=None,countdown_status=None,standings_status=None,rotation_status=None,sports_feed_status=None,plugin_root=None,plugin_registry=None):
+def make_handler(config_dir,token,frame_provider=None,settings_callback=None,feed_status=None,board_provider=None,countdown_status=None,standings_status=None,rotation_status=None,sports_feed_status=None,plugin_root=None,plugin_registry=None,plugin_diagnostics=None):
     started=time.monotonic()
     sessions=Sessions(config_dir)
     class Handler(BaseHTTPRequestHandler):
@@ -1757,6 +1765,12 @@ def make_handler(config_dir,token,frame_provider=None,settings_callback=None,fee
                     root = Path(plugin_root) if plugin_root is not None else Path('/var/lib/uls/plugins')
                     registry = Path(plugin_registry) if plugin_registry is not None else Path('/var/lib/uls/plugins.json')
                     inventory = installed_plugin_inventory(root, registry)
+                    if plugin_diagnostics is not None:
+                        health = {entry['plugin_id']: entry for entry in plugin_diagnostics()
+                                  if entry.get('plugin_id')}
+                        for plugin in inventory['plugins']:
+                            if plugin['id'] in health:
+                                plugin['runtime_health'] = health[plugin['id']]
                     from .official_plugin_catalog import dynamic_official_catalog
                     official, catalog_source = dynamic_official_catalog(refresh='refresh=1' in self.path)
                     inventory['catalog_source'] = catalog_source
@@ -2724,7 +2738,7 @@ def main():
     frame_thread = threading.Thread(target=publish_frames, daemon=True, name='frame-publisher')
     frame_thread.start()
     try:
-        with ThreadingHTTPServer((args.host,args.port),make_handler(args.config_dir,token,game,apply_settings,feed_status,board.frame,countdown_status,standings_status,lambda: {'selected_sport':board._selected(), 'live_sports':list(board._live_sports()), 'priority':'live' if board._live_sports() else 'normal'},sports_feed_status)) as server:
+        with ThreadingHTTPServer((args.host,args.port),make_handler(args.config_dir,token,game,apply_settings,feed_status,board.frame,countdown_status,standings_status,lambda: {'selected_sport':board._selected(), 'live_sports':list(board._live_sports()), 'priority':'live' if board._live_sports() else 'normal'},sports_feed_status,plugin_diagnostics=board.bullpen_diagnostics)) as server:
             print(f'Configurator listening on {args.host}:{args.port}',flush=True)
             server.serve_forever()
     finally:
