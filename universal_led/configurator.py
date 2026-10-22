@@ -1842,7 +1842,9 @@ def make_handler(config_dir,token,frame_provider=None,settings_callback=None,fee
             elif path=='/api/status':
                 feed=feed_status() if feed_status else {'state':'unavailable','games':0,'error':None}
                 game=frame_provider() if frame_provider else None
-                current={'away':game.away,'home':game.home,'status':game.status} if game else None
+                current=({'away':getattr(game,'away',getattr(game,'away_id',None)),
+                         'home':getattr(game,'home',getattr(game,'home_id',None)),
+                         'status':getattr(game,'status',None)} if game else None)
                 from .sport_settings import load_settings
                 settings=load_settings(config_dir)
                 labels={'mlb':'MLB','nhl':'NHL','nba':'NBA','wnba':'WNBA','nfl':'NFL','mls':'MLS','nwsl':'NWSL','english':'English Football'}
