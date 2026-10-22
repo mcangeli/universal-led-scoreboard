@@ -263,30 +263,30 @@ class MultiSportRenderer:
             interval = self._interval
             started = self._started
         if plugin_slots and not self._live_sports():
-            # Keep the regular ULS slot at its normal interval, but give
-            # each supplemental plugin its own validated display duration.
-            # Interleave normal ULS content between plugin appearances:
-            # base, plugin A, base, plugin B, ... rather than a plugin block.
-            # A single plugin retains its existing base/plugin cadence.
-            # Build a deterministic idle-only schedule. Each plugin specifies
-            # how many ordinary pages must intervene between its appearances.
-            # At most one plugin follows a base page; overdue plugins queue
-            # fairly rather than crowding out regular content.
+            # Preserve the original cadence exactly for legacy plugins.
+            # Frequency-controlled plugins use a separate, bounded idle cycle.
+            intervals = [max(1, min(100, int(getattr(p, 'appearance_every_pages', 1))))
+                         for p in plugin_slots]
             durations = []
             slot_ids = []
-            last_shown = [-max(1, min(100, int(getattr(p, 'appearance_every_pages', 1))))
-                          for p in plugin_slots]
-            for base_page in range(1000):
-                durations.append(interval)
-                slot_ids.append(-1)
-                eligible = [i for i, p in enumerate(plugin_slots)
-                            if base_page - last_shown[i] > max(1, min(100, int(getattr(p, 'appearance_every_pages', 1))))]
-                if eligible:
-                    selected = max(eligible, key=lambda i: (base_page - last_shown[i]) /
-                                   max(1, min(100, int(getattr(plugin_slots[i], 'appearance_every_pages', 1)))))
-                    last_shown[selected] = base_page
-                    durations.append(max(1, min(3600, getattr(plugin_slots[selected], 'display_seconds', interval))))
-                    slot_ids.append(selected)
+            if all(value == 1 for value in intervals):
+                for index, plugin in enumerate(plugin_slots):
+                    durations.extend((interval, max(1, min(3600, getattr(plugin, 'display_seconds', interval)))))
+                    slot_ids.extend((-1, index))
+            else:
+                # Count completed regular pages, never rendered frames.
+                # A bounded schedule avoids work proportional to uptime.
+                last_shown = [-value for value in intervals]
+                for base_page in range(1000):
+                    durations.append(interval)
+                    slot_ids.append(-1)
+                    eligible = [i for i, value in enumerate(intervals)
+                                if base_page - last_shown[i] >= value]
+                    if eligible:
+                        selected = max(eligible, key=lambda i: (base_page - last_shown[i]) / intervals[i])
+                        last_shown[selected] = base_page
+                        durations.append(max(1, min(3600, getattr(plugin_slots[selected], 'display_seconds', interval))))
+                        slot_ids.append(selected)
             cycle_length = sum(durations)
             elapsed = max(0.0, self.clock() - started) % cycle_length
             plugin_index = -1
