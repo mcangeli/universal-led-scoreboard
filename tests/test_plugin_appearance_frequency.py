@@ -91,7 +91,7 @@ class AppearanceFrequencyTests(unittest.TestCase):
         source = Path(configurator.__file__).read_text(encoding='utf-8')
         self.assertIn("plugin_diagnostics=board.bullpen_diagnostics", source)
         self.assertIn("plugin['runtime_health'] = health[plugin['id']]", source)
-        self.assertIn("if plugin.runtime_health", source)
+        self.assertIn("if(plugin.runtime_health){", source)
         self.assertIn("health.last_error_type", source)
         # Inventory endpoint must remain after the authentication gate.
         self.assertLess(source.index("if not self.authenticated():", source.index("def do_GET(self):")),
