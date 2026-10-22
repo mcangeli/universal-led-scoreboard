@@ -56,6 +56,8 @@ class MultiSportRenderer:
         with self._lock:
             self.bullpen_slots = tuple(slots)
             self._bullpen_failures = {}
+            self._plugin_schedule_key = None
+            self._plugin_schedule = None
 
     def bullpen_health(self):
         """Return a read-only snapshot suitable for future dashboard reporting."""
