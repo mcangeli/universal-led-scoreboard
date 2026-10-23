@@ -204,6 +204,53 @@ class MultiSportTests(unittest.TestCase):
         self.router.frame()
         self.assertEqual(slot.calls, 4)
 
+    def test_quarantined_plugin_retries_after_cooldown_and_recovers(self):
+        from types import SimpleNamespace
+
+        class RecoveringSlot:
+            plugin_id = "recovering"
+            def __init__(self):
+                self.calls = 0
+                self.fail = True
+            def frame(self, **kwargs):
+                self.calls += 1
+                if self.fail:
+                    raise RuntimeError("private details")
+                return "RECOVERED"
+
+        now = [12]
+        self.router.clock = lambda: now[0]
+        self.router.configure_rotation(("mlb", "nhl"), interval=12)
+        self.mlb.game = lambda: SimpleNamespace(status="scheduled")
+        self.nhl.game = lambda: SimpleNamespace(status="final")
+        slot = RecoveringSlot()
+        self.router.set_bullpen_slots((slot,))
+        now[0] = 24
+        for _ in range(3):
+            self.router.frame()
+        self.assertEqual(slot.calls, 3)
+        health = self.router.bullpen_diagnostics()[0]
+        self.assertEqual(health["status"], "quarantined")
+        self.assertEqual(health["retry_in_seconds"], 300)
+        now[0] = 323
+        self.router.frame()
+        self.assertEqual(slot.calls, 3)
+        self.assertEqual(self.router.bullpen_diagnostics()[0]["retry_in_seconds"], 1)
+        slot.fail = False
+        # Retry only when the regular rotation next selects the plugin.
+        recovered = False
+        for second in range(324, 360):
+            now[0] = second
+            if self.router.frame() == "RECOVERED":
+                recovered = True
+                break
+        self.assertTrue(recovered, "Plugin should recover in its next eligible rotation slot")
+        self.assertEqual(slot.calls, 4)
+        health = self.router.bullpen_diagnostics()[0]
+        self.assertEqual(health["status"], "healthy")
+        self.assertEqual(health["failures"], 0)
+        self.assertIsNone(health["retry_in_seconds"])
+
     def test_bullpen_health_reports_quarantine_and_reset(self):
         class Slot:
             def frame(self, **kwargs):
@@ -221,6 +268,31 @@ class MultiSportTests(unittest.TestCase):
         self.assertEqual(snapshot[0]["failures"], 3)
         self.router.set_bullpen_slots((slot,))
         self.assertEqual(self.router.bullpen_health()[0]["status"], "healthy")
+
+    def test_bullpen_diagnostics_hide_exception_details_and_reset(self):
+        from types import SimpleNamespace
+
+        class BrokenSlot:
+            plugin_id = 'example-plugin'
+            def frame(self, **kwargs):
+                raise RuntimeError('private token must not appear in diagnostics')
+
+        now = [0]
+        self.router.clock = lambda: now[0]
+        self.router.configure_rotation(('mlb', 'nhl'), interval=12)
+        self.mlb.game = lambda: SimpleNamespace(status='scheduled')
+        self.nhl.game = lambda: SimpleNamespace(status='final')
+        self.router.set_bullpen_slots((BrokenSlot(),))
+        now[0] = 12
+        self.router.frame()
+        details = self.router.bullpen_diagnostics()
+        self.assertEqual(details[0]['plugin_id'], 'example-plugin')
+        self.assertEqual(details[0]['last_error_type'], 'RuntimeError')
+        self.assertEqual(details[0]['failures'], 1)
+        self.assertNotIn('private token', repr(details))
+        self.router.set_bullpen_slots((BrokenSlot(),))
+        self.assertIsNone(self.router.bullpen_diagnostics()[0]['last_error_type'])
+        self.assertEqual(self.router.bullpen_diagnostics()[0]['failures'], 0)
 
     def test_default_is_mlb(self):
         self.assertEqual(self.router.active_sport, "mlb")

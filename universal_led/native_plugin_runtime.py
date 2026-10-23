@@ -37,11 +37,13 @@ class NativePluginSlot:
         self.root = Path(root)
         self.timeout = timeout
         self.display_seconds = 12
+        self.appearance_every_pages = 10 if plugin_id == 'daily-calendar' else 1
         from .plugin_settings_store import read_plugin_settings
         try:
             settings = read_plugin_settings(self.root / self.plugin_id,
                                             self.root.parent / 'plugin-settings', self.plugin_id)
             self.display_seconds = settings['display_seconds']
+            self.appearance_every_pages = settings['appearance_every_pages']
         except (OSError, ValueError, KeyError):
             pass
 
@@ -55,6 +57,7 @@ class NativePluginSlot:
         except (OSError, ValueError):
             settings = {}
         self.display_seconds = settings.get('display_seconds', 12)
+        self.appearance_every_pages = settings.get('appearance_every_pages', self.appearance_every_pages)
         completed = subprocess.run(
             [sys.executable, "-m", "universal_led.native_plugin_worker",
              str(self.root), self.plugin_id, json.dumps(settings)],
