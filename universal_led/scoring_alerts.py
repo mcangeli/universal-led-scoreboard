@@ -130,13 +130,20 @@ class ScoringAlerts:
         if not self.enabled:
             return ()
         favorites = {str(t).upper() for t in favorite_teams}
-        accepted = tuple(e for e in new if (self.scope == "all"
-                         or e.team_id.upper() in favorites
-                         or (e.sport == "soccer" and e.league in
-                             ("EPL", "CHAMPIONSHIP", "LEAGUE_ONE", "LEAGUE_TWO")
-                             and bool(favorites.intersection((e.home_club_key.upper(),
-                                 e.away_club_key.upper())))))
-                         and self._allowed(e))
+        accepted = tuple(
+            e for e in new
+            if self._allowed(e) and (
+                self.scope == "all"
+                or e.team_id.upper() in favorites
+                or (
+                    e.sport == "soccer"
+                    and e.league in ("EPL", "CHAMPIONSHIP", "LEAGUE_ONE", "LEAGUE_TWO")
+                    and bool(favorites.intersection((
+                        e.home_club_key.upper(), e.away_club_key.upper()
+                    )))
+                )
+            )
+        )
         for event in accepted:
             if self._clock is not None:
                 self._queued_at[event] = self._clock()
