@@ -131,9 +131,12 @@ class ScoringAlerts:
             return ()
         favorites = {str(t).upper() for t in favorite_teams}
         accepted = tuple(e for e in new if (self.scope == "all"
-                         or bool(favorites.intersection((e.team_id.upper(),
-                                 e.home_team.upper(), e.away_team.upper(),
-                                 e.home_club_key.upper(), e.away_club_key.upper()))))
+                         or e.team_id.upper() in favorites
+                         or (e.sport == "soccer" and e.league in
+                             ("EPL", "CHAMPIONSHIP", "LEAGUE_ONE", "LEAGUE_TWO")
+                             and bool(favorites.intersection((e.home_team.upper(),
+                                 e.away_team.upper(), e.home_club_key.upper(),
+                                 e.away_club_key.upper())))))
                          and self._allowed(e))
         for event in accepted:
             if self._clock is not None:
