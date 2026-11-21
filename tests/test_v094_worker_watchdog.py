@@ -24,6 +24,28 @@ class WorkerWatchdogTests(unittest.TestCase):
         self.assertEqual(restart_dead_workers({"mls": worker}), ())
         worker.start.assert_not_called()
 
+    def test_failed_restart_does_not_block_another_dead_worker(self):
+        failed = Mock()
+        failed._thread.is_alive.return_value = False
+        failed.start.side_effect = RuntimeError("restart failure")
+        recovered = Mock()
+        recovered._thread.is_alive.return_value = False
+        with unittest.mock.patch("universal_led.worker_watchdog._LOG.exception"):
+            result = restart_dead_workers({"nba": failed, "nhl": recovered})
+        self.assertEqual(result, ("nhl",))
+        failed.start.assert_called_once_with()
+        recovered.start.assert_called_once_with()
+
+    def test_thread_probe_failure_does_not_block_another_worker(self):
+        failed = Mock()
+        failed._thread.is_alive.side_effect = RuntimeError("thread probe failure")
+        recovered = Mock()
+        recovered._thread.is_alive.return_value = False
+        with unittest.mock.patch("universal_led.worker_watchdog._LOG.exception"):
+            result = restart_dead_workers({"nba": failed, "nhl": recovered})
+        self.assertEqual(result, ("nhl",))
+        recovered.start.assert_called_once_with()
+
     def test_one_failed_worker_does_not_restart_healthy_worker(self):
         dead = Mock()
         dead._thread.is_alive.return_value = False
