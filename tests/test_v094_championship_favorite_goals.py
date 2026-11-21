@@ -14,6 +14,10 @@ class ChampionshipFavoriteGoalTests(unittest.TestCase):
         self.alerts = ScoringAlerts(enabled=True, scope="favorites")
         self.alerts.set_eligibility(lambda e: scoring_event_eligible(e, self.settings))
 
+    def observe(self, game, events):
+        return self.alerts.observe("soccer", "CHAMPIONSHIP", game, events,
+                                   favorite_teams=self.settings["english"]["favorite_teams"])
+
     def goal(self, game, scorer, home="WRE", away="OTH", home_key="espn:555",
              away_key="espn:777", event_id="goal1"):
         return ScoreEvent("soccer", "CHAMPIONSHIP", game, event_id, scorer,
@@ -22,33 +26,33 @@ class ChampionshipFavoriteGoalTests(unittest.TestCase):
 
     def test_favorite_scores_with_provider_club_key(self):
         event = self.goal("1", "WRE")
-        self.alerts.observe("soccer", "CHAMPIONSHIP", "1", ())
-        self.assertEqual(self.alerts.observe("soccer", "CHAMPIONSHIP", "1", (event,)),
+        self.observe("1", ())
+        self.assertEqual(self.observe("1", (event,)),
                          (event,))
 
     def test_opponent_scores_in_favorite_match(self):
         event = self.goal("2", "OTH")
-        self.alerts.observe("soccer", "CHAMPIONSHIP", "2", ())
-        self.assertEqual(self.alerts.observe("soccer", "CHAMPIONSHIP", "2", (event,)),
+        self.observe("2", ())
+        self.assertEqual(self.observe("2", (event,)),
                          (event,))
 
     def test_unrelated_match_is_suppressed(self):
         event = self.goal("3", "OTH", home="AAA", away="OTH",
                           home_key="espn:111", away_key="espn:777")
-        self.alerts.observe("soccer", "CHAMPIONSHIP", "3", ())
-        self.assertEqual(self.alerts.observe("soccer", "CHAMPIONSHIP", "3", (event,)), ())
+        self.observe("3", ())
+        self.assertEqual(self.observe("3", (event,)), ())
         self.assertIsNone(self.alerts.next_alert(0))
 
     def test_duplicate_goal_is_not_replayed(self):
         event = self.goal("4", "WRE")
-        self.alerts.observe("soccer", "CHAMPIONSHIP", "4", ())
-        self.assertEqual(len(self.alerts.observe("soccer", "CHAMPIONSHIP", "4", (event,))), 1)
-        self.assertEqual(self.alerts.observe("soccer", "CHAMPIONSHIP", "4", (event,)), ())
+        self.observe("4", ())
+        self.assertEqual(len(self.observe("4", (event,))), 1)
+        self.assertEqual(self.observe("4", (event,)), ())
 
     def test_alert_expires_and_returns_control_to_scheduler(self):
         event = self.goal("5", "OTH")
-        self.alerts.observe("soccer", "CHAMPIONSHIP", "5", ())
-        self.alerts.observe("soccer", "CHAMPIONSHIP", "5", (event,))
+        self.observe("5", ())
+        self.observe("5", (event,))
         self.assertEqual(self.alerts.next_alert(0), event)
         self.assertIsNone(self.alerts.next_alert(9))
 
