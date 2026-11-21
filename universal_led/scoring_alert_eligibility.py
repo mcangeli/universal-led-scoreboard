@@ -20,4 +20,6 @@ def scoring_event_eligible(event, settings):
         return True
     favorites = {str(team).upper() for team in options.get("favorite_teams", ())}
     return bool(favorites.intersection((str(event.home_team).upper(),
-                                        str(event.away_team).upper())))
+                                        str(event.away_team).upper(),
+                                        str(event.home_club_key).upper(),
+                                        str(event.away_club_key).upper())))
