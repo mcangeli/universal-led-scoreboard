@@ -2720,12 +2720,30 @@ def main():
     plugin_root = Path('/var/lib/uls/plugins')
     plugin_registry = Path('/var/lib/uls/plugins.json')
     active_plugin_ids = None
+    from .worker_watchdog import restart_dead_workers
+    def recover_pollers():
+        settings = renderer.settings()
+        workers = {'nhl': nhl_feed, 'nba': nba_feed, 'wnba': wnba_feed,
+                   'nfl': nfl_feed, 'mls': soccer_workers['mls'],
+                   'nwsl': soccer_workers['nwsl']}
+        enabled = {name: worker for name, worker in workers.items()
+                   if settings['sports'][name]['enabled']}
+        if settings['sports']['english']['enabled']:
+            enabled.update({'english:' + name: worker
+                            for name, worker in english_workers.items()
+                            if name in settings['english']['enabled_leagues']})
+        return restart_dead_workers(enabled)
     def publish_frames():
         nonlocal active_plugin_ids
         last_plugin_scan = 0.0
+        last_worker_check = 0.0
         while not frame_stop.is_set():
             try:
                 now = time.monotonic()
+                if now - last_worker_check >= 60.0:
+                    last_worker_check = now
+                    for name in recover_pollers():
+                        print(f'Restarted stopped background worker: {name}', flush=True)
                 if now - last_plugin_scan >= 5.0 or active_plugin_ids is None:
                     last_plugin_scan = now
                     try:
