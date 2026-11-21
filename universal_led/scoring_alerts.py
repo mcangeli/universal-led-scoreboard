@@ -134,8 +134,7 @@ class ScoringAlerts:
                          or e.team_id.upper() in favorites
                          or (e.sport == "soccer" and e.league in
                              ("EPL", "CHAMPIONSHIP", "LEAGUE_ONE", "LEAGUE_TWO")
-                             and bool(favorites.intersection((e.home_team.upper(),
-                                 e.away_team.upper(), e.home_club_key.upper(),
+                             and bool(favorites.intersection((e.home_club_key.upper(),
                                  e.away_club_key.upper())))))
                          and self._allowed(e))
         for event in accepted:
