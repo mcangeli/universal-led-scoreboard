@@ -1,5 +1,8 @@
 """Weather polling runs separately from the matrix rendering thread."""
 import threading
+import logging
+
+_LOG = logging.getLogger(__name__)
 import hashlib
 
 from .time_weather_settings import load_time_weather
@@ -48,8 +51,8 @@ class WeatherWorker:
             while not self._stop.is_set():
                 try:
                     self.refresh()
-                except (OSError, ValueError, TypeError):
-                    pass
+                except Exception:
+                    _LOG.exception('Background weather refresh failed')
                 self._stop.wait(self.wait_seconds)
         self._thread = threading.Thread(target=worker, daemon=True, name='scoreboard-weather')
         self._thread.start()
