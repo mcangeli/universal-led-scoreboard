@@ -79,9 +79,12 @@ class NHLFeed:
 
     def status(self) -> dict:
         with self._lock:
+            # Detect a refresh loop that stopped without recording an error.
+            stale = (self.last_success is not None and
+                     self.clock() - self.last_success > max(3 * self.refresh_seconds, 180))
             return {
                 "state": ("starting" if self.last_attempt is None else
-                          "error" if self.last_error else "running"),
+                          "error" if self.last_error else "stale" if stale else "running"),
                 "error": self.last_error,
                 "games": len(self._games),
                 "date": self._day.isoformat() if self._day else None,
