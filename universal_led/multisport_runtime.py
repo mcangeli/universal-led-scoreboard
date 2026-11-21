@@ -289,32 +289,31 @@ class MultiSportRenderer:
         mlb = self.mlb
         directory = getattr(mlb, "directory", None)
         if directory is not None and not self._live_sports():
-            if directory is not None:
-                preferences = load_time_weather(directory)
-                idle_pages = ["regular", "regular"]
-                if (preferences["clock_enabled"] and
-                        (Path(directory) / "time_weather.json").exists()):
-                    idle_pages.append("clock")
-                snapshot = None
-                weather = getattr(mlb, "weather", None)
-                if preferences["weather_enabled"] and weather is not None:
-                    try:
-                        snapshot = weather.snapshot()
-                    except Exception:
-                        snapshot = None
-                if snapshot is not None:
-                    idle_pages.append("weather")
-                with self._lock:
-                    idle_interval = self._interval
-                    idle_started = self._started
-                idle_index = int(max(0, self.clock() - idle_started) //
-                                 idle_interval) % len(idle_pages)
-                if idle_pages[idle_index] == "clock":
-                    return ClockScreen(preferences["timezone"],
-                                       preferences["time_format"]).render()
-                if idle_pages[idle_index] == "weather":
-                    return WeatherScreen(snapshot,
-                                         preferences["temperature_unit"]).render()
+            preferences = load_time_weather(directory)
+            idle_pages = ["regular", "regular"]
+            if (preferences["clock_enabled"] and
+                    (Path(directory) / "time_weather.json").exists()):
+                idle_pages.append("clock")
+            snapshot = None
+            weather = getattr(mlb, "weather", None)
+            if preferences["weather_enabled"] and weather is not None:
+                try:
+                    snapshot = weather.snapshot()
+                except Exception:
+                    snapshot = None
+            if snapshot is not None:
+                idle_pages.append("weather")
+            with self._lock:
+                idle_interval = self._interval
+                idle_started = self._started
+            idle_index = int(max(0, self.clock() - idle_started) //
+                             idle_interval) % len(idle_pages)
+            if idle_pages[idle_index] == "clock":
+                return ClockScreen(preferences["timezone"],
+                                   preferences["time_format"]).render()
+            if idle_pages[idle_index] == "weather":
+                return WeatherScreen(snapshot,
+                                     preferences["temperature_unit"]).render()
         # Global eligibility: no supplemental Bullpen screen may interrupt
         # any live game, including a game from a different sport.
         with self._lock:
