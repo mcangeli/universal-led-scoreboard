@@ -8,6 +8,9 @@ def scoring_event_eligible(event, settings):
     selection modes preserve the existing alert scope and fallback behavior.
     """
     sport = str(event.sport).lower()
+    if sport == "soccer":
+        league = str(event.league).upper()
+        sport = league.lower() if league in ("MLS", "NWSL") else "english"
     if sport not in ("mlb", "nhl", "nba", "wnba", "nfl", "mls", "nwsl", "english"):
         return False
     if not settings.get("sports", {}).get(sport, {}).get("enabled", True):
