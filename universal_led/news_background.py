@@ -1,5 +1,8 @@
 """Non-blocking background headline cache for the display renderer."""
 import threading
+import logging
+
+_LOG = logging.getLogger(__name__)
 import time
 
 from .automatic_news import AutomaticSportsNews
@@ -22,7 +25,7 @@ class BackgroundNews:
         self._custom_sources = None
 
     def start(self, settings_getter):
-        if self._running:
+        if self._running and self._thread is not None and self._thread.is_alive():
             return
         self._running = True
         def worker():
@@ -41,8 +44,9 @@ class BackgroundNews:
                         items = normalize_items(self.automatic.items(settings) + custom, max_items=200)
                         with self._lock:
                             self._items = items
-                    except (OSError, ValueError, TypeError):
-                        pass  # Preserve cached headlines and live-score rendering.
+                    except Exception:
+                        # Preserve cached headlines; do not let one bad source kill polling.
+                        _LOG.exception('Background news refresh failed')
                 time.sleep(1)
         self._thread = threading.Thread(target=worker, daemon=True, name='scoreboard-news')
         self._thread.start()
