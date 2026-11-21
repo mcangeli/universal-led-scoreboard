@@ -55,6 +55,17 @@ class FavoriteAlertEligibilityTests(unittest.TestCase):
         self.assertFalse(scoring_event_eligible(
             event("nhl", "5", "ATL", "BOS", "ATL"), self.settings))
 
+    def test_soccer_events_use_league_specific_favorites(self):
+        for league, sport in (("MLS", "mls"), ("NWSL", "nwsl"),
+                              ("EPL", "english"), ("CHAMPIONSHIP", "english")):
+            with self.subTest(league=league):
+                match = ScoreEvent("soccer", league, "s1", "g1", "NYR", "GOAL",
+                                   home_team="ATL", away_team="NYR")
+                self.assertTrue(scoring_event_eligible(match, self.settings))
+                self.settings[sport]["favorite_teams"] = ["BOS"]
+                self.assertFalse(scoring_event_eligible(match, self.settings))
+                self.settings[sport]["favorite_teams"] = ["ATL"]
+
     def test_all_leagues_enforce_favorite_only(self):
         for sport in ("mlb", "nhl", "nba", "wnba", "nfl", "mls", "nwsl", "english"):
             with self.subTest(sport=sport):
