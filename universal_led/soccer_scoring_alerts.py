@@ -22,6 +22,8 @@ def soccer_score_events(match):
             kind="OWN GOAL" if goal.own_goal else "GOAL",
             description=(goal.scorer or "").strip(),
             home_team=str(match.home_id), away_team=str(match.away_id),
+            home_club_key=match.home_club_key or "",
+            away_club_key=match.away_club_key or "",
             home_score=match.home_score, away_score=match.away_score,
         )
         for goal in match.goals if goal.event_id and goal.team_id
@@ -86,6 +88,8 @@ def observe_soccer_match(alerts, match, *, favorite_teams=()):
                     event_id=f"score:{team}:{score}",
                     team_id=str(team), kind="GOAL",
                     home_team=str(match.home_id), away_team=str(match.away_id),
+                    home_club_key=match.home_club_key or "",
+                    away_club_key=match.away_club_key or "",
                     home_score=scores[0], away_score=scores[1]))
     return alerts.observe("soccer", match.league, str(match.match_id),
                           tuple(pending), favorite_teams=favorite_teams)
