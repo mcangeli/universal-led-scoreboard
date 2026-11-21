@@ -24,7 +24,8 @@ class SupplementalWorkerRecoveryTests(unittest.TestCase):
         worker.stop()
 
     def test_news_refresh_exception_preserves_worker(self):
-        news = BackgroundNews("/unused", automatic=Mock())
+        ticks = [0.0]
+        news = BackgroundNews("/unused", automatic=Mock(), clock=lambda: ticks[0])
         news._next = -1
         calls = []
         def settings():
@@ -37,13 +38,13 @@ class SupplementalWorkerRecoveryTests(unittest.TestCase):
         with patch("universal_led.news_background.load_news_settings",
                    return_value={"sources": []}), \
              patch("universal_led.news_background.time.sleep",
-                   side_effect=lambda _: None), \
+                   side_effect=lambda _: ticks.__setitem__(0, ticks[0] + 61)), \
              patch("universal_led.news_background._LOG.exception"):
             news.start(settings)
             news._thread.join(timeout=2)
         # A failed attempt is throttled for 60 seconds. The worker remains
         # alive until explicitly stopped; retry behavior is covered separately.
-        self.assertGreaterEqual(len(calls), 1)
+        self.assertEqual(len(calls), 2)
         news.stop()
 
     def test_news_start_replaces_dead_thread(self):
