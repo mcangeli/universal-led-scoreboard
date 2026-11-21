@@ -1,5 +1,17 @@
 # Changelog
 
+## v0.9.3 (2026-11-21, release candidate)
+
+### Fixed
+- Global idle rotation now displays enabled clock and weather pages even when the multisport scheduler selects standings, upcoming games or native plugins. Live games and scoring alerts retain priority.
+- Missing weather snapshots do not prevent the clock from appearing.
+- Avoid unnecessary cross-sport game probes when clock/weather configuration is absent.
+
+### Validation
+- Raspberry Pi 3 dashboard updater successfully installed maintenance commit `df89426` after **1,824 tests passed (15 skipped)** on November 21, 2026; settings and persistent data were preserved.
+- Operator confirmed the physical matrix displays clock and weather alongside idle content.
+- Release metadata change requires a final updater preflight before tagging.
+
 ## v0.9.2 (2026-10-22, released)
 
 ### Fixed
