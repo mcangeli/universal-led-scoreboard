@@ -52,6 +52,7 @@ class ScoringAlerts:
         self._lock = RLock()
         self._queued_at = {}
         self._clock = None
+        self._eligibility = None
         self.on_queue_transition = None
         self._seen = {}
         self._pending = deque()
@@ -59,6 +60,29 @@ class ScoringAlerts:
         self._active_favorite = False
         self._expires = None
         self.configure(enabled=enabled, scope=scope, seconds=seconds)
+
+    @synchronized
+    def set_eligibility(self, predicate):
+        """Apply current sport/game selection to alerts, including queued alerts."""
+        if predicate is not None and not callable(predicate):
+            raise TypeError("Eligibility must be callable")
+        self._eligibility = predicate
+        self._prune_ineligible()
+
+    def _allowed(self, event):
+        return self._eligibility is None or bool(self._eligibility(event))
+
+    def _prune_ineligible(self):
+        self._pending = deque((favorite, event) for favorite, event in self._pending
+                              if self._allowed(event))
+        retained = {event for _, event in self._pending}
+        if self._active is not None and not self._allowed(self._active):
+            self._active = None
+            self._expires = None
+        if self._active is not None:
+            retained.add(self._active)
+        self._queued_at = {event: stamp for event, stamp in self._queued_at.items()
+                           if event in retained}
 
     @synchronized
     def set_clock(self, clock):
@@ -104,8 +128,8 @@ class ScoringAlerts:
         if not self.enabled:
             return ()
         favorites = {str(t).upper() for t in favorite_teams}
-        accepted = tuple(e for e in new if self.scope == "all"
-                         or e.team_id.upper() in favorites)
+        accepted = tuple(e for e in new if (self.scope == "all"
+                         or e.team_id.upper() in favorites) and self._allowed(e))
         for event in accepted:
             if self._clock is not None:
                 self._queued_at[event] = self._clock()
@@ -164,6 +188,8 @@ class ScoringAlerts:
             try:
                 event = ScoreEvent(**row["event"])
             except (KeyError, TypeError, ValueError):
+                continue
+            if not self._allowed(event):
                 continue
             key = (event.sport, event.league, event.game_id)
             self._seen.setdefault(key, set()).add(event.event_id)
@@ -236,6 +262,7 @@ class ScoringAlerts:
         """Return active event; optionally defer its timer until rendered()."""
         if not self.enabled:
             return None
+        self._prune_ineligible()
         if self._active is not None and self._expires is not None and now >= self._expires:
             self._queued_at.pop(self._active, None)
             self._active = None
