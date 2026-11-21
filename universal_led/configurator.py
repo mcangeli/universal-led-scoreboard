@@ -2483,6 +2483,11 @@ def main():
         standings_caches, season_policy=standings_season_eligible)
     renderer.news = None  # Universal news is owned by the shared board scheduler.
     board = MultiSportRenderer(renderer, nhl_renderer, news=news, settings_getter=renderer.settings, nba_renderer=nba_renderer, wnba_renderer=wnba_renderer, nfl_renderer=nfl_renderer, mls_renderer=soccer_renderers['mls'], nwsl_renderer=soccer_renderers['nwsl'], english_renderer=english_renderer, scoring_alerts=scoring_alerts, standings_rotation=standings_rotation)
+    # Score notifications must follow the same per-sport favorite-only selection
+    # as normal game frames, including after settings change and queue restore.
+    from .scoring_alert_eligibility import scoring_event_eligible
+    scoring_alerts.set_eligibility(
+        lambda event: scoring_event_eligible(event, renderer.settings()))
     # Apply persisted sport choice on service startup, not just after web saves.
     def game():
         return board.game()
