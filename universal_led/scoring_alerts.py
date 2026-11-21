@@ -28,6 +28,8 @@ class ScoreEvent:
     description: str = ""
     home_team: str = ""
     away_team: str = ""
+    home_club_key: str = ""
+    away_club_key: str = ""
     home_score: int | None = None
     away_score: int | None = None
 
@@ -129,7 +131,10 @@ class ScoringAlerts:
             return ()
         favorites = {str(t).upper() for t in favorite_teams}
         accepted = tuple(e for e in new if (self.scope == "all"
-                         or e.team_id.upper() in favorites) and self._allowed(e))
+                         or bool(favorites.intersection((e.team_id.upper(),
+                                 e.home_team.upper(), e.away_team.upper(),
+                                 e.home_club_key.upper(), e.away_club_key.upper()))))
+                         and self._allowed(e))
         for event in accepted:
             if self._clock is not None:
                 self._queued_at[event] = self._clock()
