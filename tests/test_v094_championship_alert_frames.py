@@ -82,8 +82,8 @@ class ChampionshipAlertFrameTests(unittest.TestCase):
     def test_native_alert_renderer_produces_valid_ppm(self):
         image = render_scoring_alert(self.goal())
         ppm = image.ppm()
-        self.assertTrue(ppm.startswith(b"P6\\n64 32\\n255\\n"))
-        self.assertEqual(len(ppm), len(b"P6\\n64 32\\n255\\n") + 64 * 32 * 3)
+        self.assertTrue(ppm.startswith(b"P6\n64 32\n255\n"))
+        self.assertEqual(len(ppm), len(b"P6\n64 32\n255\n") + 64 * 32 * 3)
 
 
 if __name__ == "__main__":
