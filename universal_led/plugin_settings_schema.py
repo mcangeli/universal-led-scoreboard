@@ -58,6 +58,8 @@ def validate_settings_schema(raw):
     duration = fields.get("display_seconds")
     if duration is None or duration["type"] != "integer" or duration.get("min", 0) < 1 or duration.get("max", 3601) > 3600:
         raise ManifestError("screen plugin must declare display_seconds between 1 and 3600")
+    if 'appearance_every_pages' in fields:
+        raise ManifestError('appearance_every_pages is reserved for host scheduling')
     return fields
 
 
@@ -65,7 +67,15 @@ def load_settings_schema(package):
     path = Path(package) / "settings-schema.json"
     if path.is_symlink() or not path.is_file() or path.stat().st_size > MAX_SCHEMA_BYTES:
         raise ManifestError("missing or unsafe plugin settings schema")
-    return validate_settings_schema(json.loads(path.read_text(encoding="utf-8")))
+    fields = validate_settings_schema(json.loads(path.read_text(encoding="utf-8")))
+    # Host-owned control, available to every plugin without requiring plugin updates.
+    fields['appearance_every_pages'] = {
+        'type': 'integer', 'default': 10 if Path(package).name == 'daily-calendar' else 1,
+        'min': 1, 'max': 100,
+        'label': 'Show after N other pages',
+        'description': 'Minimum number of regular non-live pages between appearances. Live games and alerts always take priority.',
+    }
+    return fields
 
 
 def validated_settings(fields, values):

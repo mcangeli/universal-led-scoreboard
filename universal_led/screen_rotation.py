@@ -1,8 +1,15 @@
 """Deterministic non-priority display rotation.
 
-A live favorite-team game bypasses this scheduler entirely.
+When live_games is true, any eligible live sport takes precedence over
+clock, weather, news, countdown and plugin screens. The caller handles
+individual game selection and rotation.
 """
 def choose_screen(position, *, has_game, clock, weather, news, interval=5, countdown=False, live_games=False, plugins=()):
+    """Select a screen type, not an individual game.
+
+    interval remains accepted for backward compatibility; screen types
+    currently receive equal rotation slots rather than interval weighting.
+    """
     if live_games:
         return 'game'
     options=[]

@@ -126,6 +126,10 @@ function newsGroupCanLoad(group){return !newsGroupDirty(group)}
 function newsGroupSaved(group){newsSettingsSaved[group]=newsGroupSnapshot(group)}
 function discardNewsEdits(){
  newsSources=clone(newsSourcesSaved);newsSourcesDirty=false;
+ // Restore the visible custom-feed editor immediately; reload each settings group
+ // from the server on the next visit so discarded values cannot linger.
+ renderNewsSources();
+ document.getElementById('news-status').textContent='';
  for(const group of Object.keys(newsSettingsGroups))delete newsSettingsSaved[group];
 }
 async function previewHelloWorld(){
@@ -359,6 +363,14 @@ async function loadPluginInventory(refreshCatalog=false){
    const status=document.createElement('p');status.className='muted';
    status.textContent=(plugin.enabled?'Enabled':'Disabled')+(plugin.error?' · '+plugin.error:'');
    item.appendChild(status);
+   if(plugin.runtime_health){
+    const health=plugin.runtime_health;
+    const detail=document.createElement('p');detail.className='muted';
+    detail.textContent='Runtime health: '+health.status+
+      (health.failures?' · '+health.failures+' consecutive failures':'')+
+      (health.last_error_type?' · Last error: '+health.last_error_type:'');
+    item.appendChild(detail);
+   }
    if(plugin.source){
     const source=document.createElement('p');source.className='muted';
     source.textContent='Source: '+plugin.source+' · '+(plugin.commit||'').slice(0,12);
@@ -413,7 +425,7 @@ async function loadPluginInventory(refreshCatalog=false){
   bundledInstall.hidden=true;
  }
 }
-function showPage(name){if(!document.querySelector('[data-page="'+name+'"]'))return;if(name!=='sports'&&sportsSettingsDirty&&!confirm('You have unsaved sport settings changes. Leave this page without saving?'))return;if(name!=='news'&&(newsSourcesDirty||newsSettingsDirty())){if(!confirm('You have unsaved Content & News changes. Leave this page without saving?'))return;discardNewsEdits();}document.querySelectorAll('.nav-item').forEach(button=>{const active=button.getAttribute('onclick')==="showPage('"+name+"')";button.classList.toggle('active',active);if(active)button.setAttribute('aria-current','page');else button.removeAttribute('aria-current');});document.querySelectorAll('[data-page]').forEach(el=>el.hidden=el.dataset.page!==name);if(name==='news'){if(!newsSourcesDirty)loadNewsSources();loadAutomaticNews();loadNewsTiming();loadScoringAlerts();loadGameInterruptions();loadStandingsSettings()}if(name==='display'){loadClockSettings();loadCountdown();}if(name==='dashboard'||name==='system')refreshStatus();if(name==='system'){refreshSystem();checkSoftwareUpdate();}if(name==='matrix-settings'){loadMatrixSettings();refreshMatrixStatus();}if(name==='wifi'){refreshWifi();refreshWifiProfiles();refreshRecoveryReadiness();scanWifi()}if(name==='plugins')loadPluginInventory()}
+function showPage(name){if(!document.querySelector('[data-page="'+name+'"]'))return;if(name!=='sports'&&sportsSettingsDirty){if(!confirm('You have unsaved sport settings changes. Leave this page without saving?'))return;resetSportsSettingsDirty();loadSettings();}if(name!=='news'&&(newsSourcesDirty||newsSettingsDirty())){if(!confirm('You have unsaved Content & News changes. Leave this page without saving?'))return;discardNewsEdits();}document.querySelectorAll('.nav-item').forEach(button=>{const active=button.getAttribute('onclick')==="showPage('"+name+"')";button.classList.toggle('active',active);if(active)button.setAttribute('aria-current','page');else button.removeAttribute('aria-current');});document.querySelectorAll('[data-page]').forEach(el=>el.hidden=el.dataset.page!==name);if(name==='news'){if(!newsSourcesDirty)loadNewsSources();loadAutomaticNews();loadNewsTiming();loadScoringAlerts();loadGameInterruptions();loadStandingsSettings()}if(name==='display'){loadClockSettings();loadCountdown();}if(name==='dashboard'||name==='system')refreshStatus();if(name==='system'){refreshSystem();checkSoftwareUpdate();}if(name==='matrix-settings'){loadMatrixSettings();refreshMatrixStatus();}if(name==='wifi'){refreshWifi();refreshWifiProfiles();refreshRecoveryReadiness();scanWifi()}if(name==='plugins')loadPluginInventory()}
 async function refreshMatrixStatus(){
  const el=document.getElementById('matrix-service-state');
  try{const response=await fetch('/api/matrix-status',{cache:'no-store'});const result=await response.json();
@@ -1132,6 +1144,7 @@ async function loadSettings(){
  const enabled=['mlb','nhl','nba','wnba','nfl','mls','nwsl','english'].filter(s=>settings.sports[s]?.enabled);
  const favoriteCounts=enabled.map(s=>{const favorites=settings[s]?.favorite_teams||[];return s.toUpperCase()+': '+favorites.length+' favorites';});
  document.getElementById('summary').textContent=enabled.length+' enabled sports: '+enabled.map(s=>s.toUpperCase()).join(', ')+' | '+favoriteCounts.join(' · ');
+ resetSportsSettingsDirty();
 }
 function updateLiveShare(){
  const classic=Number(document.getElementById('live-classic').value);
@@ -1143,11 +1156,23 @@ function updateLiveShare(){
 }
 document.getElementById('live-classic').addEventListener('input',updateLiveShare);
 document.getElementById('live-matchup').addEventListener('input',updateLiveShare);
+// Compare normalized editable values, rather than treating every input event as a change.
+// This also clears the warning when a user reverts an edit to its saved value.
 let sportsSettingsDirty=false;
+let savedSportsForm=null;
+function sportsFormSnapshot(){
+ return JSON.stringify(Array.from(document.querySelectorAll('#sports-configure input, #sports-configure select, #sports-configure textarea'))
+  .filter(el=>!['english-team-search','sport-picker'].includes(el.id) && !el.disabled && !['button','submit','reset','hidden'].includes(el.type))
+  .map(el=>[el.id||el.name||'',el.type==='checkbox'||el.type==='radio'?el.checked:el.value]));
+}
+function resetSportsSettingsDirty(){
+ savedSportsForm=sportsFormSnapshot();
+ sportsSettingsDirty=false;
+}
 function markSportsSettingsDirty(event){
  if(!event.target.closest('#sports-configure')||event.target.id==='english-team-search')return;
- sportsSettingsDirty=true;
- document.getElementById('settings-status').textContent='Unsaved sport settings changes';
+ sportsSettingsDirty=savedSportsForm!==null && sportsFormSnapshot()!==savedSportsForm;
+ document.getElementById('settings-status').textContent=sportsSettingsDirty?'Unsaved sport settings changes':'';
 }
 document.querySelector('[data-page="sports"]').addEventListener('input',markSportsSettingsDirty);
 document.querySelector('[data-page="sports"]').addEventListener('change',markSportsSettingsDirty);
@@ -1234,7 +1259,7 @@ async function saveSportSettings(source){
   try{result=await response.json()}catch(_){throw Error('Server returned an unreadable response (HTTP '+response.status+'). Check configurator logs.');}
   if(!response.ok)throw Error('Server rejected sport settings (HTTP '+response.status+'): '+(result.error||'Save failed'));
   settings=result.settings;
-  sportsSettingsDirty=false;
+  resetSportsSettingsDirty();
   status.textContent='Sport settings saved.';
   try{await loadSettings();draw();await refreshStatus();status.textContent='Saved and applied to configurator preview.';}
   catch(refreshError){status.textContent='Settings saved, but the dashboard could not refresh: '+refreshError.message;}
@@ -1623,7 +1648,7 @@ def dashboard_feed_status(status, *, unix_time=False, wall_now=None, monotonic_n
         result['last_success']=wall_now-(monotonic_now-stamp)
     return result
 
-def make_handler(config_dir,token,frame_provider=None,settings_callback=None,feed_status=None,board_provider=None,countdown_status=None,standings_status=None,rotation_status=None,sports_feed_status=None,plugin_root=None,plugin_registry=None):
+def make_handler(config_dir,token,frame_provider=None,settings_callback=None,feed_status=None,board_provider=None,countdown_status=None,standings_status=None,rotation_status=None,sports_feed_status=None,plugin_root=None,plugin_registry=None,plugin_diagnostics=None):
     started=time.monotonic()
     sessions=Sessions(config_dir)
     class Handler(BaseHTTPRequestHandler):
@@ -1740,6 +1765,12 @@ def make_handler(config_dir,token,frame_provider=None,settings_callback=None,fee
                     root = Path(plugin_root) if plugin_root is not None else Path('/var/lib/uls/plugins')
                     registry = Path(plugin_registry) if plugin_registry is not None else Path('/var/lib/uls/plugins.json')
                     inventory = installed_plugin_inventory(root, registry)
+                    if plugin_diagnostics is not None:
+                        health = {entry['plugin_id']: entry for entry in plugin_diagnostics()
+                                  if entry.get('plugin_id')}
+                        for plugin in inventory['plugins']:
+                            if plugin['id'] in health:
+                                plugin['runtime_health'] = health[plugin['id']]
                     from .official_plugin_catalog import dynamic_official_catalog
                     official, catalog_source = dynamic_official_catalog(refresh='refresh=1' in self.path)
                     inventory['catalog_source'] = catalog_source
@@ -2694,7 +2725,7 @@ def main():
                     last_plugin_scan = now
                     try:
                         slots = enabled_screen_slots(plugin_root, plugin_registry)
-                        signature = tuple((slot.plugin_id, slot.display_seconds) for slot in slots)
+                        signature = tuple((slot.plugin_id, slot.display_seconds, slot.appearance_every_pages) for slot in slots)
                         if signature != active_plugin_ids:
                             board.set_bullpen_slots(slots)
                             active_plugin_ids = signature
@@ -2707,7 +2738,7 @@ def main():
     frame_thread = threading.Thread(target=publish_frames, daemon=True, name='frame-publisher')
     frame_thread.start()
     try:
-        with ThreadingHTTPServer((args.host,args.port),make_handler(args.config_dir,token,game,apply_settings,feed_status,board.frame,countdown_status,standings_status,lambda: {'selected_sport':board._selected(), 'live_sports':list(board._live_sports()), 'priority':'live' if board._live_sports() else 'normal'},sports_feed_status)) as server:
+        with ThreadingHTTPServer((args.host,args.port),make_handler(args.config_dir,token,game,apply_settings,feed_status,board.frame,countdown_status,standings_status,lambda: {'selected_sport':board._selected(), 'live_sports':list(board._live_sports()), 'priority':'live' if board._live_sports() else 'normal'},sports_feed_status,plugin_diagnostics=board.bullpen_diagnostics)) as server:
             print(f'Configurator listening on {args.host}:{args.port}',flush=True)
             server.serve_forever()
     finally:

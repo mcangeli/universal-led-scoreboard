@@ -1,6 +1,6 @@
 # External data endpoints and user responsibility
 
-**Inventory date:** October 20, 2026. These URLs reflect the ULS v0.8.0 source code at the time of review, not a guarantee that any provider will continue serving them.
+**Inventory baseline:** October 20, 2026 (ULS v0.8.0). This is a historical endpoint inventory, not a fresh verification against v0.9.2 or a guarantee that any provider will continue serving these URLs. Revalidate endpoints against the current feed implementations before treating this as an exhaustive current list.
 
 ## Sports endpoints currently used
 

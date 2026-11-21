@@ -3,6 +3,10 @@ from __future__ import annotations
 
 import threading
 import time
+from pathlib import Path
+from .clock_screen import ClockScreen
+from .weather_screen import WeatherScreen
+from .time_weather_settings import load_time_weather
 from .news_screen import NewsHeadlineScreen
 from .display import Framebuffer
 from .scoring_alert_screen import render_scoring_alert
@@ -39,6 +43,8 @@ class MultiSportRenderer:
         self.news = news
         self.bullpen_slots = ()  # Explicitly registered global supplemental screens
         self._bullpen_failures = {}  # Consecutive errors per registered slot
+        self._bullpen_error_types = {}  # Exception class only; never expose plugin secrets
+        self._bullpen_retry_at = {}  # Monotonic retry deadlines for quarantined slots
         self.settings_getter = settings_getter
         self._news_started = clock()
         self._lock = threading.Lock()
@@ -47,6 +53,8 @@ class MultiSportRenderer:
         self._interval = 12
         self._auto_rotation = False
         self._started = clock()
+        self._plugin_schedule_key = None
+        self._plugin_schedule = None
         self.set_active_sport(active_sport)
 
     def set_bullpen_slots(self, slots):
@@ -54,6 +62,10 @@ class MultiSportRenderer:
         with self._lock:
             self.bullpen_slots = tuple(slots)
             self._bullpen_failures = {}
+            self._bullpen_error_types = {}
+            self._bullpen_retry_at = {}
+            self._plugin_schedule_key = None
+            self._plugin_schedule = None
 
     def bullpen_health(self):
         """Return a read-only snapshot suitable for future dashboard reporting."""
@@ -65,6 +77,20 @@ class MultiSportRenderer:
                            else "degraded" if self._bullpen_failures.get(index, 0)
                            else "healthy"),
             } for index in range(len(self.bullpen_slots)))
+
+    def bullpen_diagnostics(self):
+        """Safe plugin failure details without exception messages or private data."""
+        with self._lock:
+            return tuple({
+                "slot": index,
+                "plugin_id": getattr(plugin, "plugin_id", None),
+                "failures": self._bullpen_failures.get(index, 0),
+                "status": ("quarantined" if self._bullpen_failures.get(index, 0) >= 3
+                           else "degraded" if self._bullpen_failures.get(index, 0)
+                           else "healthy"),
+                "last_error_type": self._bullpen_error_types.get(index),
+                "retry_in_seconds": max(0, round(self._bullpen_retry_at[index] - self.clock())) if index in self._bullpen_retry_at else None,
+            } for index, plugin in enumerate(self.bullpen_slots))
 
     def _connect_soccer_standings(self):
         """Reuse the exact caches already owned by the idle standings rotation."""
@@ -256,6 +282,38 @@ class MultiSportRenderer:
                         return draw(final_game)
         sport = self._selected()
         renderer = self._renderer(sport)
+        # Clock and weather belong to the global idle rotation, not only MLB.
+        # Reserve regular slots for games, standings, news and plugins.
+        # Do this before standings' early returns so idle pages cannot starve
+        # time/weather. Live games and final handoffs still take precedence.
+        mlb = self.mlb
+        directory = getattr(mlb, "directory", None)
+        if directory is not None and not self._live_sports():
+            preferences = load_time_weather(directory)
+            idle_pages = ["regular", "regular"]
+            if (preferences["clock_enabled"] and
+                    (Path(directory) / "time_weather.json").exists()):
+                idle_pages.append("clock")
+            snapshot = None
+            weather = getattr(mlb, "weather", None)
+            if preferences["weather_enabled"] and weather is not None:
+                try:
+                    snapshot = weather.snapshot()
+                except Exception:
+                    snapshot = None
+            if snapshot is not None:
+                idle_pages.append("weather")
+            with self._lock:
+                idle_interval = self._interval
+                idle_started = self._started
+            idle_index = int(max(0, self.clock() - idle_started) //
+                             idle_interval) % len(idle_pages)
+            if idle_pages[idle_index] == "clock":
+                return ClockScreen(preferences["timezone"],
+                                   preferences["time_format"]).render()
+            if idle_pages[idle_index] == "weather":
+                return WeatherScreen(snapshot,
+                                     preferences["temperature_unit"]).render()
         # Global eligibility: no supplemental Bullpen screen may interrupt
         # any live game, including a game from a different sport.
         with self._lock:
@@ -263,17 +321,45 @@ class MultiSportRenderer:
             interval = self._interval
             started = self._started
         if plugin_slots and not self._live_sports():
-            # Keep the regular ULS slot at its normal interval, but give
-            # each supplemental plugin its own validated display duration.
-            # Interleave normal ULS content between plugin appearances:
-            # base, plugin A, base, plugin B, ... rather than a plugin block.
-            # A single plugin retains its existing base/plugin cadence.
-            durations = []
-            slot_ids = []
-            for index, plugin in enumerate(plugin_slots):
-                durations.extend((interval, max(1, min(3600, getattr(plugin, 'display_seconds', interval)))))
-                slot_ids.extend((-1, index))
-            cycle_length = sum(durations)
+            # Preserve the original cadence exactly for legacy plugins.
+            # Frequency-controlled plugins use a separate, bounded idle cycle.
+            # Cache the schedule across frame renders. Rebuild on changes to
+            # enabled slots, appearance frequency, display duration or timing.
+            schedule_key = (interval, tuple(
+                (id(p), max(1, min(100, int(getattr(p, 'appearance_every_pages', 1)))),
+                 max(1, min(3600, getattr(p, 'display_seconds', interval))))
+                for p in plugin_slots))
+            with self._lock:
+                if schedule_key != self._plugin_schedule_key:
+                    intervals = [max(1, min(100, int(getattr(p, 'appearance_every_pages', 1))))
+                                 for p in plugin_slots]
+                    durations = []
+                    slot_ids = []
+                    if all(value == 1 for value in intervals):
+                        for index, plugin in enumerate(plugin_slots):
+                            durations.extend((interval, max(1, min(3600, getattr(plugin, 'display_seconds', interval)))))
+                            slot_ids.extend((-1, index))
+                    else:
+                        # Count completed regular pages, never rendered frames.
+                        # A bounded schedule avoids work proportional to uptime.
+                        last_shown = [0 for _ in intervals]
+                        for base_page in range(1000):
+                            durations.append(interval)
+                            slot_ids.append(-1)
+                            # The regular page above has now completed. Count it
+                            # before deciding whether a plugin can follow it.
+                            completed_pages = base_page + 1
+                            eligible = [i for i, value in enumerate(intervals)
+                                        if completed_pages - last_shown[i] >= value]
+                            if eligible:
+                                selected = max(eligible, key=lambda i: (completed_pages - last_shown[i]) / intervals[i])
+                                last_shown[selected] = completed_pages
+                                durations.append(max(1, min(3600, getattr(plugin_slots[selected], 'display_seconds', interval))))
+                                slot_ids.append(selected)
+                    cycle_length = sum(durations)
+                    self._plugin_schedule = (tuple(durations), tuple(slot_ids), cycle_length)
+                    self._plugin_schedule_key = schedule_key
+                durations, slot_ids, cycle_length = self._plugin_schedule
             elapsed = max(0.0, self.clock() - started) % cycle_length
             plugin_index = -1
             for index, duration in enumerate(durations):
@@ -284,19 +370,26 @@ class MultiSportRenderer:
             if plugin_index >= 0:
                 plugin = plugin_slots[plugin_index]
                 with self._lock:
-                    disabled = self._bullpen_failures.get(plugin_index, 0) >= 3
+                    failures = self._bullpen_failures.get(plugin_index, 0)
+                    retry_at = self._bullpen_retry_at.get(plugin_index, float('inf'))
+                    disabled = failures >= 3 and self.clock() < retry_at
                 if not disabled:
                     try:
                         candidate = plugin.frame(
                             live_games=False, selected=True, now=self.clock())
-                    except Exception:
+                    except Exception as exc:
                         with self._lock:
+                            self._bullpen_error_types[plugin_index] = type(exc).__name__
                             self._bullpen_failures[plugin_index] = (
                                 self._bullpen_failures.get(plugin_index, 0) + 1)
+                            if self._bullpen_failures[plugin_index] >= 3:
+                                self._bullpen_retry_at[plugin_index] = self.clock() + 300
                         candidate = None
                     else:
                         with self._lock:
                             self._bullpen_failures.pop(plugin_index, None)
+                            self._bullpen_error_types.pop(plugin_index, None)
+                            self._bullpen_retry_at.pop(plugin_index, None)
                     if candidate is not None:
                         return candidate
         # Live games suppress standings; scheduled pregame games do not.
