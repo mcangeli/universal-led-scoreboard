@@ -1,6 +1,7 @@
 """NBA background polling and favorite-team selection."""
 import threading
 import logging
+import time
 
 _LOG = logging.getLogger(__name__)
 from datetime import datetime
@@ -30,6 +31,7 @@ class BackgroundNBAFeed:
         self.day_provider = day_provider or self._local_day
         self._stop = threading.Event()
         self._thread = None
+        self._poll_started = None
 
     def _local_day(self):
         return datetime.now(ZoneInfo(self.timezone_name)).date()
@@ -46,11 +48,14 @@ class BackgroundNBAFeed:
 
     def _run(self):
         while not self._stop.is_set():
+            self._poll_started = time.monotonic()
             try:
                 self.refresh_once()
             except Exception:
                 # A callback or day-provider error must not permanently kill polling.
                 _LOG.exception("Background sports refresh failed")
+            finally:
+                self._poll_started = None
             self._stop.wait(self.feed.refresh_seconds)
 
     def start(self):
