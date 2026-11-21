@@ -2720,7 +2720,7 @@ def main():
     plugin_root = Path('/var/lib/uls/plugins')
     plugin_registry = Path('/var/lib/uls/plugins.json')
     active_plugin_ids = None
-    from .worker_watchdog import restart_dead_workers
+    from .worker_watchdog import restart_dead_workers, stalled_workers
     def recover_pollers():
         settings = renderer.settings()
         workers = {'nhl': nhl_feed, 'nba': nba_feed, 'wnba': wnba_feed,
@@ -2732,6 +2732,8 @@ def main():
             enabled.update({'english:' + name: worker
                             for name, worker in english_workers.items()
                             if name in settings['english']['enabled_leagues']})
+        for name in stalled_workers(enabled):
+            print(f'Background worker appears stalled: {name}', flush=True)
         return restart_dead_workers(enabled)
     def publish_frames():
         nonlocal active_plugin_ids
