@@ -79,6 +79,35 @@ class ChampionshipAlertFrameTests(unittest.TestCase):
         self.assertEqual(self.observe(event), ())
         self.assertEqual(self.board.frame().pixels[0][0], (15, 70, 130))
 
+    def test_failed_frame_render_retries_without_consuming_alert_time(self):
+        event = self.goal()
+        self.observe(event)
+        attempts = [0]
+
+        def flaky_renderer(value):
+            attempts[0] += 1
+            if attempts[0] == 1:
+                raise RuntimeError("simulated renderer failure")
+            return render_scoring_alert(value)
+
+        self.board.alert_renderer = flaky_renderer
+        with self.assertRaisesRegex(RuntimeError, "simulated renderer failure"):
+            self.board.frame()
+        self.now[0] += 10
+        self.assertEqual(self.board.frame().pixels[9][0], (85, 100, 115))
+        self.now[0] += 3
+        self.assertEqual(self.board.frame().pixels[9][0], (85, 100, 115))
+        self.now[0] += 1
+        self.assertEqual(self.board.frame().pixels[0][0], (15, 70, 130))
+        self.assertEqual(attempts[0], 3)
+
+    def test_disabling_alerts_immediately_restores_normal_frame(self):
+        event = self.goal()
+        self.observe(event)
+        self.assertEqual(self.board.frame().pixels[9][0], (85, 100, 115))
+        self.alerts.configure(enabled=False)
+        self.assertEqual(self.board.frame().pixels[0][0], (15, 70, 130))
+
     def test_native_alert_renderer_produces_valid_ppm(self):
         image = render_scoring_alert(self.goal())
         ppm = image.ppm()
