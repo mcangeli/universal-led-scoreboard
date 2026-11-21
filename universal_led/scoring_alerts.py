@@ -28,10 +28,10 @@ class ScoreEvent:
     description: str = ""
     home_team: str = ""
     away_team: str = ""
-    home_club_key: str = ""
-    away_club_key: str = ""
     home_score: int | None = None
     away_score: int | None = None
+    home_club_key: str = ""
+    away_club_key: str = ""
 
     def __post_init__(self):
         if not all((self.sport, self.league, self.game_id,
