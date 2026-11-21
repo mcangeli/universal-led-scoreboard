@@ -286,9 +286,9 @@ class MultiSportRenderer:
         # Reserve regular slots for games, standings, news and plugins.
         # Do this before standings' early returns so idle pages cannot starve
         # time/weather. Live games and final handoffs still take precedence.
-        if not self._live_sports():
-            mlb = self.mlb
-            directory = getattr(mlb, "directory", None)
+        mlb = self.mlb
+        directory = getattr(mlb, "directory", None)
+        if directory is not None and not self._live_sports():
             if directory is not None:
                 preferences = load_time_weather(directory)
                 idle_pages = ["regular", "regular"]
