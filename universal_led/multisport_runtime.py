@@ -3,6 +3,10 @@ from __future__ import annotations
 
 import threading
 import time
+from pathlib import Path
+from .clock_screen import ClockScreen
+from .weather_screen import WeatherScreen
+from .time_weather_settings import load_time_weather
 from .news_screen import NewsHeadlineScreen
 from .display import Framebuffer
 from .scoring_alert_screen import render_scoring_alert
@@ -278,6 +282,39 @@ class MultiSportRenderer:
                         return draw(final_game)
         sport = self._selected()
         renderer = self._renderer(sport)
+        # Clock and weather belong to the global idle rotation, not only MLB.
+        # Reserve regular slots for games, standings, news and plugins.
+        # Do this before standings' early returns so idle pages cannot starve
+        # time/weather. Live games and final handoffs still take precedence.
+        if not self._live_sports():
+            mlb = self.mlb
+            directory = getattr(mlb, "directory", None)
+            if directory is not None:
+                preferences = load_time_weather(directory)
+                idle_pages = ["regular", "regular"]
+                if (preferences["clock_enabled"] and
+                        (Path(directory) / "time_weather.json").exists()):
+                    idle_pages.append("clock")
+                snapshot = None
+                weather = getattr(mlb, "weather", None)
+                if preferences["weather_enabled"] and weather is not None:
+                    try:
+                        snapshot = weather.snapshot()
+                    except Exception:
+                        snapshot = None
+                if snapshot is not None:
+                    idle_pages.append("weather")
+                with self._lock:
+                    idle_interval = self._interval
+                    idle_started = self._started
+                idle_index = int(max(0, self.clock() - idle_started) //
+                                 idle_interval) % len(idle_pages)
+                if idle_pages[idle_index] == "clock":
+                    return ClockScreen(preferences["timezone"],
+                                       preferences["time_format"]).render()
+                if idle_pages[idle_index] == "weather":
+                    return WeatherScreen(snapshot,
+                                         preferences["temperature_unit"]).render()
         # Global eligibility: no supplemental Bullpen screen may interrupt
         # any live game, including a game from a different sport.
         with self._lock:
