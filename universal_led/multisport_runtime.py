@@ -10,6 +10,8 @@ from .time_weather_settings import load_time_weather
 from .news_screen import NewsHeadlineScreen
 from .display import Framebuffer
 from .scoring_alert_screen import render_scoring_alert
+from .season_countdown_settings import current as current_countdown
+from .season_countdown_screen import SeasonCountdownScreen
 
 
 class MultiSportRenderer:
@@ -303,6 +305,13 @@ class MultiSportRenderer:
                     snapshot = None
             if snapshot is not None:
                 idle_pages.append("weather")
+            # Reserve an independent idle slot, just like clock and weather.
+            # The provider returns cached data and refreshes asynchronously.
+            opening = current_countdown(
+                directory, provider=getattr(mlb, "opening_feed", None),
+                season_active=False, live_game=False)
+            if opening is not None:
+                idle_pages.append("countdown")
             with self._lock:
                 idle_interval = self._interval
                 idle_started = self._started
@@ -314,6 +323,8 @@ class MultiSportRenderer:
             if idle_pages[idle_index] == "weather":
                 return WeatherScreen(snapshot,
                                      preferences["temperature_unit"]).render()
+            if idle_pages[idle_index] == "countdown":
+                return SeasonCountdownScreen(opening).render()
         # Global eligibility: no supplemental Bullpen screen may interrupt
         # any live game, including a game from a different sport.
         with self._lock:
