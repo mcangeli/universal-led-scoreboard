@@ -41,9 +41,9 @@ class GlobalCountdownRotationTests(unittest.TestCase):
         marker = Framebuffer()
         marker.pixel(0, 0, (88, 99, 111))
         with patch("universal_led.multisport_runtime.load_time_weather",
-                   return_value=self.preferences), \\
+                   return_value=self.preferences), \
              patch("universal_led.multisport_runtime.current_countdown",
-                   return_value=object()) as current, \\
+                   return_value=object()) as current, \
              patch("universal_led.multisport_runtime.SeasonCountdownScreen") as screen:
             screen.return_value.render.return_value = marker
             self.now[0] = 10
@@ -53,14 +53,14 @@ class GlobalCountdownRotationTests(unittest.TestCase):
 
     def test_missing_countdown_keeps_regular_rotation(self):
         with patch("universal_led.multisport_runtime.load_time_weather",
-                   return_value=self.preferences), \\
+                   return_value=self.preferences), \
              patch("universal_led.multisport_runtime.current_countdown",
                    return_value=None):
             self.now[0] = 10
             self.assertEqual(self.board.frame().pixels[0][0], (11, 22, 33))
 
     def test_live_game_does_not_query_or_render_countdown(self):
-        with patch.object(self.mlb, "has_live_games", return_value=True), \\
+        with patch.object(self.mlb, "has_live_games", return_value=True), \
              patch("universal_led.multisport_runtime.current_countdown") as current:
             self.board.frame()
             current.assert_not_called()
